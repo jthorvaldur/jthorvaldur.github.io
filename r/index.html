@@ -183,9 +183,13 @@
 </div>
 
 <script>
-// Simple password gate using SHA-256 hash comparison
-// Not truly secure, but prevents casual access and search indexing
-const HASH = '0672db75dd6bd1db52bd54baf50b5f2daa37f13145bc98efd2f2937eab3c5418';
+// Password hashes — multiple access levels
+const ACCESS = {
+  // Joel: full portal
+  '0672db75dd6bd1db52bd54baf50b5f2daa37f13145bc98efd2f2937eab3c5418': 'full',
+  // Jesi (paralegal): filing package only
+  '0de9bc365a7225e1d89aa7c057805262fbe3870800b6d17fb9461067f12fdf78': 'filing'
+};
 
 async function sha256(msg) {
   const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(msg));
@@ -195,17 +199,20 @@ async function sha256(msg) {
 async function checkPw() {
   const pw = document.getElementById('pw').value;
   const hash = await sha256(pw);
-  if (hash === HASH) {
+  const level = ACCESS[hash];
+  if (level === 'full') {
     document.getElementById('login-gate').style.display = 'none';
     document.getElementById('content').style.display = 'block';
-    sessionStorage.setItem('auth', '1');
+    sessionStorage.setItem('auth', 'full');
+  } else if (level === 'filing') {
+    window.location.href = pw + '/filing/';
   } else {
     document.getElementById('login-error').style.display = 'block';
   }
 }
 
 // Auto-login if already authenticated this session
-if (sessionStorage.getItem('auth') === '1') {
+if (sessionStorage.getItem('auth') === 'full') {
   document.getElementById('login-gate').style.display = 'none';
   document.getElementById('content').style.display = 'block';
 }
