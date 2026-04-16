@@ -90,7 +90,7 @@ I, Joel Thorarinson, certify under penalties as provided by law pursuant to Sect
 
 Under penalties as provided by law pursuant to Section 1-109 of the Illinois Code of Civil Procedure, I certify that the statements set forth in this Affidavit are true and correct to the best of my knowledge, information, and belief.
 
-Dated: [CONFIRM DATE]
+Dated: April 17, 2026
 
 ______________________________
 Joel Thorarinson, Pro Se

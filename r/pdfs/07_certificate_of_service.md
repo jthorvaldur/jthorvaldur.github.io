@@ -15,7 +15,7 @@ In re the Marriage of
 
 ## CERTIFICATE OF SERVICE
 
-I, Joel Thorarinson, hereby certify that on **[CONFIRM DATE]**, I caused
+I, Joel Thorarinson, hereby certify that on **April 17, 2026**, I caused
 true and correct copies of the following documents to be served by electronic
 mail upon the persons listed below:
 
@@ -42,7 +42,7 @@ Under penalties as provided by law pursuant to Section 1-109 of the Illinois
 Code of Civil Procedure, I certify that the statements set forth in this
 Certificate of Service are true and correct.
 
-Dated: [CONFIRM DATE]
+Dated: April 17, 2026
 
 ______________________________
 Joel Thorarinson, Pro Se
