@@ -1,0 +1,1256 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex, nofollow">
+<title>Case Timeline — 2024 D 6724</title>
+<style>
+  :root {
+    --bg: #0d1117; --card: #161b22; --border: #30363d; --text: #c9d1d9; --heading: #f0f6fc;
+    --joel: #58a6ff; --heather: #f85149; --court: #bc8cff; --neutral: #8b949e;
+    --accent: #58a6ff; --green: #3fb950;
+    --future-bg: rgba(210,153,34,0.1); --prediction-bg: rgba(248,81,73,0.08);
+    --status-bg: rgba(63,185,80,0.1);
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif;
+    max-width: 1000px; margin: 0 auto; padding: 1.5rem 1rem;
+    background: var(--bg); color: var(--text); line-height: 1.6;
+  }
+  a { color: var(--accent); text-decoration: none; }
+  a:hover { text-decoration: underline; }
+  h1 { font-size: 1.5rem; color: var(--heading); margin-bottom: 0.25rem; }
+  h2 { font-size: 1.15em; color: var(--accent); margin: 2rem 0 0.75rem; border-bottom: 1px solid var(--border); padding-bottom: 6px; }
+  .subtitle { color: var(--neutral); font-size: 0.9rem; margin-bottom: 1.5rem; }
+  .back-link { display: inline-block; margin-bottom: 1rem; font-size: 0.85rem; }
+
+  .legend {
+    display: flex; flex-wrap: wrap; gap: 1rem; margin-bottom: 1.5rem;
+    padding: 0.75rem; background: var(--card); border-radius: 8px; border: 1px solid var(--border);
+  }
+  .legend-item { display: flex; align-items: center; gap: 0.35rem; font-size: 0.8rem; color: var(--text); }
+  .legend-dot { width: 10px; height: 10px; border-radius: 50%; }
+
+  .stats {
+    display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+    gap: 0.75rem; margin-bottom: 1.5rem;
+  }
+  .stat-card {
+    background: var(--card); border-radius: 8px; padding: 0.75rem;
+    border: 1px solid var(--border);
+  }
+  .stat-card .label { font-size: 0.7rem; color: var(--neutral); text-transform: uppercase; letter-spacing: 0.05em; }
+  .stat-card .value { font-size: 1.15rem; font-weight: 700; margin-top: 0.25rem; }
+
+  .timeline { position: relative; padding-left: 2rem; }
+  .timeline::before {
+    content: ''; position: absolute; left: 0.75rem; top: 0; bottom: 0;
+    width: 2px; background: var(--border);
+  }
+  .year-header {
+    font-size: 1.1rem; font-weight: 700; margin: 1.5rem 0 0.75rem -1rem;
+    padding: 0.25rem 0.75rem; background: var(--accent); color: #0d1117;
+    border-radius: 4px; display: inline-block;
+  }
+  .future-divider {
+    margin: 1.5rem 0 0.75rem -1rem;
+    padding: 0.5rem 0.75rem; background: #d29922; color: #0d1117;
+    border-radius: 4px; display: inline-block; font-weight: 700; font-size: 1rem;
+  }
+
+  .event {
+    position: relative; margin-bottom: 0.75rem;
+    padding: 0.75rem; background: var(--card); border-radius: 8px;
+    border: 1px solid var(--border); transition: border-color 0.15s;
+  }
+  .event:hover { border-color: var(--accent); }
+  .event::before {
+    content: ''; position: absolute; left: -1.65rem; top: 1rem;
+    width: 10px; height: 10px; border-radius: 50%; border: 2px solid var(--bg);
+  }
+  .event.party-joel::before { background: var(--joel); }
+  .event.party-heather::before { background: var(--heather); }
+  .event.party-court::before { background: var(--court); }
+  .event.party-neutral::before { background: var(--neutral); }
+
+  .event.future { background: var(--future-bg); border-color: rgba(210,153,34,0.3); }
+  .event.prediction { background: var(--prediction-bg); border-color: rgba(248,81,73,0.2); }
+  .event.status-marker { background: var(--status-bg); border-color: rgba(63,185,80,0.4); border-width: 2px; }
+  .event.risk-high { border-left: 4px solid var(--heather); }
+  .event.risk-medium { border-left: 4px solid #d29922; }
+
+  .event-header { display: flex; justify-content: space-between; align-items: flex-start; gap: 0.5rem; }
+  .event-date { font-size: 0.8rem; color: var(--neutral); white-space: nowrap; }
+  .event-title { font-weight: 600; font-size: 0.95rem; color: var(--heading); }
+  .event-detail { font-size: 0.85rem; color: var(--text); margin-top: 0.35rem; white-space: pre-line; opacity: 0.85; }
+  .event-docs { margin-top: 0.4rem; }
+  .event-docs a {
+    display: inline-block; margin-right: 0.5rem; margin-top: 0.25rem;
+    padding: 0.15rem 0.5rem; border-radius: 4px; font-size: 0.75rem; font-weight: 600;
+    background: rgba(88,166,255,0.1); border: 1px solid rgba(88,166,255,0.3);
+  }
+  .event-docs a:hover { background: rgba(88,166,255,0.2); text-decoration: none; }
+
+  .badge {
+    display: inline-block; padding: 0.1rem 0.5rem; border-radius: 9999px;
+    font-size: 0.65rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.03em;
+  }
+  .badge-filing { background: rgba(88,166,255,0.15); color: var(--joel); }
+  .badge-order { background: rgba(188,140,255,0.15); color: var(--court); }
+  .badge-hearing { background: rgba(188,140,255,0.2); color: #d2a8ff; }
+  .badge-deadline { background: rgba(248,81,73,0.15); color: var(--heather); }
+  .badge-motion { background: rgba(88,166,255,0.1); color: #79c0ff; }
+  .badge-discovery { background: rgba(63,185,80,0.15); color: var(--green); }
+  .badge-employment { background: rgba(210,153,34,0.15); color: #d29922; }
+  .badge-financial { background: rgba(63,185,80,0.1); color: var(--green); }
+  .badge-personal { background: rgba(188,140,255,0.1); color: var(--court); }
+  .badge-incident { background: rgba(248,81,73,0.15); color: var(--heather); }
+  .badge-prediction { background: rgba(210,153,34,0.1); color: #d29922; }
+  .badge-status { background: rgba(63,185,80,0.15); color: var(--green); }
+  .badge-business { background: rgba(88,166,255,0.1); color: #79c0ff; }
+  .badge-communication { background: rgba(188,140,255,0.1); color: #d2a8ff; }
+  .confidence {
+    font-size: 0.65rem; padding: 0.1rem 0.4rem; border-radius: 4px;
+    background: rgba(255,255,255,0.05); color: var(--neutral);
+  }
+
+  /* Email reference section */
+  .email-section { margin-top: 2rem; }
+  .email-group { margin-bottom: 1rem; }
+  .email-group-title { font-size: 0.85rem; font-weight: 600; color: var(--accent); margin-bottom: 0.5rem; }
+  .email-item {
+    padding: 0.5rem 0.75rem; background: var(--card); border: 1px solid var(--border);
+    border-radius: 6px; margin-bottom: 0.35rem; font-size: 0.8rem;
+    display: flex; justify-content: space-between; align-items: center;
+  }
+  .email-item:hover { border-color: var(--accent); }
+  .email-from { color: var(--neutral); font-size: 0.75rem; }
+  .email-date { color: var(--neutral); font-size: 0.7rem; white-space: nowrap; }
+
+  .generated { text-align: center; color: #484f58; font-size: 0.75rem; margin-top: 2rem; padding-top: 1rem; border-top: 1px solid var(--border); }
+
+  @media print { body { max-width: 100%; background: #fff; color: #000; } .event { break-inside: avoid; } }
+</style>
+</head>
+<body>
+
+<a href="index.html" class="back-link">&larr; Back to Filing Portal</a>
+
+<h1>Case Timeline — 2024 D 6724</h1>
+<div class="subtitle">Joel Thorarinson v. Heather Kim Atagan | Generated 2026-04-19 18:24</div>
+
+<div class="legend">
+  <div class="legend-item"><div class="legend-dot" style="background:var(--joel)"></div> Joel</div>
+  <div class="legend-item"><div class="legend-dot" style="background:var(--heather)"></div> Heather</div>
+  <div class="legend-item"><div class="legend-dot" style="background:var(--court)"></div> Court</div>
+  <div class="legend-item"><div class="legend-dot" style="background:var(--neutral)"></div> Neutral</div>
+  <div class="legend-item"><span style="display:inline-block;width:10px;height:10px;background:var(--future-bg);border:1px solid rgba(210,153,34,0.3);border-radius:2px"></span> Future</div>
+  <div class="legend-item"><span style="display:inline-block;width:10px;height:10px;background:var(--prediction-bg);border:1px solid rgba(248,81,73,0.2);border-radius:2px"></span> Predicted</div>
+</div>
+
+<div class="stats">
+  <div class="stat-card">
+    <div class="label">Verified Payments</div>
+    <div class="value" style="color:var(--joel)">$248,388.07</div>
+  </div>
+  <div class="stat-card">
+    <div class="label">Undisclosed Transfers</div>
+    <div class="value" style="color:var(--joel)">$110,041.00</div>
+  </div>
+  <div class="stat-card">
+    <div class="label">Combined Total</div>
+    <div class="value" style="color:var(--green)">$358,429.07</div>
+  </div>
+  <div class="stat-card">
+    <div class="label">Joel's Income</div>
+    <div class="value" style="color:var(--heather)">$0/mo</div>
+  </div>
+  <div class="stat-card">
+    <div class="label">Days Unemployed</div>
+    <div class="value">135</div>
+  </div>
+  <div class="stat-card">
+    <div class="label">Next Hearing</div>
+    <div class="value" style="font-size:0.9rem">May 5 @ 1:30pm</div>
+  </div>
+</div>
+
+<div class="timeline">
+
+
+<div class="year-header">2024</div>
+
+
+
+<div class="event party-joel">
+  <div class="event-header">
+    <div>
+      <span class="badge badge-filing">filing</span>
+      
+    </div>
+    <span class="event-date">2024-09-09</span>
+  </div>
+  <div class="event-title">Petition for Dissolution filed</div>
+  <div class="event-detail">Joel Thorarinson files for divorce in Cook County. Case No. 2024 D 6724, DRCAL11.</div>
+  
+</div>
+
+
+
+<div class="event party-joel">
+  <div class="event-header">
+    <div>
+      <span class="badge badge-filing">filing</span>
+      
+    </div>
+    <span class="event-date">2024-12-10</span>
+  </div>
+  <div class="event-title">Summons reissued</div>
+  <div class="event-detail">Second summons issued</div>
+  
+</div>
+
+
+
+<div class="event party-joel">
+  <div class="event-header">
+    <div>
+      <span class="badge badge-filing">filing</span>
+      
+    </div>
+    <span class="event-date">2024-12-18</span>
+  </div>
+  <div class="event-title">Affidavit of Service filed</div>
+  <div class="event-detail">Service on Heather completed</div>
+  
+</div>
+
+
+
+<div class="year-header">2025</div>
+
+
+
+<div class="event party-joel">
+  <div class="event-header">
+    <div>
+      <span class="badge badge-motion">motion</span>
+      
+    </div>
+    <span class="event-date">2025-01-15</span>
+  </div>
+  <div class="event-title">Motion for Default drafted</div>
+  <div class="event-detail">Joel's counsel drafts motion for default against Heather</div>
+  
+</div>
+
+
+
+<div class="event party-joel">
+  <div class="event-header">
+    <div>
+      <span class="badge badge-motion">motion</span>
+      
+    </div>
+    <span class="event-date">2025-04-17</span>
+  </div>
+  <div class="event-title">Motion for Default signed & filed</div>
+  <div class="event-detail">Set for hearing April 28, 2025</div>
+  
+</div>
+
+
+
+<div class="event party-heather">
+  <div class="event-header">
+    <div>
+      <span class="badge badge-filing">filing</span>
+      
+    </div>
+    <span class="event-date">2025-04-24</span>
+  </div>
+  <div class="event-title">Heather files Appearance + 4 Petitions</div>
+  <div class="event-detail">CPDOM, Petition for Fees, APR, Maintenance — prevents default</div>
+  
+</div>
+
+
+
+<div class="event party-court">
+  <div class="event-header">
+    <div>
+      <span class="badge badge-hearing">hearing</span>
+      
+    </div>
+    <span class="event-date">2025-04-28</span>
+  </div>
+  <div class="event-title">Hearing: Motion for Default + Counter-Petitions</div>
+  <div class="event-detail">Continued to April 30. Conniff Motion to Withdraw also presented.</div>
+  
+</div>
+
+
+
+<div class="event party-heather risk-high">
+  <div class="event-header">
+    <div>
+      <span class="badge badge-discovery">discovery</span>
+      
+    </div>
+    <span class="event-date">2025-04-28</span>
+  </div>
+  <div class="event-title">Heather subpoenas Chase Bank & Eisler Capital</div>
+  <div class="event-detail">SDT to Chase and Eisler Capital — this subpoena at workplace triggers chain leading to Joel's termination</div>
+  
+</div>
+
+
+
+<div class="event party-heather risk-high">
+  <div class="event-header">
+    <div>
+      <span class="badge badge-discovery">discovery</span>
+      
+    </div>
+    <span class="event-date">2025-04-28</span>
+  </div>
+  <div class="event-title">Subpoena served on Joel at Eisler Capital</div>
+  <div class="event-detail">Amended SDT served at workplace</div>
+  
+</div>
+
+
+
+<div class="event party-heather">
+  <div class="event-header">
+    <div>
+      <span class="badge badge-filing">filing</span>
+      
+    </div>
+    <span class="event-date">2025-04-29</span>
+  </div>
+  <div class="event-title">Heather files Emergency Petitions</div>
+  <div class="event-detail">EM Petition for TRO + EM Petition for Order of Protection</div>
+  
+</div>
+
+
+
+<div class="event party-court risk-high">
+  <div class="event-header">
+    <div>
+      <span class="badge badge-order">order</span>
+      
+    </div>
+    <span class="event-date">2025-04-30</span>
+  </div>
+  <div class="event-title">THREE Agreed Orders entered</div>
+  <div class="event-detail">1) Temporary Financial Matters ($10K/mo maintenance, TRO on accounts)
+2) No Contact (one-directional, restrains Joel only)
+3) Briefing Schedule</div>
+  
+</div>
+
+
+
+<div class="event party-joel">
+  <div class="event-header">
+    <div>
+      <span class="badge badge-deadline">deadline</span>
+      
+    </div>
+    <span class="event-date">2025-05-01</span>
+  </div>
+  <div class="event-title">First $10K maintenance payment due</div>
+  <div class="event-detail">$10K to Heather + $15K interim fees to Merel + $15K to Conniff</div>
+  
+</div>
+
+
+
+<div class="event party-joel risk-high">
+  <div class="event-header">
+    <div>
+      <span class="badge badge-incident">incident</span>
+      
+    </div>
+    <span class="event-date">2025-05-01</span>
+  </div>
+  <div class="event-title">Joel accesses Heather's email via shared LastPass</div>
+  <div class="event-detail">Discovers $26K/month lawyer fee requests. Deletes emails in anger. Account later restored. THIS IS A CONFIRMED CONTEMPT VIOLATION.</div>
+  
+</div>
+
+
+
+<div class="event party-heather">
+  <div class="event-header">
+    <div>
+      <span class="badge badge-filing">filing</span>
+      
+    </div>
+    <span class="event-date">2025-05-12</span>
+  </div>
+  <div class="event-title">First Contempt Petition drafted (re: hacking & transfers)</div>
+  <div class="event-detail">Alleges: OFW violation, email access, direct child contact, joint acct transactions</div>
+  
+</div>
+
+
+
+<div class="event party-heather">
+  <div class="event-header">
+    <div>
+      <span class="badge badge-filing">filing</span>
+      
+    </div>
+    <span class="event-date">2025-05-14</span>
+  </div>
+  <div class="event-title">Proof of Service filed (2x)</div>
+  <div class="event-detail">Chase and Eisler subpoenas served</div>
+  
+</div>
+
+
+
+<div class="event party-joel risk-high">
+  <div class="event-header">
+    <div>
+      <span class="badge badge-deadline">deadline</span>
+      
+    </div>
+    <span class="event-date">2025-05-15</span>
+  </div>
+  <div class="event-title">Joel's Financial Affidavit due</div>
+  <div class="event-detail">NOT SUBMITTED on time — becomes part of 2nd contempt petition</div>
+  
+</div>
+
+
+
+<div class="event party-heather risk-high">
+  <div class="event-header">
+    <div>
+      <span class="badge badge-filing">filing</span>
+      
+    </div>
+    <span class="event-date">2025-05-16</span>
+  </div>
+  <div class="event-title">Heather's Financial Affidavit filed</div>
+  <div class="event-detail">Claims $0 income, $29,553/month expenses. DOES NOT DISCLOSE accounts ...9056 and ...2573. Does not mention Atagan Music Studios income.</div>
+  <div class="event-docs"><a href="w2_06_motion_strike_fda.pdf" target="_blank">Motion to Strike this Affidavit</a></div>
+</div>
+
+
+
+<div class="event party-heather">
+  <div class="event-header">
+    <div>
+      <span class="badge badge-filing">filing</span>
+      
+    </div>
+    <span class="event-date">2025-05-19</span>
+  </div>
+  <div class="event-title">First Contempt Petition filed (NOM)</div>
+  <div class="event-detail">Heather's 1st Verified Petition for Indirect Civil Contempt</div>
+  
+</div>
+
+
+
+<div class="event party-court">
+  <div class="event-header">
+    <div>
+      <span class="badge badge-hearing">hearing</span>
+      
+    </div>
+    <span class="event-date">2025-05-29</span>
+  </div>
+  <div class="event-title">Court hearing — pre-trial call</div>
+  <div class="event-detail">In-person appearance. Answer/response filed. Case set on pre-trial call.</div>
+  
+</div>
+
+
+
+<div class="event party-heather">
+  <div class="event-header">
+    <div>
+      <span class="badge badge-filing">filing</span>
+      
+    </div>
+    <span class="event-date">2025-06-20</span>
+  </div>
+  <div class="event-title">Heather's Financial Affidavit notice of service</div>
+  <div class="event-detail">NOS filed for Heather's FA (signed May 16)</div>
+  
+</div>
+
+
+
+<div class="event party-joel">
+  <div class="event-header">
+    <div>
+      <span class="badge badge-motion">motion</span>
+      
+    </div>
+    <span class="event-date">2025-07-28</span>
+  </div>
+  <div class="event-title">Conniff files Motion to Withdraw as Counsel</div>
+  <div class="event-detail">First attempt — continued multiple times</div>
+  
+</div>
+
+
+
+<div class="event party-joel risk-high">
+  <div class="event-header">
+    <div>
+      <span class="badge badge-employment">employment</span>
+      
+    </div>
+    <span class="event-date">2025-08-05</span>
+  </div>
+  <div class="event-title">Joel placed on garden leave at Eisler</div>
+  <div class="event-detail">99 days after subpoena served at workplace. System access cut, suspended from trading. Performance Pay-out = $0.</div>
+  
+</div>
+
+
+
+<div class="event party-court risk-high">
+  <div class="event-header">
+    <div>
+      <span class="badge badge-order">order</span>
+      
+    </div>
+    <span class="event-date">2025-08-11</span>
+  </div>
+  <div class="event-title">Allocation Judgment entered (Joel signed WITHOUT counsel)</div>
+  <div class="event-detail">Joint Allocation of Parental Responsibilities — 22-page parenting plan.
+Heather gets SOLE decision-making. Joel gets NO parenting time until reunification therapy.
+CRITICAL: Joel signed without Conniff's advice. Conniff: 'I did not advise you... I can't have my name on it.'
+Joel: 'Working together with Heather to close this down. We just want all this court stuff to stop.'</div>
+  
+</div>
+
+
+
+<div class="event party-court">
+  <div class="event-header">
+    <div>
+      <span class="badge badge-hearing">hearing</span>
+      
+    </div>
+    <span class="event-date">2025-09-22</span>
+  </div>
+  <div class="event-title">Case set on Progress Call</div>
+  
+  
+</div>
+
+
+
+<div class="event party-joel">
+  <div class="event-header">
+    <div>
+      <span class="badge badge-business">business</span>
+      
+    </div>
+    <span class="event-date">2025-10-01</span>
+  </div>
+  <div class="event-title">GTL (Global Trading League) LLC formed</div>
+  <div class="event-detail">Joel & Dan Pei, Texas. Separate from Heather's Atagan Music Studios.</div>
+  
+</div>
+
+
+
+<div class="event party-heather">
+  <div class="event-header">
+    <div>
+      <span class="badge badge-discovery">discovery</span>
+      
+    </div>
+    <span class="event-date">2025-10-13</span>
+  </div>
+  <div class="event-title">Heather subpoenas AmEx, BOA, Citibank, HSBC</div>
+  <div class="event-detail">Blanket subpoena of all Joel's financial accounts</div>
+  
+</div>
+
+
+
+<div class="event party-joel risk-medium">
+  <div class="event-header">
+    <div>
+      <span class="badge badge-filing">filing</span>
+      
+    </div>
+    <span class="event-date">2025-10-16</span>
+  </div>
+  <div class="event-title">Joel submits first Financial Affidavit (late)</div>
+  <div class="event-detail">5 months late. Sent to Conniff. Joel noted 'a bit sloppy because Heather knows all the rest'</div>
+  
+</div>
+
+
+
+<div class="event party-joel risk-medium">
+  <div class="event-header">
+    <div>
+      <span class="badge badge-personal">personal</span>
+      
+    </div>
+    <span class="event-date">2025-10-20</span>
+  </div>
+  <div class="event-title">Uncle Richard Thorarinson dies</div>
+  <div class="event-detail">~$20K CAD deposited into RBC account controlled by Heather. Heather removes funds.</div>
+  
+</div>
+
+
+
+<div class="event party-heather risk-high">
+  <div class="event-header">
+    <div>
+      <span class="badge badge-filing">filing</span>
+      
+    </div>
+    <span class="event-date">2025-10-28</span>
+  </div>
+  <div class="event-title">Second Contempt Petition filed</div>
+  <div class="event-detail">Alleges: non-payment Jul-Oct ($31,359), joint acct transactions ($184,776), failed to tender FA. Exhibit C LISTS transfer to x9056 — proving counsel knew about account.</div>
+  
+</div>
+
+
+
+<div class="event party-joel">
+  <div class="event-header">
+    <div>
+      <span class="badge badge-motion">motion</span>
+      
+    </div>
+    <span class="event-date">2025-11-10</span>
+  </div>
+  <div class="event-title">Joel files Petition to Sell Marital Residence</div>
+  <div class="event-detail">430 Wilshire Dr, Wilmette. Heather opposes sale.</div>
+  
+</div>
+
+
+
+<div class="event party-joel">
+  <div class="event-header">
+    <div>
+      <span class="badge badge-motion">motion</span>
+      
+    </div>
+    <span class="event-date">2025-11-10</span>
+  </div>
+  <div class="event-title">Joel files Petition to Modify Child Support</div>
+  <div class="event-detail">Based on changed circumstances</div>
+  
+</div>
+
+
+
+<div class="event party-joel">
+  <div class="event-header">
+    <div>
+      <span class="badge badge-filing">filing</span>
+      
+    </div>
+    <span class="event-date">2025-11-18</span>
+  </div>
+  <div class="event-title">Joel's 2nd FDA filed with court (NOFS)</div>
+  <div class="event-detail">Formal Financial Affidavit signed via Adobe Acrobat Sign, filed through Conniff with NOFS. This is the formal court filing — not the Oct 16 informal submission.</div>
+  
+</div>
+
+
+
+<div class="event party-heather">
+  <div class="event-header">
+    <div>
+      <span class="badge badge-motion">motion</span>
+      
+    </div>
+    <span class="event-date">2025-12-01</span>
+  </div>
+  <div class="event-title">Heather files Motion for Summary Judgment</div>
+  
+  
+</div>
+
+
+
+<div class="event party-court risk-medium">
+  <div class="event-header">
+    <div>
+      <span class="badge badge-hearing">hearing</span>
+      
+    </div>
+    <span class="event-date">2025-12-02</span>
+  </div>
+  <div class="event-title">Heather's Motion for Substitution of Judge — DENIED</div>
+  <div class="event-detail">Heather tried to remove Judge Jannusch. DENIED because substantive order (Aug 11 Allocation Judgment) already entered. Jannusch stays.
+Pre-Trial Conference set for Feb 20, 2026 at 1:30pm.
+Joel told Conniff: 'Agreed with not objecting to the SOJ from them' — but court denied it anyway.</div>
+  
+</div>
+
+
+
+<div class="event party-court risk-medium">
+  <div class="event-header">
+    <div>
+      <span class="badge badge-hearing">hearing</span>
+      
+    </div>
+    <span class="event-date">2025-12-04</span>
+  </div>
+  <div class="event-title">Settlement Conference (4-way Zoom)</div>
+  <div class="event-detail">Joel, Conniff, Tarara, Heather. Joel mentions accounts are Heather's — shut down. Conniff was present and can corroborate.</div>
+  
+</div>
+
+
+
+<div class="event party-joel risk-high">
+  <div class="event-header">
+    <div>
+      <span class="badge badge-employment">employment</span>
+      
+    </div>
+    <span class="event-date">2025-12-05</span>
+  </div>
+  <div class="event-title">Eisler UK employment terminated</div>
+  <div class="event-detail">Employer-initiated. Not voluntary resignation or misconduct. Joel has had $0 earned income since this date.</div>
+  
+</div>
+
+
+
+<div class="event party-joel">
+  <div class="event-header">
+    <div>
+      <span class="badge badge-financial">financial</span>
+      
+    </div>
+    <span class="event-date">2025-12-19</span>
+  </div>
+  <div class="event-title">PILON payment received from Eisler</div>
+  <div class="event-detail">$121,378 net — one-time termination payment, not recurring income</div>
+  
+</div>
+
+
+
+<div class="year-header">2026</div>
+
+
+
+<div class="event party-heather risk-medium">
+  <div class="event-header">
+    <div>
+      <span class="badge badge-incident">incident</span>
+      
+    </div>
+    <span class="event-date">2026-01-06</span>
+  </div>
+  <div class="event-title">Heather's Open Letter emailed to family</div>
+  <div class="event-detail">Weaponized 2011 joint family letter. 'You became the thing you hated the most.' Sent to Joel's father and family members.</div>
+  
+</div>
+
+
+
+<div class="event party-heather">
+  <div class="event-header">
+    <div>
+      <span class="badge badge-filing">filing</span>
+      
+    </div>
+    <span class="event-date">2026-01-16</span>
+  </div>
+  <div class="event-title">Attorney substitution: Merel → Fitzpatrick Tarara</div>
+  <div class="event-detail">Tarara files new appearance (no fee). Merel withdrawal filed. Tarara left Merel to start Fitzpatrick Tarara Family Law LLC.</div>
+  
+</div>
+
+
+
+<div class="event party-court">
+  <div class="event-header">
+    <div>
+      <span class="badge badge-order">order</span>
+      
+    </div>
+    <span class="event-date">2026-01-20</span>
+  </div>
+  <div class="event-title">Merel Family Law withdrawal ALLOWED by court</div>
+  <div class="event-detail">Previous firm formally out. Tarara is now sole counsel for Heather.</div>
+  
+</div>
+
+
+
+<div class="event party-heather">
+  <div class="event-header">
+    <div>
+      <span class="badge badge-filing">filing</span>
+      
+    </div>
+    <span class="event-date">2026-02-03</span>
+  </div>
+  <div class="event-title">Heather files 3rd Petition for Attorney Fees + exhibits</div>
+  <div class="event-detail">Petition + NOM + 3 exhibits + affidavit. New fee petition.</div>
+  
+</div>
+
+
+
+<div class="event party-heather">
+  <div class="event-header">
+    <div>
+      <span class="badge badge-filing">filing</span>
+      
+    </div>
+    <span class="event-date">2026-02-12</span>
+  </div>
+  <div class="event-title">Heather files Emergency Motion + multiple filings</div>
+  <div class="event-detail">EM Motion, Response to Pet to Modify, Response to Pet to Sell, First Notice of Intent re Dissipation, Motion for Job Diary</div>
+  
+</div>
+
+
+
+<div class="event party-joel">
+  <div class="event-header">
+    <div>
+      <span class="badge badge-filing">filing</span>
+      
+    </div>
+    <span class="event-date">2026-02-19</span>
+  </div>
+  <div class="event-title">Joel files Response to Emergency Motion</div>
+  <div class="event-detail">Signed response to Heather's Feb 12 EM</div>
+  
+</div>
+
+
+
+<div class="event party-court risk-high">
+  <div class="event-header">
+    <div>
+      <span class="badge badge-order">order</span>
+      
+    </div>
+    <span class="event-date">2026-02-20</span>
+  </div>
+  <div class="event-title">ORDER ON RULE TO SHOW CAUSE entered</div>
+  <div class="event-detail">Judge Jannusch. Prima facie case of contempt found. Rule issued on both contempt petitions. May 5 hearing set. Body attachment warning (standard NOTICE). Service: personally in open court.</div>
+  <div class="event-docs"><a href="exhibit_f_feb20_order.pdf" target="_blank">Exhibit F — Feb 20 Order</a></div>
+</div>
+
+
+
+<div class="event party-joel">
+  <div class="event-header">
+    <div>
+      <span class="badge badge-communication">communication</span>
+      
+    </div>
+    <span class="event-date">2026-02-25</span>
+  </div>
+  <div class="event-title">Conniff forwards Feb 20 Order to Joel</div>
+  <div class="event-detail">Order sent via email from Odyssey court system</div>
+  
+</div>
+
+
+
+<div class="event party-joel">
+  <div class="event-header">
+    <div>
+      <span class="badge badge-discovery">discovery</span>
+      
+    </div>
+    <span class="event-date">2026-03-03</span>
+  </div>
+  <div class="event-title">Joel's Request for Production filed (Rule 214)</div>
+  <div class="event-detail">NOFS filed for Joel's Request for Production of Documents to Heather. Filed by Conniff. Heather has NOT responded to these discovery requests.</div>
+  
+</div>
+
+
+
+<div class="event party-joel risk-high">
+  <div class="event-header">
+    <div>
+      <span class="badge badge-deadline">deadline</span>
+      
+    </div>
+    <span class="event-date">2026-03-20</span>
+  </div>
+  <div class="event-title">DEADLINE: Joel's contempt response due</div>
+  <div class="event-detail">NO RESPONSE FILED. Joel is now in default on briefing schedule.</div>
+  
+</div>
+
+
+
+<div class="event party-joel">
+  <div class="event-header">
+    <div>
+      <span class="badge badge-motion">motion</span>
+      
+    </div>
+    <span class="event-date">2026-04-01</span>
+  </div>
+  <div class="event-title">Conniff files Motion to Withdraw (final)</div>
+  <div class="event-detail">Filed April 1. Hearing scheduled April 20.</div>
+  
+</div>
+
+
+
+<div class="event party-heather">
+  <div class="event-header">
+    <div>
+      <span class="badge badge-discovery">discovery</span>
+      
+    </div>
+    <span class="event-date">2026-04-01</span>
+  </div>
+  <div class="event-title">Heather serves 213 Interrogatories</div>
+  <div class="event-detail">New discovery request; also requesting another FDA from April 1</div>
+  
+</div>
+
+
+
+<div class="event party-heather">
+  <div class="event-header">
+    <div>
+      <span class="badge badge-deadline">deadline</span>
+      
+    </div>
+    <span class="event-date">2026-04-03</span>
+  </div>
+  <div class="event-title">DEADLINE: Heather's reply due</div>
+  <div class="event-detail">Heather's reply deadline per Feb 20 order briefing schedule</div>
+  
+</div>
+
+
+
+<div class="event party-joel status-marker">
+  <div class="event-header">
+    <div>
+      <span class="badge badge-status">status</span>
+      
+    </div>
+    <span class="event-date">2026-04-19</span>
+  </div>
+  <div class="event-title">STATUS: Wave 1 + Wave 2 filed. Awaiting May 5 hearing.</div>
+  <div class="event-detail">Wave 1: 10 documents filed & accepted April 17, 2026.
+Wave 2: 8 documents filed April 20, 2026 (including Motion to Modify Support).
+Joel is pro se, in Canada, $0 income since Dec 5 2025.
+Combined payments/transfers documented: $358,429.07
+Paralegal (Jesi) reviewing Wave 2 for Cook County compliance.
+Main hearing May 5 at 1:30pm — body attachment warning active.</div>
+  
+</div>
+
+
+
+<div class="future-divider">PROJECTED FUTURE EVENTS</div>
+
+
+
+<div class="year-header">2026</div>
+
+
+
+<div class="event party-joel future">
+  <div class="event-header">
+    <div>
+      <span class="badge badge-filing">filing</span>
+      <span class="confidence">high confidence</span>
+    </div>
+    <span class="event-date">2026-04-17</span>
+  </div>
+  <div class="event-title">FILED: Wave 1 motion packet (10 documents)</div>
+  <div class="event-detail">All 10 documents accepted by Cook County Clerk (envelope #37645899).
+Served on Tarara at atarara@ftfamilylawyers.com same day.</div>
+  
+</div>
+
+
+
+<div class="event party-joel future">
+  <div class="event-header">
+    <div>
+      <span class="badge badge-hearing">hearing</span>
+      <span class="confidence">high confidence</span>
+    </div>
+    <span class="event-date">2026-04-20</span>
+  </div>
+  <div class="event-title">Conniff Withdrawal Hearing</div>
+  <div class="event-detail">John Conniff to appear and formally withdraw as Joel's counsel. Joel becomes officially pro se after this date.</div>
+  
+</div>
+
+
+
+<div class="event party-joel future">
+  <div class="event-header">
+    <div>
+      <span class="badge badge-filing">filing</span>
+      <span class="confidence">high confidence</span>
+    </div>
+    <span class="event-date">2026-04-20</span>
+  </div>
+  <div class="event-title">FILED: Wave 2 (8 documents)</div>
+  <div class="event-detail">1. Response to Third Contempt Petition
+2. Motion to Compel Financial Disclosure
+3. Motion in Limine
+4. Motion to Purge Contempt & Vacate Body Attachment
+5. Motion to Strike Financial Affidavit
+6. Motion to Modify Temporary Support
+7. Notice of Motion (all 6 motions for May 5)
+8. Certificate of Service</div>
+  
+</div>
+
+
+
+<div class="event party-heather prediction">
+  <div class="event-header">
+    <div>
+      <span class="badge badge-prediction">prediction</span>
+      <span class="confidence">high confidence</span>
+    </div>
+    <span class="event-date">2026-04-24</span>
+  </div>
+  <div class="event-title">PREDICTED: Tarara's response to Joel's filing</div>
+  <div class="event-detail">Likely within 7 days of service. Expected arguments:
+1. Motion to strike — response is 28 days late, argue waiver
+2. Email access = willful contempt, not excusable
+3. Transfers were unauthorized, not 'support for her business'
+4. Canada location = flight risk, oppose remote appearance
+5. Request income imputation based on prior Eisler earnings
+6. Object to any modification while contempt pending
+
+OUR STRONGEST COUNTER:
+- $367K documented payments/transfers
+- Exhibit C lists x9056 as violation while omitting from her affidavit
+- Court has discretion to accept late filing (instanter)
+- Joel is engaging, not evading</div>
+  
+</div>
+
+
+
+<div class="event party-joel future">
+  <div class="event-header">
+    <div>
+      <span class="badge badge-deadline">deadline</span>
+      <span class="confidence">high confidence</span>
+    </div>
+    <span class="event-date">2026-04-29</span>
+  </div>
+  <div class="event-title">DEADLINE: Respond to 213 Interrogatories</div>
+  <div class="event-detail">28 days from April 1 service = April 29. File responses or objections. If you need more time, file a motion for extension BEFORE the deadline.</div>
+  
+</div>
+
+
+
+<div class="event party-joel future">
+  <div class="event-header">
+    <div>
+      <span class="badge badge-filing">filing</span>
+      <span class="confidence">high confidence</span>
+    </div>
+    <span class="event-date">2026-05-01</span>
+  </div>
+  <div class="event-title">TARGET: Prepare for May 5 hearing</div>
+  <div class="event-detail">By this date:
+- Review Tarara's response (if any)
+- Prepare 2-3 minute oral statement for judge
+- Test Zoom connection (Meeting ID: 969 9243 6102, Password: 295575)
+- Have all exhibits accessible on screen
+- Confirm whether court granted remote appearance</div>
+  
+</div>
+
+
+
+<div class="event party-court future">
+  <div class="event-header">
+    <div>
+      <span class="badge badge-hearing">hearing</span>
+      <span class="confidence">high confidence</span>
+    </div>
+    <span class="event-date">2026-05-05</span>
+  </div>
+  <div class="event-title">HEARING: Rule to Show Cause — Both Contempt Petitions</div>
+  <div class="event-detail">Courtroom 3003, Daley Center, 1:30 PM.
+Joel must appear (in person or request remote).
+Body attachment warning if Joel fails to appear.
+
+POSSIBLE OUTCOMES:
+A) Court allows remote appearance, accepts late response, sets new briefing schedule — BEST CASE
+B) Court allows late filing but requires in-person appearance at next date — LIKELY
+C) Court strikes late response, finds contempt, issues body attachment — WORST CASE
+D) Court continues hearing to allow Joel time to prepare — POSSIBLE
+
+KEY ARGUMENTS FOR JOEL:
+- $366,929 in documented payments/transfers
+- Counsel withdrawal left him pro se
+- $0 income since Dec 2025
+- Heather's FDA omits 5-7 accounts
+- Transfers were to HELP Heather build Atagan Music Studios</div>
+  
+</div>
+
+
+
+<div class="event party-court prediction">
+  <div class="event-header">
+    <div>
+      <span class="badge badge-prediction">prediction</span>
+      <span class="confidence">medium confidence</span>
+    </div>
+    <span class="event-date">2026-05-12</span>
+  </div>
+  <div class="event-title">PREDICTED: If continued — new briefing schedule set</div>
+  <div class="event-detail">If court grants continuance:
+- Joel's response: already filed
+- Heather's reply: 14 days after
+- New hearing: 30-45 days out (mid-June)
+- Court may order Joel to appear in person at next hearing</div>
+  
+</div>
+
+
+
+<div class="event party-joel future">
+  <div class="event-header">
+    <div>
+      <span class="badge badge-filing">filing</span>
+      <span class="confidence">high confidence</span>
+    </div>
+    <span class="event-date">2026-05-15</span>
+  </div>
+  <div class="event-title">TARGET: File discovery requests (subpoena Heather's accounts)</div>
+  <div class="event-detail">Subpoena Chase Bank directly for statements on accounts ...9056 and ...2573. Also subpoena RBC for uncle Richard's account records. File interrogatories to Heather re: all accounts and Atagan Music Studios income.</div>
+  
+</div>
+
+
+
+<div class="event party-heather prediction">
+  <div class="event-header">
+    <div>
+      <span class="badge badge-prediction">prediction</span>
+      <span class="confidence">medium confidence</span>
+    </div>
+    <span class="event-date">2026-06-01</span>
+  </div>
+  <div class="event-title">PREDICTED: Discovery responses due from Heather</div>
+  <div class="event-detail">If court orders disclosure:
+- 21-day deadline for account identification
+- 21-day deadline for amended FA
+- If Heather fails to comply → basis for sanctions motion</div>
+  
+</div>
+
+
+
+<div class="event party-court prediction">
+  <div class="event-header">
+    <div>
+      <span class="badge badge-prediction">prediction</span>
+      <span class="confidence">low confidence</span>
+    </div>
+    <span class="event-date">2026-06-15</span>
+  </div>
+  <div class="event-title">PREDICTED: Follow-up hearing (if May 5 continued)</div>
+  <div class="event-detail">If court set 30-45 day continuance from May 5.
+By this date Joel should have:
+- Chase subpoena results
+- Heather's amended disclosure (or basis for sanctions)
+- Updated financial picture</div>
+  
+</div>
+
+
+
+<div class="event party-joel future">
+  <div class="event-header">
+    <div>
+      <span class="badge badge-deadline">deadline</span>
+      <span class="confidence">medium confidence</span>
+    </div>
+    <span class="event-date">2026-07-01</span>
+  </div>
+  <div class="event-title">TARGET: Updated Financial Affidavit</div>
+  <div class="event-detail">Submit corrected/updated FDA with all current information. Show job search efforts, current financial status.</div>
+  
+</div>
+
+
+
+<div class="event party-court prediction">
+  <div class="event-header">
+    <div>
+      <span class="badge badge-prediction">prediction</span>
+      <span class="confidence">low confidence</span>
+    </div>
+    <span class="event-date">2026-08-01</span>
+  </div>
+  <div class="event-title">PROJECTED: Support modification hearing</div>
+  <div class="event-detail">If modify petition is heard:
+- Joel's $0 income since Dec 2025
+- Heather's actual income (Atagan, undisclosed accounts)
+- Potential reduction or suspension of $10K/month obligation
+- Court may impute income to both parties</div>
+  
+</div>
+
+
+
+<div class="event party-court prediction">
+  <div class="event-header">
+    <div>
+      <span class="badge badge-prediction">prediction</span>
+      <span class="confidence">low confidence</span>
+    </div>
+    <span class="event-date">2026-10-01</span>
+  </div>
+  <div class="event-title">PROJECTED: Trial or final hearing</div>
+  <div class="event-detail">If case proceeds to trial on property division:
+- 430 Wilshire Dr disposition
+- Marital asset division
+- Final support determination
+- Parenting allocation</div>
+  
+</div>
+
+
+</div>
+
+<div class="generated">
+  Confidential &mdash; do not share access link or code.<br>
+  Generated 2026-04-19 18:24.
+</div>
+
+</body>
+</html>
