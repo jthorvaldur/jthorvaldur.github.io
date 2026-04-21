@@ -3,22 +3,52 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Quantum Verbal Meaning — Visualizations</title>
+<title>Quantum Verbal Meaning</title>
 <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;700&display=swap" rel="stylesheet">
 <style>
   * { margin: 0; padding: 0; box-sizing: border-box; }
   body {
     background: #0a0a0a; color: #c0c0c0;
     font-family: 'JetBrains Mono', monospace;
-    min-height: 100vh; padding: 40px 20px;
+    min-height: 100vh;
+    display: flex; justify-content: center; align-items: center;
   }
+  /* --- Gate styles --- */
+  .gate {
+    text-align: center; max-width: 480px; padding: 40px;
+    border: 1px solid #222; border-radius: 8px;
+    background: #111;
+  }
+  .gate h1 { color: #c0a060; font-size: 1.2rem; margin-bottom: 4px; letter-spacing: 2px; }
+  .gate .sub { font-size: 0.6rem; color: #444; margin-bottom: 24px; letter-spacing: 1px; }
+  .gate input {
+    background: #1a1a1a; border: 1px solid #333; color: #e0e0e0;
+    padding: 12px 16px; font-family: inherit; font-size: 1rem;
+    width: 100%; border-radius: 4px; margin-bottom: 12px;
+    text-align: center; letter-spacing: 2px;
+  }
+  .gate input:focus { outline: none; border-color: #c0a060; }
+  .gate button {
+    background: #c0a060; color: #0a0a0a; border: none;
+    padding: 10px 32px; font-family: inherit; font-size: 0.9rem;
+    font-weight: 700; border-radius: 4px; cursor: pointer;
+    letter-spacing: 1px;
+  }
+  .gate button:hover { background: #d4b470; }
+  .error { color: #ff4444; font-size: 0.8rem; margin-top: 12px; display: none; }
+  .lock-icon { font-size: 2.5rem; margin-bottom: 16px; color: #333; }
+
+  /* --- Content styles (hidden until unlocked) --- */
+  .content { display: none; width: 100%; padding: 40px 20px; }
+  .content.visible { display: block; }
+  body.unlocked { display: block; }
   .container { max-width: 900px; margin: 0 auto; }
-  h1 {
+  .container h1 {
     color: #c0a060; font-size: 1.4rem; text-align: center;
     margin-bottom: 8px; letter-spacing: 2px;
   }
   .subtitle {
-    text-align: center; font-size: 0.75rem; color: #555;
+    text-align: center; font-size: 0.7rem; color: #555;
     margin-bottom: 48px; letter-spacing: 1px;
   }
   .grid {
@@ -35,10 +65,7 @@
     transform: translateY(-2px);
     box-shadow: 0 4px 20px rgba(192, 160, 96, 0.1);
   }
-  .card h2 {
-    color: #e0e0e0; font-size: 0.9rem; margin-bottom: 8px;
-    font-weight: 700;
-  }
+  .card h2 { color: #e0e0e0; font-size: 0.9rem; margin-bottom: 8px; font-weight: 700; }
   .card p { color: #666; font-size: 0.72rem; line-height: 1.5; }
   .card .tag {
     display: inline-block; font-size: 0.6rem; padding: 2px 8px;
@@ -53,76 +80,138 @@
     text-align: center; margin-top: 48px; font-size: 0.65rem;
     color: #333; letter-spacing: 1px;
   }
-  .lock { color: #444; margin-right: 6px; }
-  @media (max-width: 600px) {
-    .grid { grid-template-columns: 1fr; }
+  .unlocked-badge {
+    text-align: center; font-size: 0.65rem; color: #2d5a27;
+    margin-bottom: 24px;
   }
+  @media (max-width: 600px) { .grid { grid-template-columns: 1fr; } }
 </style>
 </head>
 <body>
-<div class="container">
+
+<!-- Password gate -->
+<div class="gate" id="gate">
+  <div class="lock-icon">&#x1f512;</div>
   <h1>QUANTUM VERBAL MEANING</h1>
-  <div class="subtitle">CORRECT-SENTENCE-STRUCTURE-COMMUNICATION-PARSE-SYNTAX-GRAMMAR-PERFORMANCE</div>
+  <div class="sub">C.S.S.C.P.S.G.P. VISUALIZATION FRAMEWORK</div>
+  <input type="password" id="pw" placeholder="access key" autofocus
+    onkeydown="if(event.key==='Enter')unlock()">
+  <br>
+  <button onclick="unlock()">UNLOCK</button>
+  <div class="error" id="err">Incorrect key. Try again.</div>
+</div>
 
-  <div class="grid">
-    <a class="card" href="vcc_negation_space.html">
-      <h2><span class="lock">&#x1f512;</span>VCC NEGATION SPACE</h2>
-      <p>The geometric inversion of meaning. Words plotted in 2D space where VCC prefixes reflect them across the origin. What the word SAYS vs what you THINK it means.</p>
-      <span class="tag tag-core">CORE THEORY</span>
-    </a>
+<!-- Content (hidden until authenticated) -->
+<div class="content" id="content">
+  <div class="container">
+    <h1>QUANTUM VERBAL MEANING</h1>
+    <div class="subtitle">CORRECT-SENTENCE-STRUCTURE-COMMUNICATION-PARSE-SYNTAX-GRAMMAR-PERFORMANCE</div>
+    <div class="unlocked-badge">&#x1f513; SESSION UNLOCKED — all pages accessible</div>
 
-    <a class="card" href="word_decomposer.html">
-      <h2><span class="lock">&#x1f512;</span>WORD DECOMPOSER</h2>
-      <p>Type any word, watch it split into prefix | root | suffix. Each morpheme reveals its Latin origin, VCC negation status, and true meaning. 40+ pre-loaded decompositions.</p>
-      <span class="tag tag-interactive">INTERACTIVE</span>
-    </a>
+    <div class="grid">
+      <a class="card" href="vcc_negation_space.html">
+        <h2>VCC NEGATION SPACE</h2>
+        <p>The geometric inversion of meaning. Words plotted in 2D space where VCC prefixes reflect them across the origin. What the word SAYS vs what you THINK it means.</p>
+        <span class="tag tag-core">CORE THEORY</span>
+      </a>
 
-    <a class="card" href="parse_syntax_tree.html">
-      <h2><span class="lock">&#x1f512;</span>PARSE-SYNTAX TREE</h2>
-      <p>Does your sentence say anything? Real-time sentence analysis against C.S.S.C.P.S.G.P. rules. Color-coded POS tags, null chain detection, scoring.</p>
-      <span class="tag tag-analysis">ANALYSIS</span>
-    </a>
+      <a class="card" href="word_decomposer.html">
+        <h2>WORD DECOMPOSER</h2>
+        <p>Type any word, watch it split into prefix | root | suffix. Each morpheme reveals its Latin origin, VCC negation status, and true meaning. 40+ pre-loaded decompositions.</p>
+        <span class="tag tag-interactive">INTERACTIVE</span>
+      </a>
 
-    <a class="card" href="dog_latin_scanner.html">
-      <h2><span class="lock">&#x1f512;</span>DOG-LATIN SCANNER</h2>
-      <p>Paste any text — all DOG-LATIN (GLOSSA) highlighted in red. Detects jurisdiction mixing, case-form classification, and fraudulent all-caps without hyphens.</p>
-      <span class="tag tag-analysis">ANALYSIS</span>
-    </a>
+      <a class="card" href="parse_syntax_tree.html">
+        <h2>PARSE-SYNTAX TREE</h2>
+        <p>Does your sentence say anything? Real-time sentence analysis against C.S.S.C.P.S.G.P. rules. Color-coded POS tags, null chain detection, scoring.</p>
+        <span class="tag tag-analysis">ANALYSIS</span>
+      </a>
 
-    <a class="card" href="jurisdiction_layers.html">
-      <h2><span class="lock">&#x1f512;</span>JURISDICTION LAYERS</h2>
-      <p>Three.js 3D visualization: Land/Soil (green), Sea/Water (blue), Air/Ether (amber). Words float between jurisdictional planes based on their classification.</p>
-      <span class="tag tag-core">CORE THEORY</span>
-    </a>
+      <a class="card" href="dog_latin_scanner.html">
+        <h2>DOG-LATIN SCANNER</h2>
+        <p>Paste any text — all DOG-LATIN (GLOSSA) highlighted in red. Detects jurisdiction mixing, case-form classification, and fraudulent all-caps without hyphens.</p>
+        <span class="tag tag-analysis">ANALYSIS</span>
+      </a>
 
-    <a class="card" href="maritime_box_flow.html">
-      <h2><span class="lock">&#x1f512;</span>THE MARITIME BOX</h2>
-      <p>Animated flow from berth to death. Birth canal → dock-tor → berth certificate → citizen-ship → court/dock/bar → sentenced → executed. The water never stops flowing.</p>
-      <span class="tag tag-history">ETYMOLOGY</span>
-    </a>
+      <a class="card" href="jurisdiction_layers.html">
+        <h2>JURISDICTION LAYERS</h2>
+        <p>Three.js 3D visualization: Land/Soil (green), Sea/Water (blue), Air/Ether (amber). Words float between jurisdictional planes based on their classification.</p>
+        <span class="tag tag-core">CORE THEORY</span>
+      </a>
 
-    <a class="card" href="justinian_timeline.html">
-      <h2><span class="lock">&#x1f512;</span>JUSTINIAN TIMELINE</h2>
-      <p>45 BC to present. The hijack of time: Julian Calendar → Anno Domini → Corpus Juris Civilis → GLOSSA → DOG-LATIN. How time became an instrument of commerce.</p>
-      <span class="tag tag-history">HISTORY</span>
-    </a>
+      <a class="card" href="maritime_box_flow.html">
+        <h2>THE MARITIME BOX</h2>
+        <p>Animated flow from berth to death. Birth canal → dock-tor → berth certificate → citizen-ship → court/dock/bar → sentenced → executed. The water never stops flowing.</p>
+        <span class="tag tag-history">ETYMOLOGY</span>
+      </a>
 
-    <a class="card" href="basis_constellation.html">
-      <h2><span class="lock">&#x1f512;</span>720-WORD CONSTELLATION</h2>
-      <p>The 720-word basis as a star map. Color by jurisdiction, connected by shared roots. 10 constellations (PORT, JECT, DUCT, TRACT, etc.). Search, zoom, explore.</p>
-      <span class="tag tag-interactive">INTERACTIVE</span>
-    </a>
+      <a class="card" href="justinian_timeline.html">
+        <h2>JUSTINIAN TIMELINE</h2>
+        <p>45 BC to present. The hijack of time: Julian Calendar → Anno Domini → Corpus Juris Civilis → GLOSSA → DOG-LATIN. How time became an instrument of commerce.</p>
+        <span class="tag tag-history">HISTORY</span>
+      </a>
 
-    <a class="card" href="data/basis_map.html">
-      <h2><span class="lock">&#x1f512;</span>BASIS FORCE GRAPH</h2>
-      <p>D3.js force-directed graph of the full 720-word basis set. Nodes colored by sentence role, sized by complexity, linked by shared roots. Filter, search, decompose.</p>
-      <span class="tag tag-interactive">INTERACTIVE</span>
-    </a>
-  </div>
+      <a class="card" href="basis_constellation.html">
+        <h2>720-WORD CONSTELLATION</h2>
+        <p>The 720-word basis as a star map. Color by jurisdiction, connected by shared roots. 10 constellations (PORT, JECT, DUCT, TRACT, etc.). Search, zoom, explore.</p>
+        <span class="tag tag-interactive">INTERACTIVE</span>
+      </a>
 
-  <div class="footer">
-    C.S.S.C.P.S.G.P. &mdash; :David-Wynn: Miller &middot; :Russell-Jay: Gould &middot; Romley Stewart
+      <a class="card" href="data/basis_map.html">
+        <h2>BASIS FORCE GRAPH</h2>
+        <p>D3.js force-directed graph of the full 720-word basis set. Nodes colored by sentence role, sized by complexity, linked by shared roots. Filter, search, decompose.</p>
+        <span class="tag tag-interactive">INTERACTIVE</span>
+      </a>
+    </div>
+
+    <div class="footer">
+      C.S.S.C.P.S.G.P. &mdash; :David-Wynn: Miller &middot; :Russell-Jay: Gould &middot; Romley Stewart
+    </div>
   </div>
 </div>
+
+<script>
+const SESSION_KEY = 'qwl_key';
+// SHA-256 hash of the correct password (computed at build time, verified at runtime)
+const PW_HASH = 'f4367d3a4315efa083ae2345f74106f4b2d1fd6536ca0122e7f7590dae84269a';
+
+async function hashPassword(pw) {
+  const enc = new TextEncoder();
+  const hash = await crypto.subtle.digest('SHA-256', enc.encode(pw));
+  return Array.from(new Uint8Array(hash)).map(b => b.toString(16).padStart(2,'0')).join('');
+}
+
+function showContent() {
+  document.getElementById('gate').style.display = 'none';
+  document.getElementById('content').classList.add('visible');
+  document.body.classList.add('unlocked');
+}
+
+async function unlock() {
+  const pw = document.getElementById('pw').value;
+  if (!pw) return;
+  const hash = await hashPassword(pw);
+  if (hash === PW_HASH) {
+    sessionStorage.setItem(SESSION_KEY, pw);
+    showContent();
+  } else {
+    document.getElementById('err').style.display = 'block';
+    document.getElementById('pw').value = '';
+    document.getElementById('pw').focus();
+  }
+}
+
+// Auto-unlock if session key already present
+(async function autoUnlock() {
+  const storedKey = sessionStorage.getItem(SESSION_KEY);
+  if (!storedKey) return;
+  const hash = await hashPassword(storedKey);
+  if (hash === PW_HASH) {
+    showContent();
+  } else {
+    sessionStorage.removeItem(SESSION_KEY);
+  }
+})();
+</script>
 </body>
 </html>
