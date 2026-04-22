@@ -3,29 +3,36 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>J. Thorarinson</title>
-  <meta name="description" content="Mathematician, artist, and researcher. Conformal maps, complex analysis, and the visual language of mathematical structures.">
+  <title>Thorarinson — Research Tools & Knowledge Systems</title>
+  <meta name="description" content="Open-source knowledge bases, interactive visualizations, and research tools. Evidence-checked community knowledge systems built for real-world use.">
+  <meta property="og:title" content="Thorarinson — Research Tools & Knowledge Systems">
+  <meta property="og:description" content="Open-source knowledge bases, interactive visualizations, and research tools.">
+  <meta property="og:type" content="website">
   <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@200;300;400;500;600;700&family=JetBrains+Mono:wght@300;400;500;600&display=swap" rel="stylesheet">
   <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
     :root {
       --bg: #07070f;
-      --surface: rgba(255,255,255,0.04);
-      --surface-hover: rgba(122,162,247,0.08);
-      --border: rgba(255,255,255,0.08);
-      --border-hover: rgba(122,162,247,0.35);
+      --surface: rgba(255,255,255,0.035);
+      --surface-hover: rgba(122,162,247,0.07);
+      --border: rgba(255,255,255,0.07);
+      --border-hover: rgba(122,162,247,0.30);
       --text: #e8e8f4;
       --muted: rgba(232,232,244,0.45);
+      --dim: rgba(232,232,244,0.25);
       --accent: #7aa2f7;
       --accent2: #bb9af7;
-      --glow: rgba(122,162,247,0.12);
+      --green: #9ece6a;
+      --amber: #e0af68;
+      --red: #f7768e;
+      --teal: #73daca;
+      --glow: rgba(122,162,247,0.10);
     }
 
     html { scroll-behavior: smooth; }
-
     body {
       background: var(--bg);
       color: var(--text);
@@ -34,435 +41,503 @@
       -webkit-font-smoothing: antialiased;
     }
 
-    /* ── WebGL canvas ─────────────────────────────────── */
+    /* ── WebGL ──────────────────────────────────────── */
     #gl-canvas {
-      position: fixed;
-      inset: 0;
-      width: 100%;
-      height: 100%;
-      z-index: 0;
-      pointer-events: none;
+      position: fixed; inset: 0;
+      width: 100%; height: 100%;
+      z-index: 0; pointer-events: none;
     }
 
-    /* ── Hero ─────────────────────────────────────────── */
+    /* ── Nav ────────────────────────────────────────── */
+    .nav {
+      position: fixed; top: 0; left: 0; right: 0; z-index: 50;
+      padding: 0 2rem; height: 56px;
+      display: flex; align-items: center; justify-content: space-between;
+      background: rgba(7,7,15,0.7);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      border-bottom: 1px solid var(--border);
+    }
+    .nav-brand {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.72rem; font-weight: 600;
+      letter-spacing: 0.2em; text-transform: uppercase;
+      color: var(--accent);
+      text-decoration: none;
+    }
+    .nav-links {
+      display: flex; gap: 1.5rem; list-style: none;
+    }
+    .nav-links a {
+      font-size: 0.78rem; font-weight: 400;
+      color: var(--muted); text-decoration: none;
+      transition: color 0.2s;
+    }
+    .nav-links a:hover { color: var(--text); }
+
+    /* ── Hero ───────────────────────────────────────── */
     #hero {
-      position: relative;
-      height: 100vh;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      z-index: 2;
-      text-align: center;
-      padding: 2rem;
+      position: relative; min-height: 100vh;
+      display: flex; flex-direction: column;
+      align-items: center; justify-content: center;
+      z-index: 2; text-align: center; padding: 2rem;
     }
-
     .hero-eyebrow {
       font-family: 'JetBrains Mono', monospace;
-      font-size: 0.7rem;
-      letter-spacing: 0.25em;
-      text-transform: uppercase;
-      color: var(--accent);
+      font-size: 0.65rem; letter-spacing: 0.3em;
+      text-transform: uppercase; color: var(--accent);
       margin-bottom: 1.5rem;
-      opacity: 0;
-      animation: fadeUp 0.8s 0.2s ease forwards;
+      opacity: 0; animation: fadeUp 0.8s 0.2s ease forwards;
     }
-
-    .hero-name {
-      font-size: clamp(3.5rem, 9vw, 8rem);
-      font-weight: 300;
-      letter-spacing: 0.01em;
-      line-height: 1;
-      opacity: 0;
-      animation: fadeUp 0.8s 0.4s ease forwards;
+    .hero-title {
+      font-size: clamp(2.2rem, 6vw, 4.2rem);
+      font-weight: 200; letter-spacing: -0.01em;
+      line-height: 1.15; max-width: 720px;
+      opacity: 0; animation: fadeUp 0.8s 0.4s ease forwards;
     }
-
-    .hero-name span {
+    .hero-title strong {
+      font-weight: 500;
       background: linear-gradient(140deg, #ffffff 20%, var(--accent) 60%, var(--accent2));
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent;
       background-clip: text;
     }
-
-    .hero-tagline {
-      margin-top: 1.5rem;
-      font-size: clamp(0.85rem, 2vw, 1rem);
-      color: var(--muted);
-      letter-spacing: 0.04em;
-      opacity: 0;
-      animation: fadeUp 0.8s 0.6s ease forwards;
+    .hero-sub {
+      margin-top: 1.2rem; font-size: 0.95rem;
+      color: var(--muted); max-width: 500px;
+      line-height: 1.7; letter-spacing: 0.01em;
+      opacity: 0; animation: fadeUp 0.8s 0.6s ease forwards;
     }
-
     .scroll-cue {
-      position: absolute;
-      bottom: 2.5rem;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      gap: 6px;
+      position: absolute; bottom: 2.5rem;
+      display: flex; flex-direction: column; align-items: center; gap: 6px;
       font-family: 'JetBrains Mono', monospace;
-      font-size: 0.65rem;
-      letter-spacing: 0.15em;
-      color: var(--muted);
-      opacity: 0;
-      animation: fadeUp 1s 1.2s ease forwards, bob 2.5s 2s ease-in-out infinite;
+      font-size: 0.6rem; letter-spacing: 0.15em; color: var(--dim);
+      opacity: 0; animation: fadeUp 1s 1.2s ease forwards, bob 2.5s 2s ease-in-out infinite;
     }
-
-    .scroll-line {
-      width: 1px;
-      height: 30px;
-      background: linear-gradient(to bottom, var(--accent), transparent);
-    }
-
+    .scroll-line { width: 1px; height: 28px; background: linear-gradient(to bottom, var(--accent), transparent); }
     .hero-veil {
-      position: absolute;
-      bottom: 0; left: 0; right: 0;
-      height: 180px;
+      position: absolute; bottom: 0; left: 0; right: 0; height: 200px;
       background: linear-gradient(to bottom, transparent, var(--bg));
       pointer-events: none;
     }
 
-    /* ── Main content ─────────────────────────────────── */
+    /* ── Main ───────────────────────────────────────── */
     main {
-      position: relative;
-      z-index: 2;
-      max-width: 860px;
-      margin: 0 auto;
-      padding: 5rem 2rem 8rem;
+      position: relative; z-index: 2;
+      max-width: 1000px; margin: 0 auto;
+      padding: 4rem 2rem 6rem;
     }
-
     .section { margin-bottom: 5rem; }
-
     .section-label {
       font-family: 'JetBrains Mono', monospace;
-      font-size: 0.65rem;
-      letter-spacing: 0.25em;
-      text-transform: uppercase;
-      color: var(--accent);
+      font-size: 0.6rem; letter-spacing: 0.3em;
+      text-transform: uppercase; color: var(--accent);
       margin-bottom: 1.5rem;
-      display: flex;
-      align-items: center;
-      gap: 0.8rem;
+      display: flex; align-items: center; gap: 0.8rem;
     }
-
     .section-label::after {
-      content: '';
-      display: block;
-      flex: 1;
-      height: 1px;
-      background: var(--border);
+      content: ''; display: block; flex: 1;
+      height: 1px; background: var(--border);
     }
 
-    .about-text {
-      font-size: 1.1rem;
-      line-height: 1.85;
-      color: rgba(232,232,244,0.75);
-      max-width: 580px;
-    }
-
-    /* ── Cards ─────────────────────────────────────────── */
-    .card-grid {
+    /* ── Project Cards ──────────────────────────────── */
+    .project-grid {
       display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+      grid-template-columns: repeat(auto-fit, minmax(290px, 1fr));
       gap: 1rem;
     }
-
-    .card {
-      position: relative;
-      background: var(--surface);
-      border: 1px solid var(--border);
-      border-radius: 14px;
-      padding: 1.6rem 1.8rem 1.4rem;
-      text-decoration: none;
-      color: inherit;
-      display: block;
+    .project-card {
+      position: relative; background: var(--surface);
+      border: 1px solid var(--border); border-radius: 12px;
+      padding: 1.6rem 1.8rem 1.5rem;
+      text-decoration: none; color: inherit; display: block;
       transition: background 0.25s, border-color 0.25s, transform 0.25s, box-shadow 0.25s;
       overflow: hidden;
     }
-
-    .card::before {
-      content: '';
-      position: absolute;
-      inset: 0;
+    .project-card::before {
+      content: ''; position: absolute; inset: 0;
       border-radius: inherit;
       background: radial-gradient(ellipse at top left, var(--glow), transparent 60%);
-      opacity: 0;
-      transition: opacity 0.3s;
+      opacity: 0; transition: opacity 0.3s;
+    }
+    .project-card:hover {
+      background: var(--surface-hover);
+      border-color: var(--border-hover);
+      transform: translateY(-2px);
+      box-shadow: 0 8px 32px rgba(0,0,0,0.4);
+    }
+    .project-card:hover::before { opacity: 1; }
+
+    .project-header {
+      display: flex; align-items: center; gap: 10px;
+      margin-bottom: 10px;
+    }
+    .project-icon {
+      width: 32px; height: 32px; border-radius: 8px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 0.85rem; font-weight: 600;
+      flex-shrink: 0;
+    }
+    .project-name {
+      font-weight: 600; font-size: 0.95rem;
+      color: var(--text);
+    }
+    .project-desc {
+      font-size: 0.82rem; color: var(--muted);
+      line-height: 1.65; margin-bottom: 14px;
+    }
+    .project-tags {
+      display: flex; flex-wrap: wrap; gap: 6px;
+      margin-bottom: 12px;
+    }
+    .project-tag {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.55rem; font-weight: 500;
+      letter-spacing: 0.06em; padding: 2px 8px;
+      border-radius: 6px; background: rgba(255,255,255,0.04);
+      border: 1px solid rgba(255,255,255,0.06);
+    }
+    .project-link {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.65rem; letter-spacing: 0.04em;
+      color: var(--accent); transition: color 0.2s;
+    }
+    .project-card:hover .project-link { color: #a9c2ff; }
+
+    .project-status {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.5rem; font-weight: 600;
+      letter-spacing: 0.08em; text-transform: uppercase;
+      padding: 2px 7px; border-radius: 4px;
+      margin-left: auto;
     }
 
+    /* ── Secondary cards ────────────────────────────── */
+    .card-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 1rem;
+    }
+    .card {
+      position: relative; background: var(--surface);
+      border: 1px solid var(--border); border-radius: 12px;
+      padding: 1.4rem 1.6rem 1.2rem;
+      text-decoration: none; color: inherit; display: block;
+      transition: background 0.25s, border-color 0.25s, transform 0.25s;
+    }
     .card:hover {
       background: var(--surface-hover);
       border-color: var(--border-hover);
-      transform: translateY(-3px);
-      box-shadow: 0 8px 32px rgba(0,0,0,0.4);
+      transform: translateY(-2px);
     }
-
-    .card:hover::before { opacity: 1; }
-
     .card-icon {
-      font-size: 1.3rem;
-      margin-bottom: 0.75rem;
-      display: block;
-      color: var(--accent);
+      font-size: 1.1rem; margin-bottom: 0.6rem;
+      display: block; color: var(--accent);
     }
-
     .card-title {
-      font-weight: 600;
-      font-size: 0.95rem;
-      margin-bottom: 0.45rem;
-      color: var(--text);
+      font-weight: 600; font-size: 0.88rem;
+      margin-bottom: 0.35rem;
     }
-
     .card-desc {
-      font-size: 0.82rem;
-      color: var(--muted);
-      line-height: 1.6;
+      font-size: 0.78rem; color: var(--muted); line-height: 1.6;
     }
-
     .card-link {
-      display: inline-block;
-      margin-top: 1rem;
+      display: inline-block; margin-top: 0.8rem;
       font-family: 'JetBrains Mono', monospace;
-      font-size: 0.7rem;
-      color: var(--accent);
-      letter-spacing: 0.06em;
-      transition: color 0.2s;
+      font-size: 0.65rem; color: var(--accent);
+      letter-spacing: 0.04em;
     }
 
-    .card:hover .card-link { color: #a9c2ff; }
-
-    /* ── Footer ─────────────────────────────────────────── */
+    /* ── Footer ─────────────────────────────────────── */
     footer {
-      position: relative;
-      z-index: 2;
-      text-align: center;
-      padding: 2rem;
+      position: relative; z-index: 2;
+      text-align: center; padding: 2rem;
       font-family: 'JetBrains Mono', monospace;
-      font-size: 0.7rem;
-      color: var(--muted);
+      font-size: 0.65rem; color: var(--dim);
       border-top: 1px solid var(--border);
     }
+    footer a { color: var(--muted); text-decoration: none; }
+    footer a:hover { color: var(--accent); }
 
-    /* ── Animations ─────────────────────────────────────── */
+    /* ── Animations ─────────────────────────────────── */
     @keyframes fadeUp {
       from { opacity: 0; transform: translateY(18px); }
       to   { opacity: 1; transform: translateY(0); }
     }
-
     @keyframes bob {
       0%, 100% { transform: translateY(0); }
-      50%       { transform: translateY(7px); }
+      50%      { transform: translateY(7px); }
+    }
+
+    /* ── Responsive ─────────────────────────────────── */
+    @media (max-width: 640px) {
+      .nav-links { display: none; }
+      .project-grid { grid-template-columns: 1fr; }
+      main { padding: 3rem 1.2rem 4rem; }
     }
   </style>
 </head>
 <body>
 
-  <canvas id="gl-canvas"></canvas>
+<canvas id="gl-canvas"></canvas>
 
-  <section id="hero">
-    <p class="hero-eyebrow">jthorvaldur.github.io</p>
-    <h1 class="hero-name"><span>J. Thorarinson</span></h1>
-    <p class="hero-tagline">Mathematician &nbsp;·&nbsp; Artist &nbsp;·&nbsp; Researcher</p>
-    <div class="scroll-cue">
-      <div class="scroll-line"></div>
-      <span>scroll</span>
+<nav class="nav">
+  <a href="/" class="nav-brand">Thorarinson</a>
+  <ul class="nav-links">
+    <li><a href="#projects">Projects</a></li>
+    <li><a href="#research">Research</a></li>
+    <li><a href="#documents">Documents</a></li>
+  </ul>
+</nav>
+
+<section id="hero">
+  <p class="hero-eyebrow">Open Source Knowledge Systems</p>
+  <h1 class="hero-title">
+    <strong>Evidence-checked</strong> knowledge bases and interactive research tools
+  </h1>
+  <p class="hero-sub">
+    Community-contributed knowledge validated against primary sources. Interactive visualizations that make complex systems navigable.
+  </p>
+  <div class="scroll-cue">
+    <div class="scroll-line"></div>
+    <span>explore</span>
+  </div>
+  <div class="hero-veil"></div>
+</section>
+
+<main>
+
+  <!-- ─── PROJECTS ─────────────────────────────── -->
+  <div class="section" id="projects">
+    <p class="section-label">Projects</p>
+    <div class="project-grid">
+
+      <!-- BulldogDerm -->
+      <a class="project-card" href="https://jthorvaldur.github.io/bulldogs/" target="_blank">
+        <div class="project-header">
+          <div class="project-icon" style="background:rgba(224,175,104,0.12); color:var(--amber);">BD</div>
+          <div class="project-name">BulldogDerm</div>
+          <span class="project-status" style="background:rgba(158,206,106,0.12); color:var(--green);">Live</span>
+        </div>
+        <div class="project-desc">
+          Evidence-checked knowledge base for bulldog skin health. 20-chapter handbook, AI-powered community submission validation, and 6 interactive clinical visualizations.
+        </div>
+        <div class="project-tags">
+          <span class="project-tag" style="color:var(--amber);">Veterinary</span>
+          <span class="project-tag" style="color:var(--green);">Claude API</span>
+          <span class="project-tag" style="color:var(--teal);">Canvas2D</span>
+        </div>
+        <span class="project-link">bulldogderm &rarr;</span>
+      </a>
+
+      <!-- Morpheme Page -->
+      <a class="project-card" href="https://morpheme.page" target="_blank">
+        <div class="project-header">
+          <div class="project-icon" style="background:rgba(122,162,247,0.12); color:var(--accent);">MP</div>
+          <div class="project-name">Morpheme Page</div>
+          <span class="project-status" style="background:rgba(158,206,106,0.12); color:var(--green);">Live</span>
+        </div>
+        <div class="project-desc">
+          Interactive word decomposition and linguistic analysis. Prefix-root-suffix parsing, negation detection, and a 720-word basis set visualization across jurisdictional domains.
+        </div>
+        <div class="project-tags">
+          <span class="project-tag" style="color:var(--accent);">Linguistics</span>
+          <span class="project-tag" style="color:var(--accent2);">D3.js</span>
+          <span class="project-tag" style="color:var(--teal);">Canvas2D</span>
+        </div>
+        <span class="project-link">morpheme.page &rarr;</span>
+      </a>
+
+      <!-- Quantum Grammar Legal -->
+      <a class="project-card" href="r/qwl/index.html" target="_blank">
+        <div class="project-header">
+          <div class="project-icon" style="background:rgba(187,154,247,0.12); color:var(--accent2);">QG</div>
+          <div class="project-name">Quantum Grammar</div>
+          <span class="project-status" style="background:rgba(158,206,106,0.12); color:var(--green);">Live</span>
+        </div>
+        <div class="project-desc">
+          Parse-syntax analysis tools for legal and contractual language. Sentence scoring, DOG-LATIN detection, jurisdiction classification, and document structural auditing.
+        </div>
+        <div class="project-tags">
+          <span class="project-tag" style="color:var(--accent2);">Legal</span>
+          <span class="project-tag" style="color:var(--amber);">Three.js</span>
+          <span class="project-tag" style="color:var(--teal);">Python</span>
+        </div>
+        <span class="project-link">quantum grammar tools &rarr;</span>
+      </a>
+
+      <!-- Conformal Maps -->
+      <a class="project-card" href="https://conformalmaps.com" target="_blank">
+        <div class="project-header">
+          <div class="project-icon" style="background:rgba(115,218,202,0.12); color:var(--teal);">CM</div>
+          <div class="project-name">Conformal Maps</div>
+          <span class="project-status" style="background:rgba(158,206,106,0.12); color:var(--green);">Live</span>
+        </div>
+        <div class="project-desc">
+          Visual artwork exploring mathematical transformations and conformal geometry. Complex analysis rendered as image, where abstract structure becomes visual form.
+        </div>
+        <div class="project-tags">
+          <span class="project-tag" style="color:var(--teal);">Mathematics</span>
+          <span class="project-tag" style="color:var(--accent);">Visualization</span>
+          <span class="project-tag" style="color:var(--accent2);">Art</span>
+        </div>
+        <span class="project-link">conformalmaps.com &rarr;</span>
+      </a>
+
     </div>
-    <div class="hero-veil"></div>
-  </section>
+  </div>
 
-  <main>
-    <div class="section">
-      <p class="section-label">About</p>
-      <p class="about-text">
-        Research and artwork at the intersection of mathematics and visual form.
-        My work explores conformal geometry, complex analysis, and the
-        structures that emerge when abstract mathematics meets image.
-      </p>
+  <!-- ─── RESEARCH ─────────────────────────────── -->
+  <div class="section" id="research">
+    <p class="section-label">Research</p>
+    <div class="card-grid">
+      <a class="card" href="https://arxiv.org/a/thorarinson_j_1.html" target="_blank" rel="noopener">
+        <span class="card-icon">&#8750;</span>
+        <div class="card-title">arXiv Papers</div>
+        <div class="card-desc">Academic publications in conformal maps and complex analysis.</div>
+        <span class="card-link">arxiv.org &rarr;</span>
+      </a>
+      <a class="card" href="https://github.com/jthorvaldur" target="_blank" rel="noopener">
+        <span class="card-icon">&#9671;</span>
+        <div class="card-title">GitHub</div>
+        <div class="card-desc">Source code for all projects. Open-source knowledge-base template and tools.</div>
+        <span class="card-link">github.com/jthorvaldur &rarr;</span>
+      </a>
     </div>
+  </div>
 
-    <div class="section">
-      <p class="section-label">Research</p>
-      <div class="card-grid">
-        <a class="card" href="https://arxiv.org/a/thorarinson_j_1.html" target="_blank" rel="noopener">
-          <span class="card-icon">∮</span>
-          <div class="card-title">arXiv Papers</div>
-          <div class="card-desc">Academic publications in conformal maps and related mathematics.</div>
-          <span class="card-link">arxiv.org/a/thorarinson_j_1 →</span>
-        </a>
-      </div>
+  <!-- ─── DOCUMENTS ────────────────────────────── -->
+  <div class="section" id="documents">
+    <p class="section-label">Documents</p>
+    <div class="card-grid">
+      <a class="card" href="pdf/health_care_insights.pdf" target="_blank" rel="noopener">
+        <span class="card-icon">&#8865;</span>
+        <div class="card-title">Health Care Insights</div>
+        <div class="card-desc">Nurse-based leverage points and systemic perspectives on health care delivery.</div>
+        <span class="card-link">view pdf &rarr;</span>
+      </a>
+      <a class="card" href="pdf/hc_short_stories.pdf" target="_blank" rel="noopener">
+        <span class="card-icon">&#8865;</span>
+        <div class="card-title">Short Stories</div>
+        <div class="card-desc">Health care discussion narratives and clinical experience illustrations.</div>
+        <span class="card-link">view pdf &rarr;</span>
+      </a>
     </div>
+  </div>
 
-    <div class="section">
-      <p class="section-label">Art</p>
-      <div class="card-grid">
-        <a class="card" href="https://conformalmaps.com" target="_blank" rel="noopener">
-          <span class="card-icon">◈</span>
-          <div class="card-title">Conformal Maps</div>
-          <div class="card-desc">Visual artwork exploring mathematical transformations and conformal geometry.</div>
-          <span class="card-link">conformalmaps.com →</span>
-        </a>
-      </div>
-    </div>
+</main>
 
-    <div class="section">
-      <p class="section-label">Documents</p>
-      <div class="card-grid">
-        <a class="card" href="pdf/health_care_insights.pdf" target="_blank" rel="noopener">
-          <span class="card-icon">⊡</span>
-          <div class="card-title">Health Care Insights</div>
-          <div class="card-desc">Nurse-based leverage points and systemic perspectives on health care.</div>
-          <span class="card-link">view pdf →</span>
-        </a>
-        <a class="card" href="pdf/hc_short_stories.pdf" target="_blank" rel="noopener">
-          <span class="card-icon">⊡</span>
-          <div class="card-title">Short Stories</div>
-          <div class="card-desc">Health care discussion examples and narrative illustrations.</div>
-          <span class="card-link">view pdf →</span>
-        </a>
-      </div>
-    </div>
-  </main>
+<footer>
+  <div style="display:flex; justify-content:center; gap:2rem; margin-bottom:0.8rem;">
+    <a href="https://github.com/jthorvaldur">GitHub</a>
+    <a href="https://arxiv.org/a/thorarinson_j_1.html">arXiv</a>
+    <a href="https://conformalmaps.com">Conformal Maps</a>
+  </div>
+  &copy; 2026 Thorarinson
+</footer>
 
-  <footer>
-    © 2025 J. Thorarinson
-  </footer>
+<script>
+(function () {
+  const canvas = document.getElementById('gl-canvas');
+  const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: true });
+  renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+  renderer.setSize(window.innerWidth, window.innerHeight);
+  renderer.setClearColor(0x000000, 0);
 
-  <script>
-  (function () {
-    const canvas = document.getElementById('gl-canvas');
-    const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: true });
-    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
-    renderer.setSize(window.innerWidth, window.innerHeight);
-    renderer.setClearColor(0x000000, 0);
+  const scene = new THREE.Scene();
+  const camera = new THREE.PerspectiveCamera(55, window.innerWidth / window.innerHeight, 0.1, 2000);
+  camera.position.set(0, 0, 90);
 
-    const scene = new THREE.Scene();
-    const camera = new THREE.PerspectiveCamera(55, window.innerWidth / window.innerHeight, 0.1, 2000);
-    camera.position.set(0, 0, 90);
+  const GRID  = 70;
+  const COUNT = GRID * GRID;
+  const baseX = new Float32Array(COUNT);
+  const baseY = new Float32Array(COUNT);
+  const phase = new Float32Array(COUNT);
+  const pos   = new Float32Array(COUNT * 3);
+  const col   = new Float32Array(COUNT * 3);
 
-    // ── Particle lattice ──────────────────────────────────
-    // GRID×GRID points animated through a conformal-inspired
-    // radial wave distortion (smooth flow perpendicular to radius).
-    const GRID  = 70;
-    const COUNT = GRID * GRID;
-    const baseX = new Float32Array(COUNT);
-    const baseY = new Float32Array(COUNT);
-    const phase = new Float32Array(COUNT);
-    const pos   = new Float32Array(COUNT * 3);
-    const col   = new Float32Array(COUNT * 3);
+  for (let i = 0; i < GRID; i++) {
+    for (let j = 0; j < GRID; j++) {
+      const k  = i * GRID + j;
+      baseX[k] = (i / (GRID - 1) - 0.5) * 110;
+      baseY[k] = (j / (GRID - 1) - 0.5) * 110;
+      phase[k] = Math.random() * Math.PI * 2;
 
+      const t = (i + j) / (2 * (GRID - 1));
+      col[k * 3]     = 0.25 + t * 0.25;
+      col[k * 3 + 1] = 0.35 + t * 0.25;
+      col[k * 3 + 2] = 0.75 + t * 0.22;
+    }
+  }
+
+  const geo = new THREE.BufferGeometry();
+  geo.setAttribute('position', new THREE.BufferAttribute(pos, 3));
+  geo.setAttribute('color',    new THREE.BufferAttribute(col, 3));
+
+  const mat = new THREE.PointsMaterial({
+    size: 0.7, vertexColors: true,
+    transparent: true, opacity: 0.55, sizeAttenuation: true,
+  });
+  scene.add(new THREE.Points(geo, mat));
+
+  const lineMat = new THREE.LineBasicMaterial({
+    color: 0x3344aa, transparent: true, opacity: 0.05,
+  });
+  const LINES = 8;
+  for (let i = 0; i <= LINES; i++) {
+    const u = (i / LINES - 0.5) * 110;
+    scene.add(new THREE.Line(
+      new THREE.BufferGeometry().setFromPoints([new THREE.Vector3(-55, u, -20), new THREE.Vector3(55, u, -20)]),
+      lineMat
+    ));
+    scene.add(new THREE.Line(
+      new THREE.BufferGeometry().setFromPoints([new THREE.Vector3(u, -55, -20), new THREE.Vector3(u, 55, -20)]),
+      lineMat
+    ));
+  }
+
+  let mx = 0, my = 0;
+  window.addEventListener('mousemove', e => {
+    mx = e.clientX / window.innerWidth  - 0.5;
+    my = e.clientY / window.innerHeight - 0.5;
+  });
+
+  let t = 0;
+  function tick() {
+    requestAnimationFrame(tick);
+    t += 0.004;
+    const arr = geo.attributes.position.array;
     for (let i = 0; i < GRID; i++) {
       for (let j = 0; j < GRID; j++) {
         const k  = i * GRID + j;
-        baseX[k] = (i / (GRID - 1) - 0.5) * 110;
-        baseY[k] = (j / (GRID - 1) - 0.5) * 110;
-        phase[k] = Math.random() * Math.PI * 2;
-
-        const t = (i + j) / (2 * (GRID - 1));
-        col[k * 3]     = 0.25 + t * 0.25;
-        col[k * 3 + 1] = 0.35 + t * 0.25;
-        col[k * 3 + 2] = 0.75 + t * 0.22;
+        const bx = baseX[k], by = baseY[k], ph = phase[k];
+        const r     = Math.sqrt(bx * bx + by * by) / 55;
+        const theta = Math.atan2(by, bx);
+        const wave = Math.sin(r * 2.8 - t * 1.8 + ph) * 0.4
+                   + Math.sin(r * 1.1 - t * 0.9 + ph * 0.5) * 0.2;
+        const dx = wave * Math.cos(theta + Math.PI / 2) * 5;
+        const dy = wave * Math.sin(theta + Math.PI / 2) * 5;
+        const cos0 = Math.cos(t * 0.05), sin0 = Math.sin(t * 0.05);
+        arr[k * 3]     = (bx + dx) * cos0 - (by + dy) * sin0 + mx * 6;
+        arr[k * 3 + 1] = (bx + dx) * sin0 + (by + dy) * cos0 - my * 6;
+        arr[k * 3 + 2] = Math.sin(r * 2.5 - t * 2.2 + ph) * 10 - 5;
       }
     }
+    geo.attributes.position.needsUpdate = true;
+    camera.position.x += (mx * 8  - camera.position.x) * 0.04;
+    camera.position.y += (-my * 5 - camera.position.y) * 0.04;
+    camera.lookAt(0, 0, 0);
+    renderer.render(scene, camera);
+  }
+  tick();
 
-    const geo = new THREE.BufferGeometry();
-    geo.setAttribute('position', new THREE.BufferAttribute(pos, 3));
-    geo.setAttribute('color',    new THREE.BufferAttribute(col, 3));
-
-    const mat = new THREE.PointsMaterial({
-      size: 0.7,
-      vertexColors: true,
-      transparent: true,
-      opacity: 0.65,
-      sizeAttenuation: true,
-    });
-
-    scene.add(new THREE.Points(geo, mat));
-
-    // ── Sparse background grid lines ──────────────────────
-    const lineMat = new THREE.LineBasicMaterial({
-      color: 0x3344aa,
-      transparent: true,
-      opacity: 0.06,
-    });
-
-    const LINES = 8;
-    for (let i = 0; i <= LINES; i++) {
-      const u = (i / LINES - 0.5) * 110;
-      const hg = new THREE.BufferGeometry().setFromPoints([
-        new THREE.Vector3(-55, u, -20), new THREE.Vector3(55, u, -20),
-      ]);
-      const vg = new THREE.BufferGeometry().setFromPoints([
-        new THREE.Vector3(u, -55, -20), new THREE.Vector3(u, 55, -20),
-      ]);
-      scene.add(new THREE.Line(hg, lineMat));
-      scene.add(new THREE.Line(vg, lineMat));
-    }
-
-    // ── Mouse parallax ────────────────────────────────────
-    let mx = 0, my = 0;
-    window.addEventListener('mousemove', e => {
-      mx = e.clientX / window.innerWidth  - 0.5;
-      my = e.clientY / window.innerHeight - 0.5;
-    });
-
-    // ── Render loop ───────────────────────────────────────
-    let t = 0;
-    function tick() {
-      requestAnimationFrame(tick);
-      t += 0.004;
-
-      const arr = geo.attributes.position.array;
-
-      for (let i = 0; i < GRID; i++) {
-        for (let j = 0; j < GRID; j++) {
-          const k  = i * GRID + j;
-          const bx = baseX[k];
-          const by = baseY[k];
-          const ph = phase[k];
-
-          const r     = Math.sqrt(bx * bx + by * by) / 55;
-          const theta = Math.atan2(by, bx);
-
-          // Radial wave — conformal flow perpendicular to radius
-          const wave = Math.sin(r * 2.8 - t * 1.8 + ph) * 0.4
-                     + Math.sin(r * 1.1 - t * 0.9 + ph * 0.5) * 0.2;
-          const dx = wave * Math.cos(theta + Math.PI / 2) * 5;
-          const dy = wave * Math.sin(theta + Math.PI / 2) * 5;
-
-          // Very slow global rotation
-          const cos0 = Math.cos(t * 0.05);
-          const sin0 = Math.sin(t * 0.05);
-          const rx = (bx + dx) * cos0 - (by + dy) * sin0;
-          const ry = (bx + dx) * sin0 + (by + dy) * cos0;
-
-          // Depth ripple for 3-D feel
-          const dz = Math.sin(r * 2.5 - t * 2.2 + ph) * 10 - 5;
-
-          arr[k * 3]     = rx + mx * 6;
-          arr[k * 3 + 1] = ry - my * 6;
-          arr[k * 3 + 2] = dz;
-        }
-      }
-
-      geo.attributes.position.needsUpdate = true;
-
-      // Camera drifts gently with mouse
-      camera.position.x += (mx * 8  - camera.position.x) * 0.04;
-      camera.position.y += (-my * 5 - camera.position.y) * 0.04;
-      camera.lookAt(0, 0, 0);
-
-      renderer.render(scene, camera);
-    }
-
-    tick();
-
-    window.addEventListener('resize', () => {
-      camera.aspect = window.innerWidth / window.innerHeight;
-      camera.updateProjectionMatrix();
-      renderer.setSize(window.innerWidth, window.innerHeight);
-    });
-  })();
-  </script>
+  window.addEventListener('resize', () => {
+    camera.aspect = window.innerWidth / window.innerHeight;
+    camera.updateProjectionMatrix();
+    renderer.setSize(window.innerWidth, window.innerHeight);
+  });
+})();
+</script>
 
 </body>
 </html>
