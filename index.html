@@ -467,10 +467,10 @@
   // Constants
   const PHI = (1 + Math.sqrt(5)) / 2;                // Golden ratio
   const GOLDEN_ANGLE = 2 * Math.PI / (PHI * PHI);     // ≈ 2.399963 rad ≈ 137.508°
-  const NUM_FIBERS = 120;
-  const FIBER_RES = 80;                                // points per fiber circle
+  const NUM_FIBERS = 200;                               // more fibers for density
+  const FIBER_RES = 96;                                // smoother circles
   const SCALE = 22;                                    // projection scale
-  const NUM_PARTICLES = 600;                           // gauge field particles
+  const NUM_PARTICLES = 1000;                          // more gauge field particles
 
   // ── Hopf fiber computation ──────────────────────────
   // Given (θ, φ) on S², the fiber is parametrized by η ∈ [0, 2π]:
@@ -564,7 +564,7 @@
       theta: f.theta,
       phi: f.phi,
       eta: Math.random() * Math.PI * 2,
-      speed: 0.008 + Math.random() * 0.015,
+      speed: 0.0015 + Math.random() * 0.003,            // slow drift along fibers
       color: f.color,
     });
     particleCol[i * 3]     = f.color.r;
@@ -608,14 +608,13 @@
   let t = 0;
   function tick() {
     requestAnimationFrame(tick);
-    t += 0.003;
+    t += 0.0008;                                       // very slow time step
 
-    // Slow rotation of the entire fibration
-    // This is equivalent to a rotation in S³ which acts as a
-    // gauge transformation — fibers map to fibers
-    fiberGroup.rotation.x = t * 0.15 + my * 0.3;
-    fiberGroup.rotation.y = t * 0.22 + mx * 0.3;
-    fiberGroup.rotation.z = t * 0.08;
+    // Slow, meditative rotation of the entire fibration
+    // Equivalent to a rotation in S³ — a gauge transformation
+    fiberGroup.rotation.x = t * 0.12 + my * 0.2;
+    fiberGroup.rotation.y = t * 0.18 + mx * 0.2;
+    fiberGroup.rotation.z = t * 0.06;
 
     // Update particles — flow along fibers
     const arr = particleGeo.attributes.position.array;
