@@ -437,6 +437,22 @@
 </footer>
 
 <script>
+// ═══════════════════════════════════════════════════════════════
+// HOPF FIBRATION with Golden-Ratio fiber distribution
+//
+// The Hopf map π: S³ → S² sends each point of the 3-sphere
+// to a point on the 2-sphere. Every point on S² corresponds
+// to a "fiber" — a great circle in S³. Under stereographic
+// projection S³ → R³, these fibers become linked circles
+// that tile space in toroidal families.
+//
+// Fibers are distributed on S² using the golden angle
+// (2π / φ² ≈ 137.508°) for near-optimal uniform spacing
+// with a visible spiral structure.
+//
+// Particles flow along fibers as a visual analogue of
+// parallel transport in a gauge connection (Yang-Mills).
+// ═══════════════════════════════════════════════════════════════
 (function () {
   const canvas = document.getElementById('gl-canvas');
   const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: true });
@@ -445,88 +461,186 @@
   renderer.setClearColor(0x000000, 0);
 
   const scene = new THREE.Scene();
-  const camera = new THREE.PerspectiveCamera(55, window.innerWidth / window.innerHeight, 0.1, 2000);
-  camera.position.set(0, 0, 90);
+  const camera = new THREE.PerspectiveCamera(50, window.innerWidth / window.innerHeight, 0.1, 500);
+  camera.position.set(0, 0, 65);
 
-  const GRID  = 70;
-  const COUNT = GRID * GRID;
-  const baseX = new Float32Array(COUNT);
-  const baseY = new Float32Array(COUNT);
-  const phase = new Float32Array(COUNT);
-  const pos   = new Float32Array(COUNT * 3);
-  const col   = new Float32Array(COUNT * 3);
+  // Constants
+  const PHI = (1 + Math.sqrt(5)) / 2;                // Golden ratio
+  const GOLDEN_ANGLE = 2 * Math.PI / (PHI * PHI);     // ≈ 2.399963 rad ≈ 137.508°
+  const NUM_FIBERS = 120;
+  const FIBER_RES = 80;                                // points per fiber circle
+  const SCALE = 22;                                    // projection scale
+  const NUM_PARTICLES = 600;                           // gauge field particles
 
-  for (let i = 0; i < GRID; i++) {
-    for (let j = 0; j < GRID; j++) {
-      const k  = i * GRID + j;
-      baseX[k] = (i / (GRID - 1) - 0.5) * 110;
-      baseY[k] = (j / (GRID - 1) - 0.5) * 110;
-      phase[k] = Math.random() * Math.PI * 2;
+  // ── Hopf fiber computation ──────────────────────────
+  // Given (θ, φ) on S², the fiber is parametrized by η ∈ [0, 2π]:
+  //   q = (cos(θ/2)cos(η+φ/2), cos(θ/2)sin(η+φ/2),
+  //        sin(θ/2)cos(η−φ/2), sin(θ/2)sin(η−φ/2))
+  // Stereographic projection from (0,0,0,1):
+  //   (x, y, z) = (q0, q1, q2) / (1 − q3)
 
-      const t = (i + j) / (2 * (GRID - 1));
-      col[k * 3]     = 0.25 + t * 0.25;
-      col[k * 3 + 1] = 0.35 + t * 0.25;
-      col[k * 3 + 2] = 0.75 + t * 0.22;
+  function hopfFiber(theta, phi, eta) {
+    const ct = Math.cos(theta / 2);
+    const st = Math.sin(theta / 2);
+    const q0 = ct * Math.cos(eta + phi / 2);
+    const q1 = ct * Math.sin(eta + phi / 2);
+    const q2 = st * Math.cos(eta - phi / 2);
+    const q3 = st * Math.sin(eta - phi / 2);
+    const denom = 1 - q3;
+    if (Math.abs(denom) < 0.01) return null;           // avoid singularity at north pole
+    return new THREE.Vector3(
+      (q0 / denom) * SCALE,
+      (q1 / denom) * SCALE,
+      (q2 / denom) * SCALE
+    );
+  }
+
+  // ── HSL to RGB for fiber coloring ───────────────────
+  function hsl(h, s, l) {
+    h = ((h % 1) + 1) % 1;
+    const c = (1 - Math.abs(2 * l - 1)) * s;
+    const x = c * (1 - Math.abs((h * 6) % 2 - 1));
+    const m = l - c / 2;
+    let r, g, b;
+    if (h < 1/6)      { r=c; g=x; b=0; }
+    else if (h < 2/6) { r=x; g=c; b=0; }
+    else if (h < 3/6) { r=0; g=c; b=x; }
+    else if (h < 4/6) { r=0; g=x; b=c; }
+    else if (h < 5/6) { r=x; g=0; b=c; }
+    else               { r=c; g=0; b=x; }
+    return new THREE.Color(r + m, g + m, b + m);
+  }
+
+  // ── Generate fibers on S² using golden angle ────────
+  // Fibonacci sphere: uniform-ish distribution with spiral structure
+  const fibers = [];
+  const fiberGroup = new THREE.Group();
+
+  for (let i = 0; i < NUM_FIBERS; i++) {
+    const theta = Math.acos(1 - 2 * (i + 0.5) / NUM_FIBERS);  // polar angle
+    const phi = GOLDEN_ANGLE * i;                                // azimuthal (golden spiral)
+
+    const points = [];
+    let valid = true;
+    for (let j = 0; j <= FIBER_RES; j++) {
+      const eta = (j / FIBER_RES) * Math.PI * 2;
+      const p = hopfFiber(theta, phi, eta);
+      if (!p || p.length() > 120) { valid = false; break; }
+      points.push(p);
     }
+    if (!valid || points.length < 3) continue;
+
+    // Color by position on S² — hue from φ, saturation from θ
+    const hue = (phi / (Math.PI * 2)) * 0.6 + 0.55;           // blue-violet-teal range
+    const sat = 0.5 + Math.sin(theta) * 0.3;
+    const lum = 0.45 + Math.cos(theta * 2) * 0.1;
+    const color = hsl(hue, sat, lum);
+
+    const geo = new THREE.BufferGeometry().setFromPoints(points);
+    const mat = new THREE.LineBasicMaterial({
+      color: color,
+      transparent: true,
+      opacity: 0.12 + Math.sin(theta) * 0.06,
+      linewidth: 1,
+    });
+    const line = new THREE.LineLoop(geo, mat);
+    fiberGroup.add(line);
+
+    fibers.push({ theta, phi, color, pointCount: points.length });
+  }
+  scene.add(fiberGroup);
+
+  // ── Gauge field particles (Yang-Mills analogue) ─────
+  // Particles travel along fibers as parallel transport
+  const particlePos = new Float32Array(NUM_PARTICLES * 3);
+  const particleCol = new Float32Array(NUM_PARTICLES * 3);
+  const particleAlpha = new Float32Array(NUM_PARTICLES);
+  const particleMeta = [];
+
+  for (let i = 0; i < NUM_PARTICLES; i++) {
+    const fi = Math.floor(Math.random() * fibers.length);
+    const f = fibers[fi];
+    particleMeta.push({
+      theta: f.theta,
+      phi: f.phi,
+      eta: Math.random() * Math.PI * 2,
+      speed: 0.008 + Math.random() * 0.015,
+      color: f.color,
+    });
+    particleCol[i * 3]     = f.color.r;
+    particleCol[i * 3 + 1] = f.color.g;
+    particleCol[i * 3 + 2] = f.color.b;
   }
 
-  const geo = new THREE.BufferGeometry();
-  geo.setAttribute('position', new THREE.BufferAttribute(pos, 3));
-  geo.setAttribute('color',    new THREE.BufferAttribute(col, 3));
+  const particleGeo = new THREE.BufferGeometry();
+  particleGeo.setAttribute('position', new THREE.BufferAttribute(particlePos, 3));
+  particleGeo.setAttribute('color', new THREE.BufferAttribute(particleCol, 3));
 
-  const mat = new THREE.PointsMaterial({
-    size: 0.7, vertexColors: true,
-    transparent: true, opacity: 0.55, sizeAttenuation: true,
+  const particleMat = new THREE.PointsMaterial({
+    size: 1.2,
+    vertexColors: true,
+    transparent: true,
+    opacity: 0.7,
+    sizeAttenuation: true,
+    blending: THREE.AdditiveBlending,
+    depthWrite: false,
   });
-  scene.add(new THREE.Points(geo, mat));
+  scene.add(new THREE.Points(particleGeo, particleMat));
 
-  const lineMat = new THREE.LineBasicMaterial({
-    color: 0x3344aa, transparent: true, opacity: 0.05,
+  // ── Subtle central glow (origin of S³) ──────────────
+  const glowGeo = new THREE.SphereGeometry(2, 16, 16);
+  const glowMat = new THREE.MeshBasicMaterial({
+    color: 0x4466cc,
+    transparent: true,
+    opacity: 0.04,
+    blending: THREE.AdditiveBlending,
   });
-  const LINES = 8;
-  for (let i = 0; i <= LINES; i++) {
-    const u = (i / LINES - 0.5) * 110;
-    scene.add(new THREE.Line(
-      new THREE.BufferGeometry().setFromPoints([new THREE.Vector3(-55, u, -20), new THREE.Vector3(55, u, -20)]),
-      lineMat
-    ));
-    scene.add(new THREE.Line(
-      new THREE.BufferGeometry().setFromPoints([new THREE.Vector3(u, -55, -20), new THREE.Vector3(u, 55, -20)]),
-      lineMat
-    ));
-  }
+  scene.add(new THREE.Mesh(glowGeo, glowMat));
 
+  // ── Mouse interaction ───────────────────────────────
   let mx = 0, my = 0;
   window.addEventListener('mousemove', e => {
     mx = e.clientX / window.innerWidth  - 0.5;
     my = e.clientY / window.innerHeight - 0.5;
   });
 
+  // ── Animation loop ──────────────────────────────────
   let t = 0;
   function tick() {
     requestAnimationFrame(tick);
-    t += 0.004;
-    const arr = geo.attributes.position.array;
-    for (let i = 0; i < GRID; i++) {
-      for (let j = 0; j < GRID; j++) {
-        const k  = i * GRID + j;
-        const bx = baseX[k], by = baseY[k], ph = phase[k];
-        const r     = Math.sqrt(bx * bx + by * by) / 55;
-        const theta = Math.atan2(by, bx);
-        const wave = Math.sin(r * 2.8 - t * 1.8 + ph) * 0.4
-                   + Math.sin(r * 1.1 - t * 0.9 + ph * 0.5) * 0.2;
-        const dx = wave * Math.cos(theta + Math.PI / 2) * 5;
-        const dy = wave * Math.sin(theta + Math.PI / 2) * 5;
-        const cos0 = Math.cos(t * 0.05), sin0 = Math.sin(t * 0.05);
-        arr[k * 3]     = (bx + dx) * cos0 - (by + dy) * sin0 + mx * 6;
-        arr[k * 3 + 1] = (bx + dx) * sin0 + (by + dy) * cos0 - my * 6;
-        arr[k * 3 + 2] = Math.sin(r * 2.5 - t * 2.2 + ph) * 10 - 5;
+    t += 0.003;
+
+    // Slow rotation of the entire fibration
+    // This is equivalent to a rotation in S³ which acts as a
+    // gauge transformation — fibers map to fibers
+    fiberGroup.rotation.x = t * 0.15 + my * 0.3;
+    fiberGroup.rotation.y = t * 0.22 + mx * 0.3;
+    fiberGroup.rotation.z = t * 0.08;
+
+    // Update particles — flow along fibers
+    const arr = particleGeo.attributes.position.array;
+    for (let i = 0; i < NUM_PARTICLES; i++) {
+      const m = particleMeta[i];
+      m.eta += m.speed;
+      if (m.eta > Math.PI * 2) m.eta -= Math.PI * 2;
+
+      const p = hopfFiber(m.theta, m.phi, m.eta);
+      if (p) {
+        // Apply same rotation as fiber group
+        const v = p.clone();
+        v.applyEuler(fiberGroup.rotation);
+        arr[i * 3]     = v.x;
+        arr[i * 3 + 1] = v.y;
+        arr[i * 3 + 2] = v.z;
       }
     }
-    geo.attributes.position.needsUpdate = true;
-    camera.position.x += (mx * 8  - camera.position.x) * 0.04;
-    camera.position.y += (-my * 5 - camera.position.y) * 0.04;
+    particleGeo.attributes.position.needsUpdate = true;
+
+    // Camera gently follows mouse
+    camera.position.x += (mx * 10 - camera.position.x) * 0.03;
+    camera.position.y += (-my * 8 - camera.position.y) * 0.03;
     camera.lookAt(0, 0, 0);
+
     renderer.render(scene, camera);
   }
   tick();
