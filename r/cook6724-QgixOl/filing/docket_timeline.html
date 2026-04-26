@@ -1,0 +1,695 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="robots" content="noindex, nofollow">
+<title>Docket Timeline — 2024 D 6724</title>
+<style>
+  :root {
+    --bg: #0d1117; --card: #161b22; --border: #30363d; --text: #c9d1d9; --heading: #f0f6fc;
+    --joel: #58a6ff; --heather: #f85149; --court: #d29922; --neutral: #8b949e;
+    --accent: #58a6ff; --green: #3fb950; --orange: #f0883e; --red: #f85149;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif;
+    max-width: 960px; margin: 0 auto; padding: 1.5rem 1rem;
+    background: var(--bg); color: var(--text); line-height: 1.6;
+  }
+  a { color: var(--accent); text-decoration: none; }
+  a:hover { text-decoration: underline; }
+  h1 { font-size: 1.5rem; color: var(--heading); margin-bottom: 0.25rem; }
+  .subtitle { color: var(--neutral); font-size: 0.9rem; margin-bottom: 1.25rem; }
+  .back-link { display: inline-block; margin-bottom: 1rem; font-size: 0.85rem; }
+
+  /* Legend */
+  .legend {
+    display: flex; flex-wrap: wrap; gap: 1rem; margin-bottom: 1.25rem;
+    padding: 0.75rem 1rem; background: var(--card); border-radius: 8px; border: 1px solid var(--border);
+  }
+  .legend-item { display: flex; align-items: center; gap: 0.4rem; font-size: 0.8rem; color: var(--text); }
+  .legend-dot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
+  .legend-dot.dashed { border: 2px dashed var(--orange); background: transparent; width: 10px; height: 10px; }
+
+  /* Stats grid */
+  .stats {
+    display: grid; grid-template-columns: repeat(auto-fit, minmax(175px, 1fr));
+    gap: 0.75rem; margin-bottom: 1.25rem;
+  }
+  .stat-card {
+    background: var(--card); border-radius: 8px; padding: 0.75rem 1rem;
+    border: 1px solid var(--border);
+  }
+  .stat-card .label { font-size: 0.7rem; color: var(--neutral); text-transform: uppercase; letter-spacing: 0.05em; }
+  .stat-card .value { font-size: 1.3rem; font-weight: 700; margin-top: 0.2rem; }
+  .stat-card .detail { font-size: 0.75rem; color: var(--neutral); margin-top: 0.15rem; }
+
+  /* Callout boxes */
+  .callout {
+    border-radius: 8px; padding: 1rem 1.25rem; margin-bottom: 1.25rem;
+    border: 1px solid;
+  }
+  .callout-red {
+    background: rgba(248, 81, 73, 0.08); border-color: rgba(248, 81, 73, 0.3);
+  }
+  .callout-orange {
+    background: rgba(240, 136, 62, 0.08); border-color: rgba(240, 136, 62, 0.3);
+  }
+  .callout h3 { font-size: 0.95rem; margin-bottom: 0.5rem; }
+  .callout-red h3 { color: var(--red); }
+  .callout-orange h3 { color: var(--orange); }
+  .callout p, .callout li { font-size: 0.85rem; line-height: 1.55; }
+  .callout ul { padding-left: 1.25rem; margin-top: 0.35rem; }
+  .callout li { margin-bottom: 0.25rem; }
+  .callout strong { color: var(--heading); }
+
+  /* Month group heading */
+  .month-heading {
+    font-size: 1.05rem; color: var(--accent); margin: 1.75rem 0 0.75rem;
+    border-bottom: 1px solid var(--border); padding-bottom: 6px; font-weight: 700;
+  }
+
+  /* Timeline entries */
+  .entry {
+    background: var(--card); border-radius: 8px; padding: 0.85rem 1rem;
+    margin-bottom: 0.6rem; border-left: 3px solid var(--border);
+    position: relative;
+  }
+  .entry.joel { border-left-color: var(--joel); }
+  .entry.heather { border-left-color: var(--heather); }
+  .entry.court { border-left-color: var(--court); }
+  .entry.off-docket {
+    border: 1px dashed var(--orange); border-left: 3px dashed var(--orange);
+    background: rgba(240, 136, 62, 0.04);
+  }
+  .entry.deadline {
+    border: 1px solid var(--red); border-left: 3px solid var(--red);
+    background: rgba(248, 81, 73, 0.08);
+    animation: pulse-border 2s ease-in-out infinite;
+  }
+  @keyframes pulse-border {
+    0%, 100% { box-shadow: 0 0 0 0 rgba(248,81,73,0); }
+    50% { box-shadow: 0 0 8px 2px rgba(248,81,73,0.25); }
+  }
+
+  .entry-date {
+    font-size: 0.75rem; color: var(--neutral); font-weight: 600;
+    text-transform: uppercase; letter-spacing: 0.03em;
+  }
+  .entry-type {
+    font-size: 0.7rem; display: inline-block; padding: 1px 7px;
+    border-radius: 10px; font-weight: 600; margin-left: 6px;
+  }
+  .entry-type.joel { background: rgba(88,166,255,0.12); color: var(--joel); }
+  .entry-type.heather { background: rgba(248,81,73,0.12); color: var(--heather); }
+  .entry-type.court { background: rgba(210,153,34,0.12); color: var(--court); }
+  .entry-type.off { background: rgba(240,136,62,0.12); color: var(--orange); }
+
+  .entry-desc {
+    font-size: 0.9rem; color: var(--heading); margin-top: 0.3rem; font-weight: 500;
+  }
+  .entry-filing-type {
+    font-size: 0.78rem; color: var(--neutral); margin-top: 0.15rem;
+  }
+
+  .badge-no-response {
+    display: inline-block; padding: 2px 8px; border-radius: 10px;
+    font-size: 0.7rem; font-weight: 700; margin-left: 6px;
+    background: rgba(248,81,73,0.18); color: var(--red);
+    text-transform: uppercase; letter-spacing: 0.04em;
+  }
+  .badge-deadline {
+    display: inline-block; padding: 2px 8px; border-radius: 10px;
+    font-size: 0.7rem; font-weight: 700; margin-left: 6px;
+    background: rgba(248,81,73,0.25); color: #fca5a5;
+    text-transform: uppercase; letter-spacing: 0.04em;
+    animation: pulse-text 2s ease-in-out infinite;
+  }
+  @keyframes pulse-text {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.6; }
+  }
+  .badge-body-attachment {
+    display: inline-block; padding: 2px 8px; border-radius: 10px;
+    font-size: 0.7rem; font-weight: 700; margin-left: 6px;
+    background: rgba(210,153,34,0.2); color: var(--court);
+    text-transform: uppercase; letter-spacing: 0.04em;
+  }
+
+  .annotation {
+    font-size: 0.78rem; color: var(--orange); margin-top: 0.35rem;
+    padding: 0.35rem 0.6rem; background: rgba(240,136,62,0.06);
+    border-radius: 4px; border-left: 2px solid var(--orange);
+  }
+
+  /* Bottom tally */
+  .tally {
+    background: var(--card); border: 1px solid var(--border); border-radius: 8px;
+    padding: 1.25rem; margin-top: 2rem;
+  }
+  .tally h3 { font-size: 1rem; color: var(--heading); margin-bottom: 0.75rem; }
+  .tally-grid {
+    display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;
+  }
+  .tally-col h4 { font-size: 0.85rem; margin-bottom: 0.4rem; }
+  .tally-col.joel h4 { color: var(--joel); }
+  .tally-col.heather h4 { color: var(--heather); }
+  .tally-col ul { list-style: none; padding: 0; }
+  .tally-col li { font-size: 0.85rem; padding: 0.2rem 0; }
+  .tally-col li span { color: var(--heading); font-weight: 600; }
+
+  /* Print styles */
+  @media print {
+    body { background: #fff; color: #111; max-width: 100%; padding: 0.5in; }
+    .entry { border: 1px solid #ccc; background: #fafafa; break-inside: avoid; }
+    .entry.joel { border-left-color: #2563eb; }
+    .entry.heather { border-left-color: #dc2626; }
+    .entry.court { border-left-color: #d97706; }
+    .entry.off-docket { border: 1px dashed #d97706; background: #fffbeb; }
+    .entry.deadline { border: 2px solid #dc2626; background: #fef2f2; animation: none; box-shadow: none; }
+    .callout-red { background: #fef2f2; border-color: #dc2626; }
+    .callout-orange { background: #fffbeb; border-color: #d97706; }
+    .stat-card, .legend, .tally { background: #f9fafb; border-color: #d1d5db; }
+    h1, .entry-desc { color: #111; }
+    .month-heading { color: #1d4ed8; border-bottom-color: #d1d5db; }
+    .back-link, .legend-dot { print-color-adjust: exact; -webkit-print-color-adjust: exact; }
+    @keyframes pulse-border { 0%, 100% { box-shadow: none; } }
+    @keyframes pulse-text { 0%, 100% { opacity: 1; } }
+    a { color: #1d4ed8; }
+    footer { color: #6b7280; }
+  }
+
+  footer { text-align: center; color: #484f58; font-size: 0.75rem; margin-top: 2rem; padding-top: 1rem; border-top: 1px solid var(--border); }
+</style>
+</head>
+<body>
+
+<a href="index.html" class="back-link">&larr; Back to Filing Portal</a>
+
+<h1>Complete Docket Timeline</h1>
+<p class="subtitle">
+  <strong>Thorarinson v. Atagan</strong> &mdash; Case No. 2024 D 006724<br>
+  Cook County Circuit Court, Domestic Relations Division &mdash; Calendar 11<br>
+  Judge Matthew William Jannusch &mdash; Courtroom 3003
+</p>
+
+<!-- Legend -->
+<div class="legend">
+  <div class="legend-item"><div class="legend-dot" style="background:var(--joel)"></div> Joel (Petitioner)</div>
+  <div class="legend-item"><div class="legend-dot" style="background:var(--heather)"></div> Heather / Tarara (Respondent)</div>
+  <div class="legend-item"><div class="legend-dot" style="background:var(--court)"></div> Court Orders</div>
+  <div class="legend-item"><div class="legend-dot dashed"></div> Off-Docket Communication</div>
+  <div class="legend-item"><div class="legend-dot" style="background:var(--red)"></div> Missed Deadline</div>
+</div>
+
+<!-- Summary Stats -->
+<div class="stats">
+  <div class="stat-card">
+    <div class="label">Joel's Docket Filings</div>
+    <div class="value" style="color:var(--joel)">26</div>
+    <div class="detail">+ 7 off-docket communications</div>
+  </div>
+  <div class="stat-card">
+    <div class="label">Heather / Tarara Filings</div>
+    <div class="value" style="color:var(--heather)">13</div>
+    <div class="detail">0 responses to Joel's discovery</div>
+  </div>
+  <div class="stat-card">
+    <div class="label">Unanswered Communications</div>
+    <div class="value" style="color:var(--orange)">6 of 7</div>
+    <div class="detail">Only reply: "Send me your appearance"</div>
+  </div>
+  <div class="stat-card">
+    <div class="label">Days Since Conniff's RFP</div>
+    <div class="value" style="color:var(--red)" id="daysSinceRFP"></div>
+    <div class="detail">Filed Mar 2 &mdash; still no response</div>
+  </div>
+  <div class="stat-card">
+    <div class="label">Total Docket Entries</div>
+    <div class="value" style="color:var(--court)">48</div>
+    <div class="detail">Including court orders &amp; body attachment</div>
+  </div>
+</div>
+
+<script>
+  var rfpDate = new Date(2026, 2, 2);
+  var today = new Date();
+  var diffDays = Math.floor((today - rfpDate) / (1000 * 60 * 60 * 24));
+  document.getElementById('daysSinceRFP').textContent = diffDays;
+</script>
+
+<!-- Discovery Asymmetry Callout -->
+<div class="callout callout-red">
+  <h3>Discovery Asymmetry: One-Way Stonewalling</h3>
+  <ul>
+    <li><strong>March 2, 2026</strong> &mdash; Joel's counsel Conniff files Request for Production (Rule 214) to Tarara. 28-day response deadline: March 30.</li>
+    <li><strong>March 30, 2026</strong> &mdash; Deadline passes. Tarara files nothing. No objections. No motion for extension. Complete silence.</li>
+    <li><strong>April 1, 2026</strong> &mdash; One day later, Tarara files <em>her own</em> interrogatories and NTP on Joel &mdash; while still ignoring the outstanding requests served on her.</li>
+    <li><strong>December 2025 &ndash; April 2026</strong> &mdash; Joel sends 7 written communications (emails, meet-and-confer letters, statutory demands). Tarara replies once: <em>"Send me your appearance."</em> No substantive response to any.</li>
+  </ul>
+</div>
+
+<div class="callout callout-orange">
+  <h3>Pattern of Non-Engagement</h3>
+  <p>Joel has attempted good-faith communication on financial disclosure, discovery compliance, the RBC account, and settlement at every stage. Every attempt has been met with silence. The only substantive reply in five months was a procedural deflection. This timeline documents the pattern.</p>
+</div>
+
+<!-- ===================== TIMELINE ===================== -->
+
+<!-- APRIL 2026 -->
+<div class="month-heading">April 2026</div>
+
+<div class="entry off-docket">
+  <div class="entry-date">April 24, 2026 <span class="entry-type off">OFF-DOCKET</span> <span class="badge-no-response">NO RESPONSE</span></div>
+  <div class="entry-desc">Joel sends THIRD NOTICE &mdash; Statutory demand with 8 citations</div>
+  <div class="entry-filing-type">Email &mdash; Formal demand for discovery compliance citing 8 statutory authorities</div>
+</div>
+
+<div class="entry off-docket">
+  <div class="entry-date">April 22, 2026 <span class="entry-type off">OFF-DOCKET</span></div>
+  <div class="entry-desc">Joel files ARDC complaint against Tarara</div>
+  <div class="entry-filing-type">Attorney Registration and Disciplinary Commission complaint</div>
+</div>
+
+<div class="entry off-docket">
+  <div class="entry-date">April 21, 2026 <span class="entry-type off">OFF-DOCKET</span> <span class="badge-no-response">NO RESPONSE</span></div>
+  <div class="entry-desc">Joel sends Meet-and-Confer #2 (RBC account)</div>
+  <div class="entry-filing-type">Email &mdash; Requesting disclosure of joint RBC account ...6677</div>
+</div>
+
+<div class="entry joel">
+  <div class="entry-date">April 20, 2026 <span class="entry-type joel">JOEL</span></div>
+  <div class="entry-desc">Certificate of Service</div>
+  <div class="entry-filing-type">Notice Filed &mdash; Service of Wave 2 documents</div>
+</div>
+
+<div class="entry joel">
+  <div class="entry-date">April 20, 2026 <span class="entry-type joel">JOEL</span></div>
+  <div class="entry-desc">Petitioner's Response to Third Verified Petition for Indirect Civil Contempt</div>
+  <div class="entry-filing-type">Answer/Response/Reply</div>
+</div>
+
+<div class="entry joel">
+  <div class="entry-date">April 20, 2026 <span class="entry-type joel">JOEL</span></div>
+  <div class="entry-desc">Motion to Compel Complete Financial Disclosure</div>
+  <div class="entry-filing-type">Motion Filed</div>
+</div>
+
+<div class="entry joel">
+  <div class="entry-date">April 20, 2026 <span class="entry-type joel">JOEL</span></div>
+  <div class="entry-desc">Notice of Motion &mdash; All Motions Set for May 5, 2026 at 1:30 PM</div>
+  <div class="entry-filing-type">Motion Filed</div>
+</div>
+
+<div class="entry joel">
+  <div class="entry-date">April 20, 2026 <span class="entry-type joel">JOEL</span></div>
+  <div class="entry-desc">Motion to Strike Respondent's Financial Affidavit</div>
+  <div class="entry-filing-type">Motion Filed</div>
+</div>
+
+<div class="entry joel">
+  <div class="entry-date">April 20, 2026 <span class="entry-type joel">JOEL</span></div>
+  <div class="entry-desc">Motion to Purge Contempt and Vacate Body Attachment</div>
+  <div class="entry-filing-type">Motion Filed</div>
+</div>
+
+<div class="entry joel">
+  <div class="entry-date">April 20, 2026 <span class="entry-type joel">JOEL</span></div>
+  <div class="entry-desc">Motion to Modify Temporary Support Order</div>
+  <div class="entry-filing-type">Motion Filed</div>
+</div>
+
+<div class="entry off-docket">
+  <div class="entry-date">April 20, 2026 <span class="entry-type off">OFF-DOCKET</span> <span class="badge-no-response">NO RESPONSE</span></div>
+  <div class="entry-desc">Joel sends Service of Wave 2 + settlement conference request</div>
+  <div class="entry-filing-type">Email to Tarara &mdash; Service notification and request for Rule 218 conference</div>
+</div>
+
+<div class="entry joel">
+  <div class="entry-date">April 17, 2026 <span class="entry-type joel">JOEL</span></div>
+  <div class="entry-desc">Response to Verified Petitions for Indirect Civil Contempt</div>
+  <div class="entry-filing-type">Answer/Response/Reply</div>
+  <div class="annotation">Third Contempt petition filed the same day Joel filed Wave 1 &mdash; see Heather's filing below</div>
+</div>
+
+<div class="entry joel">
+  <div class="entry-date">April 17, 2026 <span class="entry-type joel">JOEL</span></div>
+  <div class="entry-desc">Motion to Continue or Alternatively Motion for Remote Appearance</div>
+  <div class="entry-filing-type">Answer To Motion Filed</div>
+</div>
+
+<div class="entry joel">
+  <div class="entry-date">April 17, 2026 <span class="entry-type joel">JOEL</span></div>
+  <div class="entry-desc">Affidavit of Joel Thorarinson</div>
+  <div class="entry-filing-type">Affidavit Filed</div>
+</div>
+
+<div class="entry joel">
+  <div class="entry-date">April 17, 2026 <span class="entry-type joel">JOEL</span></div>
+  <div class="entry-desc">Exhibit Index</div>
+  <div class="entry-filing-type">Exhibits Filed</div>
+</div>
+
+<div class="entry joel">
+  <div class="entry-date">April 17, 2026 <span class="entry-type joel">JOEL</span></div>
+  <div class="entry-desc">Exhibit A &mdash; Procedural Timeline</div>
+  <div class="entry-filing-type">Exhibits Filed</div>
+</div>
+
+<div class="entry joel">
+  <div class="entry-date">April 17, 2026 <span class="entry-type joel">JOEL</span></div>
+  <div class="entry-desc">Appearance Filed &mdash; Petitioner appearing pro se following withdrawal of counsel</div>
+  <div class="entry-filing-type">Appearance Filed - No Fee Paid</div>
+</div>
+
+<div class="entry joel">
+  <div class="entry-date">April 17, 2026 <span class="entry-type joel">JOEL</span></div>
+  <div class="entry-desc">Exhibit D &mdash; Payment Summary</div>
+  <div class="entry-filing-type">Exhibits Filed</div>
+</div>
+
+<div class="entry joel">
+  <div class="entry-date">April 17, 2026 <span class="entry-type joel">JOEL</span></div>
+  <div class="entry-desc">Exhibit A &mdash; Procedural Timeline</div>
+  <div class="entry-filing-type">Exhibits Filed</div>
+</div>
+
+<div class="entry joel">
+  <div class="entry-date">April 17, 2026 <span class="entry-type joel">JOEL</span></div>
+  <div class="entry-desc">Notice of Motion</div>
+  <div class="entry-filing-type">Notice Of Motion Filed</div>
+</div>
+
+<div class="entry joel">
+  <div class="entry-date">April 17, 2026 <span class="entry-type joel">JOEL</span></div>
+  <div class="entry-desc">Certificate of Service</div>
+  <div class="entry-filing-type">Certificate Of Service Filed</div>
+</div>
+
+<div class="entry joel">
+  <div class="entry-date">April 17, 2026 <span class="entry-type joel">JOEL</span></div>
+  <div class="entry-desc">Exhibit E &mdash; Undisclosed Transfers Detail</div>
+  <div class="entry-filing-type">Exhibits Filed</div>
+</div>
+
+<div class="entry off-docket">
+  <div class="entry-date">April 17, 2026 <span class="entry-type off">OFF-DOCKET</span></div>
+  <div class="entry-desc">Tarara replies: "Send me your appearance"</div>
+  <div class="entry-filing-type">Email &mdash; Only substantive response in 5 months of communication attempts</div>
+</div>
+
+<div class="entry off-docket">
+  <div class="entry-date">April 17, 2026 <span class="entry-type off">OFF-DOCKET</span> <span class="badge-no-response">NO RESPONSE</span></div>
+  <div class="entry-desc">Joel sends Meet-and-Confer #1 (financial disclosure)</div>
+  <div class="entry-filing-type">Email to Tarara &mdash; Good-faith attempt to resolve discovery dispute per Rule 201(k)</div>
+</div>
+
+<div class="entry off-docket">
+  <div class="entry-date">April 1, 2026 <span class="entry-type heather">TARARA</span></div>
+  <div class="entry-desc">Tarara files her OWN interrogatories and NTP on Joel</div>
+  <div class="entry-filing-type">Discovery &mdash; Filed 1 day after her own deadline passed</div>
+  <div class="annotation">Tarara files discovery demands on Joel &mdash; 1 day after ignoring her own 28-day deadline to respond to Conniff's Request for Production</div>
+</div>
+
+<!-- MARCH 2026 -->
+<div class="month-heading">March 2026</div>
+
+<div class="entry deadline">
+  <div class="entry-date">March 30, 2026 <span class="badge-deadline">DEADLINE EXPIRED</span></div>
+  <div class="entry-desc">Tarara's 28-day deadline to respond to Request for Production &mdash; EXPIRED WITH NO RESPONSE</div>
+  <div class="entry-filing-type">Rule 214 &mdash; No response filed. No objections. No motion for extension. Complete silence.</div>
+  <div class="annotation">28 days from March 2 service. Tarara never responds. The next day she files her own discovery demands on Joel.</div>
+</div>
+
+<div class="entry off-docket">
+  <div class="entry-date">March 2, 2026 <span class="entry-type off">OFF-DOCKET</span></div>
+  <div class="entry-desc">Conniff files Request for Production (Rule 214) to Tarara</div>
+  <div class="entry-filing-type">Discovery &mdash; Joel's counsel serves formal document production request. 28-day response deadline: March 30.</div>
+</div>
+
+<!-- FEBRUARY 2026 -->
+<div class="month-heading">February 2026</div>
+
+<div class="entry court">
+  <div class="entry-date">February 20, 2026 <span class="entry-type court">COURT</span> <span class="badge-body-attachment">BODY ATTACHMENT AUTHORIZED</span></div>
+  <div class="entry-desc">Court Order &mdash; Body Attachment Issued Against Joel</div>
+  <div class="entry-filing-type">Court Order &mdash; Resulted from Emergency Motion hearing</div>
+  <div class="annotation">Body attachment (arrest warrant) authorized. Joel must purge contempt or face arrest upon return to Illinois.</div>
+</div>
+
+<div class="entry joel">
+  <div class="entry-date">February 19, 2026 <span class="entry-type joel">JOEL</span></div>
+  <div class="entry-desc">Response to Emergency Motion</div>
+  <div class="entry-filing-type">Answer/Response/Reply</div>
+</div>
+
+<div class="entry joel">
+  <div class="entry-date">February 19, 2026 <span class="entry-type joel">JOEL</span></div>
+  <div class="entry-desc">Notice of Filing and Service</div>
+  <div class="entry-filing-type">Notice Filed</div>
+</div>
+
+<div class="entry heather">
+  <div class="entry-date">February 13, 2026 <span class="entry-type heather">HEATHER/TARARA</span></div>
+  <div class="entry-desc">Emergency Motion</div>
+  <div class="entry-filing-type">Motion Filed</div>
+</div>
+
+<div class="entry heather">
+  <div class="entry-date">February 13, 2026 <span class="entry-type heather">HEATHER/TARARA</span></div>
+  <div class="entry-desc">Notice of Emergency Motion</div>
+  <div class="entry-filing-type">Notice Of Motion Filed</div>
+</div>
+
+<div class="entry court">
+  <div class="entry-date">February 3, 2026 <span class="entry-type court">COURT</span></div>
+  <div class="entry-desc">Notice of Motion</div>
+  <div class="entry-filing-type">Notice Of Motion Filed</div>
+</div>
+
+<div class="entry court">
+  <div class="entry-date">February 3, 2026 <span class="entry-type court">COURT</span></div>
+  <div class="entry-desc">Exhibit A</div>
+  <div class="entry-filing-type">Exhibits Filed</div>
+</div>
+
+<div class="entry court">
+  <div class="entry-date">February 3, 2026 <span class="entry-type court">COURT</span></div>
+  <div class="entry-desc">Affidavit</div>
+  <div class="entry-filing-type">Affidavit Filed</div>
+</div>
+
+<div class="entry court">
+  <div class="entry-date">February 3, 2026 <span class="entry-type court">COURT</span></div>
+  <div class="entry-desc">Exhibit B</div>
+  <div class="entry-filing-type">Exhibits Filed</div>
+</div>
+
+<div class="entry court">
+  <div class="entry-date">February 3, 2026 <span class="entry-type court">COURT</span></div>
+  <div class="entry-desc">Exhibit A</div>
+  <div class="entry-filing-type">Exhibits Filed</div>
+</div>
+
+<!-- DECEMBER 2025 -->
+<div class="month-heading">December 2025</div>
+
+<div class="entry off-docket">
+  <div class="entry-date">December 6, 2025 <span class="entry-type off">OFF-DOCKET</span> <span class="badge-no-response">NO RESPONSE</span></div>
+  <div class="entry-desc">Joel sends second request for Chase account records</div>
+  <div class="entry-filing-type">Email to Tarara &mdash; Follow-up request for Chase account documentation</div>
+</div>
+
+<div class="entry off-docket">
+  <div class="entry-date">December 3, 2025 <span class="entry-type off">OFF-DOCKET</span> <span class="badge-no-response">NO RESPONSE</span></div>
+  <div class="entry-desc">Joel requests Chase account records from Tarara</div>
+  <div class="entry-filing-type">Email &mdash; First request for financial account records</div>
+</div>
+
+<!-- NOVEMBER 2025 -->
+<div class="month-heading">November 2025</div>
+
+<div class="entry joel">
+  <div class="entry-date">November 18, 2025 <span class="entry-type joel">JOEL</span></div>
+  <div class="entry-desc">Notice of Filing and Service</div>
+  <div class="entry-filing-type">Notice Filed</div>
+</div>
+
+<div class="entry joel">
+  <div class="entry-date">November 13, 2025 <span class="entry-type joel">JOEL</span></div>
+  <div class="entry-desc">Notice of Motion</div>
+  <div class="entry-filing-type">Notice Of Motion Filed</div>
+</div>
+
+<div class="entry joel">
+  <div class="entry-date">November 13, 2025 <span class="entry-type joel">JOEL</span></div>
+  <div class="entry-desc">Petition to Modify Child Support</div>
+  <div class="entry-filing-type">Petition Filed</div>
+</div>
+
+<div class="entry joel">
+  <div class="entry-date">November 13, 2025 <span class="entry-type joel">JOEL</span></div>
+  <div class="entry-desc">Petition to Sell Marital Residence</div>
+  <div class="entry-filing-type">Petition Filed</div>
+</div>
+
+<!-- OCTOBER 2025 -->
+<div class="month-heading">October 2025</div>
+
+<div class="entry joel">
+  <div class="entry-date">October 14, 2025 <span class="entry-type joel">JOEL</span></div>
+  <div class="entry-desc">Notice of Issuance of Subpoena</div>
+  <div class="entry-filing-type">Notice Filed</div>
+</div>
+
+<!-- JULY 2025 -->
+<div class="month-heading">July 2025</div>
+
+<div class="entry court">
+  <div class="entry-date">July 28, 2025 <span class="entry-type court">COURT</span></div>
+  <div class="entry-desc">Notice of Motion</div>
+  <div class="entry-filing-type">Notice Of Motion Filed</div>
+</div>
+
+<div class="entry court">
+  <div class="entry-date">July 28, 2025 <span class="entry-type court">COURT</span></div>
+  <div class="entry-desc">Motion to Withdraw as Counsel</div>
+  <div class="entry-filing-type">Substitution And/Or Withdrawal Of Attorney Filed</div>
+  <div class="annotation">Conniff's motion to withdraw as Joel's counsel &mdash; Joel becomes pro se</div>
+</div>
+
+<!-- JUNE 2025 -->
+<div class="month-heading">June 2025</div>
+
+<div class="entry heather">
+  <div class="entry-date">June 20, 2025 <span class="entry-type heather">HEATHER/TARARA</span></div>
+  <div class="entry-desc">Notice of Service &mdash; Financial Affidavit</div>
+  <div class="entry-filing-type">Notice Filed</div>
+</div>
+
+<!-- MAY 2025 -->
+<div class="month-heading">May 2025</div>
+
+<div class="entry heather">
+  <div class="entry-date">May 20, 2025 <span class="entry-type heather">HEATHER/TARARA</span></div>
+  <div class="entry-desc">Exhibits &mdash; Petition for Indirect Civil Contempt</div>
+  <div class="entry-filing-type">Exhibits Filed</div>
+</div>
+
+<div class="entry heather">
+  <div class="entry-date">May 20, 2025 <span class="entry-type heather">HEATHER/TARARA</span></div>
+  <div class="entry-desc">Petition for Indirect Civil Contempt (Second)</div>
+  <div class="entry-filing-type">Petition Filed</div>
+  <div class="annotation">Second contempt petition against Joel</div>
+</div>
+
+<div class="entry heather">
+  <div class="entry-date">May 20, 2025 <span class="entry-type heather">HEATHER/TARARA</span></div>
+  <div class="entry-desc">Notice of Motion &mdash; Petition for Indirect Civil Contempt</div>
+  <div class="entry-filing-type">Notice Of Motion Filed</div>
+</div>
+
+<!-- APRIL 2025 -->
+<div class="month-heading">April 2025</div>
+
+<div class="entry heather">
+  <div class="entry-date">April 30, 2025 <span class="entry-type heather">HEATHER/TARARA</span></div>
+  <div class="entry-desc">Notice of Emergency Motion</div>
+  <div class="entry-filing-type">Notice Of Motion Filed</div>
+</div>
+
+<div class="entry heather">
+  <div class="entry-date">April 29, 2025 <span class="entry-type heather">HEATHER/TARARA</span></div>
+  <div class="entry-desc">Affidavit &mdash; Emergency Petition for Order of Protection</div>
+  <div class="entry-filing-type">Affidavit Filed</div>
+</div>
+
+<div class="entry heather">
+  <div class="entry-date">April 29, 2025 <span class="entry-type heather">HEATHER/TARARA</span></div>
+  <div class="entry-desc">Exhibits &mdash; Emergency Petition for Order of Protection</div>
+  <div class="entry-filing-type">Exhibits Filed</div>
+</div>
+
+<div class="entry heather">
+  <div class="entry-date">April 29, 2025 <span class="entry-type heather">HEATHER/TARARA</span></div>
+  <div class="entry-desc">Emergency Petition for Order of Protection</div>
+  <div class="entry-filing-type">Petition For Temp Protection Order</div>
+</div>
+
+<div class="entry heather">
+  <div class="entry-date">April 29, 2025 <span class="entry-type heather">HEATHER/TARARA</span></div>
+  <div class="entry-desc">Affidavit &mdash; Emergency Petition for TRO</div>
+  <div class="entry-filing-type">Affidavit Filed</div>
+</div>
+
+<div class="entry heather">
+  <div class="entry-date">April 29, 2025 <span class="entry-type heather">HEATHER/TARARA</span></div>
+  <div class="entry-desc">Exhibits &mdash; Emergency Petition for TRO</div>
+  <div class="entry-filing-type">Exhibits Filed</div>
+</div>
+
+<div class="entry heather">
+  <div class="entry-date">April 29, 2025 <span class="entry-type heather">HEATHER/TARARA</span></div>
+  <div class="entry-desc">Emergency Petition for TRO</div>
+  <div class="entry-filing-type">Petition Filed</div>
+</div>
+
+<div class="entry court">
+  <div class="entry-date">April 28, 2025 <span class="entry-type court">COURT</span> <span class="badge-body-attachment">BODY ATTACHMENT AUTHORIZED</span></div>
+  <div class="entry-desc">Parent Conduct &mdash; Comply Allowed</div>
+  <div class="entry-filing-type">Court Order</div>
+</div>
+
+<div class="entry court">
+  <div class="entry-date">April 28, 2025 <span class="entry-type court">COURT</span></div>
+  <div class="entry-desc">Our Family Wizard &mdash; Comply Allowed</div>
+  <div class="entry-filing-type">Court Order</div>
+</div>
+
+<!-- SEPTEMBER 2024 -->
+<div class="month-heading">September 2024</div>
+
+<div class="entry court">
+  <div class="entry-date">September 9, 2024 <span class="entry-type court">COURT</span></div>
+  <div class="entry-desc">Open Call &mdash; Calendar 11, Judge Jannusch</div>
+  <div class="entry-filing-type">Case opened &mdash; 1:30 PM call</div>
+</div>
+
+<!-- Bottom Tally -->
+<div class="tally">
+  <h3>Case Activity Summary</h3>
+  <div class="tally-grid">
+    <div class="tally-col joel">
+      <h4>Joel (Petitioner)</h4>
+      <ul>
+        <li><span>26</span> docket filings</li>
+        <li><span>7</span> off-docket communications</li>
+        <li><span>2</span> meet-and-confer letters (Rule 201(k))</li>
+        <li><span>1</span> statutory demand with 8 citations</li>
+        <li><span>1</span> ARDC complaint filed</li>
+        <li><span>1</span> settlement conference request</li>
+        <li><span>2</span> requests for Chase account records</li>
+      </ul>
+    </div>
+    <div class="tally-col heather">
+      <h4>Heather / Tarara (Respondent)</h4>
+      <ul>
+        <li><span>13</span> docket filings</li>
+        <li><span>0</span> responses to Request for Production</li>
+        <li><span>0</span> responses to meet-and-confer letters</li>
+        <li><span>0</span> responses to statutory demand</li>
+        <li><span>0</span> responses to settlement request</li>
+        <li><span>1</span> reply in 5 months: <em>"Send me your appearance"</em></li>
+      </ul>
+    </div>
+  </div>
+</div>
+
+<footer>
+  <p>Docket Timeline &mdash; <em>Thorarinson v. Atagan</em>, 2024 D 006724 &mdash; Generated from court records and documented communications</p>
+  <p style="margin-top:4px"><a href="index.html">&larr; Filing Portal</a></p>
+</footer>
+
+</body>
+</html>
