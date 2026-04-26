@@ -114,6 +114,14 @@ async function decrypt() {
   try {
     const html = await decryptWithPassword(pw);
     sessionStorage.setItem(SESSION_KEY, pw);
+    // Trigger Chrome/1Password save prompt
+    try {
+      if (window.PasswordCredential) {
+        const cred = new PasswordCredential({ id: 'thorarinson-filing', password: pw });
+        navigator.credentials.store(cred);
+      }
+    } catch(x) {}
+
     document.open();
     document.write(html);
     document.close();

@@ -51,6 +51,13 @@ async function go() {
   const pw = document.getElementById('pw').value;
   const h = await sha256(pw);
   if (VALID.includes(h)) {
+    // Trigger Chrome/1Password save prompt
+    try {
+      if (window.PasswordCredential) {
+        const cred = new PasswordCredential({ id: 'thorarinson-portal', password: pw });
+        navigator.credentials.store(cred);
+      }
+    } catch(x) {}
     // Password doubles as directory name — redirect there
     const suffix = h === VALID[1] ? '/filing/' : '/';
     window.location.href = pw + suffix;

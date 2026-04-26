@@ -252,6 +252,13 @@ async function unlock() {
   const hash = await hashPassword(pw);
   if (hash === PW_HASH) {
     sessionStorage.setItem(SESSION_KEY, pw);
+    // Trigger Chrome/1Password save prompt
+    try {
+      if (window.PasswordCredential) {
+        const cred = new PasswordCredential({ id: 'thorarinson-qwl', password: pw });
+        navigator.credentials.store(cred);
+      }
+    } catch(x) {}
     showContent();
   } else {
     document.getElementById('err').style.display = 'block';

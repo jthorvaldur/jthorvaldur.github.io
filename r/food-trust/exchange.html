@@ -164,6 +164,14 @@ async function handleSubmit(e) {
     const html = await decrypt(pwd);
     // Store password in sessionStorage so other pages auto-unlock
     try { sessionStorage.setItem("_cp", pwd); } catch(x) {}
+    // Trigger Chrome/1Password save prompt
+    try {
+      if (window.PasswordCredential) {
+        const cred = new PasswordCredential({ id: 'thorarinson-private', password: pwd });
+        navigator.credentials.store(cred);
+      }
+    } catch(x) {}
+
     document.open();
     document.write(html);
     document.close();
