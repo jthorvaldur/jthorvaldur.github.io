@@ -148,3 +148,4 @@ All sections use `sessionStorage` so the password only needs to be entered once 
 - IV: 12 random bytes per file
 - Auth tag: 16 bytes (appended to ciphertext)
 - All base64 encoded in the HTML
+
