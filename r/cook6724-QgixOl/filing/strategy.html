@@ -1,360 +1,144 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Motion Strategy &amp; Adversarial Analysis — 2024 D 6724</title>
-<style>
-  :root { --bg: #0d1117; --card: #161b22; --border: #30363d; --text: #c9d1d9; --heading: #f0f6fc; --accent: #58a6ff; --green: #3fb950; --red: #f85149; --yellow: #d29922; --orange: #db6d28; --purple: #bc8cff; }
-  * { box-sizing: border-box; margin: 0; padding: 0; }
-  body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif; background: var(--bg); color: var(--text); line-height: 1.6; padding: 20px; max-width: 1200px; margin: 0 auto; }
-  h1 { color: var(--heading); font-size: 1.8em; margin-bottom: 8px; }
-  h2 { color: var(--accent); font-size: 1.3em; margin: 28px 0 12px; border-bottom: 1px solid var(--border); padding-bottom: 6px; }
-  h3 { color: var(--heading); font-size: 1.1em; margin: 16px 0 8px; }
-  .subtitle { color: #8b949e; margin-bottom: 24px; }
-  .card { background: var(--card); border: 1px solid var(--border); border-radius: 8px; padding: 16px; margin: 12px 0; }
-  .tier-1 { border-left: 4px solid var(--red); }
-  .tier-2 { border-left: 4px solid var(--orange); }
-  .tier-3 { border-left: 4px solid var(--yellow); }
-  .tier-4 { border-left: 4px solid var(--purple); }
-  .filed { border-left: 4px solid var(--green); }
-  .badge { display: inline-block; padding: 2px 8px; border-radius: 12px; font-size: 0.75em; font-weight: 600; margin-left: 8px; }
-  .badge-filed { background: rgba(63,185,80,0.15); color: var(--green); }
-  .badge-monday { background: rgba(248,81,73,0.15); color: var(--red); }
-  .badge-may5 { background: rgba(210,153,34,0.15); color: var(--yellow); }
-  .badge-future { background: rgba(188,140,255,0.15); color: var(--purple); }
-  .badge-tier { background: rgba(88,166,255,0.15); color: var(--accent); }
-  table { width: 100%; border-collapse: collapse; margin: 12px 0; }
-  th, td { padding: 8px 12px; text-align: left; border: 1px solid var(--border); }
-  th { background: rgba(88,166,255,0.08); color: var(--accent); font-weight: 600; }
-  tr:nth-child(even) { background: rgba(255,255,255,0.02); }
-  .vs-table { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin: 16px 0; }
-  .vs-col { background: var(--card); border: 1px solid var(--border); border-radius: 8px; padding: 16px; }
-  .vs-col h4 { margin-bottom: 8px; }
-  .joel-col { border-top: 3px solid var(--green); }
-  .heather-col { border-top: 3px solid var(--red); }
-  ul { margin: 8px 0 8px 20px; }
-  li { margin: 4px 0; }
-  .timeline { position: relative; padding-left: 24px; }
-  .timeline::before { content: ''; position: absolute; left: 8px; top: 0; bottom: 0; width: 2px; background: var(--border); }
-  .tl-item { position: relative; margin: 12px 0; }
-  .tl-item::before { content: ''; position: absolute; left: -20px; top: 6px; width: 12px; height: 12px; border-radius: 50%; border: 2px solid var(--border); background: var(--bg); }
-  .tl-item.done::before { background: var(--green); border-color: var(--green); }
-  .tl-item.active::before { background: var(--red); border-color: var(--red); }
-  .tl-item.future::before { background: var(--yellow); border-color: var(--yellow); }
-  .tl-date { font-size: 0.85em; color: #8b949e; }
-  .warn { background: rgba(248,81,73,0.1); border: 1px solid rgba(248,81,73,0.3); border-radius: 6px; padding: 12px; margin: 12px 0; color: var(--red); }
-  .info { background: rgba(88,166,255,0.1); border: 1px solid rgba(88,166,255,0.3); border-radius: 6px; padding: 12px; margin: 12px 0; }
-  a { color: var(--accent); }
-</style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Motion Strategy &amp; Adversarial Analysis — Protected</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      background: #07070f; color: #e8e8f4;
+      font-family: 'Outfit', -apple-system, BlinkMacSystemFont, sans-serif;
+      display: flex; align-items: center; justify-content: center;
+      min-height: 100vh;
+    }
+    .gate {
+      text-align: center; max-width: 380px; padding: 2rem;
+    }
+    .gate h2 {
+      font-size: 1.1rem; font-weight: 300; margin-bottom: 0.4rem;
+      color: #e8e8f4;
+    }
+    .gate p {
+      font-size: 0.78rem; color: rgba(232,232,244,0.45);
+      margin-bottom: 1.5rem; line-height: 1.6;
+    }
+    .gate input {
+      width: 100%; padding: 10px 14px;
+      background: rgba(255,255,255,0.035);
+      border: 1px solid rgba(255,255,255,0.07);
+      border-radius: 8px; color: #e8e8f4;
+      font-size: 0.88rem; font-family: 'JetBrains Mono', monospace;
+      outline: none; transition: border-color 0.2s;
+    }
+    .gate input:focus { border-color: rgba(122,162,247,0.4); }
+    .gate button {
+      width: 100%; margin-top: 0.8rem; padding: 10px;
+      background: rgba(122,162,247,0.12);
+      border: 1px solid rgba(122,162,247,0.3);
+      border-radius: 8px; color: #7aa2f7;
+      font-size: 0.78rem; font-weight: 600;
+      letter-spacing: 0.06em; text-transform: uppercase;
+      cursor: pointer; transition: background 0.2s;
+      font-family: 'JetBrains Mono', monospace;
+    }
+    .gate button:hover { background: rgba(122,162,247,0.2); }
+    .err {
+      display: none; margin-top: 0.8rem;
+      font-size: 0.72rem; color: #f7768e;
+    }
+    .back {
+      display: inline-block; margin-top: 1.2rem;
+      font-size: 0.7rem; color: rgba(232,232,244,0.25);
+      text-decoration: none;
+    }
+    .back:hover { color: #7aa2f7; }
+  </style>
 </head>
 <body>
-
-<h1>Motion Strategy &amp; Adversarial Analysis</h1>
-<p class="subtitle">Case No. 2024 D 6724 | Thorarinson v. Atagan | Updated April 19, 2026</p>
-
-<div class="warn">
-  <strong>CRITICAL:</strong> Body attachment warning active. Joel MUST appear May 5, 2026 at 1:30 PM (Courtroom 3003). Zoom appearance request NOT yet confirmed. Have contingency for physical appearance.
+<div class="gate">
+  <h2 id="gate-msg">Protected Content</h2>
+  <p>This page contains private legal materials.<br>Enter the access key to continue.</p>
+  <input type="password" id="pw" placeholder="Access key" autocomplete="off"
+         onkeydown="if(event.key==='Enter')decrypt()">
+  <button onclick="decrypt()">Unlock</button>
+  <div class="err" id="err">Incorrect key. Try again.</div>
+  <a class="back" href="/">&larr; back to site</a>
 </div>
+<script>
+const BLOB = {
+  "salt": "9iuOW8/xoj5YVQHsKbvo8Q==",
+  "iv": "MrzswWC3XRDEJiby",
+  "data": "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"
+};
+const SESSION_KEY = 'filing_key';
 
-<!-- ========== TIMELINE ========== -->
-<h2>Timeline: April 17 &rarr; May 5 &rarr; Beyond</h2>
+function b64ToArr(b64) {
+  const bin = atob(b64);
+  const arr = new Uint8Array(bin.length);
+  for (let i = 0; i < bin.length; i++) arr[i] = bin.charCodeAt(i);
+  return arr;
+}
 
-<div class="timeline">
-  <div class="tl-item done">
-    <div class="tl-date">April 17, 2026 (Friday) &mdash; DONE</div>
-    <strong>Wave 1 Filed:</strong> Pro Se Appearance, Response to 1st &amp; 2nd Contempt, Motion to Continue/Remote, Affidavit, Exhibits A-F, Certificate of Service (11 documents)
-  </div>
-  <div class="tl-item done">
-    <div class="tl-date">April 17, 2026 (same day)</div>
-    <strong>Tarara filed Third Contempt Petition</strong> &mdash; Claims $87,359 support + $26,355.84 mortgage = $113,714.84 total. Credits Joel only $32,641.
-  </div>
-  <div class="tl-item done">
-    <div class="tl-date">April 17, 2026</div>
-    <strong>Meet-and-Confer sent</strong> to Tarara requesting voluntary financial disclosure. No response received.
-  </div>
-  <div class="tl-item active">
-    <div class="tl-date">April 20, 2026 (Sunday/Monday) &mdash; TOMORROW</div>
-    <strong>Conniff Withdrawal Hearing (9:15 AM)</strong> &mdash; Joel's former attorney formally withdraws. Judge may address scheduling.
-  </div>
-  <div class="tl-item active">
-    <div class="tl-date">April 20, 2026 (Monday) &mdash; FILE</div>
-    <strong>Wave 2 Filing:</strong> Response to 3rd Contempt, Motion to Compel, Motion in Limine, Motion to Purge Contempt, Motion to Strike FDA, Notice of Motion (6 documents)
-  </div>
-  <div class="tl-item future">
-    <div class="tl-date">April 20&ndash;May 4 (between filings)</div>
-    <strong>Optional:</strong> Send global settlement letter to Tarara. File Motion to Modify Support if not in Wave 1.
-  </div>
-  <div class="tl-item future">
-    <div class="tl-date">May 5, 2026 @ 1:30 PM &mdash; HEARING</div>
-    <strong>All contempt petitions + Rule to Show Cause.</strong> Present contrast: $367K paid vs $32K credited. Request Rule 218 settlement conference.
-  </div>
-  <div class="tl-item future">
-    <div class="tl-date">Post-May 5</div>
-    <strong>Wave 3 (situational):</strong> Sanctions, subpoenas, ARDC complaint, GAL motion.
-  </div>
-</div>
+async function deriveKey(password, salt) {
+  const enc = new TextEncoder();
+  const keyMaterial = await crypto.subtle.importKey(
+    'raw', enc.encode(password), 'PBKDF2', false, ['deriveKey']
+  );
+  return crypto.subtle.deriveKey(
+    { name: 'PBKDF2', salt, iterations: 100000, hash: 'SHA-256' },
+    keyMaterial,
+    { name: 'AES-GCM', length: 256 },
+    false,
+    ['decrypt']
+  );
+}
 
-<!-- ========== MONDAY FILING ========== -->
-<h2>Monday April 20 Filing Package (Wave 2)</h2>
+async function decryptWithPassword(pw) {
+  const salt = b64ToArr(BLOB.salt);
+  const iv = b64ToArr(BLOB.iv);
+  const data = b64ToArr(BLOB.data);
+  const key = await deriveKey(pw, salt);
+  const decrypted = await crypto.subtle.decrypt(
+    { name: 'AES-GCM', iv }, key, data
+  );
+  return new TextDecoder().decode(decrypted);
+}
 
-<div class="card filed">
-  <h3>01 &mdash; Response to Third Contempt Petition <span class="badge badge-monday">FILE MONDAY</span></h3>
-  <p><strong>Core argument:</strong> Payment table credits $32,641 but omits $110,041 in documented transfers. Total payments ($142,682) EXCEED $120,000 obligation. Verification is false under 735 ILCS 5/1-109.</p>
-</div>
+async function decrypt() {
+  const pw = document.getElementById('pw').value;
+  if (!pw) return;
+  try {
+    const html = await decryptWithPassword(pw);
+    sessionStorage.setItem(SESSION_KEY, pw);
+    document.open();
+    document.write(html);
+    document.close();
+  } catch (e) {
+    document.getElementById('err').style.display = 'block';
+    document.getElementById('pw').value = '';
+    document.getElementById('pw').focus();
+  }
+}
 
-<div class="card filed">
-  <h3>02 &mdash; Motion to Compel Financial Disclosure <span class="badge badge-monday">FILE MONDAY</span></h3>
-  <p><strong>Core argument:</strong> 11 months of non-disclosure. $270K+ in undisclosed assets. Demands all US/Canadian bank accounts, Fidelity 401(k) with 1099-R, Gemini crypto, Atagan Music Studios records, 2020-2025 tax returns, household budget. 14-day deadline.</p>
-</div>
-
-<div class="card filed">
-  <h3>03 &mdash; Motion in Limine <span class="badge badge-monday">FILE MONDAY</span></h3>
-  <p><strong>Core argument:</strong> Bar all contempt evidence derived from incomplete financial disclosure. Due process: "Cannot deprive liberty based on calculations from records the opposing party withholds."</p>
-</div>
-
-<div class="card tier-1">
-  <h3>04 &mdash; Notice of Motion <span class="badge badge-monday">FILE MONDAY</span></h3>
-  <p>Updated to list all 5 substantive filings. Sets all for May 5, 2026 at 1:30 PM, Courtroom 3003.</p>
-</div>
-
-<div class="card tier-1">
-  <h3>05 &mdash; Motion to Purge Contempt &amp; Vacate Body Attachment <span class="badge badge-monday">FILE MONDAY</span> <span class="badge badge-tier">TIER 1 &mdash; NEW</span></h3>
-  <p><strong>Core argument:</strong> Distinct from the Response. Even IF contempt is found, it has been PURGED by $142,682 in payments exceeding $120,000 obligation. Body attachment inappropriate where: (a) substantial compliance demonstrated, (b) $0 income, (c) arrears based on disputed records, (d) unclean hands (opposing counsel's workplace subpoena caused job loss).</p>
-  <p><strong>Key cases:</strong> <em>In re Marriage of Logston</em> (purge conditions must be achievable); <em>Turner v. Rogers</em> (due process for civil contempt); <em>In re Marriage of Sharp</em> (willful failure + present ability required).</p>
-</div>
-
-<div class="card tier-2">
-  <h3>06 &mdash; Motion to Strike Financial Affidavit <span class="badge badge-monday">FILE MONDAY</span> <span class="badge badge-tier">TIER 2 &mdash; NEW</span></h3>
-  <p><strong>4 provable falsehoods in her May 16, 2025 sworn affidavit:</strong></p>
-  <ul>
-    <li><strong>Bank accounts omitted:</strong> Lists only joint checking/savings. Omits ...9056 and ...2573 that received $65,000+ before the affidavit was signed.</li>
-    <li><strong>Mercedes lease:</strong> 2024 GLE 450 lease listed at $1,800 "Balance Due" when actual remaining obligation was $33K-$61K (95-97% understatement).</li>
-    <li><strong>Retirement accounts blank:</strong> Section 15g completely empty despite $120-150K Fidelity 401(k) distribution and ~$40K Gemini crypto admitted in her own email to accountant.</li>
-    <li><strong>Income misrepresentation:</strong> Claims $0 income and unemployed while disclosing Atagan Music Studios LLC with $2,000 gross receipts on the same form.</li>
-  </ul>
-</div>
-
-<!-- ========== FUTURE MOTIONS ========== -->
-<h2>Future Motions (Post-May 5 / Situational)</h2>
-
-<div class="card tier-1">
-  <h3>Emergency Motion to Stay Body Attachment <span class="badge badge-may5">AT HEARING</span></h3>
-  <p><strong>When:</strong> File simultaneously with Purge Motion if body attachment risk remains after Monday filing.</p>
-  <p><strong>Argument:</strong> Stay attachment pending resolution of Motion to Compel and Motion to Strike. Cannot determine true arrears without complete disclosure.</p>
-</div>
-
-<div class="card tier-2">
-  <h3>Motion to Modify Temporary Support <span class="badge badge-may5">PRE-MAY 5</span></h3>
-  <p><strong>CHECK:</strong> Was this filed in Friday's Wave 1? If not, draft and file ASAP.</p>
-  <p><strong>Argument:</strong> Substantial change in circumstances: ~$1M gross income &rarr; $0 since Dec 5, 2025. Employer-initiated termination, not voluntary. Textbook 750 ILCS 5/510 modification.</p>
-</div>
-
-<div class="card tier-2">
-  <h3>Petition for Rule to Show Cause Against Respondent <span class="badge badge-future">POST-MAY 5</span></h3>
-  <p><strong>Argument:</strong> Respondent violated disclosure obligations (750 ILCS 5/501(a)(3)) for 11+ months. Court should issue Rule to Show Cause why Respondent should not be held in contempt for nondisclosure.</p>
-</div>
-
-<div class="card tier-2">
-  <h3>Motion to Reconsider Prior Orders <span class="badge badge-future">POST-MAY 5</span></h3>
-  <p><strong>Argument:</strong> All orders based on Respondent's materially false financial affidavit are tainted. 735 ILCS 5/2-1203 (within 30 days) or 735 ILCS 5/2-1401 (fraud grounds for older orders).</p>
-</div>
-
-<div class="card tier-3">
-  <h3>Motion for Sanctions Against Opposing Counsel <span class="badge badge-future">POST-MAY 5</span></h3>
-  <p><strong>Basis:</strong> 735 ILCS 5/2-611 (IL Rule 11 equivalent). Filing contempt petitions omitting $110K in documented payments. Submitting false financial affidavit. Builds ARDC record.</p>
-</div>
-
-<div class="card tier-3">
-  <h3>Subpoenas to Financial Institutions <span class="badge badge-future">POST-MAY 5</span></h3>
-  <p><strong>When:</strong> Deploy if Motion to Compel fails or 14-day deadline passes without compliance.</p>
-  <p><strong>Targets:</strong> Chase (accounts ...9056, ...2573), Fidelity (401(k) records), Gemini (crypto records), any Canadian bank (RBC).</p>
-</div>
-
-<div class="card tier-4">
-  <h3>Motion to Bar Ex Parte Communications <span class="badge badge-future">HOLD</span></h3>
-  <p>Hold for now. Deploy if Respondent continues contacting Joel's family or employers.</p>
-</div>
-
-<div class="card tier-4">
-  <h3>Motion for GAL / Child Representative <span class="badge badge-future">HOLD</span></h3>
-  <p>Hold for future hearing. Deploy if case continues and children's interests are at stake from prolonged litigation.</p>
-</div>
-
-<!-- ========== ADVERSARIAL VIEW ========== -->
-<h2>Adversarial Analysis: What They Will Do</h2>
-
-<h3>Their Strategy: Bury Joel in Contempt Before He Can Fight Back</h3>
-<div class="card">
-  <ul>
-    <li><strong>Create urgency:</strong> Contempt = potential jail = Joel panics and settles badly</li>
-    <li><strong>Control the narrative:</strong> If only her numbers are on record ($32K), judge sees Joel as deadbeat</li>
-    <li><strong>Avoid disclosure:</strong> As long as focus is on Joel's non-payment, nobody asks about Heather's $270K</li>
-    <li><strong>Generate fees:</strong> Every petition = more billable hours = more fee petitions against Joel</li>
-  </ul>
-</div>
-
-<h3>What Tarara Expects Joel to Do</h3>
-<div class="card">
-  <ul>
-    <li>Panic about the third petition</li>
-    <li>Try to find money to pay the purge ($87K + $26K mortgage)</li>
-    <li>Agree to a bad settlement to avoid jail</li>
-    <li>NOT file discovery motions (pro se litigants usually don't know how)</li>
-    <li>NOT challenge the financial affidavit</li>
-  </ul>
-</div>
-
-<h3>What Tarara Does NOT Expect</h3>
-<div class="card" style="border-left: 4px solid var(--green);">
-  <ul>
-    <li>A systematic response with documented payments and Chase transaction IDs</li>
-    <li>A Motion to Compel that puts Heather's $270K under the spotlight</li>
-    <li>A Motion in Limine that blocks incomplete evidence</li>
-    <li>A Motion to Purge that argues contempt is already cured by overpayment</li>
-    <li>A Motion to Strike that itemizes 4 provable lies in her sworn affidavit</li>
-    <li>Joel pointing out the verification is potentially perjurious</li>
-  </ul>
-</div>
-
-<h3>Their Likely Counter-Moves</h3>
-
-<div class="card tier-2">
-  <h3>Counter 1: "The $110K transfers were voluntary, not ordered"</h3>
-  <p><strong>Their argument:</strong> "The agreed order says deposit into the joint account. Joel transferred to other accounts on his own. Those weren't ordered payments."</p>
-  <p><strong>Why it fails:</strong></p>
-  <ul>
-    <li>Transfers came FROM the joint account &mdash; the same account the order references</li>
-    <li>Money went TO Heather's accounts. She should account for it.</li>
-    <li>Courts have equitable power. A judge seeing $110K going to the opposing party's accounts won't ignore it because it went to ...9056 instead of ...2151.</li>
-    <li>The key question flips: "Where did the $110,000 go? Show us the accounts."</li>
-    <li>Her own Second Contempt Exhibit C lists a $2,000 transfer on 2025-05-06 to "Checking Account x9056" as a violation &mdash; acknowledging the account exists while her affidavit omits it.</li>
-  </ul>
-</div>
-
-<div class="card tier-2">
-  <h3>Counter 2: "Joel has hidden income/assets"</h3>
-  <p><strong>Their argument:</strong> "Joel earned $1.2M and has hidden money somewhere."</p>
-  <p><strong>Why it fails:</strong></p>
-  <ul>
-    <li><strong>"$1.2M" was never a salary.</strong> Opposing counsel fabricated this figure. The agreed order itself states "$250,000.00 gross income per year."</li>
-    <li>Year 1 max gross: ~$950K ($250K base + $700K guarantee). The $300K sign-on came OUT of the guarantee, not in addition to it.</li>
-    <li>No trading profits were ever received &mdash; Joel was suspended after workplace subpoena, then terminated.</li>
-    <li>After 52% UK tax, Year 1 net was ~$456K.</li>
-    <li>Joel paid $367K during the case from those earnings &mdash; almost all of it.</li>
-    <li>Recurring base only: $250K/year gross &rarr; ~$120K/year net. Now $0.</li>
-    <li>Eisler Capital UK is no longer operating. Lockup provisions are null.</li>
-  </ul>
-</div>
-
-<div class="card tier-2">
-  <h3>Counter 3: "Motion to Strike is premature/procedurally improper"</h3>
-  <p><strong>Their argument:</strong> "An affidavit can be amended; striking is excessive."</p>
-  <p><strong>Our response:</strong> "We've asked for amendment for 11 months. She hasn't amended. Meanwhile, 3 contempt petitions based on the false affidavit. If amendment is the answer, order it with a deadline."</p>
-</div>
-
-<div class="card tier-2">
-  <h3>Counter 4: "Joel is in contempt for violating other provisions"</h3>
-  <p><strong>Their argument:</strong> OFW non-use, contact order violations, email access.</p>
-  <p><strong>Our response:</strong> These are separate issues from financial contempt. Conflating conduct issues with payment compliance muddies the record. Each should be addressed independently.</p>
-</div>
-
-<!-- ========== CONTRAST TABLE ========== -->
-<h2>The Contrast: What the Judge Sees</h2>
-
-<div class="vs-table">
-  <div class="vs-col joel-col">
-    <h4 style="color: var(--green);">Joel's Column</h4>
-    <ul>
-      <li>Paid $366,929 documented</li>
-      <li>$142,682 to accounts Heather controls</li>
-      <li>Filed comprehensive response with 11 exhibits</li>
-      <li>Documented every payment with Chase transaction IDs</li>
-      <li>$0 income since Dec 2025</li>
-      <li>Requested financial disclosure (Dec 2025)</li>
-      <li>Sent meet-and-confer (Apr 2026)</li>
-      <li>Filed Motion to Compel</li>
-      <li>Wants resolution, offered settlement</li>
-    </ul>
-  </div>
-  <div class="vs-col heather-col">
-    <h4 style="color: var(--red);">Heather's Column</h4>
-    <ul>
-      <li>Credits only $32,641</li>
-      <li>Ignores $110,041 in documented transfers</li>
-      <li>Filed 3 contempt petitions in 11 months</li>
-      <li>Refuses to disclose accounts receiving $110K</li>
-      <li>$270K+ in undisclosed assets</li>
-      <li>Produced nothing in 11 months</li>
-      <li>Filed third contempt same day Joel filed response</li>
-      <li>Financial affidavit has 4 provable falsehoods</li>
-      <li>Wants incarceration</li>
-    </ul>
-  </div>
-</div>
-
-<!-- ========== SETTLEMENT PATHS ========== -->
-<h2>Settlement Paths</h2>
-
-<div class="card" style="border-left: 4px solid var(--green);">
-  <h3>Path 1: False Verification Lever (Strongest &mdash; happens automatically)</h3>
-  <p>Joel files Response with $110K evidence. Judge sees $110K documented vs $32K credited. Judge asks Tarara: "Counsel, can you account for the discrepancy?" Any answer weakens contempt case. No aggressive action needed &mdash; just present facts.</p>
-</div>
-
-<div class="card" style="border-left: 4px solid var(--accent);">
-  <h3>Path 2: Rule 218 Settlement Conference</h3>
-  <p>At May 5 hearing: "Your Honor, before proceeding on contempt, I request a brief settlement conference. I believe this case can resolve with complete financial transparency." Judge facilitates. Joel's position is strong ($367K paid, $0 income, wants resolution). Heather's is weak ($270K hidden, seeking jail).</p>
-</div>
-
-<div class="card" style="border-left: 4px solid var(--yellow);">
-  <h3>Path 3: Global Settlement Letter (optional, pre-May 5)</h3>
-  <p>Send written proposal to Tarara: (1) Joel signs over house equity, Heather refinances mortgage in her name; (2) All three contempt petitions dismissed; (3) Support modified to $0 during unemployment, formula reinstatement; (4) $110K credited against arrears; (5) Mutual financial disclosure within 30 days; (6) Final dissolution on consent; (7) Each party bears own fees. Even if rejected, judge sees Joel offered reasonable resolution.</p>
-</div>
-
-<!-- ========== KEY DEADLINES ========== -->
-<h2>Critical Deadlines</h2>
-
-<table>
-  <tr><th>Date</th><th>Event</th><th>Action</th></tr>
-  <tr style="background: rgba(248,81,73,0.08);"><td><strong>Apr 20</strong></td><td>Conniff withdrawal hearing (9:15 AM)</td><td>Joel's former lawyer formally withdraws. Judge may discuss scheduling/zoom.</td></tr>
-  <tr style="background: rgba(248,81,73,0.08);"><td><strong>Apr 21</strong></td><td>Wave 2 filing</td><td>E-file 6 documents via Odyssey. Serve Tarara via email same day.</td></tr>
-  <tr><td>Apr 21&ndash;May 4</td><td>Optional</td><td>Settlement letter to Tarara. Motion to Modify Support if not filed.</td></tr>
-  <tr style="background: rgba(248,81,73,0.15);"><td><strong>May 5 @ 1:30 PM</strong></td><td>HEARING &mdash; Contempt + Rule to Show Cause</td><td>Appear (zoom or in person). Body attachment if absent. Present contrast. Request settlement conference.</td></tr>
-  <tr><td>Post-May 5</td><td>ARDC complaint</td><td>File against Tarara (and potentially Conniff).</td></tr>
-  <tr><td>Post-May 5</td><td>Subpoenas</td><td>Deploy to banks if Motion to Compel not complied with.</td></tr>
-</table>
-
-<!-- ========== LEGAL DOCTRINES ========== -->
-<h2>Key Legal Doctrines</h2>
-
-<table>
-  <tr><th>Doctrine</th><th>Application</th><th>Key Case/Statute</th></tr>
-  <tr><td>Not Willful Contempt</td><td>Joel DID pay ($142K) and CANNOT pay more ($0 income)</td><td><em>In re Marriage of Sharp</em>, 2014 IL App (2d) 130547</td></tr>
-  <tr><td>Impossibility / Inability</td><td>$0 income since Dec 2025, employer-initiated termination</td><td><em>In re Marriage of Logston</em>, 103 Ill. 2d 266</td></tr>
-  <tr><td>Unclean Hands</td><td>Counsel's workplace subpoena caused income loss</td><td>Equitable doctrine</td></tr>
-  <tr><td>Perjurious Affidavit</td><td>4 material falsehoods in sworn financial disclosure</td><td>735 ILCS 5/1-109; Rule 137</td></tr>
-  <tr><td>Due Process</td><td>Cannot deprive liberty based on records opposing party withholds</td><td><em>Turner v. Rogers</em>, 564 U.S. 431</td></tr>
-  <tr><td>Full Disclosure Duty</td><td>11 months nondisclosure of $270K+ in assets</td><td>750 ILCS 5/501(a)(3), 503</td></tr>
-  <tr><td>Tortious Interference</td><td>Opposing counsel contacted employer; led to termination</td><td>Separate future action</td></tr>
-</table>
-
-<!-- ========== OPEN QUESTIONS ========== -->
-<h2>Open Questions &mdash; Must Confirm Before May 5</h2>
-
-<div class="card">
-  <ul>
-    <li>Was Motion to Modify Support filed in Friday's Wave 1? If not, draft and file before May 5.</li>
-    <li>Has zoom appearance request been ruled on? Backup plan for physical appearance?</li>
-    <li>Do you have the original agreed order text to confirm $10K/month deposit requirement?</li>
-    <li>Do you have her email to Elena Cociug (Oct 4, 2024) as a standalone exhibit?</li>
-    <li>Original Mercedes lease terms (to prove $1,800 is one payment, not total balance)?</li>
-    <li>Employment contract from Eisler showing material stress clause?</li>
-  </ul>
-</div>
-
-<p style="text-align: center; color: #8b949e; margin-top: 32px; font-size: 0.85em;">
-  Generated April 19, 2026 &mdash; For strategic reference only, not for filing
-</p>
-
+(async function autoDecrypt() {
+  const storedKey = sessionStorage.getItem(SESSION_KEY);
+  if (!storedKey) return;
+  try {
+    document.getElementById('gate-msg').textContent = 'Authenticating...';
+    document.getElementById('pw').style.display = 'none';
+    document.querySelector('button').style.display = 'none';
+    const html = await decryptWithPassword(storedKey);
+    document.open();
+    document.write(html);
+    document.close();
+  } catch (e) {
+    document.getElementById('gate-msg').textContent = 'Session expired. Enter the access key.';
+    document.getElementById('pw').style.display = '';
+    document.querySelector('button').style.display = '';
+    sessionStorage.removeItem(SESSION_KEY);
+  }
+})();
+</script>
 </body>
 </html>
