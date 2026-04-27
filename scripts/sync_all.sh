@@ -41,7 +41,7 @@ if [[ -z "$PASSWORD" ]]; then
     echo ""
 fi
 
-CONTACTS_DIR="$HOME/contacts"
+CONTACTS_DIR="$HOME/GitHub/contacts"
 ENCRYPT_TOOL="$CONTACTS_DIR/tools/encrypt_page.py"
 
 # ── Step 1: Contacts pages ────────────────────────────────
