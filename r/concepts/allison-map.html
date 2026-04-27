@@ -1,0 +1,228 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Allison Hensgen — Information Map</title>
+<style>
+:root { --bg: #07070f; --surface: rgba(255,255,255,0.035); --border: rgba(255,255,255,0.07); --text: #e8e8f4; --muted: rgba(232,232,244,0.45); --dim: rgba(232,232,244,0.25); --accent: #7aa2f7; }
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body { background: var(--bg); color: var(--text); font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; padding: 1.5rem; }
+.container { max-width: 1000px; margin: 0 auto; }
+h1 { font-size: 1.4rem; font-weight: 200; margin-bottom: 0.2rem; }
+h1 strong { font-weight: 600; background: linear-gradient(140deg, #fff 20%, #bb9af7 60%, #7aa2f7); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
+.subtitle { font-size: 0.78rem; color: var(--muted); margin-bottom: 1.5rem; }
+h2 { font-size: 0.6rem; letter-spacing: 0.3em; text-transform: uppercase; color: var(--accent); margin: 2rem 0 0.8rem; display: flex; align-items: center; gap: 0.8rem; }
+h2::after { content: ''; flex: 1; height: 1px; background: var(--border); }
+.stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: 0.6rem; margin-bottom: 1.5rem; }
+.stat { background: var(--surface); border: 1px solid var(--border); border-radius: 8px; padding: 0.8rem; text-align: center; }
+.stat .num { font-size: 1.3rem; font-weight: 700; font-family: 'SF Mono', Menlo, monospace; color: #bb9af7; }
+.stat .label { font-size: 0.58rem; color: var(--muted); text-transform: uppercase; letter-spacing: 0.06em; margin-top: 0.1rem; }
+.chart-box { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 1rem; margin-bottom: 1rem; position: relative; }
+.chart-title { font-size: 0.72rem; font-weight: 600; color: var(--muted); margin-bottom: 0.5rem; }
+canvas { width: 100%; display: block; cursor: crosshair; }
+#tooltip { position: absolute; background: rgba(20,20,35,0.95); border: 1px solid rgba(122,162,247,0.3); border-radius: 8px; padding: 10px 12px; font-size: 0.72rem; pointer-events: none; display: none; z-index: 10; max-width: 300px; line-height: 1.5; backdrop-filter: blur(8px); }
+#tooltip .tt-type { font-size: 0.6rem; color: #bb9af7; text-transform: uppercase; letter-spacing: 0.05em; }
+#tooltip .tt-title { font-weight: 600; margin: 2px 0; }
+#tooltip .tt-preview { color: var(--muted); font-size: 0.68rem; }
+.legend { display: flex; flex-wrap: wrap; gap: 12px; margin: 8px 0; font-size: 0.7rem; }
+.legend-item { display: flex; align-items: center; gap: 5px; color: var(--muted); }
+.legend-dot { width: 8px; height: 8px; border-radius: 50%; }
+.chart-row { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
+@media (max-width: 700px) { .chart-row { grid-template-columns: 1fr; } }
+</style>
+</head>
+<body>
+<div class="container">
+<h1><strong>Allison Hensgen</strong> — Information Map</h1>
+<p class="subtitle">109 vectors across 768 dimensions, projected to 2D via PCA. Every dot is a document chunk that mentions or relates to Allison.</p>
+
+<div class="stats" id="stats"></div>
+
+<h2>Semantic Space — PCA Projection</h2>
+<div class="chart-box" style="position:relative;">
+  <div class="chart-title">768-dim → 2D projection. Nearby points are semantically similar. Hover for details.</div>
+  <canvas id="scatter" height="500"></canvas>
+  <div id="tooltip"></div>
+  <div class="legend" id="legend"></div>
+</div>
+
+<h2>Content Breakdown</h2>
+<div class="chart-row">
+  <div class="chart-box"><div class="chart-title">By Source Type</div><canvas id="donut-type" height="260"></canvas></div>
+  <div class="chart-box"><div class="chart-title">By Collection</div><canvas id="donut-col" height="260"></canvas></div>
+</div>
+
+<h2>Timeline</h2>
+<div class="chart-box"><div class="chart-title">Documents over time (by date field)</div><canvas id="timeline" height="200"></canvas></div>
+
+<p style="font-size:0.6rem; color:var(--dim); margin-top:1.5rem; text-align:center;">
+  109 points × 768 dimensions = 83,712 continuous dimensions mapped to Allison Hensgen<br>
+  Generated 2026-04-27 | PCA computed from cosine-embedded vectors (Qdrant)
+</p>
+</div>
+
+<script>
+const DATA = [{"col":"legal_docs","type":"email_attachment","title":"dual_prime_brain__Copy__Allison_Edits.pdf","date":"2025-11-07","preview":"# dual_prime_brain__Copy__Allison_Edits.pdf  Dual-Brain AI: p-Adic Coherence Architecture for Resilient Learning and Dec","nx":0.6113,"ny":0.8871},{"col":"legal_docs","type":"email_attachment","title":"null_quantum__Copy__Allison_Edits.pdf","date":"2025-10-29","preview":"B.6 6. Period Integrals and Quantization The holomorphic 3-form Ωacts as a global wave function. Integrating Ωover a sym","nx":0.8921,"ny":0.0759},{"col":"legal_docs","type":"email_attachment","title":"dual_prime_brain__Copy__Allison_Edits.pdf","date":"2025-10-29","preview":"# dual_prime_brain__Copy__Allison_Edits.pdf  Dual-Brain AI: p-Adic Coherence Architecture for Resilient Learning and Dec","nx":0.6102,"ny":0.8868},{"col":"legal_docs","type":"email","title":"\"quantum_gravity (Copy) Allison Edits\" — shared by bohoecoboutique@gmail.com","date":"2025-10-27","preview":"# \"quantum_gravity (Copy) Allison Edits\" — shared by bohoecoboutique@gmail.com  **From:** Overleaf <welcome@overleaf.com","nx":0.3488,"ny":0.0882},{"col":"legal_docs","type":"pdf","title":"20251029 092Ff5D9 Null Quantum  Copy  Allison Edits","date":"2025-10-29","preview":"# 20251029 092Ff5D9 Null Quantum  Copy  Allison Edits  Resonance Entanglement: Coherence Beyond Quantization Ryan M. Dua","nx":0.9189,"ny":0.141},{"col":"legal_docs","type":"json","title":"We had a baby today!","date":"2013-07-31","preview":"# We had a baby today!  ```json {   \"date_utc\": \"2013-07-31T00:56:53+00:00\",   \"subject\": \"We had a baby today!\",   \"fro","nx":0.0999,"ny":0.1242},{"col":"legal_docs","type":"md","title":"2013 07 31 00 56 We Had A Baby Today","date":"2013-07-31","preview":"# 2013 07 31 00 56 We Had A Baby Today  # We had a baby today!  **Date:** 2013-07-31T00:56:53Z   **From:** Erica Wygonik","nx":0.0249,"ny":0.1269},{"col":"legal_docs","type":"pdf","title":"20251029 D52B59C3 Quantum Gravity  Copy  Allison Edits","date":"2025-10-29","preview":"# 20251029 D52B59C3 Quantum Gravity  Copy  Allison Edits  Sovereign Coherence Unification of Quantum Gravity: Determinis","nx":0.9094,"ny":0.1987},{"col":"legal_docs","type":"email_attachment","title":"null_quantum__Copy__Allison_Edits.pdf","date":"2025-10-29","preview":"# null_quantum__Copy__Allison_Edits.pdf  Resonance Entanglement: Coherence Beyond Quantization Ryan M. Duarte1 Joel L. M","nx":0.9149,"ny":0.159},{"col":"legal_docs","type":"email","title":"It's a go for Labor Day Weekend!","date":"2011-05-31","preview":"# It's a go for Labor Day Weekend!  **From:** Kristen Garner <kristen.m.garner@gmail.com>   **To:** Allison Henrich <all","nx":0.0734,"ny":0.1294},{"col":"legal_docs","type":"pdf","title":"20251029 D52B59C3 Quantum Gravity  Copy  Allison Edits","date":"2025-10-29","preview":"---  3 Existence, Reflection Positivity, and Reconstruction, sketch 3.1 Euclideanization and OS Sector Perform Wick rota","nx":0.9295,"ny":0.1538},{"col":"legal_docs","type":"email_attachment","title":"dual_prime_brain__Copy__Allison_Edits.pdf","date":"2025-11-07","preview":"4.2 Audit and reversibility Every symbolic decision path is auditable through {wi,t}. Unlearning corresponds to decremen","nx":0.6511,"ny":1},{"col":"legal_docs","type":"email","title":"Re: Getting the band back together - Memorial Day weekend on the Cape","date":"2011-05-19","preview":"# Re: Getting the band back together - Memorial Day weekend on the Cape  **From:** Allison Henrich <allisonhenrich@gmail","nx":0.0795,"ny":0.0104},{"col":"legal_docs","type":"pdf","title":"20251029 D52B59C3 Quantum Gravity  Copy  Allison Edits","date":"2025-10-29","preview":"---  14 Resolution of the Quantum Gravity Paradox 10 14.1 Background Independence . . . . . . . . . . . . . . . . . . . ","nx":0.2095,"ny":0.2232},{"col":"legal_docs","type":"pdf","title":"20251029 D52B59C3 Quantum Gravity  Copy  Allison Edits","date":"2025-10-29","preview":"---  9.2 No Massless Gravitons Strict convexity implies λ0 > 0 ⇒mgrav > 0, eliminating infrared divergences. 9.3 Unified","nx":0.9185,"ny":0.1017},{"col":"legal_docs","type":"email_attachment","title":"null_quantum__Copy__Allison_Edits.pdf","date":"2025-10-29","preview":"B.6 6. Period Integrals and Quantization The holomorphic 3-form Ωacts as a global wave function. Integrating Ωover a sym","nx":0.8921,"ny":0.0759},{"col":"legal_docs","type":"json","title":"\"quantum_gravity (Copy) Allison Edits\"  —  shared by bohoecoboutique@gmail.com","date":"2025-10-27","preview":"# \"quantum_gravity (Copy) Allison Edits\"  —  shared by bohoecoboutique@gmail.com  ```json {   \"date_utc\": \"2025-10-27T20","nx":0.367,"ny":0.1247},{"col":"legal_docs","type":"email_attachment","title":"quantum_gravity__Copy__Allison_Edits.pdf","date":"2025-10-29","preview":"3 Existence, Reflection Positivity, and Reconstruction, sketch 3.1 Euclideanization and OS Sector Perform Wick rotation ","nx":0.9712,"ny":0.181},{"col":"legal_docs","type":"pdf","title":"20251029 D52B59C3 Quantum Gravity  Copy  Allison Edits","date":"2025-10-29","preview":"# 20251029 D52B59C3 Quantum Gravity  Copy  Allison Edits","nx":0.2135,"ny":0.1943},{"col":"legal_docs","type":"email_attachment","title":"null_quantum__Copy__Allison_Edits.pdf","date":"2025-10-29","preview":"10 Conclusion Resonance entanglement reframes the foundations of physics and language alike. The discrete world of quant","nx":0.9728,"ny":0.1441},{"col":"legal_docs","type":"email_attachment","title":"quantum_gravity__Copy__Allison_Edits.pdf","date":"2025-10-29","preview":"2 Geometric and Quantum Configuration and Invariants 2.1 Tetrad and Spin Connection Work on an oriented, time orientable","nx":0.8256,"ny":0.2148},{"col":"legal_docs","type":"pdf","title":"20251029 092Ff5D9 Null Quantum  Copy  Allison Edits","date":"2025-10-29","preview":"---  5 Mirror Duality as Phase–Amplitude Projection Mirror symmetry exchanges complex and K¨ahler moduli. In the resonan","nx":0.974,"ny":0.0885},{"col":"legal_docs","type":"email","title":"Re: It's a go for Labor Day Weekend!","date":"2011-08-17","preview":"# Re: It's a go for Labor Day Weekend!  **From:** Allison Henrich <allisonhenrich@gmail.com>   **To:** Joel Thorarinson ","nx":0,"ny":0.0754},{"col":"legal_docs","type":"pdf","title":"20251029 092Ff5D9 Null Quantum  Copy  Allison Edits","date":"2025-10-29","preview":"---  • The ultraviolet divergences of quantum field theory emerge from treating a projected, discrete lattice as fundame","nx":0.972,"ny":0.1676},{"col":"legal_docs","type":"email_attachment","title":"quantum_gravity__Copy__Allison_Edits.pdf","date":"2025-10-29","preview":"# quantum_gravity__Copy__Allison_Edits.pdf  Sovereign Coherence Unification of Quantum Gravity: Deterministic Emergence ","nx":0.8926,"ny":0.1636},{"col":"legal_docs","type":"email_attachment","title":"dual_prime_brain__Copy__Allison_Edits.pdf","date":"2025-11-07","preview":"3 Construction of the Dual-Brain Architecture 3.1 State, ledger, and outputs Let St ∈Rd, Lt ∈Z with K tracked primes, an","nx":0.542,"ny":0.8962},{"col":"legal_docs","type":"email_attachment","title":"dual_prime_brain__Copy__Allison_Edits.pdf","date":"2025-11-07","preview":"3 Construction of the Dual-Brain Architecture 3.1 State, ledger, and outputs Let St ∈Rd, Lt ∈Z with K tracked primes, an","nx":0.542,"ny":0.8962},{"col":"legal_docs","type":"pdf","title":"20251029 092Ff5D9 Null Quantum  Copy  Allison Edits","date":"2025-10-29","preview":"---  [3] D. Bohm, A Suggested Interpretation of the Quantum Theory in Terms of “Hidden” Variables I and II, Physical Rev","nx":0.3036,"ny":0.3737},{"col":"legal_docs","type":"email","title":"\"P_NP (Copy) Allison Edits\" — shared by bohoecoboutique@gmail.com","date":"2025-10-27","preview":"# \"P_NP (Copy) Allison Edits\" — shared by bohoecoboutique@gmail.com  **From:** Overleaf <welcome@overleaf.com>   **To:**","nx":0.1039,"ny":0.1657},{"col":"legal_docs","type":"json","title":"\"null_quantum (Copy) Allison Edits\"  —  shared by bohoecoboutique@gmail.com","date":"2025-10-28","preview":"# \"null_quantum (Copy) Allison Edits\"  —  shared by bohoecoboutique@gmail.com  ```json {   \"date_utc\": \"2025-10-28T00:09","nx":0.2989,"ny":0.2019},{"col":"legal_docs","type":"email","title":"Re: Getting the band back together - Memorial Day weekend on the Cape","date":"2011-05-19","preview":"# Re: Getting the band back together - Memorial Day weekend on the Cape  **From:** Allison Henrich <allisonhenrich@gmail","nx":0.0795,"ny":0.0104},{"col":"legal_docs","type":"email_attachment","title":"quantum_gravity__Copy__Allison_Edits.pdf","date":"2025-10-29","preview":"1 Sovereign Coherence Axiom and Roadmap 1.1 Axiom: Coherence Descent on Invariant Configuration Space Let F denote the s","nx":0.9762,"ny":0.1609},{"col":"legal_docs","type":"pdf","title":"20251029 D52B59C3 Quantum Gravity  Copy  Allison Edits","date":"2025-10-29","preview":"---  7 The Unified Coherence Functional 7.1 Definition Φtotal[g, A] = Z M (α Cgrav + β CYM + γ Ccross)√g d4x, with each ","nx":0.9011,"ny":0.1406},{"col":"legal_docs","type":"pdf","title":"20251029 D52B59C3 Quantum Gravity  Copy  Allison Edits","date":"2025-10-29","preview":"---  3 Existence, Reflection Positivity, and Reconstruction, sketch 6 3.1 Euclideanization and OS Sector . . . . . . . .","nx":0.209,"ny":0.2202},{"col":"legal_docs","type":"email_attachment","title":"dual_prime_brain__Copy__Allison_Edits.pdf","date":"2025-10-29","preview":"3 Construction of the Dual-Brain Architecture 3.1 State, ledger, and outputs Let St ∈Rd, Lt ∈Z with K tracked primes, an","nx":0.542,"ny":0.8962},{"col":"legal_docs","type":"email_attachment","title":"null_quantum__Copy__Allison_Edits.pdf","date":"2025-10-29","preview":"10 Conclusion Resonance entanglement reframes the foundations of physics and language alike. The discrete world of quant","nx":0.9728,"ny":0.1441},{"col":"legal_docs","type":"pdf","title":"20251029 092Ff5D9 Null Quantum  Copy  Allison Edits","date":"2025-10-29","preview":"---  • The ultraviolet divergences of quantum field theory emerge from treating a projected, discrete lattice as fundame","nx":0.972,"ny":0.1676},{"col":"legal_docs","type":"email_attachment","title":"null_quantum__Copy__Allison_Edits.pdf","date":"2025-10-29","preview":"• The ultraviolet divergences of quantum field theory emerge from treating a projected, discrete lattice as fundamental.","nx":0.9879,"ny":0.1863},{"col":"legal_docs","type":"email_attachment","title":"null_quantum__Copy__Allison_Edits.pdf","date":"2025-10-29","preview":"5 Mirror Duality as Phase–Amplitude Projection Mirror symmetry exchanges complex and K¨ahler moduli. In the resonance fr","nx":1,"ny":0.126},{"col":"legal_docs","type":"pdf","title":"20251029 D52B59C3 Quantum Gravity  Copy  Allison Edits","date":"2025-10-29","preview":"---  5 Coherence Geometry of Spacetime Fields 5.1 Metric Field as a Coherence Substrate Let (M, gµν) be a four-dimension","nx":0.924,"ny":0.1663},{"col":"legal_docs","type":"email_attachment","title":"null_quantum__Copy__Allison_Edits.pdf","date":"2025-10-29","preview":"where K encodes nonlocal resonance coupling. Self-consistent solutions satisfy: ˆCΨ = λΨ, with continuous eigenvalues λ ","nx":0.996,"ny":0.1952},{"col":"legal_docs","type":"pdf","title":"20251029 092Ff5D9 Null Quantum  Copy  Allison Edits","date":"2025-10-29","preview":"# 20251029 092Ff5D9 Null Quantum  Copy  Allison Edits  Resonance Entanglement: Coherence Beyond Quantization Ryan M. Dua","nx":0.9189,"ny":0.141},{"col":"legal_docs","type":"email_attachment","title":"quantum_gravity__Copy__Allison_Edits.pdf","date":"2025-10-29","preview":"3 Existence, Reflection Positivity, and Reconstruction, sketch 6 3.1 Euclideanization and OS Sector . . . . . . . . . . ","nx":0.2364,"ny":0.2391},{"col":"legal_docs","type":"email_attachment","title":"null_quantum__Copy__Allison_Edits.pdf","date":"2025-10-29","preview":"# null_quantum__Copy__Allison_Edits.pdf  Resonance Entanglement: Coherence Beyond Quantization Ryan M. Duarte1 Joel L. M","nx":0.9149,"ny":0.159},{"col":"legal_docs","type":"pdf","title":"20251029 092Ff5D9 Null Quantum  Copy  Allison Edits","date":"2025-10-29","preview":"---  B.2 2. Basic Definitions A Calabi–Yau manifold is a compact, complex K¨ahler manifold XCY satisfying two con- ditio","nx":0.7673,"ny":0.0937},{"col":"legal_docs","type":"email_attachment","title":"quantum_gravity__Copy__Allison_Edits.pdf","date":"2025-10-29","preview":"7 The Unified Coherence Functional 7.1 Definition Φtotal[g, A] = Z M (α Cgrav + β CYM + γ Ccross)√g d4x, with each term ","nx":0.916,"ny":0.1838},{"col":"legal_docs","type":"email_attachment","title":"dual_prime_brain__Copy__Allison_Edits.pdf","date":"2025-10-29","preview":"# dual_prime_brain__Copy__Allison_Edits.pdf","nx":0.3534,"ny":0.5355},{"col":"legal_docs","type":"json","title":"We had a baby today!","date":"2013-07-31","preview":"# We had a baby today!  ```json {   \"date_utc\": \"2013-07-31T00:56:53+00:00\",   \"subject\": \"We had a baby today!\",   \"fro","nx":0.0991,"ny":0.1238},{"col":"legal_docs","type":"pdf","title":"20251029 092Ff5D9 Null Quantum  Copy  Allison Edits","date":"2025-10-29","preview":"---  10 Conclusion Resonance entanglement reframes the foundations of physics and language alike. The discrete world of ","nx":0.9348,"ny":0.1143},{"col":"legal_docs","type":"email","title":"Fw: Save the date October 8th 2016  50th Wedding Anniversary!!","date":"2016-08-17","preview":"# Fw: Save the date October 8th 2016  50th Wedding Anniversary!!  **From:** Sonja Kornik <skornik@mymts.net>   **To:** C","nx":0.0753,"ny":0.1666},{"col":"legal_docs","type":"pdf","title":"20251029 D52B59C3 Quantum Gravity  Copy  Allison Edits","date":"2025-10-29","preview":"---  2 Geometric and Quantum Configuration and Invariants 2.1 Tetrad and Spin Connection Work on an oriented, time orien","nx":0.7865,"ny":0.1937},{"col":"legal_docs","type":"pdf","title":"20251029 092Ff5D9 Null Quantum  Copy  Allison Edits","date":"2025-10-29","preview":"---  B.6 6. Period Integrals and Quantization The holomorphic 3-form Ωacts as a global wave function. Integrating Ωover ","nx":0.8544,"ny":0.0685},{"col":"legal_docs","type":"email_attachment","title":"quantum_gravity__Copy__Allison_Edits.pdf","date":"2025-10-29","preview":"18 Empirical Validation Pathway (C9) 18.1 Computational Experiments We propose direct numerical validation through: 1. L","nx":0.8599,"ny":0.3024},{"col":"legal_docs","type":"email_attachment","title":"quantum_gravity__Copy__Allison_Edits.pdf","date":"2025-10-29","preview":"13 Einstein Field Equations as Fixed Points of Coherence Flow 13.1 Variation and Fixed Points δC δgµν = α(Rµν −1 2gµνR) ","nx":0.854,"ny":0.1233},{"col":"legal_docs","type":"email_attachment","title":"dual_prime_brain__Copy__Allison_Edits.pdf","date":"2025-10-29","preview":"B Coherence–Descent Operator We consider a block coordinate descent with projected integer steps on {wi} and standard gr","nx":0.6266,"ny":0.8353},{"col":"legal_docs","type":"pdf","title":"20251029 D52B59C3 Quantum Gravity  Copy  Allison Edits","date":"2025-10-29","preview":"---  13 Einstein Field Equations as Fixed Points of Coherence Flow 13.1 Variation and Fixed Points δC δgµν = α(Rµν −1 2g","nx":0.8178,"ny":0.0968},{"col":"legal_docs","type":"email_attachment","title":"null_quantum__Copy__Allison_Edits.pdf","date":"2025-10-29","preview":"• The ultraviolet divergences of quantum field theory emerge from treating a projected, discrete lattice as fundamental.","nx":0.9879,"ny":0.1863},{"col":"legal_docs","type":"email_attachment","title":"null_quantum__Copy__Allison_Edits.pdf","date":"2025-10-29","preview":"B.2 2. Basic Definitions A Calabi–Yau manifold is a compact, complex K¨ahler manifold XCY satisfying two con- ditions: 1","nx":0.7829,"ny":0.1017},{"col":"legal_docs","type":"email","title":"Getting the band back together - Memorial Day weekend on the Cape","date":"2011-05-19","preview":"# Getting the band back together - Memorial Day weekend on the Cape  **From:** Kristen Garner <kristen.m.garner@gmail.co","nx":0.0758,"ny":0},{"col":"legal_docs","type":"email_attachment","title":"null_quantum__Copy__Allison_Edits.pdf","date":"2025-10-29","preview":"where K encodes nonlocal resonance coupling. Self-consistent solutions satisfy: ˆCΨ = λΨ, with continuous eigenvalues λ ","nx":0.996,"ny":0.1952},{"col":"legal_docs","type":"json","title":"\"dual_prime_brain (Copy) Allison Edits\"  —  shared by bohoecoboutique@gmail.com","date":"2025-10-28","preview":"# \"dual_prime_brain (Copy) Allison Edits\"  —  shared by bohoecoboutique@gmail.com  ```json {   \"date_utc\": \"2025-10-28T0","nx":0.2302,"ny":0.4175},{"col":"legal_docs","type":"email_attachment","title":"dual_prime_brain__Copy__Allison_Edits.pdf","date":"2025-11-07","preview":"B Coherence–Descent Operator We consider a block coordinate descent with projected integer steps on {wi} and standard gr","nx":0.6266,"ny":0.8353},{"col":"legal_docs","type":"email","title":"We had a baby today!","date":"2013-07-30","preview":"# We had a baby today!  **From:** Erica Wygonik <ewygonik@gmail.com>   **To:** Rhona Dallison <rhona.dallison@gmail.com>","nx":0.0226,"ny":0.1199},{"col":"legal_docs","type":"email_attachment","title":"quantum_gravity__Copy__Allison_Edits.pdf","date":"2025-10-29","preview":"Clay Millennium Problem Compliance Checklist This confirms that the Navier–Stokes, Yang–Mills, and Quantum Gravity resul","nx":0.8191,"ny":0.2068},{"col":"legal_docs","type":"pdf","title":"20251029 D52B59C3 Quantum Gravity  Copy  Allison Edits","date":"2025-10-29","preview":"---  1 Sovereign Coherence Axiom and Roadmap 1.1 Axiom: Coherence Descent on Invariant Configuration Space Let F denote ","nx":0.9199,"ny":0.13},{"col":"legal_docs","type":"pdf","title":"20251029 092Ff5D9 Null Quantum  Copy  Allison Edits","date":"2025-10-29","preview":"---  where K encodes nonlocal resonance coupling. Self-consistent solutions satisfy: ˆCΨ = λΨ, with continuous eigenvalu","nx":0.9841,"ny":0.1986},{"col":"legal_docs","type":"pdf","title":"20251029 092Ff5D9 Null Quantum  Copy  Allison Edits","date":"2025-10-29","preview":"---","nx":0.2058,"ny":0.1333},{"col":"legal_docs","type":"email","title":"Re: It's a go for Labor Day Weekend!","date":"2011-08-18","preview":"# Re: It's a go for Labor Day Weekend!  **From:** Chris Peters <pyite3@gmail.com>   **To:** Allison Henrich <allisonhenr","nx":0.0037,"ny":0.0693},{"col":"legal_docs","type":"email_attachment","title":"dual_prime_brain__Copy__Allison_Edits.pdf","date":"2025-11-07","preview":"1 Foundations 1.1 Motivation Modern deep learning systems excel in high-bandwidth pattern formation but struggle with lo","nx":0.6837,"ny":0.988},{"col":"legal_docs","type":"email_attachment","title":"dual_prime_brain__Copy__Allison_Edits.pdf","date":"2025-11-07","preview":"1 Foundations 1.1 Motivation Modern deep learning systems excel in high-bandwidth pattern formation but struggle with lo","nx":0.6837,"ny":0.988},{"col":"legal_docs","type":"json","title":"\"P_NP (Copy) Allison Edits\"  —  shared by bohoecoboutique@gmail.com","date":"2025-10-27","preview":"# \"P_NP (Copy) Allison Edits\"  —  shared by bohoecoboutique@gmail.com  ```json {   \"date_utc\": \"2025-10-27T21:24:28+00:0","nx":0.1358,"ny":0.216},{"col":"legal_docs","type":"email_attachment","title":"quantum_gravity__Copy__Allison_Edits.pdf","date":"2025-10-29","preview":"# quantum_gravity__Copy__Allison_Edits.pdf","nx":0.5125,"ny":0.1029},{"col":"legal_docs","type":"pdf","title":"20251029 092Ff5D9 Null Quantum  Copy  Allison Edits","date":"2025-10-29","preview":"---  where K encodes nonlocal resonance coupling. Self-consistent solutions satisfy: ˆCΨ = λΨ, with continuous eigenvalu","nx":0.9841,"ny":0.1986},{"col":"legal_docs","type":"email_attachment","title":"dual_prime_brain__Copy__Allison_Edits.pdf","date":"2025-10-29","preview":"1 Foundations 1.1 Motivation Modern deep learning systems excel in high-bandwidth pattern formation but struggle with lo","nx":0.6837,"ny":0.988},{"col":"legal_docs","type":"pdf","title":"20251029 092Ff5D9 Null Quantum  Copy  Allison Edits","date":"2025-10-29","preview":"---  5 Mirror Duality as Phase–Amplitude Projection Mirror symmetry exchanges complex and K¨ahler moduli. In the resonan","nx":0.974,"ny":0.0885},{"col":"legal_docs","type":"email_attachment","title":"dual_prime_brain__Copy__Allison_Edits.pdf","date":"2025-11-07","preview":"# dual_prime_brain__Copy__Allison_Edits.pdf","nx":0.3534,"ny":0.5355},{"col":"legal_docs","type":"pdf","title":"20251029 092Ff5D9 Null Quantum  Copy  Allison Edits","date":"2025-10-29","preview":"---  [3] D. Bohm, A Suggested Interpretation of the Quantum Theory in Terms of “Hidden” Variables I and II, Physical Rev","nx":0.3036,"ny":0.3737},{"col":"legal_docs","type":"pdf","title":"20251029 D52B59C3 Quantum Gravity  Copy  Allison Edits","date":"2025-10-29","preview":"---","nx":0.2058,"ny":0.1333},{"col":"legal_docs","type":"email","title":"Re: It's a go for Labor Day Weekend!","date":"2011-08-17","preview":"# Re: It's a go for Labor Day Weekend!  **From:** Allison Henrich <allisonhenrich@gmail.com>   **To:** Joel Thorarinson ","nx":0,"ny":0.0754},{"col":"legal_docs","type":"email","title":"Re: Getting the band back together - Memorial Day weekend on the Cape","date":"2011-05-19","preview":"# Re: Getting the band back together - Memorial Day weekend on the Cape  **From:** Chris Peters <pyite3@gmail.com>   **T","nx":0.0717,"ny":0.0463},{"col":"legal_docs","type":"email_attachment","title":"dual_prime_brain__Copy__Allison_Edits.pdf","date":"2025-11-07","preview":"B Coherence–Descent Operator We consider a block coordinate descent with projected integer steps on {wi} and standard gr","nx":0.6266,"ny":0.8353},{"col":"legal_docs","type":"pdf","title":"20251029 D52B59C3 Quantum Gravity  Copy  Allison Edits","date":"2025-10-29","preview":"---  15.2 Emergent Coupling Constants Effective couplings arise from eigenvalue ratios, G G0 = λgrav λ0 , gi g0 = λi λ0 ","nx":0.8923,"ny":0.1816},{"col":"legal_docs","type":"email","title":"Re: Getting the band back together - Memorial Day weekend on the Cape","date":"2011-05-19","preview":"# Re: Getting the band back together - Memorial Day weekend on the Cape  **From:** Chris Peters <pyite3@gmail.com>   **T","nx":0.0717,"ny":0.0463},{"col":"legal_docs","type":"email","title":"\"dual_prime_brain (Copy) Allison Edits\" — shared by bohoecoboutique@gmail.com","date":"2025-10-28","preview":"# \"dual_prime_brain (Copy) Allison Edits\" — shared by bohoecoboutique@gmail.com  **From:** Overleaf <welcome@overleaf.co","nx":0.2172,"ny":0.3821},{"col":"legal_docs","type":"email_attachment","title":"null_quantum__Copy__Allison_Edits.pdf","date":"2025-10-29","preview":"B.2 2. Basic Definitions A Calabi–Yau manifold is a compact, complex K¨ahler manifold XCY satisfying two con- ditions: 1","nx":0.7829,"ny":0.1017},{"col":"legal_docs","type":"pdf","title":"20251029 D52B59C3 Quantum Gravity  Copy  Allison Edits","date":"2025-10-29","preview":"---  Clay Millennium Problem Compliance Checklist This confirms that the Navier–Stokes, Yang–Mills, and Quantum Gravity ","nx":0.8069,"ny":0.2005},{"col":"legal_docs","type":"pdf","title":"20251029 092Ff5D9 Null Quantum  Copy  Allison Edits","date":"2025-10-29","preview":"---  B.6 6. Period Integrals and Quantization The holomorphic 3-form Ωacts as a global wave function. Integrating Ωover ","nx":0.8544,"ny":0.0685},{"col":"legal_docs","type":"email_attachment","title":"quantum_gravity__Copy__Allison_Edits.pdf","date":"2025-10-29","preview":"9.2 No Massless Gravitons Strict convexity implies λ0 > 0 ⇒mgrav > 0, eliminating infrared divergences. 9.3 Unified Mass","nx":0.9594,"ny":0.1551},{"col":"legal_docs","type":"pdf","title":"20251029 092Ff5D9 Null Quantum  Copy  Allison Edits","date":"2025-10-29","preview":"---  B.2 2. Basic Definitions A Calabi–Yau manifold is a compact, complex K¨ahler manifold XCY satisfying two con- ditio","nx":0.7673,"ny":0.0937},{"col":"legal_docs","type":"email_attachment","title":"null_quantum__Copy__Allison_Edits.pdf","date":"2025-10-29","preview":"5 Mirror Duality as Phase–Amplitude Projection Mirror symmetry exchanges complex and K¨ahler moduli. In the resonance fr","nx":1,"ny":0.126},{"col":"legal_docs","type":"pdf","title":"20251029 D52B59C3 Quantum Gravity  Copy  Allison Edits","date":"2025-10-29","preview":"---  18 Empirical Validation Pathway (C9) 18.1 Computational Experiments We propose direct numerical validation through:","nx":0.8122,"ny":0.2574},{"col":"legal_docs","type":"email_attachment","title":"dual_prime_brain__Copy__Allison_Edits.pdf","date":"2025-11-07","preview":"# dual_prime_brain__Copy__Allison_Edits.pdf","nx":0.3534,"ny":0.5355},{"col":"legal_docs","type":"pdf","title":"20251029 092Ff5D9 Null Quantum  Copy  Allison Edits","date":"2025-10-29","preview":"---","nx":0.2058,"ny":0.1333},{"col":"legal_docs","type":"pdf","title":"20251029 092Ff5D9 Null Quantum  Copy  Allison Edits","date":"2025-10-29","preview":"---  10 Conclusion Resonance entanglement reframes the foundations of physics and language alike. The discrete world of ","nx":0.9348,"ny":0.1143},{"col":"legal_docs","type":"email_attachment","title":"null_quantum__Copy__Allison_Edits.pdf","date":"2025-10-29","preview":"[3] D. Bohm, A Suggested Interpretation of the Quantum Theory in Terms of “Hidden” Variables I and II, Physical Review, ","nx":0.3196,"ny":0.3901},{"col":"legal_docs","type":"email_attachment","title":"null_quantum__Copy__Allison_Edits.pdf","date":"2025-10-29","preview":"[3] D. Bohm, A Suggested Interpretation of the Quantum Theory in Terms of “Hidden” Variables I and II, Physical Review, ","nx":0.3196,"ny":0.3901},{"col":"legal_docs","type":"email_attachment","title":"quantum_gravity__Copy__Allison_Edits.pdf","date":"2025-10-29","preview":"15.2 Emergent Coupling Constants Effective couplings arise from eigenvalue ratios, G G0 = λgrav λ0 , gi g0 = λi λ0 , tyi","nx":0.9389,"ny":0.2162},{"col":"legal_docs","type":"email_attachment","title":"dual_prime_brain__Copy__Allison_Edits.pdf","date":"2025-11-07","preview":"4.2 Audit and reversibility Every symbolic decision path is auditable through {wi,t}. Unlearning corresponds to decremen","nx":0.6511,"ny":1},{"col":"legal_docs","type":"email_attachment","title":"quantum_gravity__Copy__Allison_Edits.pdf","date":"2025-10-29","preview":"5 Coherence Geometry of Spacetime Fields 5.1 Metric Field as a Coherence Substrate Let (M, gµν) be a four-dimensional, s","nx":0.9556,"ny":0.2008},{"col":"legal_docs","type":"json","title":"Re: It's a go for Labor Day Weekend!","date":"2011-08-17","preview":"# Re: It's a go for Labor Day Weekend!  ```json {   \"date_utc\": \"2011-08-18T01:32:45+00:00\",   \"subject\": \"Re: It's a go","nx":0.0873,"ny":0.1868},{"col":"legal_docs","type":"email_attachment","title":"dual_prime_brain__Copy__Allison_Edits.pdf","date":"2025-11-07","preview":"# dual_prime_brain__Copy__Allison_Edits.pdf  Dual-Brain AI: p-Adic Coherence Architecture for Resilient Learning and Dec","nx":0.6113,"ny":0.8871},{"col":"legal_docs","type":"email_attachment","title":"quantum_gravity__Copy__Allison_Edits.pdf","date":"2025-10-29","preview":"14 Resolution of the Quantum Gravity Paradox 10 14.1 Background Independence . . . . . . . . . . . . . . . . . . . . . .","nx":0.2299,"ny":0.249},{"col":"legal_docs","type":"email","title":"\"null_quantum (Copy) Allison Edits\" — shared by bohoecoboutique@gmail.com","date":"2025-10-28","preview":"# \"null_quantum (Copy) Allison Edits\" — shared by bohoecoboutique@gmail.com  **From:** Overleaf <welcome@overleaf.com>  ","nx":0.2797,"ny":0.1651},{"col":"legal_docs","type":"email_attachment","title":"dual_prime_brain__Copy__Allison_Edits.pdf","date":"2025-10-29","preview":"4.2 Audit and reversibility Every symbolic decision path is auditable through {wi,t}. Unlearning corresponds to decremen","nx":0.6511,"ny":1},{"col":"legal_docs","type":"email","title":"🗓 David Steenhoek's Zoom Meeting on January 28, 2026 | Read Meeting Report","date":"2026-01-28","preview":"• The platform (&quot;coherence engine&quot;) is a physics-based stability and verification layer that detects drift and","nx":0.6832,"ny":0.3815},{"col":"legal_docs","type":"txt","title":" Chat","date":"2025-01-07","preview":"**Text Footer:**  > From pure proof → applied coherence engine → cross-sector acceleration.  ---  ## **Slide 5 — Verific","nx":0.5186,"ny":0.3256},{"col":"legal_docs","type":"email","title":"\"Pilot At Waterloo\" meeting notes and AI answers are ready ✅","date":"2026-03-11","preview":"-------------------------- 3. Proposed Waterloo Pilot --------------------------  * Allison seeks 30-90 days of campus e","nx":0.5399,"ny":0.2956},{"col":"legal_docs","type":"email","title":"\"Pilot At Waterloo\" meeting notes and AI answers are ready ✅","date":"2026-03-11","preview":"-------------------------- 3. Proposed Waterloo Pilot --------------------------  * Allison seeks 30-90 days of campus e","nx":0.5399,"ny":0.2956},{"col":"claude_chats_ai","type":"claude_chats_ai","title":"","date":"","preview":"Human: Can you suggest the theory and content of what she is selling. Her instagram talks of akashic records and that au","nx":0.5364,"ny":0.2966}];
+
+const COLORS = { email_attachment:'#bb9af7', pdf:'#f7768e', email:'#7aa2f7', json:'#e0af68', md:'#9ece6a', txt:'#73daca', claude_chats_ai:'#ff9e64', whatsapp_chats:'#2ac3de', concepts:'#b4f9f8', directives:'#c0caf5' };
+const COL_COLORS = { legal_docs:'#7aa2f7', whatsapp_chats:'#2ac3de', concepts:'#b4f9f8', claude_chats_ai:'#ff9e64', directives:'#c0caf5' };
+
+// Stats
+const byType = {}, byCol = {};
+DATA.forEach(d => { byType[d.type] = (byType[d.type]||0)+1; byCol[d.col] = (byCol[d.col]||0)+1; });
+document.getElementById('stats').innerHTML = [
+  {num: DATA.length, label: 'Vector Points'},
+  {num: '83,712', label: 'Dimensions'},
+  {num: Object.keys(byType).length, label: 'Source Types'},
+  {num: Object.keys(byCol).length, label: 'Collections'},
+  {num: DATA.filter(d=>d.date).length, label: 'Dated'},
+].map(s => '<div class="stat"><div class="num">'+s.num+'</div><div class="label">'+s.label+'</div></div>').join('');
+
+// ── Scatter plot ──────────────────────────────────────
+function setupCanvas(id, h) {
+  const c = document.getElementById(id);
+  const dpr = window.devicePixelRatio || 1;
+  const rect = c.getBoundingClientRect();
+  c.width = rect.width * dpr; c.height = h * dpr;
+  c.style.height = h + 'px';
+  const ctx = c.getContext('2d');
+  ctx.scale(dpr, dpr);
+  return { ctx, W: rect.width, H: h, canvas: c };
+}
+
+const { ctx, W, H, canvas: scatterCanvas } = setupCanvas('scatter', 500);
+const pad = 40;
+
+function drawScatter() {
+  ctx.clearRect(0, 0, W, H);
+  // Grid
+  ctx.strokeStyle = 'rgba(255,255,255,0.03)';
+  ctx.lineWidth = 1;
+  for (let i = 0; i <= 10; i++) {
+    const x = pad + (W - 2*pad) * i/10;
+    const y = pad + (H - 2*pad) * i/10;
+    ctx.beginPath(); ctx.moveTo(x, pad); ctx.lineTo(x, H-pad); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(pad, y); ctx.lineTo(W-pad, y); ctx.stroke();
+  }
+  // Points
+  DATA.forEach(d => {
+    const x = pad + d.nx * (W - 2*pad);
+    const y = pad + (1 - d.ny) * (H - 2*pad);
+    d._sx = x; d._sy = y;
+    ctx.beginPath();
+    ctx.arc(x, y, 5, 0, Math.PI*2);
+    ctx.fillStyle = COLORS[d.type] || '#888';
+    ctx.globalAlpha = 0.75;
+    ctx.fill();
+    ctx.globalAlpha = 1;
+    ctx.strokeStyle = 'rgba(255,255,255,0.15)';
+    ctx.lineWidth = 0.5;
+    ctx.stroke();
+  });
+  // Axes
+  ctx.fillStyle = 'rgba(232,232,244,0.2)';
+  ctx.font = '9px -apple-system, sans-serif';
+  ctx.textAlign = 'center';
+  ctx.fillText('PC1 →', W/2, H - 8);
+  ctx.save(); ctx.translate(12, H/2); ctx.rotate(-Math.PI/2);
+  ctx.fillText('PC2 →', 0, 0);
+  ctx.restore();
+}
+drawScatter();
+
+// Legend
+const types = Object.entries(byType).sort((a,b) => b[1]-a[1]);
+document.getElementById('legend').innerHTML = types.map(([t,c]) =>
+  '<div class="legend-item"><div class="legend-dot" style="background:'+(COLORS[t]||'#888')+'"></div>'+t+' ('+c+')</div>'
+).join('');
+
+// Tooltip
+const tooltip = document.getElementById('tooltip');
+scatterCanvas.addEventListener('mousemove', e => {
+  const rect = scatterCanvas.getBoundingClientRect();
+  const mx = e.clientX - rect.left, my = e.clientY - rect.top;
+  let closest = null, minDist = 20;
+  DATA.forEach(d => {
+    const dist = Math.hypot(d._sx - mx, d._sy - my);
+    if (dist < minDist) { minDist = dist; closest = d; }
+  });
+  if (closest) {
+    tooltip.style.display = 'block';
+    tooltip.style.left = (closest._sx + 12) + 'px';
+    tooltip.style.top = (closest._sy - 10) + 'px';
+    tooltip.innerHTML = '<div class="tt-type">' + closest.type + ' · ' + closest.col + '</div>' +
+      '<div class="tt-title">' + (closest.title || '(untitled)') + '</div>' +
+      (closest.date ? '<div style="font-size:0.6rem;color:#e0af68;">'+closest.date+'</div>' : '') +
+      '<div class="tt-preview">' + (closest.preview || '').substring(0,150) + '</div>';
+  } else {
+    tooltip.style.display = 'none';
+  }
+});
+scatterCanvas.addEventListener('mouseleave', () => { tooltip.style.display = 'none'; });
+
+// ── Donut helper ──────────────────────────────────────
+function drawDonut(id, data, colors, h) {
+  const s = setupCanvas(id, h);
+  const cx = s.W/2, cy = s.H/2 - 10, R = Math.min(s.W, s.H)/2 - 30, inner = R * 0.55;
+  const total = data.reduce((s,d) => s+d[1], 0);
+  let angle = -Math.PI/2;
+  data.forEach(([label, val]) => {
+    const sweep = (val/total) * Math.PI * 2;
+    s.ctx.beginPath();
+    s.ctx.moveTo(cx + inner*Math.cos(angle), cy + inner*Math.sin(angle));
+    s.ctx.arc(cx, cy, R, angle, angle+sweep);
+    s.ctx.arc(cx, cy, inner, angle+sweep, angle, true);
+    s.ctx.closePath();
+    s.ctx.fillStyle = colors[label] || '#555';
+    s.ctx.fill();
+    if (sweep > 0.3) {
+      const mid = angle + sweep/2;
+      s.ctx.fillStyle = '#07070f';
+      s.ctx.font = '600 9px -apple-system, sans-serif';
+      s.ctx.textAlign = 'center';
+      s.ctx.fillText(label, cx+(R+inner)/2*Math.cos(mid), cy+(R+inner)/2*Math.sin(mid)+3);
+    }
+    angle += sweep;
+  });
+  s.ctx.fillStyle = '#e8e8f4'; s.ctx.font = '700 16px SF Mono, Menlo, monospace';
+  s.ctx.textAlign = 'center'; s.ctx.fillText(total.toString(), cx, cy);
+  s.ctx.fillStyle = 'rgba(232,232,244,0.4)'; s.ctx.font = '400 9px -apple-system, sans-serif';
+  s.ctx.fillText('points', cx, cy + 14);
+}
+drawDonut('donut-type', types, COLORS, 260);
+drawDonut('donut-col', Object.entries(byCol).sort((a,b)=>b[1]-a[1]), COL_COLORS, 260);
+
+// ── Timeline ──────────────────────────────────────────
+const dated = DATA.filter(d => d.date).sort((a,b) => a.date.localeCompare(b.date));
+if (dated.length > 0) {
+  const s = setupCanvas('timeline', 200);
+  const months = {};
+  dated.forEach(d => {
+    const m = d.date.substring(0,7); // YYYY-MM
+    if (!months[m]) months[m] = {};
+    months[m][d.type] = (months[m][d.type]||0) + 1;
+  });
+  const keys = Object.keys(months).sort();
+  const maxH = Math.max(...keys.map(k => Object.values(months[k]).reduce((s,v) => s+v, 0)));
+  const barW = Math.min(30, (s.W - 60) / keys.length - 2);
+  
+  keys.forEach((k, i) => {
+    const x = 40 + i * (barW + 2);
+    let y = s.H - 30;
+    Object.entries(months[k]).forEach(([type, count]) => {
+      const h = (count / maxH) * (s.H - 50);
+      s.ctx.fillStyle = COLORS[type] || '#555';
+      s.ctx.fillRect(x, y - h, barW, h);
+      y -= h;
+    });
+    s.ctx.fillStyle = 'rgba(232,232,244,0.25)';
+    s.ctx.font = '8px -apple-system, sans-serif';
+    s.ctx.save(); s.ctx.translate(x + barW/2, s.H - 18); s.ctx.rotate(-0.5);
+    s.ctx.fillText(k, 0, 0);
+    s.ctx.restore();
+  });
+}
+</script>
+</body>
+</html>
