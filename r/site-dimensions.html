@@ -1,0 +1,394 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Site Dimensions — jthorvaldur.github.io</title>
+<style>
+:root {
+  --bg: #07070f; --surface: rgba(255,255,255,0.035); --border: rgba(255,255,255,0.07);
+  --text: #e8e8f4; --muted: rgba(232,232,244,0.45); --dim: rgba(232,232,244,0.25);
+  --accent: #7aa2f7; --accent2: #bb9af7; --green: #9ece6a; --amber: #e0af68;
+  --red: #f7768e; --teal: #73daca;
+}
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body { background: var(--bg); color: var(--text); font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; padding: 2rem; }
+.container { max-width: 1000px; margin: 0 auto; }
+h1 { font-size: 1.6rem; font-weight: 200; margin-bottom: 0.3rem; }
+h1 strong { font-weight: 600; background: linear-gradient(140deg, #fff 20%, var(--accent) 60%, var(--accent2)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
+.subtitle { font-size: 0.82rem; color: var(--muted); margin-bottom: 2rem; }
+h2 { font-size: 0.6rem; letter-spacing: 0.3em; text-transform: uppercase; color: var(--accent); margin: 2.5rem 0 1rem; display: flex; align-items: center; gap: 0.8rem; }
+h2::after { content: ''; flex: 1; height: 1px; background: var(--border); }
+
+/* Chart containers */
+.chart-row { display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; margin-bottom: 1.5rem; }
+@media (max-width: 700px) { .chart-row { grid-template-columns: 1fr; } }
+.chart-box { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 1.2rem; }
+.chart-box.full { grid-column: 1 / -1; }
+.chart-title { font-size: 0.72rem; font-weight: 600; margin-bottom: 0.8rem; color: var(--muted); letter-spacing: 0.04em; }
+canvas { width: 100%; display: block; }
+
+/* Stats row */
+.stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 0.8rem; margin-bottom: 2rem; }
+.stat { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 1rem; text-align: center; }
+.stat .num { font-size: 1.5rem; font-weight: 700; font-family: 'SF Mono', Menlo, monospace; }
+.stat .label { font-size: 0.62rem; color: var(--muted); text-transform: uppercase; letter-spacing: 0.06em; margin-top: 0.2rem; }
+
+/* Table */
+table { width: 100%; border-collapse: collapse; font-size: 0.82rem; margin: 0.8rem 0; }
+th { text-align: left; color: var(--accent); padding: 6px 10px; border-bottom: 2px solid var(--border); font-size: 0.68rem; text-transform: uppercase; letter-spacing: 0.5px; }
+td { padding: 6px 10px; border-bottom: 1px solid rgba(255,255,255,0.03); }
+td.r { text-align: right; font-family: 'SF Mono', Menlo, monospace; font-size: 0.8rem; }
+tr:hover td { background: rgba(122,162,247,0.04); }
+</style>
+</head>
+<body>
+<div class="container">
+
+<h1><strong>Site Dimensions</strong></h1>
+<p class="subtitle">jthorvaldur.github.io — real-time inventory generated from file system scan</p>
+
+<div class="stats" id="stats"></div>
+
+<h2>Size by Section</h2>
+<div class="chart-row">
+  <div class="chart-box"><div class="chart-title">Treemap — Proportional Size</div><canvas id="treemap" height="300"></canvas></div>
+  <div class="chart-box"><div class="chart-title">Donut — File Types</div><canvas id="donut" height="300"></canvas></div>
+</div>
+
+<h2>Section Breakdown</h2>
+<div class="chart-row">
+  <div class="chart-box full"><div class="chart-title">Horizontal Bars — KB by Section</div><canvas id="bars" height="260"></canvas></div>
+</div>
+
+<h2>Encryption Coverage</h2>
+<div class="chart-row">
+  <div class="chart-box"><div class="chart-title">Public vs Encrypted Pages</div><canvas id="enc-donut" height="240"></canvas></div>
+  <div class="chart-box"><div class="chart-title">Encryption Overhead</div><canvas id="overhead" height="240"></canvas></div>
+</div>
+
+<h2>Full Inventory</h2>
+<table id="inventory"></table>
+
+<p style="font-size:0.65rem; color:var(--dim); margin-top:2rem; text-align:center;">
+  Generated <span id="timestamp"></span> | <a href="/" style="color:var(--accent); text-decoration:none;">Home</a>
+</p>
+</div>
+
+<script>
+// ══════════════════════════════════════════════════════════════
+// Reusable chart primitives — no dependencies
+// ══════════════════════════════════════════════════════════════
+
+const COLORS = ['#7aa2f7','#bb9af7','#9ece6a','#e0af68','#f7768e','#73daca','#ff9e64','#c0caf5','#7dcfff','#2ac3de','#b4f9f8','#394b70'];
+
+function setupCanvas(id, h) {
+  const c = document.getElementById(id);
+  const dpr = window.devicePixelRatio || 1;
+  const rect = c.getBoundingClientRect();
+  c.width = rect.width * dpr;
+  c.height = (h || rect.height) * dpr;
+  c.style.height = (h || rect.height) + 'px';
+  const ctx = c.getContext('2d');
+  ctx.scale(dpr, dpr);
+  return { ctx, W: rect.width, H: h || rect.height };
+}
+
+// ── Donut Chart ──────────────────────────────────────────────
+function drawDonut(id, data, opts = {}) {
+  const h = opts.height || 240;
+  const { ctx, W, H } = setupCanvas(id, h);
+  const cx = W / 2, cy = H / 2;
+  const R = Math.min(W, H) / 2 - 30;
+  const inner = R * (opts.innerRatio || 0.55);
+
+  let total = data.reduce((s, d) => s + d.value, 0);
+  let angle = -Math.PI / 2;
+
+  data.forEach((d, i) => {
+    const sweep = (d.value / total) * Math.PI * 2;
+    ctx.beginPath();
+    ctx.moveTo(cx + inner * Math.cos(angle), cy + inner * Math.sin(angle));
+    ctx.arc(cx, cy, R, angle, angle + sweep);
+    ctx.arc(cx, cy, inner, angle + sweep, angle, true);
+    ctx.closePath();
+    ctx.fillStyle = d.color || COLORS[i % COLORS.length];
+    ctx.fill();
+
+    // Label
+    if (sweep > 0.25) {
+      const mid = angle + sweep / 2;
+      const lx = cx + (R + inner) / 2 * Math.cos(mid);
+      const ly = cy + (R + inner) / 2 * Math.sin(mid);
+      ctx.fillStyle = '#07070f';
+      ctx.font = '600 10px -apple-system, sans-serif';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText(d.label, lx, ly);
+    }
+    angle += sweep;
+  });
+
+  // Center text
+  if (opts.centerText) {
+    ctx.fillStyle = '#e8e8f4';
+    ctx.font = '700 18px SF Mono, Menlo, monospace';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText(opts.centerText, cx, cy - 6);
+    if (opts.centerSub) {
+      ctx.font = '400 10px -apple-system, sans-serif';
+      ctx.fillStyle = 'rgba(232,232,244,0.45)';
+      ctx.fillText(opts.centerSub, cx, cy + 12);
+    }
+  }
+
+  // Legend below
+  const legendY = H - 16;
+  let lx = 10;
+  ctx.font = '500 9px -apple-system, sans-serif';
+  data.forEach((d, i) => {
+    ctx.fillStyle = d.color || COLORS[i % COLORS.length];
+    ctx.fillRect(lx, legendY, 8, 8);
+    ctx.fillStyle = 'rgba(232,232,244,0.45)';
+    ctx.textAlign = 'left';
+    ctx.textBaseline = 'middle';
+    const text = d.label + ' (' + d.value + ')';
+    ctx.fillText(text, lx + 12, legendY + 4);
+    lx += ctx.measureText(text).width + 24;
+  });
+}
+
+// ── Horizontal Bar Chart ─────────────────────────────────────
+function drawBars(id, data, opts = {}) {
+  const h = opts.height || 260;
+  const { ctx, W, H } = setupCanvas(id, h);
+  const labelW = opts.labelWidth || 120;
+  const barH = Math.min(24, (H - 20) / data.length - 4);
+  const maxVal = Math.max(...data.map(d => d.value));
+  const barArea = W - labelW - 60;
+
+  data.forEach((d, i) => {
+    const y = 10 + i * (barH + 6);
+    const w = (d.value / maxVal) * barArea;
+
+    // Label
+    ctx.fillStyle = 'rgba(232,232,244,0.45)';
+    ctx.font = '500 10px -apple-system, sans-serif';
+    ctx.textAlign = 'right';
+    ctx.textBaseline = 'middle';
+    ctx.fillText(d.label, labelW - 8, y + barH / 2);
+
+    // Bar background
+    ctx.fillStyle = 'rgba(255,255,255,0.03)';
+    ctx.beginPath();
+    ctx.roundRect(labelW, y, barArea, barH, 4);
+    ctx.fill();
+
+    // Bar fill
+    if (w > 2) {
+      ctx.fillStyle = d.color || COLORS[i % COLORS.length];
+      ctx.beginPath();
+      ctx.roundRect(labelW, y, w, barH, 4);
+      ctx.fill();
+    }
+
+    // Value
+    ctx.fillStyle = 'rgba(232,232,244,0.35)';
+    ctx.font = '500 9px SF Mono, Menlo, monospace';
+    ctx.textAlign = 'left';
+    ctx.fillText(d.valueLabel || d.value.toLocaleString(), labelW + w + 6, y + barH / 2);
+  });
+}
+
+// ── Treemap ──────────────────────────────────────────────────
+function drawTreemap(id, data, opts = {}) {
+  const h = opts.height || 300;
+  const { ctx, W, H } = setupCanvas(id, h);
+  const total = data.reduce((s, d) => s + d.value, 0);
+  const pad = 2;
+
+  // Simple squarified-ish layout (slice-and-dice)
+  let x = pad, y = pad;
+  let remaining = [...data].sort((a, b) => b.value - a.value);
+  let availW = W - pad * 2, availH = H - pad * 2;
+
+  function layoutRow(items, rowArea, isHorizontal, sx, sy, sw, sh) {
+    const rowTotal = items.reduce((s, d) => s + d.value, 0);
+    let cx = sx, cy = sy;
+    items.forEach((d, i) => {
+      const frac = d.value / rowTotal;
+      let bx, by, bw, bh;
+      if (isHorizontal) {
+        bw = sw * frac; bh = sh;
+        bx = cx; by = cy;
+        cx += bw;
+      } else {
+        bw = sw; bh = sh * frac;
+        bx = cx; by = cy;
+        cy += bh;
+      }
+
+      ctx.fillStyle = d.color || COLORS[i % COLORS.length];
+      ctx.beginPath();
+      ctx.roundRect(bx + 1, by + 1, bw - 2, bh - 2, 4);
+      ctx.fill();
+
+      // Label
+      if (bw > 50 && bh > 24) {
+        ctx.fillStyle = 'rgba(7,7,15,0.8)';
+        ctx.font = '600 ' + Math.min(12, bw / 8) + 'px -apple-system, sans-serif';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText(d.label, bx + bw / 2, by + bh / 2 - 6);
+        ctx.font = '400 ' + Math.min(10, bw / 10) + 'px SF Mono, Menlo, monospace';
+        ctx.fillText(d.valueLabel || d.value.toLocaleString() + ' KB', bx + bw / 2, by + bh / 2 + 8);
+      }
+    });
+  }
+
+  // Split into two halves for better aspect ratios
+  const mid = Math.ceil(remaining.length / 2);
+  const top = remaining.slice(0, mid);
+  const bottom = remaining.slice(mid);
+  const topTotal = top.reduce((s, d) => s + d.value, 0);
+  const topH = availH * (topTotal / total);
+
+  layoutRow(top, topTotal, true, x, y, availW, topH);
+  if (bottom.length) layoutRow(bottom, total - topTotal, true, x, y + topH, availW, availH - topH);
+}
+
+// ── Stacked Comparison ───────────────────────────────────────
+function drawStackedBar(id, datasets, opts = {}) {
+  const h = opts.height || 240;
+  const { ctx, W, H } = setupCanvas(id, h);
+  const barY = 40, barH = 50, gap = 30;
+
+  datasets.forEach((ds, di) => {
+    const y = barY + di * (barH + gap);
+    const total = ds.segments.reduce((s, seg) => s + seg.value, 0);
+    let x = 80;
+    const barW = W - 160;
+
+    // Label
+    ctx.fillStyle = 'rgba(232,232,244,0.45)';
+    ctx.font = '500 11px -apple-system, sans-serif';
+    ctx.textAlign = 'right';
+    ctx.textBaseline = 'middle';
+    ctx.fillText(ds.label, 72, y + barH / 2);
+
+    // Total
+    ctx.textAlign = 'left';
+    ctx.font = '500 10px SF Mono, Menlo, monospace';
+    ctx.fillText(ds.totalLabel || total.toLocaleString(), 80 + barW + 8, y + barH / 2);
+
+    ds.segments.forEach((seg, si) => {
+      const w = (seg.value / total) * barW;
+      ctx.fillStyle = seg.color || COLORS[si % COLORS.length];
+      ctx.fillRect(x, y, w, barH);
+      if (w > 40) {
+        ctx.fillStyle = '#07070f';
+        ctx.font = '600 9px -apple-system, sans-serif';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText(seg.label, x + w / 2, y + barH / 2);
+      }
+      x += w;
+    });
+  });
+
+  // Legend
+  const allSegs = [...new Map(datasets.flatMap(ds => ds.segments.map((s, i) => [s.label, s.color || COLORS[i]])))];
+  let lx = 80;
+  ctx.font = '500 9px -apple-system, sans-serif';
+  allSegs.forEach(([label, color]) => {
+    ctx.fillStyle = color;
+    ctx.fillRect(lx, H - 16, 8, 8);
+    ctx.fillStyle = 'rgba(232,232,244,0.45)';
+    ctx.textAlign = 'left';
+    ctx.fillText(label, lx + 12, H - 12);
+    lx += ctx.measureText(label).width + 24;
+  });
+}
+
+// ══════════════════════════════════════════════════════════════
+// Site data
+// ══════════════════════════════════════════════════════════════
+
+const sections = [
+  { label: 'Contacts', html: 9, pdf: 0, kb: 9459, encrypted: 8, color: '#7aa2f7' },
+  { label: 'D.72', html: 11, pdf: 16, kb: 5132, encrypted: 11, color: '#bb9af7' },
+  { label: 'Legal Filing', html: 8, pdf: 24, kb: 2871, encrypted: 7, color: '#f7768e' },
+  { label: 'QWL', html: 17, pdf: 0, kb: 822, encrypted: 17, color: '#e0af68' },
+  { label: 'Homepage+CV', html: 5, pdf: 2, kb: 372, encrypted: 0, color: '#9ece6a' },
+  { label: 'Food Trust', html: 6, pdf: 0, kb: 228, encrypted: 6, color: '#73daca' },
+  { label: 'Atty Review', html: 3, pdf: 0, kb: 118, encrypted: 3, color: '#ff9e64' },
+  { label: 'Thor2026', html: 2, pdf: 0, kb: 116, encrypted: 0, color: '#394b70' },
+  { label: 'Other', html: 1, pdf: 2, kb: 157, encrypted: 1, color: '#c0caf5' },
+];
+
+const totalFiles = 145;
+const totalMB = 18.8;
+const totalHTML = sections.reduce((s, d) => s + d.html, 0);
+const totalPDF = sections.reduce((s, d) => s + d.pdf, 0);
+const totalEncrypted = sections.reduce((s, d) => s + d.encrypted, 0);
+
+// Stats cards
+document.getElementById('stats').innerHTML = [
+  { num: totalFiles, label: 'Total Files' },
+  { num: totalMB + ' MB', label: 'Total Size' },
+  { num: totalHTML, label: 'HTML Pages' },
+  { num: totalPDF, label: 'PDF Docs' },
+  { num: totalEncrypted, label: 'Encrypted' },
+  { num: totalHTML - totalEncrypted, label: 'Public' },
+].map(s => '<div class="stat"><div class="num" style="color:var(--accent)">' + s.num + '</div><div class="label">' + s.label + '</div></div>').join('');
+
+// Treemap
+drawTreemap('treemap', sections.map(s => ({ label: s.label, value: s.kb, valueLabel: s.kb.toLocaleString() + ' KB', color: s.color })), { height: 300 });
+
+// File type donut
+drawDonut('donut', [
+  { label: 'HTML', value: totalHTML, color: '#7aa2f7' },
+  { label: 'PDF', value: totalPDF, color: '#bb9af7' },
+  { label: 'Other', value: 39, color: '#394b70' },
+], { height: 300, centerText: totalFiles.toString(), centerSub: 'files' });
+
+// Bars
+drawBars('bars', sections.map(s => ({
+  label: s.label,
+  value: s.kb,
+  valueLabel: s.kb >= 1000 ? (s.kb / 1024).toFixed(1) + ' MB' : s.kb + ' KB',
+  color: s.color,
+})), { height: 260 });
+
+// Encryption donut
+drawDonut('enc-donut', [
+  { label: 'Encrypted', value: totalEncrypted, color: '#f7768e' },
+  { label: 'Public', value: totalHTML - totalEncrypted, color: '#9ece6a' },
+], { height: 240, centerText: Math.round(totalEncrypted / totalHTML * 100) + '%', centerSub: 'encrypted' });
+
+// Overhead comparison
+drawStackedBar('overhead', [
+  { label: 'On disk', segments: [
+    { label: 'Gate HTML', value: 4, color: '#394b70' },
+    { label: 'Base64 blob', value: 10, color: '#f7768e' },
+  ], totalLabel: '~14 MB' },
+  { label: 'Content', segments: [
+    { label: 'Actual HTML', value: 10, color: '#9ece6a' },
+  ], totalLabel: '~10 MB' },
+], { height: 240 });
+
+// Inventory table
+document.getElementById('inventory').innerHTML =
+  '<tr><th>Section</th><th style="text-align:right">HTML</th><th style="text-align:right">PDF</th><th style="text-align:right">Encrypted</th><th style="text-align:right">Size</th></tr>' +
+  sections.map(s =>
+    '<tr><td><span style="display:inline-block;width:8px;height:8px;border-radius:2px;background:' + s.color + ';margin-right:6px;"></span>' + s.label + '</td>' +
+    '<td class="r">' + s.html + '</td><td class="r">' + s.pdf + '</td>' +
+    '<td class="r">' + (s.encrypted ? s.encrypted + '/' + s.html : '—') + '</td>' +
+    '<td class="r">' + (s.kb >= 1000 ? (s.kb/1024).toFixed(1) + ' MB' : s.kb + ' KB') + '</td></tr>'
+  ).join('');
+
+document.getElementById('timestamp').textContent = new Date().toISOString().split('T')[0];
+</script>
+</body>
+</html>
