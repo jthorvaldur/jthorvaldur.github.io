@@ -96,7 +96,7 @@ echo "[3/3] Committing and pushing..."
 if [[ -z "$DRY_RUN" ]]; then
     git add -A
     if ! git diff --cached --quiet; then
-        git commit -m "Auto-sync: $(date +%Y-%m-%d) — contacts + d72 pages"
+        git -c commit.gpgsign=false commit -m "Auto-sync: $(date +%Y-%m-%d) — contacts + d72 pages"
         git push
         echo "  Pushed to GitHub Pages."
     else
