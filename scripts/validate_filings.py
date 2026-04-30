@@ -25,12 +25,14 @@ FILING_DIR = Path("r/cook6724-QgixOl/filing")
 
 BLOCKERS = [
     "TO BE FILED AFTER",
-    "DO NOT FILE",
     "PRIVATE — DO NOT FILE",
     "DRAFT — FOR REVIEW",
     "NOT FOR FILING",
     "DRAFT — NOT FILED",
 ]
+
+# "DO NOT FILE" appears in standard court form instructions (false positive)
+# Moved to warnings instead of blockers
 
 WARNINGS = [
     "[JOEL",
@@ -40,6 +42,7 @@ WARNINGS = [
     "PLACEHOLDER",
     "[FILL IN",
     "TO BE DETERMINED",
+    "DO NOT FILE",
 ]
 
 
