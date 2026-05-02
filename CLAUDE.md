@@ -1,31 +1,71 @@
 # CLAUDE.md — jthorvaldur.github.io
 
-**Runtime:** Static HTML (GitHub Pages)
+**Runtime:** Static HTML (GitHub Pages — PUBLIC repo)
 **Status:** active
 
-## What this is
-Personal portfolio, research hub, and deployment target for all project outputs. All private sections use AES-256-GCM client-side encryption with shared password.
+## CRITICAL: This repo is PUBLIC
 
-## How to deploy
+Everything committed here is accessible on the internet. All HTML containing
+case data, personal names, financial info, legal analysis, or private
+communications **MUST** be encrypted with AES-256-GCM before committing.
+
+**Before committing ANY HTML to r/**, run:**
 ```bash
-# From any project repo with encrypt_page.py:
-python3 tools/encrypt_page.py source.html r/section/page.html --password $CONTACTS_PAGE_PASSWORD
+cd ~/GitHub/policy-orchestrator && devctl audit-pages
+```
+If it reports errors, DO NOT commit until fixed.
 
-# Sync all:
-./scripts/sync_all.sh
+## Encryption rules
+
+1. **Never commit plaintext sensitive HTML** — encrypt first
+2. **Never use localStorage** — only sessionStorage (clears on tab close)
+3. **Never put passwords in URL hashes** — leaks to browser history
+4. **Never commit _originals/ files** — they're gitignored for a reason
+5. **Always verify after encrypting** — `devctl deploy-pages --verify`
+
+## How to deploy pages
+
+```bash
+# Preferred: central deploy from policy-orchestrator (reads pages.yaml)
+devctl deploy-pages --section=SECTION_NAME --verify --push
+
+# Manual single file (from any repo with the encrypt tool):
+cd ~/GitHub/policy-orchestrator
+.venv/bin/python ~/GitHub/contacts/tools/encrypt_page.py \
+    SOURCE.html r/SECTION/TARGET.html "$PASSWORD"
 ```
 
-## Key files
-- `scripts/sync_all.sh` — syncs contacts + d72 pages, commits, pushes
-- `r/contacts/` — 9 pages (browser, dashboard, coherence, signal, behavioral, calendar, radial, vdb)
-- `r/d72/` — 11 pages (coherence framework, dimensional analysis, frequencies)
-- `r/concepts/` — concept browser, network graph, repo coherence, system overview
-- `r/food-trust/` — 5 pages (trusts, commodity, exchange, governance stack)
-- `r/qwl/` — 16 pages (quantum word logic tools)
-- `.passwords` — git-ignored, all section passwords
+## Password zones
+
+| Env var | Session key | Sections |
+|---------|------------|----------|
+| `CONTACTS_PAGE_PASSWORD` | `_cp` | contacts, concepts, d72, food-trust, dimensions |
+| `CONTACTS_PAGE_PASSWORD` | `qwl_key` | qwl |
+| `JTHORVALDUR_LEGAL_PAGE_PASSWORD` | `filing_key` | filing, reports, case, thor2026 |
+| `ENERGY_TEXAS_PAGE_PASSWORD` | `energy_key` | energy |
+
+## Structure
+
+- `index.html` — homepage (public, Hopf fibration + project cards)
+- `cv/` — curriculum vitae (public)
+- `r/` — private sections (encrypted) + portal gate
+- `r/contacts/` — contact analytics (9 pages)
+- `r/concepts/` — concept maps (8 pages)
+- `r/d72/` — coherence framework (11 pages)
+- `r/food-trust/` — food value trust (6 pages)
+- `r/qwl/` — quantum word logic (15 pages)
+- `r/cook6724-QgixOl/filing/` — legal filing portal (10+ pages)
+- `r/energy/` — energy texas research (11 pages)
+- `r/reports/` — div_legal analysis reports (40 pages)
+- `r/case/` — caseledger exhibits (6 pages)
+- `r/dimensions/` — dimensional analysis (9 pages)
+- `r/thor2026/` — case review portal (2 pages)
+- `scripts/sync_all.sh` — legacy sync (use devctl deploy-pages instead)
+- `.passwords` — gitignored, password mappings for sync_all.sh
 
 ## How it connects
-- Receives encrypted output from: contacts, div_legal, d72
-- All commits use `git -c commit.gpgsign=false` (1Password workaround)
-- Password: stored in CONTACTS_PAGE_PASSWORD env var
 
+- Receives encrypted output from: contacts, div_legal, caseledger, energy_texas, words_quantum_legal, legal-tax-ops
+- Policy: `policy-orchestrator/policies/hard/pages-encryption.yaml`
+- Registry: `policy-orchestrator/registries/pages.yaml`
+- Audit: `devctl audit-pages`
