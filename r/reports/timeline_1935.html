@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Protected Page</title>
+<style>
+:root {
+  --bg: #0f172a;
+  --card: #1e293b;
+  --border: #334155;
+  --text: #f1f5f9;
+  --text2: #94a3b8;
+  --accent: #6366f1;
+  --accent-hover: #818cf8;
+  --red: #f87171;
+}
+@media (prefers-color-scheme: light) {
+  :root {
+    --bg: #f0f2f5;
+    --card: #ffffff;
+    --border: #e5e7eb;
+    --text: #1a1a2e;
+    --text2: #6b7280;
+  }
+}
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body {
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 100vh;
+  padding: 20px;
+}
+.login-card {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  padding: 40px;
+  max-width: 400px;
+  width: 100%;
+  box-shadow: 0 4px 6px rgba(0,0,0,0.1), 0 10px 15px rgba(0,0,0,0.1);
+}
+.login-card h1 {
+  font-size: 22px;
+  font-weight: 700;
+  margin-bottom: 8px;
+}
+.login-card p {
+  font-size: 14px;
+  color: var(--text2);
+  margin-bottom: 24px;
+}
+.input-group {
+  position: relative;
+  margin-bottom: 16px;
+}
+.input-group input {
+  width: 100%;
+  padding: 12px 16px;
+  font-size: 15px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: var(--bg);
+  color: var(--text);
+  outline: none;
+  transition: border-color 0.2s;
+}
+.input-group input:focus {
+  border-color: var(--accent);
+}
+.btn {
+  width: 100%;
+  padding: 12px;
+  font-size: 15px;
+  font-weight: 600;
+  background: var(--accent);
+  color: #fff;
+  border: none;
+  border-radius: 10px;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+.btn:hover { background: var(--accent-hover); }
+.btn:disabled { opacity: 0.6; cursor: not-allowed; }
+.error {
+  color: var(--red);
+  font-size: 13px;
+  margin-top: 10px;
+  display: none;
+}
+.loading {
+  display: none;
+  text-align: center;
+  padding: 40px;
+  font-size: 16px;
+  color: var(--text2);
+}
+</style>
+</head>
+<body>
+<div class="login-card" id="loginCard">
+  <h1>Contact Analytics</h1>
+  <p>Enter the password to view this page.</p>
+  <form id="loginForm" onsubmit="return handleSubmit(event)">
+    <div class="input-group">
+      <input type="password" id="pwd" placeholder="Password" autocomplete="off" autofocus>
+    </div>
+    <button type="submit" class="btn" id="submitBtn">Unlock</button>
+    <div class="error" id="error">Incorrect password. Please try again.</div>
+  </form>
+</div>
+<div class="loading" id="loading">Decrypting...</div>
+
+<script>
+const SALT = "36yMjrDngLvES3NgiSPWjQ==";
+const IV = "pN0Gm/L7P2G+7w8R";
+const CT = "UpV3+hNDZB9JbCkVJLTKoUzyIsxBIMQ8SAHupSrwFCkTQzifNJ5R+Tn8shkVkhW4f1mBc4a6/4ie5r9mOUxoMh68oyhTIf21WvTQG1utk36RFBSx/7FuyaJzj6nnTyBU4X/idsS8ZCTTzcoEan0Oj3KHnTEmZDZZcr+cejOVVyrfxP0UbSved5Vmu0bWHd8TB0pFkIzHrvGKrZLXQLh183FCOLiNbaqX/zJd9pmbl37oV/N90IvveGX9KEGJRf0daN32mgdlv5RpSGKoa9mx9GBgdkLNTq4PSpZFjwucbDOo7DuBk85fTHAAUDblLoIQwDhJMsxDhJzbO4B56In6mZC9vqOes7TPdagsCGJBomRwuWLQ/zAGB8w0c2ZPzr+mure+OL0rkWGVi7/hN5GY9TB3FtOdB354U4X4H+b5aDCSmQZPB46TTAWXc/7MgCu4oQBEr4tqemj4ZuXzLCbDwhR2d3SqXbPI1f2JmC+EzXMWMLB+ROlOMjz+MehqVwPNiLD/wm9+1gIeUcr6Z3KFKuLmv8dOCjXgnyZsB65T7hqioibLaGJV9EyA+STGnCc0FPgz3loXY4n4qgFVRXASN2k5wNThK0sIvbASA6Rolm0ve+pCBnTYkGSqjrtuCm74VPogHMLOFDShx5gUiCzQApacFrHTQ9HcBMR/ldge8vOOpZB4zTokUWsBQ6Oy8pPlxMUQjp8KMHdTSZbwGxuk3BU/OQPgqPMJP7zfmPiUhWxfbBG4Prgyv9DMfI6sZqqN+dgSib5MOWQHYrFG6/1nupz/InkIcXBEN+1YN6B6UQRTcjKYu61etm2xEM3iADecD6LFwKavyonhQcv2qAjPUPpHkdYdjqglkBaT5g9cGlEMqGOokDUnHR/WgYthkU6FaePzoPhd7sho+Wpw1Lm57oNuqIz4b2ghIi1iIR5Fzbds93QTFeB9lgI0AZ1UJRvlkkqjyj7SaL78jX8hAt3U94QsFzCDedq7n8vzF62evA6xWb6I7lx5Q9gmdl4iLHnOD5PLj7MRl9Ifims5xC0DH/aDp1J1QJnIN4IfnHKd3dJxuN3DIEmUvCOQVml3QP+MnFSS4CCd4EkKHMdyfJgKM9M0AVXV17mAqdwNrcb0s2G/x5BVsit2J81QLe2pM0F2pX+7LaLePZ6CVm/yDZHFdoVMeT3Sxu9hK/W7obiWEP+c6tUmVay+9YtSf9iPL050Hzxas3PXITZIccYGJ+r8QLd5hfjJj0d+J9qRfdIeWg/+kyXvqOCRVMHru55/ZbAmhZdKMPZ6UbWFi6XwZOTpIZG+q03KZF9LbpelHUQ6sYm/nDjD+z6EFbAoqPf+kxwE0wFjXxJhl7kuVFxVJDq0j5c20OjrQoPTSqjKIUZCpB5EzKFqC2cQsftL96Uw+aiOV1PqLvvEAE4qDPLzPgLOEhpOFGJ/IkFqyfvSCy2qs8MKk5R05FkBPaZfLvjhwh6wWxXP9JA+w/7N3QZ6qIQz44rA+l7nnjFXmXViw7NRi+5oD0kwjMEEGBKdjYgSeClSL5dVLUT+XnSvJqlan49i3DaRRKdkUI9A7y7VG32rtuLuSlw5UQdM1J8K";
+
+function b64decode(s) {
+  const bin = atob(s);
+  const arr = new Uint8Array(bin.length);
+  for (let i = 0; i < bin.length; i++) arr[i] = bin.charCodeAt(i);
+  return arr;
+}
+
+async function decrypt(password) {
+  const enc = new TextEncoder();
+  const keyMaterial = await crypto.subtle.importKey(
+    "raw", enc.encode(password), "PBKDF2", false, ["deriveKey"]
+  );
+  const key = await crypto.subtle.deriveKey(
+    { name: "PBKDF2", salt: b64decode(SALT), iterations: 100000, hash: "SHA-256" },
+    keyMaterial,
+    { name: "AES-GCM", length: 256 },
+    false,
+    ["decrypt"]
+  );
+  const ct = b64decode(CT);
+  const iv = b64decode(IV);
+  const decrypted = await crypto.subtle.decrypt({ name: "AES-GCM", iv }, key, ct);
+  return new TextDecoder().decode(decrypted);
+}
+
+async function handleSubmit(e) {
+  e.preventDefault();
+  const pwd = document.getElementById("pwd").value;
+  if (!pwd) return false;
+
+  const btn = document.getElementById("submitBtn");
+  const errEl = document.getElementById("error");
+  btn.disabled = true;
+  btn.textContent = "Decrypting...";
+  errEl.style.display = "none";
+
+  try {
+    const html = await decrypt(pwd);
+    // Store password in sessionStorage so other pages auto-unlock
+    try { sessionStorage.setItem("filing_key", pwd); } catch(x) {}
+    document.open();
+    document.write(html);
+    document.close();
+  } catch (e) {
+    errEl.style.display = "block";
+    btn.disabled = false;
+    btn.textContent = "Unlock";
+  }
+  return false;
+}
+
+// Auto-unlock from sessionStorage (same session, no re-prompting)
+(async function() {
+  let saved = null;
+  try { saved = sessionStorage.getItem("filing_key"); } catch(x) {}
+  if (saved) {
+    try {
+      const html = await decrypt(saved);
+      document.open();
+      document.write(html);
+      document.close();
+      return;
+    } catch(e) {
+      try { sessionStorage.removeItem("filing_key"); } catch(x) {}
+    }
+  }
+  // Fallback: check URL hash
+  if (location.hash.length > 1) {
+    document.getElementById("pwd").value = decodeURIComponent(location.hash.slice(1));
+    handleSubmit(new Event("submit"));
+  }
+})();
+</script>
+</body>
+</html>

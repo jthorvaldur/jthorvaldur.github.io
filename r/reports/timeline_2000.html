@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Protected Page</title>
+<style>
+:root {
+  --bg: #0f172a;
+  --card: #1e293b;
+  --border: #334155;
+  --text: #f1f5f9;
+  --text2: #94a3b8;
+  --accent: #6366f1;
+  --accent-hover: #818cf8;
+  --red: #f87171;
+}
+@media (prefers-color-scheme: light) {
+  :root {
+    --bg: #f0f2f5;
+    --card: #ffffff;
+    --border: #e5e7eb;
+    --text: #1a1a2e;
+    --text2: #6b7280;
+  }
+}
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body {
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 100vh;
+  padding: 20px;
+}
+.login-card {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  padding: 40px;
+  max-width: 400px;
+  width: 100%;
+  box-shadow: 0 4px 6px rgba(0,0,0,0.1), 0 10px 15px rgba(0,0,0,0.1);
+}
+.login-card h1 {
+  font-size: 22px;
+  font-weight: 700;
+  margin-bottom: 8px;
+}
+.login-card p {
+  font-size: 14px;
+  color: var(--text2);
+  margin-bottom: 24px;
+}
+.input-group {
+  position: relative;
+  margin-bottom: 16px;
+}
+.input-group input {
+  width: 100%;
+  padding: 12px 16px;
+  font-size: 15px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: var(--bg);
+  color: var(--text);
+  outline: none;
+  transition: border-color 0.2s;
+}
+.input-group input:focus {
+  border-color: var(--accent);
+}
+.btn {
+  width: 100%;
+  padding: 12px;
+  font-size: 15px;
+  font-weight: 600;
+  background: var(--accent);
+  color: #fff;
+  border: none;
+  border-radius: 10px;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+.btn:hover { background: var(--accent-hover); }
+.btn:disabled { opacity: 0.6; cursor: not-allowed; }
+.error {
+  color: var(--red);
+  font-size: 13px;
+  margin-top: 10px;
+  display: none;
+}
+.loading {
+  display: none;
+  text-align: center;
+  padding: 40px;
+  font-size: 16px;
+  color: var(--text2);
+}
+</style>
+</head>
+<body>
+<div class="login-card" id="loginCard">
+  <h1>Contact Analytics</h1>
+  <p>Enter the password to view this page.</p>
+  <form id="loginForm" onsubmit="return handleSubmit(event)">
+    <div class="input-group">
+      <input type="password" id="pwd" placeholder="Password" autocomplete="off" autofocus>
+    </div>
+    <button type="submit" class="btn" id="submitBtn">Unlock</button>
+    <div class="error" id="error">Incorrect password. Please try again.</div>
+  </form>
+</div>
+<div class="loading" id="loading">Decrypting...</div>
+
+<script>
+const SALT = "TOQWXoqpX7CyZqYnTGlklg==";
+const IV = "0yqHdFtdVEGcCRTp";
+const CT = "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";
+
+function b64decode(s) {
+  const bin = atob(s);
+  const arr = new Uint8Array(bin.length);
+  for (let i = 0; i < bin.length; i++) arr[i] = bin.charCodeAt(i);
+  return arr;
+}
+
+async function decrypt(password) {
+  const enc = new TextEncoder();
+  const keyMaterial = await crypto.subtle.importKey(
+    "raw", enc.encode(password), "PBKDF2", false, ["deriveKey"]
+  );
+  const key = await crypto.subtle.deriveKey(
+    { name: "PBKDF2", salt: b64decode(SALT), iterations: 100000, hash: "SHA-256" },
+    keyMaterial,
+    { name: "AES-GCM", length: 256 },
+    false,
+    ["decrypt"]
+  );
+  const ct = b64decode(CT);
+  const iv = b64decode(IV);
+  const decrypted = await crypto.subtle.decrypt({ name: "AES-GCM", iv }, key, ct);
+  return new TextDecoder().decode(decrypted);
+}
+
+async function handleSubmit(e) {
+  e.preventDefault();
+  const pwd = document.getElementById("pwd").value;
+  if (!pwd) return false;
+
+  const btn = document.getElementById("submitBtn");
+  const errEl = document.getElementById("error");
+  btn.disabled = true;
+  btn.textContent = "Decrypting...";
+  errEl.style.display = "none";
+
+  try {
+    const html = await decrypt(pwd);
+    // Store password in sessionStorage so other pages auto-unlock
+    try { sessionStorage.setItem("filing_key", pwd); } catch(x) {}
+    document.open();
+    document.write(html);
+    document.close();
+  } catch (e) {
+    errEl.style.display = "block";
+    btn.disabled = false;
+    btn.textContent = "Unlock";
+  }
+  return false;
+}
+
+// Auto-unlock from sessionStorage (same session, no re-prompting)
+(async function() {
+  let saved = null;
+  try { saved = sessionStorage.getItem("filing_key"); } catch(x) {}
+  if (saved) {
+    try {
+      const html = await decrypt(saved);
+      document.open();
+      document.write(html);
+      document.close();
+      return;
+    } catch(e) {
+      try { sessionStorage.removeItem("filing_key"); } catch(x) {}
+    }
+  }
+  // Fallback: check URL hash
+  if (location.hash.length > 1) {
+    document.getElementById("pwd").value = decodeURIComponent(location.hash.slice(1));
+    handleSubmit(new Event("submit"));
+  }
+})();
+</script>
+</body>
+</html>

@@ -1,1157 +1,197 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Case Timeline — 2024 D 6724</title>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Protected Page</title>
 <style>
+:root {
+  --bg: #0f172a;
+  --card: #1e293b;
+  --border: #334155;
+  --text: #f1f5f9;
+  --text2: #94a3b8;
+  --accent: #6366f1;
+  --accent-hover: #818cf8;
+  --red: #f87171;
+}
+@media (prefers-color-scheme: light) {
   :root {
-    --joel: #2563eb;
-    --heather: #dc2626;
-    --court: #7c3aed;
-    --neutral: #6b7280;
-    --future-bg: #fefce8;
-    --prediction-bg: #fff7ed;
-    --status-bg: #ecfdf5;
-    --high-risk: #fecaca;
-    --medium-risk: #fef3c7;
+    --bg: #f0f2f5;
+    --card: #ffffff;
+    --border: #e5e7eb;
+    --text: #1a1a2e;
+    --text2: #6b7280;
   }
-  * { box-sizing: border-box; margin: 0; padding: 0; }
-  body {
-    font-family: 'Inter', system-ui, -apple-system, sans-serif;
-    max-width: 1000px; margin: 0 auto; padding: 1rem;
-    background: #f8fafc; color: #1e293b;
-    line-height: 1.5;
-  }
-  h1 { font-size: 1.5rem; margin-bottom: 0.25rem; }
-  .subtitle { color: #64748b; font-size: 0.9rem; margin-bottom: 1.5rem; }
-  .legend {
-    display: flex; flex-wrap: wrap; gap: 1rem; margin-bottom: 1.5rem;
-    padding: 0.75rem; background: #fff; border-radius: 8px; border: 1px solid #e2e8f0;
-  }
-  .legend-item { display: flex; align-items: center; gap: 0.35rem; font-size: 0.8rem; }
-  .legend-dot { width: 10px; height: 10px; border-radius: 50%; }
-  .stats {
-    display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-    gap: 0.75rem; margin-bottom: 1.5rem;
-  }
-  .stat-card {
-    background: #fff; border-radius: 8px; padding: 0.75rem;
-    border: 1px solid #e2e8f0;
-  }
-  .stat-card .label { font-size: 0.75rem; color: #64748b; text-transform: uppercase; letter-spacing: 0.05em; }
-  .stat-card .value { font-size: 1.25rem; font-weight: 700; margin-top: 0.25rem; }
-
-  .timeline { position: relative; padding-left: 2rem; }
-  .timeline::before {
-    content: ''; position: absolute; left: 0.75rem; top: 0; bottom: 0;
-    width: 2px; background: #cbd5e1;
-  }
-  .year-header {
-    font-size: 1.2rem; font-weight: 700; margin: 1.5rem 0 0.75rem -1rem;
-    padding: 0.25rem 0.75rem; background: #1e293b; color: #fff;
-    border-radius: 4px; display: inline-block;
-  }
-  .future-divider {
-    margin: 1.5rem 0 0.75rem -1rem;
-    padding: 0.5rem 0.75rem; background: #f59e0b; color: #fff;
-    border-radius: 4px; display: inline-block; font-weight: 700;
-    font-size: 1rem;
-  }
-  .event {
-    position: relative; margin-bottom: 0.75rem;
-    padding: 0.75rem; background: #fff; border-radius: 8px;
-    border: 1px solid #e2e8f0; transition: box-shadow 0.15s;
-  }
-  .event:hover { box-shadow: 0 2px 8px rgba(0,0,0,0.08); }
-  .event::before {
-    content: ''; position: absolute; left: -1.65rem; top: 1rem;
-    width: 10px; height: 10px; border-radius: 50%;
-    border: 2px solid #fff;
-  }
-  .event.party-joel::before { background: var(--joel); }
-  .event.party-heather::before { background: var(--heather); }
-  .event.party-court::before { background: var(--court); }
-  .event.party-neutral::before { background: var(--neutral); }
-
-  .event.future { background: var(--future-bg); border-color: #fde68a; }
-  .event.prediction { background: var(--prediction-bg); border-color: #fed7aa; }
-  .event.status-marker { background: var(--status-bg); border-color: #6ee7b7; border-width: 2px; }
-  .event.risk-high { border-left: 4px solid #ef4444; }
-  .event.risk-medium { border-left: 4px solid #f59e0b; }
-
-  .event-header { display: flex; justify-content: space-between; align-items: flex-start; gap: 0.5rem; }
-  .event-date { font-size: 0.8rem; color: #64748b; white-space: nowrap; }
-  .event-title { font-weight: 600; font-size: 0.95rem; }
-  .event-detail { font-size: 0.85rem; color: #475569; margin-top: 0.35rem; white-space: pre-line; }
-  .badge {
-    display: inline-block; padding: 0.1rem 0.5rem; border-radius: 9999px;
-    font-size: 0.7rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.03em;
-  }
-  .badge-filing { background: #dbeafe; color: #1d4ed8; }
-  .badge-order { background: #ede9fe; color: #6d28d9; }
-  .badge-hearing { background: #fce7f3; color: #be185d; }
-  .badge-deadline { background: #fee2e2; color: #dc2626; }
-  .badge-motion { background: #e0f2fe; color: #0369a1; }
-  .badge-discovery { background: #f0fdf4; color: #15803d; }
-  .badge-employment { background: #fef3c7; color: #92400e; }
-  .badge-financial { background: #f0fdf4; color: #166534; }
-  .badge-personal { background: #f5f3ff; color: #7c3aed; }
-  .badge-incident { background: #fef2f2; color: #991b1b; }
-  .badge-prediction { background: #fff7ed; color: #c2410c; }
-  .badge-status { background: #ecfdf5; color: #065f46; }
-  .badge-business { background: #f0f9ff; color: #075985; }
-  .badge-communication { background: #faf5ff; color: #7e22ce; }
-  .confidence {
-    font-size: 0.7rem; padding: 0.1rem 0.4rem; border-radius: 4px;
-    background: #f1f5f9; color: #64748b;
-  }
-
-  .generated { text-align: center; color: #94a3b8; font-size: 0.75rem; margin-top: 2rem; padding-top: 1rem; border-top: 1px solid #e2e8f0; }
-
-  @media print {
-    body { max-width: 100%; }
-    .event { break-inside: avoid; }
-  }
+}
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body {
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 100vh;
+  padding: 20px;
+}
+.login-card {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  padding: 40px;
+  max-width: 400px;
+  width: 100%;
+  box-shadow: 0 4px 6px rgba(0,0,0,0.1), 0 10px 15px rgba(0,0,0,0.1);
+}
+.login-card h1 {
+  font-size: 22px;
+  font-weight: 700;
+  margin-bottom: 8px;
+}
+.login-card p {
+  font-size: 14px;
+  color: var(--text2);
+  margin-bottom: 24px;
+}
+.input-group {
+  position: relative;
+  margin-bottom: 16px;
+}
+.input-group input {
+  width: 100%;
+  padding: 12px 16px;
+  font-size: 15px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: var(--bg);
+  color: var(--text);
+  outline: none;
+  transition: border-color 0.2s;
+}
+.input-group input:focus {
+  border-color: var(--accent);
+}
+.btn {
+  width: 100%;
+  padding: 12px;
+  font-size: 15px;
+  font-weight: 600;
+  background: var(--accent);
+  color: #fff;
+  border: none;
+  border-radius: 10px;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+.btn:hover { background: var(--accent-hover); }
+.btn:disabled { opacity: 0.6; cursor: not-allowed; }
+.error {
+  color: var(--red);
+  font-size: 13px;
+  margin-top: 10px;
+  display: none;
+}
+.loading {
+  display: none;
+  text-align: center;
+  padding: 40px;
+  font-size: 16px;
+  color: var(--text2);
+}
 </style>
 </head>
 <body>
-
-<h1>Case Timeline — 2024 D 6724</h1>
-<div class="subtitle">Joel Thorarinson v. Heather Kim Atagan | Generated 2026-04-16 15:35</div>
-
-<div class="legend">
-  <div class="legend-item"><div class="legend-dot" style="background:var(--joel)"></div> Joel (Petitioner)</div>
-  <div class="legend-item"><div class="legend-dot" style="background:var(--heather)"></div> Heather (Respondent)</div>
-  <div class="legend-item"><div class="legend-dot" style="background:var(--court)"></div> Court</div>
-  <div class="legend-item"><div class="legend-dot" style="background:var(--neutral)"></div> Neutral</div>
-  <div class="legend-item"><span style="display:inline-block;width:10px;height:10px;background:var(--future-bg);border:1px solid #fde68a;border-radius:2px"></span> Future/Target</div>
-  <div class="legend-item"><span style="display:inline-block;width:10px;height:10px;background:var(--prediction-bg);border:1px solid #fed7aa;border-radius:2px"></span> Predicted</div>
-</div>
-
-<div class="stats">
-  <div class="stat-card">
-    <div class="label">Verified Payments</div>
-    <div class="value" style="color:var(--joel)">$256,888.07</div>
-  </div>
-  <div class="stat-card">
-    <div class="label">Undisclosed Transfers</div>
-    <div class="value" style="color:var(--joel)">$110,041.00</div>
-  </div>
-  <div class="stat-card">
-    <div class="label">Combined Total</div>
-    <div class="value" style="color:#059669">$366,929.07</div>
-  </div>
-  <div class="stat-card">
-    <div class="label">Joel's Current Income</div>
-    <div class="value" style="color:var(--heather)">$0</div>
-  </div>
-  <div class="stat-card">
-    <div class="label">Days Since Termination</div>
-    <div class="value">132</div>
-  </div>
-  <div class="stat-card">
-    <div class="label">Next Hearing</div>
-    <div class="value" style="font-size:1rem">May 5, 2026 1:30pm</div>
-  </div>
-</div>
-
-<div class="timeline">
-
-
-<div class="year-header">2024</div>
-
-
-
-<div class="event party-joel">
-  <div class="event-header">
-    <div>
-      <span class="badge badge-filing">filing</span>
-      
-    </div>
-    <span class="event-date">2024-09-09</span>
-  </div>
-  <div class="event-title">Petition for Dissolution filed</div>
-  <div class="event-detail">Joel Thorarinson files for divorce in Cook County. Case No. 2024 D 6724, DRCAL11.</div>
-</div>
-
-
-
-<div class="event party-joel">
-  <div class="event-header">
-    <div>
-      <span class="badge badge-filing">filing</span>
-      
-    </div>
-    <span class="event-date">2024-12-10</span>
-  </div>
-  <div class="event-title">Summons reissued</div>
-  <div class="event-detail">Second summons issued</div>
-</div>
-
-
-
-<div class="event party-joel">
-  <div class="event-header">
-    <div>
-      <span class="badge badge-filing">filing</span>
-      
-    </div>
-    <span class="event-date">2024-12-18</span>
-  </div>
-  <div class="event-title">Affidavit of Service filed</div>
-  <div class="event-detail">Service on Heather completed</div>
-</div>
-
-
-
-<div class="year-header">2025</div>
-
-
-
-<div class="event party-joel">
-  <div class="event-header">
-    <div>
-      <span class="badge badge-motion">motion</span>
-      
-    </div>
-    <span class="event-date">2025-01-15</span>
-  </div>
-  <div class="event-title">Motion for Default drafted</div>
-  <div class="event-detail">Joel's counsel drafts motion for default against Heather</div>
-</div>
-
-
-
-<div class="event party-joel">
-  <div class="event-header">
-    <div>
-      <span class="badge badge-motion">motion</span>
-      
-    </div>
-    <span class="event-date">2025-04-17</span>
-  </div>
-  <div class="event-title">Motion for Default signed & filed</div>
-  <div class="event-detail">Set for hearing April 28, 2025</div>
-</div>
-
-
-
-<div class="event party-heather">
-  <div class="event-header">
-    <div>
-      <span class="badge badge-filing">filing</span>
-      
-    </div>
-    <span class="event-date">2025-04-24</span>
-  </div>
-  <div class="event-title">Heather files Appearance + 4 Petitions</div>
-  <div class="event-detail">CPDOM, Petition for Fees, APR, Maintenance — prevents default</div>
-</div>
-
-
-
-<div class="event party-court">
-  <div class="event-header">
-    <div>
-      <span class="badge badge-hearing">hearing</span>
-      
-    </div>
-    <span class="event-date">2025-04-28</span>
-  </div>
-  <div class="event-title">Hearing: Motion for Default + Counter-Petitions</div>
-  <div class="event-detail">Continued to April 30. Conniff Motion to Withdraw also presented.</div>
-</div>
-
-
-
-<div class="event party-heather risk-high">
-  <div class="event-header">
-    <div>
-      <span class="badge badge-discovery">discovery</span>
-      
-    </div>
-    <span class="event-date">2025-04-28</span>
-  </div>
-  <div class="event-title">Heather subpoenas Chase Bank & Eisler Capital</div>
-  <div class="event-detail">SDT to Chase and Eisler Capital — this subpoena at workplace triggers chain leading to Joel's termination</div>
-</div>
-
-
-
-<div class="event party-heather risk-high">
-  <div class="event-header">
-    <div>
-      <span class="badge badge-discovery">discovery</span>
-      
-    </div>
-    <span class="event-date">2025-04-28</span>
-  </div>
-  <div class="event-title">Subpoena served on Joel at Eisler Capital</div>
-  <div class="event-detail">Amended SDT served at workplace</div>
-</div>
-
-
-
-<div class="event party-heather">
-  <div class="event-header">
-    <div>
-      <span class="badge badge-filing">filing</span>
-      
-    </div>
-    <span class="event-date">2025-04-29</span>
-  </div>
-  <div class="event-title">Heather files Emergency Petitions</div>
-  <div class="event-detail">EM Petition for TRO + EM Petition for Order of Protection</div>
-</div>
-
-
-
-<div class="event party-court risk-high">
-  <div class="event-header">
-    <div>
-      <span class="badge badge-order">order</span>
-      
-    </div>
-    <span class="event-date">2025-04-30</span>
-  </div>
-  <div class="event-title">THREE Agreed Orders entered</div>
-  <div class="event-detail">1) Temporary Financial Matters ($10K/mo maintenance, TRO on accounts)
-2) No Contact (one-directional, restrains Joel only)
-3) Briefing Schedule</div>
-</div>
-
-
-
-<div class="event party-joel">
-  <div class="event-header">
-    <div>
-      <span class="badge badge-deadline">deadline</span>
-      
-    </div>
-    <span class="event-date">2025-05-01</span>
-  </div>
-  <div class="event-title">First $10K maintenance payment due</div>
-  <div class="event-detail">$10K to Heather + $15K interim fees to Merel + $15K to Conniff</div>
-</div>
-
-
-
-<div class="event party-joel risk-high">
-  <div class="event-header">
-    <div>
-      <span class="badge badge-incident">incident</span>
-      
-    </div>
-    <span class="event-date">2025-05-01</span>
-  </div>
-  <div class="event-title">Joel accesses Heather's email via shared LastPass</div>
-  <div class="event-detail">Discovers $26K/month lawyer fee requests. Deletes emails in anger. Account later restored. THIS IS A CONFIRMED CONTEMPT VIOLATION.</div>
-</div>
-
-
-
-<div class="event party-heather">
-  <div class="event-header">
-    <div>
-      <span class="badge badge-filing">filing</span>
-      
-    </div>
-    <span class="event-date">2025-05-12</span>
-  </div>
-  <div class="event-title">First Contempt Petition drafted (re: hacking & transfers)</div>
-  <div class="event-detail">Alleges: OFW violation, email access, direct child contact, joint acct transactions</div>
-</div>
-
-
-
-<div class="event party-heather">
-  <div class="event-header">
-    <div>
-      <span class="badge badge-filing">filing</span>
-      
-    </div>
-    <span class="event-date">2025-05-14</span>
-  </div>
-  <div class="event-title">Proof of Service filed (2x)</div>
-  <div class="event-detail">Chase and Eisler subpoenas served</div>
-</div>
-
-
-
-<div class="event party-joel risk-high">
-  <div class="event-header">
-    <div>
-      <span class="badge badge-deadline">deadline</span>
-      
-    </div>
-    <span class="event-date">2025-05-15</span>
-  </div>
-  <div class="event-title">Joel's Financial Affidavit due</div>
-  <div class="event-detail">NOT SUBMITTED on time — becomes part of 2nd contempt petition</div>
-</div>
-
-
-
-<div class="event party-heather risk-high">
-  <div class="event-header">
-    <div>
-      <span class="badge badge-filing">filing</span>
-      
-    </div>
-    <span class="event-date">2025-05-16</span>
-  </div>
-  <div class="event-title">Heather's Financial Affidavit filed</div>
-  <div class="event-detail">Claims $0 income, $29,553/month expenses. DOES NOT DISCLOSE accounts ...9056 and ...2573. Does not mention Atagan Music Studios income.</div>
-</div>
-
-
-
-<div class="event party-heather">
-  <div class="event-header">
-    <div>
-      <span class="badge badge-filing">filing</span>
-      
-    </div>
-    <span class="event-date">2025-05-19</span>
-  </div>
-  <div class="event-title">First Contempt Petition filed (NOM)</div>
-  <div class="event-detail">Heather's 1st Verified Petition for Indirect Civil Contempt</div>
-</div>
-
-
-
-<div class="event party-court">
-  <div class="event-header">
-    <div>
-      <span class="badge badge-hearing">hearing</span>
-      
-    </div>
-    <span class="event-date">2025-05-29</span>
-  </div>
-  <div class="event-title">Court hearing — pre-trial call</div>
-  <div class="event-detail">In-person appearance. Answer/response filed. Case set on pre-trial call.</div>
-</div>
-
-
-
-<div class="event party-heather">
-  <div class="event-header">
-    <div>
-      <span class="badge badge-filing">filing</span>
-      
-    </div>
-    <span class="event-date">2025-06-20</span>
-  </div>
-  <div class="event-title">Heather's Financial Affidavit notice of service</div>
-  <div class="event-detail">NOS filed for Heather's FA (signed May 16)</div>
-</div>
-
-
-
-<div class="event party-joel">
-  <div class="event-header">
-    <div>
-      <span class="badge badge-motion">motion</span>
-      
-    </div>
-    <span class="event-date">2025-07-28</span>
-  </div>
-  <div class="event-title">Conniff files Motion to Withdraw as Counsel</div>
-  <div class="event-detail">First attempt — continued multiple times</div>
-</div>
-
-
-
-<div class="event party-joel risk-high">
-  <div class="event-header">
-    <div>
-      <span class="badge badge-employment">employment</span>
-      
-    </div>
-    <span class="event-date">2025-08-05</span>
-  </div>
-  <div class="event-title">Joel placed on garden leave at Eisler</div>
-  <div class="event-detail">99 days after subpoena served at workplace. System access cut, suspended from trading. Performance Pay-out = $0.</div>
-</div>
-
-
-
-<div class="event party-court risk-high">
-  <div class="event-header">
-    <div>
-      <span class="badge badge-order">order</span>
-      
-    </div>
-    <span class="event-date">2025-08-11</span>
-  </div>
-  <div class="event-title">Allocation Judgment entered (Joel signed WITHOUT counsel)</div>
-  <div class="event-detail">Joint Allocation of Parental Responsibilities — 22-page parenting plan.
-Heather gets SOLE decision-making. Joel gets NO parenting time until reunification therapy.
-CRITICAL: Joel signed without Conniff's advice. Conniff: 'I did not advise you... I can't have my name on it.'
-Joel: 'Working together with Heather to close this down. We just want all this court stuff to stop.'</div>
-</div>
-
-
-
-<div class="event party-court">
-  <div class="event-header">
-    <div>
-      <span class="badge badge-hearing">hearing</span>
-      
-    </div>
-    <span class="event-date">2025-09-22</span>
-  </div>
-  <div class="event-title">Case set on Progress Call</div>
-  
-</div>
-
-
-
-<div class="event party-joel">
-  <div class="event-header">
-    <div>
-      <span class="badge badge-business">business</span>
-      
-    </div>
-    <span class="event-date">2025-10-01</span>
-  </div>
-  <div class="event-title">GTL (Global Trading League) LLC formed</div>
-  <div class="event-detail">Joel & Dan Pei, Texas. Separate from Heather's Atagan Music Studios.</div>
-</div>
-
-
-
-<div class="event party-heather">
-  <div class="event-header">
-    <div>
-      <span class="badge badge-discovery">discovery</span>
-      
-    </div>
-    <span class="event-date">2025-10-13</span>
-  </div>
-  <div class="event-title">Heather subpoenas AmEx, BOA, Citibank, HSBC</div>
-  <div class="event-detail">Blanket subpoena of all Joel's financial accounts</div>
-</div>
-
-
-
-<div class="event party-joel risk-medium">
-  <div class="event-header">
-    <div>
-      <span class="badge badge-filing">filing</span>
-      
-    </div>
-    <span class="event-date">2025-10-16</span>
-  </div>
-  <div class="event-title">Joel submits first Financial Affidavit (late)</div>
-  <div class="event-detail">5 months late. Sent to Conniff. Joel noted 'a bit sloppy because Heather knows all the rest'</div>
-</div>
-
-
-
-<div class="event party-joel risk-medium">
-  <div class="event-header">
-    <div>
-      <span class="badge badge-personal">personal</span>
-      
-    </div>
-    <span class="event-date">2025-10-20</span>
-  </div>
-  <div class="event-title">Uncle Richard Thorarinson dies</div>
-  <div class="event-detail">~$20K CAD deposited into RBC account controlled by Heather. Heather removes funds.</div>
-</div>
-
-
-
-<div class="event party-heather risk-high">
-  <div class="event-header">
-    <div>
-      <span class="badge badge-filing">filing</span>
-      
-    </div>
-    <span class="event-date">2025-10-28</span>
-  </div>
-  <div class="event-title">Second Contempt Petition filed</div>
-  <div class="event-detail">Alleges: non-payment Jul-Oct ($31,359), joint acct transactions ($184,776), failed to tender FA. Exhibit C LISTS transfer to x9056 — proving counsel knew about account.</div>
-</div>
-
-
-
-<div class="event party-joel">
-  <div class="event-header">
-    <div>
-      <span class="badge badge-motion">motion</span>
-      
-    </div>
-    <span class="event-date">2025-11-10</span>
-  </div>
-  <div class="event-title">Joel files Petition to Sell Marital Residence</div>
-  <div class="event-detail">430 Wilshire Dr, Wilmette. Heather opposes sale.</div>
-</div>
-
-
-
-<div class="event party-joel">
-  <div class="event-header">
-    <div>
-      <span class="badge badge-motion">motion</span>
-      
-    </div>
-    <span class="event-date">2025-11-10</span>
-  </div>
-  <div class="event-title">Joel files Petition to Modify Child Support</div>
-  <div class="event-detail">Based on changed circumstances</div>
-</div>
-
-
-
-<div class="event party-joel">
-  <div class="event-header">
-    <div>
-      <span class="badge badge-filing">filing</span>
-      
-    </div>
-    <span class="event-date">2025-11-18</span>
-  </div>
-  <div class="event-title">Joel's 2nd FDA filed with court (NOFS)</div>
-  <div class="event-detail">Formal Financial Affidavit signed via Adobe Acrobat Sign, filed through Conniff with NOFS. This is the formal court filing — not the Oct 16 informal submission.</div>
-</div>
-
-
-
-<div class="event party-heather">
-  <div class="event-header">
-    <div>
-      <span class="badge badge-motion">motion</span>
-      
-    </div>
-    <span class="event-date">2025-12-01</span>
-  </div>
-  <div class="event-title">Heather files Motion for Summary Judgment</div>
-  
-</div>
-
-
-
-<div class="event party-court risk-medium">
-  <div class="event-header">
-    <div>
-      <span class="badge badge-hearing">hearing</span>
-      
-    </div>
-    <span class="event-date">2025-12-02</span>
-  </div>
-  <div class="event-title">Heather's Motion for Substitution of Judge — DENIED</div>
-  <div class="event-detail">Heather tried to remove Judge Jannusch. DENIED because substantive order (Aug 11 Allocation Judgment) already entered. Jannusch stays.
-Pre-Trial Conference set for Feb 20, 2026 at 1:30pm.
-Joel told Conniff: 'Agreed with not objecting to the SOJ from them' — but court denied it anyway.</div>
-</div>
-
-
-
-<div class="event party-court risk-medium">
-  <div class="event-header">
-    <div>
-      <span class="badge badge-hearing">hearing</span>
-      
-    </div>
-    <span class="event-date">2025-12-04</span>
-  </div>
-  <div class="event-title">Settlement Conference (4-way Zoom)</div>
-  <div class="event-detail">Joel, Conniff, Tarara, Heather. Joel mentions accounts are Heather's — shut down. Conniff was present and can corroborate.</div>
-</div>
-
-
-
-<div class="event party-joel risk-high">
-  <div class="event-header">
-    <div>
-      <span class="badge badge-employment">employment</span>
-      
-    </div>
-    <span class="event-date">2025-12-05</span>
-  </div>
-  <div class="event-title">Eisler UK employment terminated</div>
-  <div class="event-detail">Employer-initiated. Not voluntary resignation or misconduct. Joel has had $0 earned income since this date.</div>
-</div>
-
-
-
-<div class="event party-joel">
-  <div class="event-header">
-    <div>
-      <span class="badge badge-financial">financial</span>
-      
-    </div>
-    <span class="event-date">2025-12-19</span>
-  </div>
-  <div class="event-title">PILON payment received from Eisler</div>
-  <div class="event-detail">$121,378 net — one-time termination payment, not recurring income</div>
-</div>
-
-
-
-<div class="year-header">2026</div>
-
-
-
-<div class="event party-heather risk-medium">
-  <div class="event-header">
-    <div>
-      <span class="badge badge-incident">incident</span>
-      
-    </div>
-    <span class="event-date">2026-01-06</span>
-  </div>
-  <div class="event-title">Heather's Open Letter emailed to family</div>
-  <div class="event-detail">Weaponized 2011 joint family letter. 'You became the thing you hated the most.' Sent to Joel's father and family members.</div>
-</div>
-
-
-
-<div class="event party-heather">
-  <div class="event-header">
-    <div>
-      <span class="badge badge-filing">filing</span>
-      
-    </div>
-    <span class="event-date">2026-01-16</span>
-  </div>
-  <div class="event-title">Attorney substitution: Merel → Fitzpatrick Tarara</div>
-  <div class="event-detail">Tarara files new appearance (no fee). Merel withdrawal filed. Tarara left Merel to start Fitzpatrick Tarara Family Law LLC.</div>
-</div>
-
-
-
-<div class="event party-court">
-  <div class="event-header">
-    <div>
-      <span class="badge badge-order">order</span>
-      
-    </div>
-    <span class="event-date">2026-01-20</span>
-  </div>
-  <div class="event-title">Merel Family Law withdrawal ALLOWED by court</div>
-  <div class="event-detail">Previous firm formally out. Tarara is now sole counsel for Heather.</div>
-</div>
-
-
-
-<div class="event party-heather">
-  <div class="event-header">
-    <div>
-      <span class="badge badge-filing">filing</span>
-      
-    </div>
-    <span class="event-date">2026-02-03</span>
-  </div>
-  <div class="event-title">Heather files 3rd Petition for Attorney Fees + exhibits</div>
-  <div class="event-detail">Petition + NOM + 3 exhibits + affidavit. New fee petition.</div>
-</div>
-
-
-
-<div class="event party-heather">
-  <div class="event-header">
-    <div>
-      <span class="badge badge-filing">filing</span>
-      
-    </div>
-    <span class="event-date">2026-02-12</span>
-  </div>
-  <div class="event-title">Heather files Emergency Motion + multiple filings</div>
-  <div class="event-detail">EM Motion, Response to Pet to Modify, Response to Pet to Sell, First Notice of Intent re Dissipation, Motion for Job Diary</div>
-</div>
-
-
-
-<div class="event party-joel">
-  <div class="event-header">
-    <div>
-      <span class="badge badge-filing">filing</span>
-      
-    </div>
-    <span class="event-date">2026-02-19</span>
-  </div>
-  <div class="event-title">Joel files Response to Emergency Motion</div>
-  <div class="event-detail">Signed response to Heather's Feb 12 EM</div>
-</div>
-
-
-
-<div class="event party-court risk-high">
-  <div class="event-header">
-    <div>
-      <span class="badge badge-order">order</span>
-      
-    </div>
-    <span class="event-date">2026-02-20</span>
-  </div>
-  <div class="event-title">ORDER ON RULE TO SHOW CAUSE entered</div>
-  <div class="event-detail">Judge Jannusch. Prima facie case of contempt found. Rule issued on both contempt petitions. May 5 hearing set. Body attachment warning (standard NOTICE). Service: personally in open court.</div>
-</div>
-
-
-
-<div class="event party-joel">
-  <div class="event-header">
-    <div>
-      <span class="badge badge-communication">communication</span>
-      
-    </div>
-    <span class="event-date">2026-02-25</span>
-  </div>
-  <div class="event-title">Conniff forwards Feb 20 Order to Joel</div>
-  <div class="event-detail">Order sent via email from Odyssey court system</div>
-</div>
-
-
-
-<div class="event party-joel">
-  <div class="event-header">
-    <div>
-      <span class="badge badge-discovery">discovery</span>
-      
-    </div>
-    <span class="event-date">2026-03-03</span>
-  </div>
-  <div class="event-title">Joel's Request for Production filed (Rule 214)</div>
-  <div class="event-detail">NOFS filed for Joel's Request for Production of Documents to Heather. Filed by Conniff. Heather has NOT responded to these discovery requests.</div>
-</div>
-
-
-
-<div class="event party-joel risk-high">
-  <div class="event-header">
-    <div>
-      <span class="badge badge-deadline">deadline</span>
-      
-    </div>
-    <span class="event-date">2026-03-20</span>
-  </div>
-  <div class="event-title">DEADLINE: Joel's contempt response due</div>
-  <div class="event-detail">NO RESPONSE FILED. Joel is now in default on briefing schedule.</div>
-</div>
-
-
-
-<div class="event party-joel">
-  <div class="event-header">
-    <div>
-      <span class="badge badge-motion">motion</span>
-      
-    </div>
-    <span class="event-date">2026-04-01</span>
-  </div>
-  <div class="event-title">Conniff files Motion to Withdraw (final)</div>
-  <div class="event-detail">Filed April 1. Hearing scheduled April 20.</div>
-</div>
-
-
-
-<div class="event party-heather">
-  <div class="event-header">
-    <div>
-      <span class="badge badge-discovery">discovery</span>
-      
-    </div>
-    <span class="event-date">2026-04-01</span>
-  </div>
-  <div class="event-title">Heather serves 213 Interrogatories</div>
-  <div class="event-detail">New discovery request; also requesting another FDA from April 1</div>
-</div>
-
-
-
-<div class="event party-heather">
-  <div class="event-header">
-    <div>
-      <span class="badge badge-deadline">deadline</span>
-      
-    </div>
-    <span class="event-date">2026-04-03</span>
-  </div>
-  <div class="event-title">DEADLINE: Heather's reply due</div>
-  <div class="event-detail">Heather's reply deadline per Feb 20 order briefing schedule</div>
-</div>
-
-
-
-<div class="event party-joel status-marker">
-  <div class="event-header">
-    <div>
-      <span class="badge badge-status">status</span>
-      
-    </div>
-    <span class="event-date">2026-04-16</span>
-  </div>
-  <div class="event-title">STATUS: Wave 1 filed. Awaiting May 5 hearing.</div>
-  <div class="event-detail">9 documents filed April 17, 2026. Served on opposing counsel same day.
-Joel is pro se, in Canada, $0 income since Dec 5 2025.
-Combined payments/transfers documented: $366,929.07
-Emails sent to Conniff (6 questions) and Uncle John (account inquiry).
-Conniff withdrawal hearing April 20. Main hearing May 5 at 1:30pm.
-Allison reviewing docs. Upwork paralegals verifying.</div>
-</div>
-
-
-
-<div class="future-divider">PROJECTED FUTURE EVENTS</div>
-
-
-
-<div class="year-header">2026</div>
-
-
-
-<div class="event party-joel future">
-  <div class="event-header">
-    <div>
-      <span class="badge badge-filing">filing</span>
-      <span class="confidence">high confidence</span>
-    </div>
-    <span class="event-date">2026-04-17</span>
-  </div>
-  <div class="event-title">FILED: Wave 1 motion packet (9 documents)</div>
-  <div class="event-detail">1. Notice of Motion
-2. Response to Both Contempt Petitions (v3 — merged tone)
-3. Motion to Continue / Remote Appearance
-4. Affidavit (735 ILCS 5/1-109 certification)
-5. Exhibit A — Procedural Timeline
-6. Exhibit D — Verified Payments ($256,888)
-7. Exhibit E — Undisclosed Transfers ($110,041)
-8. Exhibit F — Feb 20, 2026 Order
-9. Certificate of Service
-Served on Tarara at atarara@ftfamilylawyers.com same day.</div>
-</div>
-
-
-
-<div class="event party-joel future">
-  <div class="event-header">
-    <div>
-      <span class="badge badge-hearing">hearing</span>
-      <span class="confidence">high confidence</span>
-    </div>
-    <span class="event-date">2026-04-20</span>
-  </div>
-  <div class="event-title">Conniff Withdrawal Hearing</div>
-  <div class="event-detail">John Conniff to appear and formally withdraw as Joel's counsel. Joel becomes officially pro se after this date.</div>
-</div>
-
-
-
-<div class="event party-heather prediction">
-  <div class="event-header">
-    <div>
-      <span class="badge badge-prediction">prediction</span>
-      <span class="confidence">high confidence</span>
-    </div>
-    <span class="event-date">2026-04-24</span>
-  </div>
-  <div class="event-title">PREDICTED: Tarara's response to Joel's filing</div>
-  <div class="event-detail">Likely within 7 days of service. Expected arguments:
-1. Motion to strike — response is 28 days late, argue waiver
-2. Email access = willful contempt, not excusable
-3. Transfers were unauthorized, not 'support for her business'
-4. Canada location = flight risk, oppose remote appearance
-5. Request income imputation based on prior Eisler earnings
-6. Object to any modification while contempt pending
-
-OUR STRONGEST COUNTER:
-- $367K documented payments/transfers
-- Exhibit C lists x9056 as violation while omitting from her affidavit
-- Court has discretion to accept late filing (instanter)
-- Joel is engaging, not evading</div>
-</div>
-
-
-
-<div class="event party-joel future">
-  <div class="event-header">
-    <div>
-      <span class="badge badge-deadline">deadline</span>
-      <span class="confidence">high confidence</span>
-    </div>
-    <span class="event-date">2026-04-29</span>
-  </div>
-  <div class="event-title">DEADLINE: Respond to 213 Interrogatories</div>
-  <div class="event-detail">28 days from April 1 service = April 29. File responses or objections. If you need more time, file a motion for extension BEFORE the deadline.</div>
-</div>
-
-
-
-<div class="event party-joel future">
-  <div class="event-header">
-    <div>
-      <span class="badge badge-filing">filing</span>
-      <span class="confidence">high confidence</span>
-    </div>
-    <span class="event-date">2026-05-01</span>
-  </div>
-  <div class="event-title">TARGET: Prepare for May 5 hearing</div>
-  <div class="event-detail">By this date:
-- Review Tarara's response (if any)
-- Prepare 2-3 minute oral statement for judge
-- Test Zoom connection (Meeting ID: 969 9243 6102, Password: 295575)
-- Have all exhibits accessible on screen
-- Confirm whether court granted remote appearance</div>
-</div>
-
-
-
-<div class="event party-court future">
-  <div class="event-header">
-    <div>
-      <span class="badge badge-hearing">hearing</span>
-      <span class="confidence">high confidence</span>
-    </div>
-    <span class="event-date">2026-05-05</span>
-  </div>
-  <div class="event-title">HEARING: Rule to Show Cause — Both Contempt Petitions</div>
-  <div class="event-detail">Courtroom 3003, Daley Center, 1:30 PM.
-Joel must appear (in person or request remote).
-Body attachment warning if Joel fails to appear.
-
-POSSIBLE OUTCOMES:
-A) Court allows remote appearance, accepts late response, sets new briefing schedule — BEST CASE
-B) Court allows late filing but requires in-person appearance at next date — LIKELY
-C) Court strikes late response, finds contempt, issues body attachment — WORST CASE
-D) Court continues hearing to allow Joel time to prepare — POSSIBLE
-
-KEY ARGUMENTS FOR JOEL:
-- $366,929 in documented payments/transfers
-- Counsel withdrawal left him pro se
-- $0 income since Dec 2025
-- Heather's FDA omits 5-7 accounts
-- Transfers were to HELP Heather build Atagan Music Studios</div>
-</div>
-
-
-
-<div class="event party-court prediction">
-  <div class="event-header">
-    <div>
-      <span class="badge badge-prediction">prediction</span>
-      <span class="confidence">medium confidence</span>
-    </div>
-    <span class="event-date">2026-05-12</span>
-  </div>
-  <div class="event-title">PREDICTED: If continued — new briefing schedule set</div>
-  <div class="event-detail">If court grants continuance:
-- Joel's response: already filed
-- Heather's reply: 14 days after
-- New hearing: 30-45 days out (mid-June)
-- Court may order Joel to appear in person at next hearing</div>
-</div>
-
-
-
-<div class="event party-joel future">
-  <div class="event-header">
-    <div>
-      <span class="badge badge-filing">filing</span>
-      <span class="confidence">high confidence</span>
-    </div>
-    <span class="event-date">2026-05-15</span>
-  </div>
-  <div class="event-title">TARGET: File discovery requests (subpoena Heather's accounts)</div>
-  <div class="event-detail">Subpoena Chase Bank directly for statements on accounts ...9056 and ...2573. Also subpoena RBC for uncle Richard's account records. File interrogatories to Heather re: all accounts and Atagan Music Studios income.</div>
-</div>
-
-
-
-<div class="event party-heather prediction">
-  <div class="event-header">
-    <div>
-      <span class="badge badge-prediction">prediction</span>
-      <span class="confidence">medium confidence</span>
-    </div>
-    <span class="event-date">2026-06-01</span>
-  </div>
-  <div class="event-title">PREDICTED: Discovery responses due from Heather</div>
-  <div class="event-detail">If court orders disclosure:
-- 21-day deadline for account identification
-- 21-day deadline for amended FA
-- If Heather fails to comply → basis for sanctions motion</div>
-</div>
-
-
-
-<div class="event party-court prediction">
-  <div class="event-header">
-    <div>
-      <span class="badge badge-prediction">prediction</span>
-      <span class="confidence">low confidence</span>
-    </div>
-    <span class="event-date">2026-06-15</span>
-  </div>
-  <div class="event-title">PREDICTED: Follow-up hearing (if May 5 continued)</div>
-  <div class="event-detail">If court set 30-45 day continuance from May 5.
-By this date Joel should have:
-- Chase subpoena results
-- Heather's amended disclosure (or basis for sanctions)
-- Updated financial picture</div>
-</div>
-
-
-
-<div class="event party-joel future">
-  <div class="event-header">
-    <div>
-      <span class="badge badge-deadline">deadline</span>
-      <span class="confidence">medium confidence</span>
-    </div>
-    <span class="event-date">2026-07-01</span>
-  </div>
-  <div class="event-title">TARGET: Updated Financial Affidavit</div>
-  <div class="event-detail">Submit corrected/updated FDA with all current information. Show job search efforts, current financial status.</div>
-</div>
-
-
-
-<div class="event party-court prediction">
-  <div class="event-header">
-    <div>
-      <span class="badge badge-prediction">prediction</span>
-      <span class="confidence">low confidence</span>
-    </div>
-    <span class="event-date">2026-08-01</span>
-  </div>
-  <div class="event-title">PROJECTED: Support modification hearing</div>
-  <div class="event-detail">If modify petition is heard:
-- Joel's $0 income since Dec 2025
-- Heather's actual income (Atagan, undisclosed accounts)
-- Potential reduction or suspension of $10K/month obligation
-- Court may impute income to both parties</div>
-</div>
-
-
-
-<div class="event party-court prediction">
-  <div class="event-header">
-    <div>
-      <span class="badge badge-prediction">prediction</span>
-      <span class="confidence">low confidence</span>
-    </div>
-    <span class="event-date">2026-10-01</span>
-  </div>
-  <div class="event-title">PROJECTED: Trial or final hearing</div>
-  <div class="event-detail">If case proceeds to trial on property division:
-- 430 Wilshire Dr disposition
-- Marital asset division
-- Final support determination
-- Parenting allocation</div>
-</div>
-
-
-</div>
-
-<div class="generated">
-  Generated 2026-04-16 15:35 by div_legal case timeline generator.
-  Rerun: uv run python -m src.scripts.generate_case_timeline
-</div>
-
+<div class="login-card" id="loginCard">
+  <h1>Contact Analytics</h1>
+  <p>Enter the password to view this page.</p>
+  <form id="loginForm" onsubmit="return handleSubmit(event)">
+    <div class="input-group">
+      <input type="password" id="pwd" placeholder="Password" autocomplete="off" autofocus>
+    </div>
+    <button type="submit" class="btn" id="submitBtn">Unlock</button>
+    <div class="error" id="error">Incorrect password. Please try again.</div>
+  </form>
+</div>
+<div class="loading" id="loading">Decrypting...</div>
+
+<script>
+const SALT = "EI7RF8vLqvEwIc6A46HYzA==";
+const IV = "iBFlohHlJi2uRNlR";
+const CT = "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";
+
+function b64decode(s) {
+  const bin = atob(s);
+  const arr = new Uint8Array(bin.length);
+  for (let i = 0; i < bin.length; i++) arr[i] = bin.charCodeAt(i);
+  return arr;
+}
+
+async function decrypt(password) {
+  const enc = new TextEncoder();
+  const keyMaterial = await crypto.subtle.importKey(
+    "raw", enc.encode(password), "PBKDF2", false, ["deriveKey"]
+  );
+  const key = await crypto.subtle.deriveKey(
+    { name: "PBKDF2", salt: b64decode(SALT), iterations: 100000, hash: "SHA-256" },
+    keyMaterial,
+    { name: "AES-GCM", length: 256 },
+    false,
+    ["decrypt"]
+  );
+  const ct = b64decode(CT);
+  const iv = b64decode(IV);
+  const decrypted = await crypto.subtle.decrypt({ name: "AES-GCM", iv }, key, ct);
+  return new TextDecoder().decode(decrypted);
+}
+
+async function handleSubmit(e) {
+  e.preventDefault();
+  const pwd = document.getElementById("pwd").value;
+  if (!pwd) return false;
+
+  const btn = document.getElementById("submitBtn");
+  const errEl = document.getElementById("error");
+  btn.disabled = true;
+  btn.textContent = "Decrypting...";
+  errEl.style.display = "none";
+
+  try {
+    const html = await decrypt(pwd);
+    // Store password in sessionStorage so other pages auto-unlock
+    try { sessionStorage.setItem("filing_key", pwd); } catch(x) {}
+    document.open();
+    document.write(html);
+    document.close();
+  } catch (e) {
+    errEl.style.display = "block";
+    btn.disabled = false;
+    btn.textContent = "Unlock";
+  }
+  return false;
+}
+
+// Auto-unlock from sessionStorage (same session, no re-prompting)
+(async function() {
+  let saved = null;
+  try { saved = sessionStorage.getItem("filing_key"); } catch(x) {}
+  if (saved) {
+    try {
+      const html = await decrypt(saved);
+      document.open();
+      document.write(html);
+      document.close();
+      return;
+    } catch(e) {
+      try { sessionStorage.removeItem("filing_key"); } catch(x) {}
+    }
+  }
+  // Fallback: check URL hash
+  if (location.hash.length > 1) {
+    document.getElementById("pwd").value = decodeURIComponent(location.hash.slice(1));
+    handleSubmit(new Event("submit"));
+  }
+})();
+</script>
 </body>
 </html>
