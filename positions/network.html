@@ -1,0 +1,218 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Network Graph &mdash; Positions</title>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;600&display=swap" rel="stylesheet">
+<script src="https://d3js.org/d3.v7.min.js"></script>
+<style>
+:root { --bg:#0d1117; --bg2:#161b22; --bg3:#21262d; --bd:#30363d;
+  --fg:#c9d1d9; --muted:#8b949e; --accent:#58a6ff;
+  --jp:#f7768e; --ks:#e0af68; --cn:#9ece6a; --pg:#7aa2f7; --gr:#bb9af7; --ar:#ff9e64; --rr:#73daca; }
+*, *::before, *::after { box-sizing:border-box; margin:0; padding:0; }
+body { font-family:'JetBrains Mono',monospace; background:var(--bg); color:var(--fg); overflow:hidden; }
+.bar { position:fixed; top:0; left:0; right:0; height:48px; background:var(--bg2);
+  border-bottom:1px solid var(--bd); display:flex; align-items:center; padding:0 12px; z-index:1000; gap:8px; }
+.bar a { color:var(--accent); text-decoration:none; font-weight:600; font-size:13px; }
+.bar .sp { flex:1; }
+.bar select { background:var(--bg3); border:1px solid var(--bd); border-radius:5px;
+  color:var(--fg); padding:4px 8px; font-size:11px; font-family:inherit; cursor:pointer; }
+svg { position:fixed; top:48px; left:0; right:0; bottom:0; }
+.node circle { stroke-width:2; cursor:pointer; transition:all .15s; }
+.node text { font-size:8px; fill:var(--fg); pointer-events:none; font-family:'JetBrains Mono',monospace; }
+.node:hover circle { stroke-width:4; filter:brightness(1.3); }
+.link { stroke-opacity:0.25; fill:none; }
+.tooltip { position:fixed; background:var(--bg2); border:1px solid var(--bd);
+  border-radius:8px; padding:10px 14px; font-size:11px; pointer-events:none;
+  z-index:2000; max-width:320px; box-shadow:0 4px 16px rgba(0,0,0,.5); }
+.tooltip .tt-name { font-weight:700; font-size:13px; }
+.tooltip .tt-detail { margin:4px 0; color:var(--fg); }
+.tooltip .tt-meta { font-size:10px; color:var(--muted); }
+.legend { position:fixed; bottom:12px; left:12px; background:var(--bg2); border:1px solid var(--bd);
+  border-radius:8px; padding:10px 14px; font-size:10px; z-index:1000; }
+.legend div { display:flex; align-items:center; gap:5px; margin:2px 0; }
+.legend .dot { width:10px; height:10px; border-radius:50%; flex-shrink:0; }
+.stats { position:fixed; bottom:12px; right:12px; background:var(--bg2); border:1px solid var(--bd);
+  border-radius:8px; padding:8px 12px; font-size:10px; color:var(--muted); z-index:1000; }
+</style>
+</head>
+<body>
+<div class="bar">
+  <a href="index.html">&larr; Overview</a>
+  <div class="sp"></div>
+  <select id="tradFilter" onchange="filterTradition(this.value)">
+    <option value="all">All Traditions</option>
+    <option value="shijuhatte">Shijūhatte (29)</option>
+<option value="kamasutra">Kāmasūtra (27)</option>
+<option value="fangzhongshu">Fángzhōngshù (12)</option>
+<option value="perfumed_garden">Perfumed Garden (9)</option>
+<option value="greco_roman">Greco-Roman (7)</option>
+<option value="ananga_ranga">Ananga Ranga (13)</option>
+<option value="ratirahasya">Ratirahasya (10)</option>
+
+  </select>
+  <select id="catFilter" onchange="filterCategory(this.value)">
+    <option value="all">All Categories</option>
+    <option value="facing">facing (40)</option>
+<option value="rear">rear (17)</option>
+<option value="sitting">sitting (6)</option>
+<option value="standing">standing (10)</option>
+<option value="side">side (7)</option>
+<option value="inverted">inverted (19)</option>
+<option value="oral">oral (5)</option>
+<option value="special">special (3)</option>
+
+  </select>
+  <select id="simFilter" onchange="filterSimilarity(+this.value)">
+    <option value="0.70">&#8805; 70% similarity</option>
+    <option value="0.75">&#8805; 75%</option>
+    <option value="0.80">&#8805; 80%</option>
+    <option value="0.85" selected>&#8805; 85%</option>
+    <option value="0.90">&#8805; 90%</option>
+  </select>
+</div>
+
+<div class="tooltip" id="tooltip" style="display:none"></div>
+
+<div class="legend">
+  <div style="font-weight:600;margin-bottom:4px">Traditions</div>
+  <div><span class="dot" style="background:#f7768e"></span> Shijūhatte (29)</div>
+<div><span class="dot" style="background:#e0af68"></span> Kāmasūtra (27)</div>
+<div><span class="dot" style="background:#9ece6a"></span> Fángzhōngshù (12)</div>
+<div><span class="dot" style="background:#7aa2f7"></span> Perfumed Garden (9)</div>
+<div><span class="dot" style="background:#bb9af7"></span> Greco-Roman (7)</div>
+<div><span class="dot" style="background:#ff9e64"></span> Ananga Ranga (13)</div>
+<div><span class="dot" style="background:#73daca"></span> Ratirahasya (10)</div>
+
+  <div style="margin-top:6px;border-top:1px solid var(--bd);padding-top:4px">
+    <span class="dot" style="background:transparent;border:2px solid var(--bd)"></span> Larger = more connections
+  </div>
+</div>
+
+<div class="stats" id="stats"></div>
+
+<svg id="graph"></svg>
+
+<script>
+const data = {"nodes": [{"id": "jp-01", "name": "Normal Position", "tradition": "shijuhatte", "tradDisplay": "Shij\u016bhatte", "color": "#f7768e", "cat": "facing"}, {"id": "ks-04", "name": "Clasping / Box", "tradition": "kamasutra", "tradDisplay": "K\u0101mas\u016btra", "color": "#e0af68", "cat": "facing"}, {"id": "jp-03", "name": "Swallowtail Base", "tradition": "shijuhatte", "tradDisplay": "Shij\u016bhatte", "color": "#f7768e", "cat": "facing"}, {"id": "ks-10", "name": "High Pressure", "tradition": "kamasutra", "tradDisplay": "K\u0101mas\u016btra", "color": "#e0af68", "cat": "facing"}, {"id": "jp-07", "name": "True Leg Hook", "tradition": "shijuhatte", "tradDisplay": "Shij\u016bhatte", "color": "#f7768e", "cat": "facing"}, {"id": "ks-11", "name": "Half Pressure", "tradition": "kamasutra", "tradDisplay": "K\u0101mas\u016btra", "color": "#e0af68", "cat": "facing"}, {"id": "jp-08", "name": "Chrysanthemum Line", "tradition": "shijuhatte", "tradDisplay": "Shij\u016bhatte", "color": "#f7768e", "cat": "facing"}, {"id": "ks-13", "name": "Fixing of a Nail / Implement", "tradition": "kamasutra", "tradDisplay": "K\u0101mas\u016btra", "color": "#e0af68", "cat": "facing"}, {"id": "jp-04", "name": "Plover", "tradition": "shijuhatte", "tradDisplay": "Shij\u016bhatte", "color": "#f7768e", "cat": "facing"}, {"id": "ks-15", "name": "Packed / Tight", "tradition": "kamasutra", "tradDisplay": "K\u0101mas\u016btra", "color": "#e0af68", "cat": "facing"}, {"id": "jp-06", "name": "Tightened Plover", "tradition": "shijuhatte", "tradDisplay": "Shij\u016bhatte", "color": "#f7768e", "cat": "facing"}, {"id": "ks-05", "name": "Pressing", "tradition": "kamasutra", "tradDisplay": "K\u0101mas\u016btra", "color": "#e0af68", "cat": "facing"}, {"id": "jp-23", "name": "Pine Needle Collapse", "tradition": "shijuhatte", "tradDisplay": "Shij\u016bhatte", "color": "#f7768e", "cat": "special"}, {"id": "ks-12", "name": "Splitting the Bamboo", "tradition": "kamasutra", "tradDisplay": "K\u0101mas\u016btra", "color": "#e0af68", "cat": "facing"}, {"id": "jp-25", "name": "Flower Diamond", "tradition": "shijuhatte", "tradDisplay": "Shij\u016bhatte", "color": "#f7768e", "cat": "facing"}, {"id": "ks-14", "name": "Crab", "tradition": "kamasutra", "tradDisplay": "K\u0101mas\u016btra", "color": "#e0af68", "cat": "facing"}, {"id": "jp-29", "name": "Deep Mountain", "tradition": "shijuhatte", "tradDisplay": "Shij\u016bhatte", "color": "#f7768e", "cat": "facing"}, {"id": "jp-02", "name": "Wickerwork Base", "tradition": "shijuhatte", "tradDisplay": "Shij\u016bhatte", "color": "#f7768e", "cat": "facing"}, {"id": "ks-06", "name": "Twining", "tradition": "kamasutra", "tradDisplay": "K\u0101mas\u016btra", "color": "#e0af68", "cat": "facing"}, {"id": "ks-01", "name": "Widely Opened", "tradition": "kamasutra", "tradDisplay": "K\u0101mas\u016btra", "color": "#e0af68", "cat": "facing"}, {"id": "jp-09", "name": "Rear Position", "tradition": "shijuhatte", "tradDisplay": "Shij\u016bhatte", "color": "#f7768e", "cat": "rear"}, {"id": "ks-20", "name": "Congress of a Cow", "tradition": "kamasutra", "tradDisplay": "K\u0101mas\u016btra", "color": "#e0af68", "cat": "rear"}, {"id": "jp-11", "name": "Bush Warbler Crossing the Valley", "tradition": "shijuhatte", "tradDisplay": "Shij\u016bhatte", "color": "#f7768e", "cat": "rear"}, {"id": "ks-23", "name": "Congress of an Elephant", "tradition": "kamasutra", "tradDisplay": "K\u0101mas\u016btra", "color": "#e0af68", "cat": "rear"}, {"id": "jp-31", "name": "Cat", "tradition": "shijuhatte", "tradDisplay": "Shij\u016bhatte", "color": "#f7768e", "cat": "rear"}, {"id": "ks-22", "name": "Congress of a Cat", "tradition": "kamasutra", "tradDisplay": "K\u0101mas\u016btra", "color": "#e0af68", "cat": "rear"}, {"id": "jp-33", "name": "Deer", "tradition": "shijuhatte", "tradDisplay": "Shij\u016bhatte", "color": "#f7768e", "cat": "rear"}, {"id": "ks-21", "name": "Congress of a Dog", "tradition": "kamasutra", "tradDisplay": "K\u0101mas\u016btra", "color": "#e0af68", "cat": "rear"}, {"id": "jp-10", "name": "Lion Dance", "tradition": "shijuhatte", "tradDisplay": "Shij\u016bhatte", "color": "#f7768e", "cat": "rear"}, {"id": "ks-24", "name": "Congress of a Horse", "tradition": "kamasutra", "tradDisplay": "K\u0101mas\u016btra", "color": "#e0af68", "cat": "rear"}, {"id": "jp-12", "name": "Sitting Position", "tradition": "shijuhatte", "tradDisplay": "Shij\u016bhatte", "color": "#f7768e", "cat": "sitting"}, {"id": "ks-16", "name": "Lotus Position", "tradition": "kamasutra", "tradDisplay": "K\u0101mas\u016btra", "color": "#e0af68", "cat": "sitting"}, {"id": "jp-35", "name": "Lotus", "tradition": "shijuhatte", "tradDisplay": "Shij\u016bhatte", "color": "#f7768e", "cat": "sitting"}, {"id": "jp-15", "name": "Riding Position", "tradition": "shijuhatte", "tradDisplay": "Shij\u016bhatte", "color": "#f7768e", "cat": "inverted"}, {"id": "ks-27", "name": "Woman Acting Man's Part", "tradition": "kamasutra", "tradDisplay": "K\u0101mas\u016btra", "color": "#e0af68", "cat": "inverted"}, {"id": "jp-16", "name": "Tea Grinder", "tradition": "shijuhatte", "tradDisplay": "Shij\u016bhatte", "color": "#f7768e", "cat": "inverted"}, {"id": "ks-29", "name": "Spinning Top", "tradition": "kamasutra", "tradDisplay": "K\u0101mas\u016btra", "color": "#e0af68", "cat": "inverted"}, {"id": "jp-18", "name": "Swallow's Flight Reversal", "tradition": "shijuhatte", "tradDisplay": "Shij\u016bhatte", "color": "#f7768e", "cat": "inverted"}, {"id": "ks-17", "name": "Turning / Spin", "tradition": "kamasutra", "tradDisplay": "K\u0101mas\u016btra", "color": "#e0af68", "cat": "inverted"}, {"id": "jp-40", "name": "Handball Tea Grinder", "tradition": "shijuhatte", "tradDisplay": "Shij\u016bhatte", "color": "#f7768e", "cat": "inverted"}, {"id": "ks-30", "name": "Swing", "tradition": "kamasutra", "tradDisplay": "K\u0101mas\u016btra", "color": "#e0af68", "cat": "inverted"}, {"id": "jp-17", "name": "True Tea Grinder", "tradition": "shijuhatte", "tradDisplay": "Shij\u016bhatte", "color": "#f7768e", "cat": "inverted"}, {"id": "ks-28", "name": "Tongs", "tradition": "kamasutra", "tradDisplay": "K\u0101mas\u016btra", "color": "#e0af68", "cat": "inverted"}, {"id": "jp-19", "name": "Standing Position", "tradition": "shijuhatte", "tradDisplay": "Shij\u016bhatte", "color": "#f7768e", "cat": "standing"}, {"id": "ks-18", "name": "Supported Congress", "tradition": "kamasutra", "tradDisplay": "K\u0101mas\u016btra", "color": "#e0af68", "cat": "standing"}, {"id": "jp-20", "name": "Station Lunch Box", "tradition": "shijuhatte", "tradDisplay": "Shij\u016bhatte", "color": "#f7768e", "cat": "standing"}, {"id": "ks-19", "name": "Suspended Congress", "tradition": "kamasutra", "tradDisplay": "K\u0101mas\u016btra", "color": "#e0af68", "cat": "standing"}, {"id": "jp-45", "name": "Song of the Plover", "tradition": "shijuhatte", "tradDisplay": "Shij\u016bhatte", "color": "#f7768e", "cat": "oral"}, {"id": "ks-31", "name": "Casual / Nominal", "tradition": "kamasutra", "tradDisplay": "K\u0101mas\u016btra", "color": "#e0af68", "cat": "oral"}, {"id": "cn-01", "name": "Dragon Turns Over", "tradition": "fangzhongshu", "tradDisplay": "F\u00e1ngzh\u014dngsh\u00f9", "color": "#9ece6a", "cat": "facing"}, {"id": "cn-04", "name": "Cicada Clings", "tradition": "fangzhongshu", "tradDisplay": "F\u00e1ngzh\u014dngsh\u00f9", "color": "#9ece6a", "cat": "facing"}, {"id": "cn-05", "name": "Tortoise Mounts", "tradition": "fangzhongshu", "tradDisplay": "F\u00e1ngzh\u014dngsh\u00f9", "color": "#9ece6a", "cat": "facing"}, {"id": "cn-06", "name": "Phoenix Soars", "tradition": "fangzhongshu", "tradDisplay": "F\u00e1ngzh\u014dngsh\u00f9", "color": "#9ece6a", "cat": "facing"}, {"id": "cn-02", "name": "Tiger's Tread", "tradition": "fangzhongshu", "tradDisplay": "F\u00e1ngzh\u014dngsh\u00f9", "color": "#9ece6a", "cat": "rear"}, {"id": "cn-03", "name": "Monkey Attack", "tradition": "fangzhongshu", "tradDisplay": "F\u00e1ngzh\u014dngsh\u00f9", "color": "#9ece6a", "cat": "inverted"}, {"id": "cn-08", "name": "Fish Interlocking Scales", "tradition": "fangzhongshu", "tradDisplay": "F\u00e1ngzh\u014dngsh\u00f9", "color": "#9ece6a", "cat": "inverted"}, {"id": "cn-09", "name": "Cranes Intertwining Necks", "tradition": "fangzhongshu", "tradDisplay": "F\u00e1ngzh\u014dngsh\u00f9", "color": "#9ece6a", "cat": "sitting"}, {"id": "jp-46", "name": "Sword Guard Clash", "tradition": "shijuhatte", "tradDisplay": "Shij\u016bhatte", "color": "#f7768e", "cat": "oral"}, {"id": "cn-07", "name": "Rabbit Nibbles Fur", "tradition": "fangzhongshu", "tradDisplay": "F\u00e1ngzh\u014dngsh\u00f9", "color": "#9ece6a", "cat": "oral"}, {"id": "cn-18", "name": "Squirrel Climbing Branch", "tradition": "fangzhongshu", "tradDisplay": "F\u00e1ngzh\u014dngsh\u00f9", "color": "#9ece6a", "cat": "standing"}, {"id": "ks-39", "name": "Congress in Water", "tradition": "kamasutra", "tradDisplay": "K\u0101mas\u016btra", "color": "#e0af68", "cat": "special"}, {"id": "cn-13", "name": "Swimming Dragon Plays in Water", "tradition": "fangzhongshu", "tradDisplay": "F\u00e1ngzh\u014dngsh\u00f9", "color": "#9ece6a", "cat": "special"}, {"id": "pg-01", "name": "The Approach", "tradition": "perfumed_garden", "tradDisplay": "Perfumed Garden", "color": "#7aa2f7", "cat": "facing"}, {"id": "pg-03", "name": "The Pressing", "tradition": "perfumed_garden", "tradDisplay": "Perfumed Garden", "color": "#7aa2f7", "cat": "facing"}, {"id": "pg-04", "name": "The Couch", "tradition": "perfumed_garden", "tradDisplay": "Perfumed Garden", "color": "#7aa2f7", "cat": "facing"}, {"id": "pg-07", "name": "The Sticking", "tradition": "perfumed_garden", "tradDisplay": "Perfumed Garden", "color": "#7aa2f7", "cat": "rear"}, {"id": "jp-21", "name": "Side Position", "tradition": "shijuhatte", "tradDisplay": "Shij\u016bhatte", "color": "#f7768e", "cat": "side"}, {"id": "pg-08", "name": "The Side Coupling", "tradition": "perfumed_garden", "tradDisplay": "Perfumed Garden", "color": "#7aa2f7", "cat": "side"}, {"id": "jp-44", "name": "Sleeping Together", "tradition": "shijuhatte", "tradDisplay": "Shij\u016bhatte", "color": "#f7768e", "cat": "side"}, {"id": "pg-09", "name": "The Rear Side", "tradition": "perfumed_garden", "tradDisplay": "Perfumed Garden", "color": "#7aa2f7", "cat": "side"}, {"id": "jp-41", "name": "Over the Desk", "tradition": "shijuhatte", "tradDisplay": "Shij\u016bhatte", "color": "#f7768e", "cat": "standing"}, {"id": "pg-10", "name": "The Supported", "tradition": "perfumed_garden", "tradDisplay": "Perfumed Garden", "color": "#7aa2f7", "cat": "standing"}, {"id": "pg-12", "name": "The Caliph", "tradition": "perfumed_garden", "tradDisplay": "Perfumed Garden", "color": "#7aa2f7", "cat": "inverted"}, {"id": "gr-01", "name": "Natural Venus", "tradition": "greco_roman", "tradDisplay": "Greco-Roman", "color": "#bb9af7", "cat": "facing"}, {"id": "gr-03", "name": "Averted Venus", "tradition": "greco_roman", "tradDisplay": "Greco-Roman", "color": "#bb9af7", "cat": "rear"}, {"id": "gr-05", "name": "Riding Venus / The Horse", "tradition": "greco_roman", "tradDisplay": "Greco-Roman", "color": "#bb9af7", "cat": "inverted"}, {"id": "gr-07", "name": "Standing Venus", "tradition": "greco_roman", "tradDisplay": "Greco-Roman", "color": "#bb9af7", "cat": "standing"}, {"id": "gr-08", "name": "Lateral Venus", "tradition": "greco_roman", "tradDisplay": "Greco-Roman", "color": "#bb9af7", "cat": "side"}, {"id": "gr-04", "name": "In the Manner of Beasts", "tradition": "greco_roman", "tradDisplay": "Greco-Roman", "color": "#bb9af7", "cat": "rear"}, {"id": "gr-06", "name": "The Racehorse", "tradition": "greco_roman", "tradDisplay": "Greco-Roman", "color": "#bb9af7", "cat": "inverted"}, {"id": "pg-14", "name": "The Spinner", "tradition": "perfumed_garden", "tradDisplay": "Perfumed Garden", "color": "#7aa2f7", "cat": "inverted"}, {"id": "cn-14", "name": "Mandarin Ducks Mating", "tradition": "fangzhongshu", "tradDisplay": "F\u00e1ngzh\u014dngsh\u00f9", "color": "#9ece6a", "cat": "side"}, {"id": "ar-01", "name": "Equal Feet Supine", "tradition": "ananga_ranga", "tradDisplay": "Ananga Ranga", "color": "#ff9e64", "cat": "facing"}, {"id": "ar-03", "name": "Stride of Vi\u1e63\u1e47u", "tradition": "ananga_ranga", "tradDisplay": "Ananga Ranga", "color": "#ff9e64", "cat": "facing"}, {"id": "ar-07", "name": "The Yawning", "tradition": "ananga_ranga", "tradDisplay": "Ananga Ranga", "color": "#ff9e64", "cat": "facing"}, {"id": "ks-02", "name": "Yawning", "tradition": "kamasutra", "tradDisplay": "K\u0101mas\u016btra", "color": "#e0af68", "cat": "facing"}, {"id": "ar-08", "name": "The Entwined", "tradition": "ananga_ranga", "tradDisplay": "Ananga Ranga", "color": "#ff9e64", "cat": "facing"}, {"id": "ar-09", "name": "The Bamboo Split", "tradition": "ananga_ranga", "tradDisplay": "Ananga Ranga", "color": "#ff9e64", "cat": "facing"}, {"id": "ar-06", "name": "The Unopened", "tradition": "ananga_ranga", "tradDisplay": "Ananga Ranga", "color": "#ff9e64", "cat": "facing"}, {"id": "ar-15", "name": "Lotus Seat", "tradition": "ananga_ranga", "tradDisplay": "Ananga Ranga", "color": "#ff9e64", "cat": "sitting"}, {"id": "ar-28", "name": "Cow Prone", "tradition": "ananga_ranga", "tradDisplay": "Ananga Ranga", "color": "#ff9e64", "cat": "rear"}, {"id": "ar-29", "name": "Elephant Prone", "tradition": "ananga_ranga", "tradDisplay": "Ananga Ranga", "color": "#ff9e64", "cat": "rear"}, {"id": "ar-30", "name": "Reversed Woman-on-Top", "tradition": "ananga_ranga", "tradDisplay": "Ananga Ranga", "color": "#ff9e64", "cat": "inverted"}, {"id": "ar-31", "name": "Spinning Top Woman", "tradition": "ananga_ranga", "tradDisplay": "Ananga Ranga", "color": "#ff9e64", "cat": "inverted"}, {"id": "ar-27", "name": "Fame Standing", "tradition": "ananga_ranga", "tradDisplay": "Ananga Ranga", "color": "#ff9e64", "cat": "standing"}, {"id": "ar-12", "name": "Lute Side-lying", "tradition": "ananga_ranga", "tradDisplay": "Ananga Ranga", "color": "#ff9e64", "cat": "side"}, {"id": "rr-03", "name": "The Yawning", "tradition": "ratirahasya", "tradDisplay": "Ratirahasya", "color": "#73daca", "cat": "facing"}, {"id": "rr-04", "name": "The Blossoming", "tradition": "ratirahasya", "tradDisplay": "Ratirahasya", "color": "#73daca", "cat": "facing"}, {"id": "rr-05", "name": "Wife of Indra", "tradition": "ratirahasya", "tradDisplay": "Ratirahasya", "color": "#73daca", "cat": "facing"}, {"id": "ks-03", "name": "Wife of Indra", "tradition": "kamasutra", "tradDisplay": "K\u0101mas\u016btra", "color": "#e0af68", "cat": "facing"}, {"id": "rr-07", "name": "Splitting Bamboo", "tradition": "ratirahasya", "tradDisplay": "Ratirahasya", "color": "#73daca", "cat": "facing"}, {"id": "rr-06", "name": "Half Pressed", "tradition": "ratirahasya", "tradDisplay": "Ratirahasya", "color": "#73daca", "cat": "facing"}, {"id": "rr-09", "name": "Cow Village", "tradition": "ratirahasya", "tradDisplay": "Ratirahasya", "color": "#73daca", "cat": "rear"}, {"id": "rr-11", "name": "Lotus Love", "tradition": "ratirahasya", "tradDisplay": "Ratirahasya", "color": "#73daca", "cat": "sitting"}, {"id": "rr-13", "name": "Reversed Love", "tradition": "ratirahasya", "tradDisplay": "Ratirahasya", "color": "#73daca", "cat": "inverted"}, {"id": "rr-15", "name": "Standing Love", "tradition": "ratirahasya", "tradDisplay": "Ratirahasya", "color": "#73daca", "cat": "standing"}, {"id": "rr-16", "name": "Upper Congress", "tradition": "ratirahasya", "tradDisplay": "Ratirahasya", "color": "#73daca", "cat": "oral"}], "edges": [{"source": "jp-01", "target": "ks-04", "similarity": 0.9, "notes": "Seij\u014di \u2248 Samputakam. Baseline missionary.", "cat": "facing"}, {"source": "jp-03", "target": "ks-10", "similarity": 0.85, "notes": "Ageha-honte \u2248 Utpiditakam. Legs on shoulders.", "cat": "facing"}, {"source": "jp-07", "target": "ks-11", "similarity": 0.88, "notes": "Hon-komagake \u2248 Ardhapiditakam. One leg hooked.", "cat": "facing"}, {"source": "jp-08", "target": "ks-13", "similarity": 0.8, "notes": "Kiku-ichimonji \u2248 Shuulachitakam. Leg vertical.", "cat": "facing"}, {"source": "jp-04", "target": "ks-15", "similarity": 0.82, "notes": "Chidori \u2248 Piditakam. Legs pressed.", "cat": "facing"}, {"source": "jp-06", "target": "ks-05", "similarity": 0.85, "notes": "Shimekomi-chidori \u2248 Piditakam (pressing).", "cat": "facing"}, {"source": "jp-23", "target": "ks-12", "similarity": 0.75, "notes": "Matsuba-kuzushi \u2248 Venudaritakam. Leg alternation.", "cat": "facing"}, {"source": "jp-25", "target": "ks-14", "similarity": 0.78, "notes": "Hanabishi \u2248 Karkatakam. Diamond/crab legs.", "cat": "facing"}, {"source": "jp-29", "target": "ks-10", "similarity": 0.82, "notes": "Miyama \u2248 Utpiditakam. Max depth.", "cat": "facing"}, {"source": "jp-02", "target": "ks-06", "similarity": 0.8, "notes": "Ajiro-honte \u2248 Veshtitakam. Legs twined.", "cat": "facing"}, {"source": "jp-01", "target": "ks-01", "similarity": 0.7, "notes": "Seij\u014di \u2248 Utphullakam (size-differential variant).", "cat": "facing"}, {"source": "jp-09", "target": "ks-20", "similarity": 0.92, "notes": "K\u014dhaii \u2248 Dhenuka. Standard rear.", "cat": "rear"}, {"source": "jp-11", "target": "ks-23", "similarity": 0.85, "notes": "Uguisu-no-taniwatari \u2248 Gaja. Prone rear.", "cat": "rear"}, {"source": "jp-31", "target": "ks-22", "similarity": 0.88, "notes": "Neko \u2248 Marjarita. Cat.", "cat": "rear"}, {"source": "jp-33", "target": "ks-21", "similarity": 0.72, "notes": "Shika \u2248 Dog congress. Animal rear variants.", "cat": "rear"}, {"source": "jp-10", "target": "ks-24", "similarity": 0.78, "notes": "Shishimai \u2248 Ashva congress. Head-down rear.", "cat": "rear"}, {"source": "jp-12", "target": "ks-16", "similarity": 0.88, "notes": "Zai \u2248 Padmasana. Seated.", "cat": "sitting"}, {"source": "jp-35", "target": "ks-16", "similarity": 0.95, "notes": "Renge \u2248 Padmasana. Lotus, near-identical.", "cat": "sitting"}, {"source": "jp-15", "target": "ks-27", "similarity": 0.92, "notes": "Kij\u014di \u2248 Purushayita. Woman on top.", "cat": "inverted"}, {"source": "jp-16", "target": "ks-29", "similarity": 0.88, "notes": "Chausu \u2248 Bhramara. Grinding/spinning.", "cat": "inverted"}, {"source": "jp-18", "target": "ks-17", "similarity": 0.85, "notes": "Tsubame-gaeshi \u2248 Paravrttakam. Mid-act rotation.", "cat": "inverted"}, {"source": "jp-40", "target": "ks-30", "similarity": 0.82, "notes": "Temari-chausu \u2248 Preritaka. Bouncing/swing.", "cat": "inverted"}, {"source": "jp-17", "target": "ks-28", "similarity": 0.8, "notes": "Hon-chausu \u2248 Samdamsha. Internal grip.", "cat": "inverted"}, {"source": "jp-19", "target": "ks-18", "similarity": 0.9, "notes": "Tachii \u2248 Sthitarata. Standing.", "cat": "standing"}, {"source": "jp-20", "target": "ks-19", "similarity": 0.92, "notes": "Ekiben \u2248 Avalambitaka. Suspended.", "cat": "standing"}, {"source": "jp-45", "target": "ks-31", "similarity": 0.7, "notes": "Chidori-no-kyoku \u2248 Nimittaka. Oral.", "cat": "oral"}, {"source": "jp-01", "target": "cn-01", "similarity": 0.88, "notes": "Seij\u014di \u2248 Dragon Turns Over. Standard missionary.", "cat": "facing"}, {"source": "jp-04", "target": "cn-04", "similarity": 0.82, "notes": "Chidori \u2248 Cicada Clings. Legs drawn up, clinging.", "cat": "facing"}, {"source": "jp-29", "target": "cn-05", "similarity": 0.85, "notes": "Miyama \u2248 Tortoise Mounts. Max depth, legs to chest.", "cat": "facing"}, {"source": "jp-03", "target": "cn-06", "similarity": 0.83, "notes": "Ageha-honte \u2248 Phoenix Soars. Legs high, spread.", "cat": "facing"}, {"source": "jp-09", "target": "cn-02", "similarity": 0.9, "notes": "K\u014dhaii \u2248 Tiger's Tread. Standard rear.", "cat": "rear"}, {"source": "jp-15", "target": "cn-03", "similarity": 0.85, "notes": "Kij\u014di \u2248 Monkey Attack. Woman on top.", "cat": "inverted"}, {"source": "jp-16", "target": "cn-08", "similarity": 0.82, "notes": "Chausu \u2248 Fish Scales. Grinding/rocking on top.", "cat": "inverted"}, {"source": "jp-35", "target": "cn-09", "similarity": 0.9, "notes": "Renge \u2248 Cranes Necks. Seated, meditative.", "cat": "sitting"}, {"source": "jp-46", "target": "cn-07", "similarity": 0.78, "notes": "Tsubazeri-ai \u2248 Rabbit Nibbles. Mutual oral.", "cat": "oral"}, {"source": "jp-20", "target": "cn-18", "similarity": 0.85, "notes": "Ekiben \u2248 Squirrel Climbing. Suspended/clinging.", "cat": "standing"}, {"source": "ks-04", "target": "cn-01", "similarity": 0.85, "notes": "Samputakam \u2248 Dragon Turns Over. Baseline supine.", "cat": "facing"}, {"source": "ks-10", "target": "cn-06", "similarity": 0.82, "notes": "Utpiditakam \u2248 Phoenix Soars. Legs raised high.", "cat": "facing"}, {"source": "ks-14", "target": "cn-05", "similarity": 0.78, "notes": "Karkatakam \u2248 Tortoise Mounts. Drawn-up legs.", "cat": "facing"}, {"source": "ks-20", "target": "cn-02", "similarity": 0.9, "notes": "Dhenuka \u2248 Tiger's Tread. Standard rear.", "cat": "rear"}, {"source": "ks-27", "target": "cn-03", "similarity": 0.85, "notes": "Purushayita \u2248 Monkey Attack. Woman on top.", "cat": "inverted"}, {"source": "ks-16", "target": "cn-09", "similarity": 0.88, "notes": "Padmasana \u2248 Cranes Necks. Lotus/seated.", "cat": "sitting"}, {"source": "ks-19", "target": "cn-18", "similarity": 0.82, "notes": "Avalambitaka \u2248 Squirrel Climbing. Suspended.", "cat": "standing"}, {"source": "ks-39", "target": "cn-13", "similarity": 0.8, "notes": "Jalarata \u2248 Swimming Dragon. Congress in water.", "cat": "special"}, {"source": "jp-01", "target": "pg-01", "similarity": 0.88, "notes": "Seij\u014di \u2248 The Approach. Standard missionary.", "cat": "facing"}, {"source": "jp-06", "target": "pg-03", "similarity": 0.82, "notes": "Shimekomi-chidori \u2248 The Pressing. Thighs tight.", "cat": "facing"}, {"source": "jp-29", "target": "pg-04", "similarity": 0.85, "notes": "Miyama \u2248 The Couch. Legs on shoulders, deep.", "cat": "facing"}, {"source": "jp-09", "target": "pg-07", "similarity": 0.88, "notes": "K\u014dhaii \u2248 The Sticking. Standard rear.", "cat": "rear"}, {"source": "jp-21", "target": "pg-08", "similarity": 0.85, "notes": "Sokui \u2248 Side Coupling. Side face-to-face.", "cat": "side"}, {"source": "jp-44", "target": "pg-09", "similarity": 0.88, "notes": "Soine \u2248 Rear Side. Spooning.", "cat": "side"}, {"source": "jp-41", "target": "pg-10", "similarity": 0.85, "notes": "Tsukue-goshi \u2248 The Supported. Over furniture.", "cat": "standing"}, {"source": "jp-15", "target": "pg-12", "similarity": 0.82, "notes": "Kij\u014di \u2248 The Caliph. Woman on top.", "cat": "inverted"}, {"source": "jp-01", "target": "gr-01", "similarity": 0.88, "notes": "Seij\u014di \u2248 Venus naturalis. Standard missionary.", "cat": "facing"}, {"source": "jp-09", "target": "gr-03", "similarity": 0.88, "notes": "K\u014dhaii \u2248 Venus aversa. Rear entry.", "cat": "rear"}, {"source": "jp-15", "target": "gr-05", "similarity": 0.85, "notes": "Kij\u014di \u2248 Venus equitans. Woman on top.", "cat": "inverted"}, {"source": "jp-19", "target": "gr-07", "similarity": 0.82, "notes": "Tachii \u2248 Venus stans. Standing.", "cat": "standing"}, {"source": "jp-21", "target": "gr-08", "similarity": 0.78, "notes": "Sokui \u2248 Venus lateralis. Side-lying.", "cat": "side"}, {"source": "ks-04", "target": "gr-01", "similarity": 0.85, "notes": "Samputakam \u2248 Venus naturalis. Missionary.", "cat": "facing"}, {"source": "ks-20", "target": "gr-04", "similarity": 0.9, "notes": "Dhenuka \u2248 More ferarum. Animal-modeled rear.", "cat": "rear"}, {"source": "ks-27", "target": "gr-05", "similarity": 0.82, "notes": "Purushayita \u2248 Venus equitans. Woman on top.", "cat": "inverted"}, {"source": "ks-27", "target": "gr-06", "similarity": 0.85, "notes": "Purushayita \u2248 Kel\u0113s (racehorse). Greek W-on-top.", "cat": "inverted"}, {"source": "pg-01", "target": "ks-04", "similarity": 0.88, "notes": "The Approach \u2248 Samputakam. Standard supine.", "cat": "facing"}, {"source": "pg-04", "target": "ks-10", "similarity": 0.85, "notes": "The Couch \u2248 Utpiditakam. Legs on shoulders.", "cat": "facing"}, {"source": "pg-07", "target": "ks-20", "similarity": 0.88, "notes": "The Sticking \u2248 Dhenuka. Rear entry.", "cat": "rear"}, {"source": "pg-12", "target": "ks-27", "similarity": 0.82, "notes": "The Caliph \u2248 Purushayita. Woman on top.", "cat": "inverted"}, {"source": "pg-14", "target": "ks-29", "similarity": 0.8, "notes": "The Spinner \u2248 Bhramara. Rotating on top.", "cat": "inverted"}, {"source": "cn-01", "target": "pg-01", "similarity": 0.85, "notes": "Dragon \u2248 Approach. Standard supine.", "cat": "facing"}, {"source": "cn-02", "target": "pg-07", "similarity": 0.85, "notes": "Tiger \u2248 Sticking. Standard rear.", "cat": "rear"}, {"source": "cn-14", "target": "pg-08", "similarity": 0.8, "notes": "Mandarin Ducks \u2248 Side Coupling. Side-lying.", "cat": "side"}, {"source": "cn-01", "target": "gr-01", "similarity": 0.82, "notes": "Dragon \u2248 Venus naturalis. Standard missionary.", "cat": "facing"}, {"source": "cn-02", "target": "gr-04", "similarity": 0.85, "notes": "Tiger \u2248 More ferarum. Animal-modeled rear.", "cat": "rear"}, {"source": "cn-03", "target": "gr-06", "similarity": 0.78, "notes": "Monkey \u2248 Kel\u0113s. Woman on top.", "cat": "inverted"}, {"source": "pg-01", "target": "gr-01", "similarity": 0.85, "notes": "Approach \u2248 Venus naturalis. Standard missionary.", "cat": "facing"}, {"source": "pg-07", "target": "gr-03", "similarity": 0.85, "notes": "Sticking \u2248 Venus aversa. Rear entry.", "cat": "rear"}, {"source": "pg-12", "target": "gr-05", "similarity": 0.8, "notes": "Caliph \u2248 Venus equitans. Woman on top.", "cat": "inverted"}, {"source": "ar-01", "target": "ks-10", "similarity": 0.88, "notes": "Samapada \u2248 Utpiditakam. Both legs on shoulders.", "cat": "facing"}, {"source": "ar-03", "target": "ks-11", "similarity": 0.9, "notes": "Traivikrama \u2248 Ardhapiditakam. One leg on shoulder.", "cat": "facing"}, {"source": "ar-07", "target": "ks-02", "similarity": 0.92, "notes": "Jrimbhita \u2248 Vijrmbhitakam. Yawning \u2014 direct descendant.", "cat": "facing"}, {"source": "ar-08", "target": "ks-06", "similarity": 0.9, "notes": "Veshtita \u2248 Veshtitakam. Entwined \u2014 direct descendant.", "cat": "facing"}, {"source": "ar-09", "target": "ks-12", "similarity": 0.95, "notes": "Venuvidarita \u2248 Venudaritakam. Splitting bamboo \u2014 same position.", "cat": "facing"}, {"source": "ar-06", "target": "ks-05", "similarity": 0.88, "notes": "Avidarita \u2248 Piditakam. Pressed thighs.", "cat": "facing"}, {"source": "ar-15", "target": "ks-16", "similarity": 0.95, "notes": "Padmasana \u2248 Padmasana. Identical lotus seat.", "cat": "sitting"}, {"source": "ar-28", "target": "ks-20", "similarity": 0.92, "notes": "Dhenuka-vyanta \u2248 Dhenuka. Cow congress \u2014 same name.", "cat": "rear"}, {"source": "ar-29", "target": "ks-23", "similarity": 0.9, "notes": "Aibha-vyanta \u2248 Gaja. Elephant prone.", "cat": "rear"}, {"source": "ar-30", "target": "ks-27", "similarity": 0.9, "notes": "Viparita-purushayita \u2248 Purushayita. Woman on top.", "cat": "inverted"}, {"source": "ar-31", "target": "ks-29", "similarity": 0.92, "notes": "Purushayita-bhramara \u2248 Bhramara. Spinning top \u2014 same concept.", "cat": "inverted"}, {"source": "ar-27", "target": "ks-19", "similarity": 0.88, "notes": "Kirti \u2248 Avalambitaka. Suspended/carried.", "cat": "standing"}, {"source": "ar-01", "target": "jp-03", "similarity": 0.85, "notes": "Samapada \u2248 Ageha-honte. Legs high.", "cat": "facing"}, {"source": "ar-09", "target": "jp-23", "similarity": 0.8, "notes": "Venuvidarita \u2248 Matsuba-kuzushi. Bamboo/pine needle split.", "cat": "facing"}, {"source": "ar-15", "target": "jp-35", "similarity": 0.92, "notes": "Padmasana \u2248 Renge. Lotus \u2014 same concept.", "cat": "sitting"}, {"source": "ar-28", "target": "jp-09", "similarity": 0.88, "notes": "Dhenuka \u2248 K\u014dhaii. Standard rear.", "cat": "rear"}, {"source": "ar-30", "target": "jp-15", "similarity": 0.88, "notes": "Viparita \u2248 Kij\u014di. Woman on top.", "cat": "inverted"}, {"source": "ar-12", "target": "jp-21", "similarity": 0.82, "notes": "Vinaka-tiryak \u2248 Sokui. Side-lying face-to-face.", "cat": "side"}, {"source": "ar-27", "target": "jp-20", "similarity": 0.85, "notes": "Kirti \u2248 Ekiben. Suspended.", "cat": "standing"}, {"source": "ar-28", "target": "cn-02", "similarity": 0.85, "notes": "Dhenuka \u2248 Tiger's Tread. Rear entry.", "cat": "rear"}, {"source": "ar-15", "target": "cn-09", "similarity": 0.88, "notes": "Padmasana \u2248 Cranes Necks. Seated meditative.", "cat": "sitting"}, {"source": "ar-30", "target": "cn-03", "similarity": 0.82, "notes": "Viparita \u2248 Monkey Attack. Woman on top.", "cat": "inverted"}, {"source": "ar-28", "target": "pg-07", "similarity": 0.85, "notes": "Dhenuka \u2248 The Sticking. Standard rear.", "cat": "rear"}, {"source": "ar-12", "target": "pg-08", "similarity": 0.82, "notes": "Vinaka-tiryak \u2248 Side Coupling. Side-lying.", "cat": "side"}, {"source": "rr-03", "target": "ks-02", "similarity": 0.95, "notes": "Jrimbhita \u2248 Vijrmbhitakam. Yawning \u2014 same term.", "cat": "facing"}, {"source": "rr-04", "target": "ks-01", "similarity": 0.95, "notes": "Utphullaka \u2248 Utphullakam. Blossoming \u2014 same term.", "cat": "facing"}, {"source": "rr-05", "target": "ks-03", "similarity": 0.95, "notes": "Indranika \u2248 Indranikam. Wife of Indra \u2014 same.", "cat": "facing"}, {"source": "rr-07", "target": "ks-12", "similarity": 0.95, "notes": "Venu-vidarita \u2248 Venudaritakam. Splitting bamboo.", "cat": "facing"}, {"source": "rr-06", "target": "ks-11", "similarity": 0.92, "notes": "Ardha-pidita \u2248 Ardhapiditakam. Half pressed.", "cat": "facing"}, {"source": "rr-09", "target": "ks-20", "similarity": 0.88, "notes": "Gokula \u2248 Dhenuka. Cow rear.", "cat": "rear"}, {"source": "rr-11", "target": "ks-16", "similarity": 0.92, "notes": "Padma-rata \u2248 Padmasana. Lotus.", "cat": "sitting"}, {"source": "rr-13", "target": "ks-27", "similarity": 0.9, "notes": "Viparita-rata \u2248 Purushayita. Woman on top.", "cat": "inverted"}, {"source": "rr-15", "target": "ks-18", "similarity": 0.88, "notes": "Sthita-rata \u2248 Sthitarata. Standing.", "cat": "standing"}, {"source": "rr-16", "target": "ks-31", "similarity": 0.85, "notes": "Auparishtaka \u2248 Nimittaka. Oral congress.", "cat": "oral"}, {"source": "rr-03", "target": "ar-07", "similarity": 0.95, "notes": "Jrimbhita \u2248 Jrimbhita-asana. Same name, same position.", "cat": "facing"}, {"source": "rr-07", "target": "ar-09", "similarity": 0.95, "notes": "Venu-vidarita \u2248 Venuvidarita. Same bamboo-split.", "cat": "facing"}, {"source": "rr-11", "target": "ar-15", "similarity": 0.95, "notes": "Padma-rata \u2248 Padma-asana. Lotus lineage.", "cat": "sitting"}, {"source": "rr-13", "target": "ar-30", "similarity": 0.92, "notes": "Viparita-rata \u2248 Viparita-purushayita. Woman on top.", "cat": "inverted"}, {"source": "rr-09", "target": "ar-28", "similarity": 0.9, "notes": "Gokula \u2248 Dhenuka-vyanta. Cow rear.", "cat": "rear"}]};
+
+const catColors = {
+  facing:'#58a6ff', rear:'#f7768e', sitting:'#9ece6a', standing:'#e0af68',
+  side:'#bb9af7', inverted:'#73daca', oral:'#ff9e64', special:'#8b949e'
+};
+
+const width = window.innerWidth;
+const height = window.innerHeight - 48;
+
+const svg = d3.select('#graph').attr('width', width).attr('height', height);
+const g = svg.append('g');
+
+// Zoom + pan
+svg.call(d3.zoom().scaleExtent([0.2, 5]).on('zoom', e => g.attr('transform', e.transform)));
+
+// Connection counts
+const connCount = {};
+data.nodes.forEach(n => connCount[n.id] = 0);
+data.edges.forEach(e => {
+  connCount[e.source] = (connCount[e.source]||0) + 1;
+  connCount[e.target] = (connCount[e.target]||0) + 1;
+});
+
+// Force simulation
+const simulation = d3.forceSimulation(data.nodes)
+  .force('link', d3.forceLink(data.edges).id(d => d.id).distance(90).strength(d => d.similarity * 0.5))
+  .force('charge', d3.forceManyBody().strength(-250))
+  .force('x', d3.forceX(width / 2).strength(0.04))
+  .force('y', d3.forceY(height / 2).strength(0.04))
+  .force('collision', d3.forceCollide().radius(d => Math.sqrt(connCount[d.id]||1) * 5 + 14));
+
+// Edges
+const link = g.append('g').selectAll('line')
+  .data(data.edges).join('line')
+  .attr('class', 'link')
+  .attr('stroke', d => catColors[d.cat] || '#555')
+  .attr('stroke-width', d => d.similarity * 3)
+  .attr('stroke-opacity', d => d.similarity * 0.5);
+
+// Nodes
+const node = g.append('g').selectAll('.node')
+  .data(data.nodes).join('g')
+  .attr('class', 'node')
+  .call(d3.drag()
+    .on('start', (e,d) => { if(!e.active) simulation.alphaTarget(0.3).restart(); d.fx=d.x; d.fy=d.y; })
+    .on('drag', (e,d) => { d.fx=e.x; d.fy=e.y; })
+    .on('end', (e,d) => { if(!e.active) simulation.alphaTarget(0); d.fx=null; d.fy=null; })
+  );
+
+node.append('circle')
+  .attr('r', d => Math.sqrt(connCount[d.id]||1) * 4 + 6)
+  .attr('fill', d => d.color)
+  .attr('stroke', d => catColors[d.cat] || '#555')
+  .attr('opacity', 0.85);
+
+node.append('text')
+  .text(d => d.name.length > 18 ? d.name.slice(0,16)+'...' : d.name)
+  .attr('dy', d => Math.sqrt(connCount[d.id]||1) * 4 + 18)
+  .attr('text-anchor', 'middle')
+  .style('font-size', d => connCount[d.id] > 3 ? '9px' : '7px')
+  .style('font-weight', d => connCount[d.id] > 3 ? '600' : '400');
+
+// Tooltip
+const tooltip = d3.select('#tooltip');
+node.on('mouseover', (e, d) => {
+  const conns = data.edges.filter(l => (l.source.id||l.source)===d.id || (l.target.id||l.target)===d.id);
+  tooltip.style('display', 'block')
+    .style('left', (e.pageX+14)+'px').style('top', (e.pageY-10)+'px')
+    .html(`<div class="tt-name" style="color:${d.color}">${d.name}</div>
+      <div class="tt-detail">${d.tradDisplay} &middot; ${d.cat}</div>
+      <div class="tt-meta">${connCount[d.id]} connections</div>
+      <div class="tt-meta" style="margin-top:4px">${conns.slice(0,5).map(c => {
+        const other = (c.source.id||c.source)===d.id ? (c.target.name||c.target) : (c.source.name||c.source);
+        return `${(c.similarity*100).toFixed(0)}% ${other}`;
+      }).join('<br>')}</div>`);
+  // Highlight connected
+  const connected = new Set(conns.map(c => c.source.id||c.source).concat(conns.map(c => c.target.id||c.target)));
+  node.style('opacity', n => connected.has(n.id) || n.id===d.id ? 1 : 0.12);
+  link.style('opacity', l => (l.source.id||l.source)===d.id || (l.target.id||l.target)===d.id ? 0.8 : 0.03);
+}).on('mouseout', () => {
+  tooltip.style('display', 'none');
+  node.style('opacity', 0.85);
+  link.style('opacity', d => d.similarity * 0.5);
+});
+
+// Tick
+simulation.on('tick', () => {
+  link.attr('x1',d=>d.source.x).attr('y1',d=>d.source.y)
+      .attr('x2',d=>d.target.x).attr('y2',d=>d.target.y);
+  node.attr('transform', d => `translate(${d.x},${d.y})`);
+});
+
+// Filters
+let activeTrad = 'all', activeCat = 'all', activeSim = 0.85;
+function applyFilters() {
+  node.style('opacity', d => {
+    if (activeTrad !== 'all' && d.tradition !== activeTrad) return 0.08;
+    if (activeCat !== 'all' && d.cat !== activeCat) return 0.08;
+    return 0.85;
+  });
+  link.style('opacity', d => {
+    if (d.similarity < activeSim) return 0.02;
+    const s = d.source, t = d.target;
+    if (activeTrad !== 'all' && s.tradition !== activeTrad && t.tradition !== activeTrad) return 0.02;
+    if (activeCat !== 'all' && d.cat !== activeCat) return 0.02;
+    return d.similarity * 0.5;
+  });
+  link.attr('stroke-width', d => d.similarity < activeSim ? 0.3 : d.similarity * 3);
+}
+window.filterTradition = v => { activeTrad = v; applyFilters(); };
+window.filterCategory = v => { activeCat = v; applyFilters(); };
+window.filterSimilarity = v => { activeSim = v; applyFilters(); };
+applyFilters();
+
+// Stats
+document.getElementById('stats').innerHTML =
+  `${data.nodes.length} positions | ${data.edges.length} mappings<br>` +
+  `Drag nodes &middot; Scroll to zoom &middot; Hover for details`;
+</script>
+</body></html>
