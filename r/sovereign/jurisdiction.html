@@ -1,0 +1,1476 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="robots" content="noindex, nofollow">
+<title>The Jurisdictional Stack</title>
+<style>
+  *, *::before, *::after {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+  }
+
+  ::selection {
+    background: #58a6ff33;
+    color: #e6edf3;
+  }
+
+  html {
+    scroll-behavior: smooth;
+    font-size: 16px;
+  }
+
+  body {
+    background: #0d1117;
+    color: #c9d1d9;
+    font-family: Georgia, 'Times New Roman', serif;
+    line-height: 1.7;
+    min-height: 100vh;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  /* -- Navigation dots -- */
+  .nav-dots {
+    position: fixed;
+    right: 24px;
+    top: 50%;
+    transform: translateY(-50%);
+    z-index: 100;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+  }
+
+  .nav-dot {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    border: 1.5px solid #8b949e;
+    background: transparent;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    position: relative;
+  }
+
+  .nav-dot:hover {
+    border-color: #58a6ff;
+    transform: scale(1.3);
+  }
+
+  .nav-dot.active {
+    background: #58a6ff;
+    border-color: #58a6ff;
+    box-shadow: 0 0 8px #58a6ff66;
+  }
+
+  .nav-dot .dot-label {
+    position: absolute;
+    right: 20px;
+    top: 50%;
+    transform: translateY(-50%);
+    font-family: 'SF Mono', 'Fira Code', 'Fira Mono', Menlo, Consolas, monospace;
+    font-size: 0.65rem;
+    color: #8b949e;
+    white-space: nowrap;
+    opacity: 0;
+    transition: opacity 0.2s ease;
+    pointer-events: none;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+  }
+
+  .nav-dot:hover .dot-label {
+    opacity: 1;
+  }
+
+  /* -- Main container -- */
+  .container {
+    max-width: 900px;
+    margin: 0 auto;
+    padding: 0 32px;
+  }
+
+  /* -- Hero section -- */
+  .hero {
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    text-align: center;
+    position: relative;
+    padding: 80px 32px;
+  }
+
+  .hero h1 {
+    font-family: Georgia, serif;
+    font-size: clamp(2.4rem, 5vw, 3.6rem);
+    color: #e6edf3;
+    font-weight: 400;
+    letter-spacing: -0.02em;
+    line-height: 1.2;
+    margin-bottom: 24px;
+  }
+
+  .hero .subtitle {
+    font-size: clamp(1rem, 2vw, 1.2rem);
+    color: #8b949e;
+    max-width: 600px;
+    font-style: italic;
+  }
+
+  .hero .scroll-hint {
+    position: absolute;
+    bottom: 48px;
+    left: 50%;
+    transform: translateX(-50%);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+    color: #8b949e;
+    font-family: 'SF Mono', 'Fira Code', 'Fira Mono', Menlo, Consolas, monospace;
+    font-size: 0.7rem;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    animation: pulse-down 2s ease-in-out infinite;
+  }
+
+  .scroll-hint .arrow {
+    width: 1px;
+    height: 32px;
+    background: linear-gradient(to bottom, #8b949e, transparent);
+  }
+
+  @keyframes pulse-down {
+    0%, 100% { opacity: 0.5; transform: translateX(-50%) translateY(0); }
+    50% { opacity: 1; transform: translateX(-50%) translateY(6px); }
+  }
+
+  /* -- Section styling -- */
+  section {
+    padding: 100px 0;
+    position: relative;
+  }
+
+  section + section {
+    border-top: 1px solid #21262d;
+  }
+
+  .section-label {
+    font-family: 'SF Mono', 'Fira Code', 'Fira Mono', Menlo, Consolas, monospace;
+    font-size: 0.7rem;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    color: #58a6ff;
+    margin-bottom: 16px;
+    display: block;
+  }
+
+  .section-title {
+    font-family: Georgia, serif;
+    font-size: clamp(1.6rem, 3vw, 2.2rem);
+    color: #e6edf3;
+    font-weight: 400;
+    margin-bottom: 16px;
+    letter-spacing: -0.01em;
+  }
+
+  .section-intro {
+    color: #8b949e;
+    font-size: 1.05rem;
+    max-width: 720px;
+    margin-bottom: 48px;
+    line-height: 1.8;
+  }
+
+  /* -- Stack visualization -- */
+  .stack-wrapper {
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+    margin-top: 40px;
+    position: relative;
+  }
+
+  .stack-wrapper::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 0;
+    bottom: 0;
+    width: 2px;
+    background: linear-gradient(
+      to bottom,
+      #3fb950 0%, #3fb950 25%,
+      #58a6ff 25%, #58a6ff 50%,
+      #d29922 50%, #d29922 75%,
+      #f85149 75%, #f85149 100%
+    );
+    border-radius: 1px;
+  }
+
+  .layer-card {
+    position: relative;
+    border: 1px solid #21262d;
+    border-radius: 6px;
+    margin-left: 24px;
+    margin-bottom: 12px;
+    cursor: pointer;
+    transition: all 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+    overflow: hidden;
+  }
+
+  .layer-card::before {
+    content: '';
+    position: absolute;
+    left: -25px;
+    top: 24px;
+    width: 16px;
+    height: 2px;
+    transition: background 0.3s ease;
+  }
+
+  /* Layer 4 - Natural Law */
+  .layer-card[data-layer="4"] {
+    border-left: 3px solid #3fb950;
+    background: linear-gradient(135deg, #0d1117 0%, #0d1117 85%, #3fb95008 100%);
+  }
+  .layer-card[data-layer="4"]::before { background: #3fb950; }
+  .layer-card[data-layer="4"]:hover,
+  .layer-card[data-layer="4"].expanded {
+    box-shadow: 0 0 24px #3fb95015, 0 0 48px #3fb95008;
+    border-color: #3fb95044;
+  }
+  .layer-card[data-layer="4"] .layer-number { color: #3fb950; }
+  .layer-card[data-layer="4"] .layer-tag { background: #3fb95018; color: #3fb950; border: 1px solid #3fb95033; }
+
+  /* Layer 3 - Common Law */
+  .layer-card[data-layer="3"] {
+    border-left: 3px solid #58a6ff;
+    background: linear-gradient(135deg, #0d1117 0%, #0d1117 85%, #58a6ff08 100%);
+  }
+  .layer-card[data-layer="3"]::before { background: #58a6ff; }
+  .layer-card[data-layer="3"]:hover,
+  .layer-card[data-layer="3"].expanded {
+    box-shadow: 0 0 24px #58a6ff15, 0 0 48px #58a6ff08;
+    border-color: #58a6ff44;
+  }
+  .layer-card[data-layer="3"] .layer-number { color: #58a6ff; }
+  .layer-card[data-layer="3"] .layer-tag { background: #58a6ff18; color: #58a6ff; border: 1px solid #58a6ff33; }
+
+  /* Layer 2 - Statutory */
+  .layer-card[data-layer="2"] {
+    border-left: 3px solid #d29922;
+    background: linear-gradient(135deg, #0d1117 0%, #0d1117 85%, #d2992208 100%);
+  }
+  .layer-card[data-layer="2"]::before { background: #d29922; }
+  .layer-card[data-layer="2"]:hover,
+  .layer-card[data-layer="2"].expanded {
+    box-shadow: 0 0 24px #d2992215, 0 0 48px #d2992208;
+    border-color: #d2992244;
+  }
+  .layer-card[data-layer="2"] .layer-number { color: #d29922; }
+  .layer-card[data-layer="2"] .layer-tag { background: #d2992218; color: #d29922; border: 1px solid #d2992233; }
+
+  /* Layer 1 - Commercial/Admiralty */
+  .layer-card[data-layer="1"] {
+    border-left: 3px solid #f85149;
+    background: linear-gradient(135deg, #0d1117 0%, #0d1117 85%, #f8514908 100%);
+  }
+  .layer-card[data-layer="1"]::before { background: #f85149; }
+  .layer-card[data-layer="1"]:hover,
+  .layer-card[data-layer="1"].expanded {
+    box-shadow: 0 0 24px #f8514915, 0 0 48px #f8514908;
+    border-color: #f8514944;
+  }
+  .layer-card[data-layer="1"] .layer-number { color: #f85149; }
+  .layer-card[data-layer="1"] .layer-tag { background: #f8514918; color: #f85149; border: 1px solid #f8514933; }
+
+  /* Layer card header */
+  .layer-header {
+    padding: 20px 24px;
+    display: flex;
+    align-items: center;
+    gap: 16px;
+  }
+
+  .layer-number {
+    font-family: 'SF Mono', 'Fira Code', 'Fira Mono', Menlo, Consolas, monospace;
+    font-size: 0.7rem;
+    font-weight: 600;
+    letter-spacing: 0.1em;
+    flex-shrink: 0;
+  }
+
+  .layer-name {
+    font-family: Georgia, serif;
+    font-size: 1.2rem;
+    color: #e6edf3;
+    flex-grow: 1;
+  }
+
+  .layer-tag {
+    font-family: 'SF Mono', 'Fira Code', 'Fira Mono', Menlo, Consolas, monospace;
+    font-size: 0.6rem;
+    padding: 3px 10px;
+    border-radius: 12px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    flex-shrink: 0;
+  }
+
+  .layer-expand-icon {
+    color: #8b949e;
+    font-size: 0.8rem;
+    transition: transform 0.3s ease;
+    flex-shrink: 0;
+  }
+
+  .layer-card.expanded .layer-expand-icon {
+    transform: rotate(180deg);
+  }
+
+  /* Layer card body */
+  .layer-body {
+    max-height: 0;
+    overflow: hidden;
+    transition: max-height 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  .layer-card.expanded .layer-body {
+    max-height: 1200px;
+  }
+
+  .layer-content {
+    padding: 0 24px 24px 24px;
+    border-top: 1px solid #21262d;
+    margin-top: 0;
+    padding-top: 20px;
+  }
+
+  .layer-content h4 {
+    font-family: 'SF Mono', 'Fira Code', 'Fira Mono', Menlo, Consolas, monospace;
+    font-size: 0.7rem;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: #8b949e;
+    margin-top: 20px;
+    margin-bottom: 8px;
+  }
+
+  .layer-content h4:first-child {
+    margin-top: 0;
+  }
+
+  .layer-content p {
+    color: #c9d1d9;
+    font-size: 0.95rem;
+    line-height: 1.7;
+    margin-bottom: 8px;
+  }
+
+  .layer-content ul {
+    list-style: none;
+    padding: 0;
+  }
+
+  .layer-content ul li {
+    position: relative;
+    padding-left: 18px;
+    font-size: 0.92rem;
+    color: #c9d1d9;
+    line-height: 1.7;
+    margin-bottom: 4px;
+  }
+
+  .layer-content ul li::before {
+    content: '\2014';
+    position: absolute;
+    left: 0;
+    color: #8b949e;
+  }
+
+  .vocab-tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin-top: 4px;
+  }
+
+  .vocab-tag {
+    font-family: 'SF Mono', 'Fira Code', 'Fira Mono', Menlo, Consolas, monospace;
+    font-size: 0.68rem;
+    padding: 3px 10px;
+    border-radius: 4px;
+    background: #161b22;
+    border: 1px solid #30363d;
+    color: #c9d1d9;
+    letter-spacing: 0.02em;
+  }
+
+  .layer-quote {
+    margin-top: 16px;
+    padding: 12px 16px;
+    border-left: 2px solid #30363d;
+    font-style: italic;
+    color: #8b949e;
+    font-size: 0.9rem;
+    line-height: 1.7;
+  }
+
+  /* -- "You are here" indicator -- */
+  .you-are-here {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    font-family: 'SF Mono', 'Fira Code', 'Fira Mono', Menlo, Consolas, monospace;
+    font-size: 0.72rem;
+    color: #d29922;
+    letter-spacing: 0.05em;
+    padding: 6px 14px;
+    background: #d2992210;
+    border: 1px solid #d2992233;
+    border-radius: 4px;
+    animation: you-are-here-pulse 3s ease-in-out infinite;
+  }
+
+  .you-are-here .arrow-anim {
+    display: inline-block;
+    animation: arrow-bounce 1.5s ease-in-out infinite;
+  }
+
+  @keyframes you-are-here-pulse {
+    0%, 100% { opacity: 0.7; }
+    50% { opacity: 1; }
+  }
+
+  @keyframes arrow-bounce {
+    0%, 100% { transform: translateX(0); }
+    50% { transform: translateX(4px); }
+  }
+
+  /* -- How Courts Move section -- */
+  .courts-move {
+    margin-top: 48px;
+    padding: 32px;
+    border: 1px solid #21262d;
+    border-radius: 6px;
+    background: #161b2266;
+  }
+
+  .courts-move h3 {
+    font-family: Georgia, serif;
+    font-size: 1.3rem;
+    color: #e6edf3;
+    margin-bottom: 16px;
+    font-weight: 400;
+  }
+
+  .courts-move p {
+    color: #c9d1d9;
+    font-size: 0.95rem;
+    line-height: 1.8;
+    margin-bottom: 12px;
+  }
+
+  .shift-sequence {
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+    margin: 20px 0;
+  }
+
+  .shift-step {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    padding: 10px 0;
+    position: relative;
+  }
+
+  .shift-step + .shift-step {
+    border-top: 1px dashed #21262d;
+  }
+
+  .shift-num {
+    font-family: 'SF Mono', 'Fira Code', 'Fira Mono', Menlo, Consolas, monospace;
+    font-size: 0.7rem;
+    color: #8b949e;
+    flex-shrink: 0;
+    padding-top: 2px;
+  }
+
+  .shift-step p {
+    margin: 0;
+    font-size: 0.92rem;
+  }
+
+  .shift-arrow {
+    text-align: center;
+    color: #f85149;
+    font-family: 'SF Mono', 'Fira Code', 'Fira Mono', Menlo, Consolas, monospace;
+    font-size: 0.75rem;
+    padding: 4px 0;
+    letter-spacing: 0.1em;
+  }
+
+  /* -- Translation table -- */
+  .table-wrapper {
+    overflow-x: auto;
+    margin-top: 32px;
+    border: 1px solid #21262d;
+    border-radius: 6px;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.88rem;
+    min-width: 760px;
+  }
+
+  thead {
+    position: sticky;
+    top: 0;
+    z-index: 2;
+  }
+
+  thead th {
+    background: #161b22;
+    color: #e6edf3;
+    font-family: 'SF Mono', 'Fira Code', 'Fira Mono', Menlo, Consolas, monospace;
+    font-size: 0.68rem;
+    font-weight: 600;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    text-align: left;
+    padding: 14px 16px;
+    border-bottom: 2px solid #30363d;
+    white-space: nowrap;
+  }
+
+  thead th:first-child {
+    min-width: 100px;
+  }
+
+  tbody tr {
+    border-bottom: 1px solid #21262d;
+    transition: background 0.15s ease;
+  }
+
+  tbody tr:nth-child(even) {
+    background: #161b2244;
+  }
+
+  tbody tr:hover {
+    background: #161b22aa;
+  }
+
+  tbody td {
+    padding: 12px 16px;
+    vertical-align: top;
+    line-height: 1.6;
+    color: #c9d1d9;
+  }
+
+  tbody td:first-child {
+    font-weight: 600;
+    color: #e6edf3;
+    font-family: 'SF Mono', 'Fira Code', 'Fira Mono', Menlo, Consolas, monospace;
+    font-size: 0.78rem;
+    white-space: nowrap;
+  }
+
+  /* color-coded column headers */
+  .th-natural { border-bottom-color: #3fb950; }
+  .th-common { border-bottom-color: #58a6ff; }
+  .th-statutory { border-bottom-color: #d29922; }
+  .th-commercial { border-bottom-color: #f85149; }
+
+  /* -- Question framework -- */
+  .question-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
+    gap: 16px;
+    margin-top: 32px;
+  }
+
+  .question-card {
+    border: 1px solid #21262d;
+    border-radius: 6px;
+    padding: 24px;
+    background: #161b2244;
+    transition: all 0.3s ease;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .question-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 2px;
+    background: linear-gradient(90deg, #58a6ff, #58a6ff00);
+  }
+
+  .question-card:hover {
+    border-color: #58a6ff33;
+    background: #161b2288;
+    transform: translateY(-2px);
+    box-shadow: 0 8px 24px #00000033;
+  }
+
+  .question-context {
+    font-family: 'SF Mono', 'Fira Code', 'Fira Mono', Menlo, Consolas, monospace;
+    font-size: 0.65rem;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: #58a6ff;
+    margin-bottom: 12px;
+    display: block;
+  }
+
+  .question-text {
+    font-family: Georgia, serif;
+    font-size: 0.98rem;
+    color: #e6edf3;
+    line-height: 1.65;
+    font-style: italic;
+  }
+
+  .question-card .question-note {
+    margin-top: 12px;
+    font-size: 0.82rem;
+    color: #8b949e;
+    line-height: 1.6;
+  }
+
+  /* -- Rules cards -- */
+  .rules-list {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    margin-top: 32px;
+  }
+
+  .rule-item {
+    display: flex;
+    gap: 16px;
+    padding: 20px 24px;
+    border: 1px solid #21262d;
+    border-radius: 6px;
+    background: #161b2233;
+    transition: border-color 0.2s ease;
+  }
+
+  .rule-item:hover {
+    border-color: #30363d;
+  }
+
+  .rule-num {
+    font-family: 'SF Mono', 'Fira Code', 'Fira Mono', Menlo, Consolas, monospace;
+    font-size: 0.85rem;
+    color: #58a6ff;
+    flex-shrink: 0;
+    padding-top: 2px;
+  }
+
+  .rule-content h4 {
+    font-family: Georgia, serif;
+    font-size: 1.05rem;
+    color: #e6edf3;
+    font-weight: 400;
+    margin-bottom: 6px;
+  }
+
+  .rule-content p {
+    font-size: 0.9rem;
+    color: #8b949e;
+    line-height: 1.65;
+  }
+
+  /* -- Response patterns -- */
+  .response-grid {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    margin-top: 24px;
+  }
+
+  .response-item {
+    border: 1px solid #21262d;
+    border-radius: 6px;
+    overflow: hidden;
+  }
+
+  .response-prompt {
+    padding: 14px 20px;
+    background: #161b22;
+    font-family: Georgia, serif;
+    font-size: 0.92rem;
+    color: #f85149;
+    font-style: italic;
+    border-bottom: 1px solid #21262d;
+  }
+
+  .response-prompt::before {
+    content: 'Court: ';
+    font-family: 'SF Mono', 'Fira Code', 'Fira Mono', Menlo, Consolas, monospace;
+    font-size: 0.65rem;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    color: #8b949e;
+    font-style: normal;
+  }
+
+  .response-answer {
+    padding: 14px 20px;
+    font-family: Georgia, serif;
+    font-size: 0.92rem;
+    color: #3fb950;
+    font-style: italic;
+    line-height: 1.65;
+  }
+
+  .response-answer::before {
+    content: 'You: ';
+    font-family: 'SF Mono', 'Fira Code', 'Fira Mono', Menlo, Consolas, monospace;
+    font-size: 0.65rem;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    color: #8b949e;
+    font-style: normal;
+  }
+
+  /* -- Epigraph / pull quotes -- */
+  .epigraph {
+    border-left: 2px solid #58a6ff33;
+    padding: 16px 24px;
+    margin: 32px 0;
+    color: #8b949e;
+    font-style: italic;
+    font-size: 1.05rem;
+    line-height: 1.7;
+  }
+
+  .epigraph .attr {
+    display: block;
+    margin-top: 8px;
+    font-size: 0.82rem;
+    font-style: normal;
+    color: #484f58;
+  }
+
+  /* -- Footer -- */
+  .site-footer {
+    padding: 48px 0 64px;
+    text-align: center;
+    border-top: 1px solid #21262d;
+  }
+
+  .site-footer p {
+    font-family: 'SF Mono', 'Fira Code', 'Fira Mono', Menlo, Consolas, monospace;
+    font-size: 0.7rem;
+    letter-spacing: 0.1em;
+    color: #484f58;
+  }
+
+  .site-footer a {
+    color: #58a6ff;
+    text-decoration: none;
+    transition: color 0.2s ease;
+  }
+
+  .site-footer a:hover {
+    color: #79c0ff;
+  }
+
+  /* -- Responsive -- */
+  @media (max-width: 768px) {
+    .container { padding: 0 20px; }
+    section { padding: 64px 0; }
+    .hero { min-height: 80vh; padding: 60px 20px; }
+
+    .nav-dots {
+      right: 12px;
+      gap: 12px;
+    }
+    .nav-dot .dot-label { display: none; }
+
+    .layer-card { margin-left: 16px; }
+    .layer-header { padding: 16px 16px; gap: 10px; }
+    .layer-name { font-size: 1rem; }
+    .layer-content { padding: 0 16px 20px 16px; }
+
+    .question-grid {
+      grid-template-columns: 1fr;
+    }
+
+    .courts-move { padding: 24px 20px; }
+    table { font-size: 0.8rem; }
+    thead th { padding: 10px 12px; }
+    tbody td { padding: 10px 12px; }
+  }
+
+  @media (max-width: 480px) {
+    .hero h1 { font-size: 1.8rem; }
+    .hero .subtitle { font-size: 0.9rem; }
+    .layer-header { flex-wrap: wrap; }
+    .layer-tag { order: 10; }
+    .nav-dots { right: 8px; }
+    .nav-dot { width: 8px; height: 8px; }
+  }
+</style>
+</head>
+<body>
+
+<!-- Navigation dots -->
+<nav class="nav-dots" id="navDots" aria-label="Section navigation">
+  <div class="nav-dot active" data-section="hero"><span class="dot-label">Top</span></div>
+  <div class="nav-dot" data-section="stack"><span class="dot-label">The Stack</span></div>
+  <div class="nav-dot" data-section="translations"><span class="dot-label">Translations</span></div>
+  <div class="nav-dot" data-section="questions"><span class="dot-label">Questions</span></div>
+  <div class="nav-dot" data-section="rules"><span class="dot-label">Rules</span></div>
+  <div class="nav-dot" data-section="responses"><span class="dot-label">Responses</span></div>
+</nav>
+
+<!-- Hero -->
+<header class="hero" id="hero">
+  <h1>The Jurisdictional Stack</h1>
+  <p class="subtitle">Four layers of legal reality &mdash; which one are you operating in?</p>
+  <div class="scroll-hint">
+    <span>Scroll</span>
+    <div class="arrow"></div>
+  </div>
+</header>
+
+<!-- Section: The Stack -->
+<section id="stack">
+  <div class="container">
+    <span class="section-label">01 &mdash; The Four Layers</span>
+    <h2 class="section-title">The Jurisdictional Stack</h2>
+    <p class="section-intro">
+      Every legal interaction occurs within a jurisdiction. Courts, orders, statutes, and rights all derive their authority from a specific layer. The critical skill is identifying which layer is active &mdash; because different layers grant different rights, impose different obligations, and respond to different challenges.
+    </p>
+
+    <div class="stack-wrapper">
+
+      <!-- Layer 4: Natural Law -->
+      <div class="layer-card" data-layer="4">
+        <div class="layer-header" onclick="toggleLayer(this.parentElement)">
+          <span class="layer-number">LAYER 4</span>
+          <span class="layer-name">Natural Law / Divine Law</span>
+          <span class="layer-tag">Highest Authority</span>
+          <span class="layer-expand-icon">&#9662;</span>
+        </div>
+        <div class="layer-body">
+          <div class="layer-content">
+            <h4>Authority Source</h4>
+            <p>Nature, creation, inherent existence. Not granted by any state, court, or legislature.</p>
+
+            <h4>Core Principle</h4>
+            <p>Rights exist by virtue of being alive. They precede government. They cannot be granted because they were never absent. They cannot be revoked because no human institution created them.</p>
+
+            <h4>Rights at This Layer</h4>
+            <ul>
+              <li>The parent-offspring bond &mdash; exists by nature, not granted by any court</li>
+              <li>Bodily autonomy &mdash; no entity has jurisdiction over your body without consent</li>
+              <li>Freedom of movement &mdash; the right to travel without license or permission</li>
+              <li>Self-determination &mdash; the right to direct your own life, labor, and property</li>
+            </ul>
+
+            <h4>Key Vocabulary</h4>
+            <div class="vocab-tags">
+              <span class="vocab-tag">offspring</span>
+              <span class="vocab-tag">living soul</span>
+              <span class="vocab-tag">flesh and blood</span>
+              <span class="vocab-tag">man / woman</span>
+              <span class="vocab-tag">natural person</span>
+              <span class="vocab-tag">unalienable</span>
+              <span class="vocab-tag">endowed</span>
+              <span class="vocab-tag">creator</span>
+              <span class="vocab-tag">DNA</span>
+            </div>
+
+            <h4>Key Distinction</h4>
+            <p>Natural rights are <strong>unalienable</strong> &mdash; they cannot be transferred, sold, or surrendered. They can only be violated. A court that claims to "grant" custody is operating below this layer, because natural law recognizes no authority to grant what already exists.</p>
+
+            <h4>Recognition Markers</h4>
+            <p>References to "God-given rights," "natural rights," "the laws of nature," or "inherent rights."</p>
+
+            <div class="layer-quote">
+              "Do you claim authority to sever the bond between a mother and her offspring? Under what law of nature does that authority exist?"
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Layer 3: Common Law -->
+      <div class="layer-card" data-layer="3">
+        <div class="layer-header" onclick="toggleLayer(this.parentElement)">
+          <span class="layer-number">LAYER 3</span>
+          <span class="layer-name">Common Law</span>
+          <span class="layer-tag">Law of the People</span>
+          <span class="layer-expand-icon">&#9662;</span>
+        </div>
+        <div class="layer-body">
+          <div class="layer-content">
+            <h4>Authority Source</h4>
+            <p>Custom, precedent, the consent of the governed. Built over centuries of practice and agreement.</p>
+
+            <h4>Core Principle</h4>
+            <p>Rights exist because they have been recognized and defended through history. The common law is the law of the people &mdash; not the law of the legislature or the crown.</p>
+
+            <h4>Rights at This Layer</h4>
+            <ul>
+              <li>Trial by jury of peers &mdash; actual peers from the community, not a panel of lawyers</li>
+              <li>Habeas corpus &mdash; the right to challenge detention</li>
+              <li>Due process &mdash; proper notice, opportunity to be heard, impartial tribunal</li>
+              <li>Property rights &mdash; allodial title, owned outright without obligation to a superior</li>
+              <li>Right to contract &mdash; voluntary agreements between consenting parties</li>
+            </ul>
+
+            <h4>Key Vocabulary</h4>
+            <div class="vocab-tags">
+              <span class="vocab-tag">man / woman</span>
+              <span class="vocab-tag">the people</span>
+              <span class="vocab-tag">land</span>
+              <span class="vocab-tag">oath</span>
+              <span class="vocab-tag">affidavit</span>
+              <span class="vocab-tag">freehold</span>
+              <span class="vocab-tag">allodial title</span>
+              <span class="vocab-tag">jury</span>
+              <span class="vocab-tag">peers</span>
+              <span class="vocab-tag">writ</span>
+              <span class="vocab-tag">precedent</span>
+            </div>
+
+            <h4>Key Distinction</h4>
+            <p>Common law requires a <strong>harmed party</strong>. No victim, no crime. Fundamentally different from statutory law, where the state can prosecute without any individual being harmed.</p>
+
+            <h4>Recognition Markers</h4>
+            <p>References to Magna Carta, the Bill of Rights (as common law protections), trial by jury, habeas corpus, or "the common law of the land."</p>
+
+            <div class="layer-quote">
+              "Is this court operating under the common law? If so, where is the injured party? If not, under what jurisdiction does it claim authority?"
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Layer 2: Statutory -->
+      <div class="layer-card" data-layer="2">
+        <div class="layer-header" onclick="toggleLayer(this.parentElement)">
+          <span class="layer-number">LAYER 2</span>
+          <span class="layer-name">Statutory Law / Equity</span>
+          <span class="layer-tag">Default Jurisdiction</span>
+          <span class="you-are-here"><span class="arrow-anim">&rarr;</span> You are probably here</span>
+          <span class="layer-expand-icon">&#9662;</span>
+        </div>
+        <div class="layer-body">
+          <div class="layer-content">
+            <h4>Authority Source</h4>
+            <p>Legislation, codes, court rules. Created by legislatures and enforced by courts.</p>
+
+            <h4>Core Principle</h4>
+            <p>Rights and obligations are defined by written statutes. Equity jurisdiction allows courts to issue orders based on "fairness" and "discretion" rather than strict legal rights. This is where most legal proceedings operate by default.</p>
+
+            <h4>Rights at This Layer</h4>
+            <ul>
+              <li>Whatever the statute grants &mdash; statutory rights are <strong>privileges</strong>, modifiable or revocable by the legislature</li>
+              <li>Equitable remedies: injunctions, orders of protection, custody arrangements</li>
+              <li>Procedural rights as defined by court rules</li>
+            </ul>
+
+            <h4>Key Vocabulary</h4>
+            <div class="vocab-tags">
+              <span class="vocab-tag">petitioner</span>
+              <span class="vocab-tag">respondent</span>
+              <span class="vocab-tag">order</span>
+              <span class="vocab-tag">judgment</span>
+              <span class="vocab-tag">statute</span>
+              <span class="vocab-tag">motion</span>
+              <span class="vocab-tag">hearing</span>
+              <span class="vocab-tag">finding</span>
+              <span class="vocab-tag">best interest</span>
+              <span class="vocab-tag">equitable distribution</span>
+            </div>
+
+            <h4>Key Distinction</h4>
+            <p>Equity has <strong>no jury</strong>. A judge decides based on discretion. The "best interest of the child" standard gives the judge nearly unlimited power based on subjective judgment. This is why family courts feel arbitrary &mdash; they are arbitrary, by design.</p>
+
+            <h4>Critical Insight</h4>
+            <p>By filing a petition in a statutory court, you <strong>consent to its jurisdiction</strong>. The act of filing is the act of submission. The question "Do I consent to this jurisdiction?" must be asked before engaging &mdash; not after.</p>
+
+            <h4>Recognition Markers</h4>
+            <p>Citations to specific statutes (750 ILCS, 28 U.S.C.), references to "the court's discretion," "equitable distribution," "best interest," or "this court finds."</p>
+
+            <div class="layer-quote">
+              "Under which specific statute does this court claim jurisdiction over the natural bond between parent and offspring?"
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Layer 1: Commercial/Admiralty -->
+      <div class="layer-card" data-layer="1">
+        <div class="layer-header" onclick="toggleLayer(this.parentElement)">
+          <span class="layer-number">LAYER 1</span>
+          <span class="layer-name">Commercial / Admiralty Law</span>
+          <span class="layer-tag">Operates Without Disclosure</span>
+          <span class="layer-expand-icon">&#9662;</span>
+        </div>
+        <div class="layer-body">
+          <div class="layer-content">
+            <h4>Authority Source</h4>
+            <p>The law of commerce, contracts between corporate entities, the Uniform Commercial Code (UCC), admiralty/maritime law.</p>
+
+            <h4>Core Principle</h4>
+            <p>Everything is a commercial transaction. Parties are corporate entities. Disputes are about debts, obligations, and the settlement of accounts. This layer often operates <strong>without disclosure</strong>.</p>
+
+            <h4>Rights at This Layer</h4>
+            <ul>
+              <li>Contract rights as defined by the UCC</li>
+              <li>Secured creditor/debtor relationships</li>
+              <li>Commercial paper, negotiable instruments</li>
+              <li>Corporate rights and obligations</li>
+            </ul>
+
+            <h4>Key Vocabulary</h4>
+            <div class="vocab-tags">
+              <span class="vocab-tag">PERSON (all caps)</span>
+              <span class="vocab-tag">DEFENDANT</span>
+              <span class="vocab-tag">PLAINTIFF</span>
+              <span class="vocab-tag">CREDITOR</span>
+              <span class="vocab-tag">DEBTOR</span>
+              <span class="vocab-tag">CORPORATION</span>
+              <span class="vocab-tag">TRUST</span>
+              <span class="vocab-tag">ESTATE</span>
+              <span class="vocab-tag">ASSET</span>
+              <span class="vocab-tag">SETTLEMENT</span>
+            </div>
+
+            <h4>Key Distinction</h4>
+            <p>Your name in ALL CAPITALS is not you &mdash; it is a corporate entity, a legal fiction created by the state. The court has jurisdiction over the fiction, not over the living man or woman. By responding to the ALL CAPS name, you accept jurisdiction over your person.</p>
+
+            <h4>Recognition Markers</h4>
+            <ul>
+              <li>Names in ALL CAPITALS on court documents</li>
+              <li>Language of debt and settlement ("division of marital assets" = settling corporate accounts)</li>
+              <li>References to the UCC, commercial code, or banking regulations</li>
+              <li>Treatment of children as "assets" to be "allocated"</li>
+              <li>Focus on financial obligations rather than rights</li>
+            </ul>
+
+            <div class="layer-quote">
+              "Is the name on that order the name of a living man, or is it the name of a corporate fiction? Under what authority does this court claim jurisdiction over the living man behind that fiction?"
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div><!-- /stack-wrapper -->
+
+    <!-- How Courts Move -->
+    <div class="courts-move">
+      <h3>How Courts Move Between Layers</h3>
+      <p>Courts shift jurisdiction constantly, and the shift is almost always <strong>downward</strong> &mdash; from higher rights to lower ones.</p>
+
+      <div class="shift-sequence">
+        <div class="shift-step">
+          <span class="shift-num" style="color:#3fb950">4.</span>
+          <p>Natural law says the parent-offspring bond is sacred and cannot be severed.</p>
+        </div>
+        <div class="shift-step">
+          <span class="shift-num" style="color:#58a6ff">3.</span>
+          <p>Common law says you have a right to a jury trial and due process.</p>
+        </div>
+        <div class="shift-step">
+          <span class="shift-num" style="color:#d29922">2.</span>
+          <p>The court operates in equity, where the judge has "discretion" and there is no jury.</p>
+        </div>
+        <div class="shift-step">
+          <span class="shift-num" style="color:#f85149">1.</span>
+          <p>The court's actual mechanism is commercial, treating the family as assets and debts to be divided.</p>
+        </div>
+      </div>
+
+      <p><strong>Each downward shift strips rights.</strong> The strategic response: ask questions that force the court to identify its jurisdictional layer. The court cannot answer without either acknowledging a higher jurisdiction it is violating, or revealing that it has no authority beyond what the parties consented to.</p>
+    </div>
+
+  </div>
+</section>
+
+<!-- Section: Translation Table -->
+<section id="translations">
+  <div class="container">
+    <span class="section-label">02 &mdash; Vocabulary as Jurisdiction</span>
+    <h2 class="section-title">Black's Law Translations</h2>
+    <p class="section-intro">
+      Words are jurisdictional weapons. The same word carries different meanings in different jurisdictions, and using the wrong word in the wrong context accepts the wrong jurisdiction.
+    </p>
+
+    <div class="epigraph">
+      A mother who says "I want custody of my child" has already surrendered two layers of rights. The same mother who says "I am the mother of my offspring and no court has authority to sever that bond" is operating in natural law.
+      <span class="attr">This is not wordplay. This is strategy.</span>
+    </div>
+
+    <div class="table-wrapper">
+      <table>
+        <thead>
+          <tr>
+            <th>Term</th>
+            <th class="th-natural" style="color:#3fb950;">Natural / Common</th>
+            <th class="th-statutory" style="color:#d29922;">Statutory (Black's)</th>
+            <th class="th-commercial" style="color:#f85149;">Commercial / Admiralty</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>Custody</td>
+            <td>Stewardship of offspring &mdash; a natural duty, not a state-granted right</td>
+            <td>Legal right to control and maintain a person; care awarded by a court</td>
+            <td>Possession of an asset; physical control of property or a person</td>
+          </tr>
+          <tr>
+            <td>Child</td>
+            <td>Offspring &mdash; a living being connected by blood and nature to the parent</td>
+            <td>A person under the age of majority; a ward of the state under court jurisdiction</td>
+            <td>A dependent; a liability or asset on a balance sheet; a trust beneficiary</td>
+          </tr>
+          <tr>
+            <td>Person</td>
+            <td>Man or woman &mdash; a living soul, flesh and blood; not a legal construct</td>
+            <td>A legal entity with rights and obligations; includes natural persons and corporations</td>
+            <td>PERSON &mdash; the corporate fiction, the ALL CAPS name on government documents</td>
+          </tr>
+          <tr>
+            <td>Property</td>
+            <td>That which one holds by right of labor and nature; allodial, without obligation</td>
+            <td>Real or personal property as defined by statute; subject to taxation and state claims</td>
+            <td>Commercial asset; subject to liens, encumbrances, UCC filings</td>
+          </tr>
+          <tr>
+            <td>Order</td>
+            <td>A request &mdash; no man has authority to command another absent consent</td>
+            <td>A directive of a court, enforceable by contempt</td>
+            <td>A commercial directive between entities; enforceable only within the commercial relationship</td>
+          </tr>
+          <tr>
+            <td>Judgment</td>
+            <td>An opinion &mdash; carries no weight absent jurisdiction over the living man or woman</td>
+            <td>Final determination of a court of competent jurisdiction; creates enforceable obligations</td>
+            <td>Settlement of accounts; final determination of debts between corporate entities</td>
+          </tr>
+          <tr>
+            <td>Consent</td>
+            <td>Informed, voluntary, explicit agreement &mdash; cannot be coerced or presumed</td>
+            <td>Voluntary agreement; can be express or implied; silence may constitute consent</td>
+            <td>Acceptance of terms; entering the court system = consenting to commercial jurisdiction</td>
+          </tr>
+          <tr>
+            <td>Contract</td>
+            <td>A meeting of minds &mdash; requires full disclosure, mutual benefit, voluntary participation</td>
+            <td>A legally enforceable agreement between parties with consideration</td>
+            <td>A commercial instrument; the foundation of all commercial jurisdiction</td>
+          </tr>
+          <tr>
+            <td>Jurisdiction</td>
+            <td>Authority by consent only &mdash; no man has inherent jurisdiction over another</td>
+            <td>The power of a court to hear and decide; requires subject-matter and personal jurisdiction</td>
+            <td>Created by contract &mdash; filing a case = signing a contract = accepting jurisdiction</td>
+          </tr>
+          <tr>
+            <td>Sovereign</td>
+            <td>Each man and woman is sovereign over themselves &mdash; self-governing, self-determining</td>
+            <td>The supreme power in a state; in democracies, sovereignty resides in the people collectively</td>
+            <td>Not applicable &mdash; only parties to contracts, creditors, and debtors</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</section>
+
+<!-- Section: Question Framework -->
+<section id="questions">
+  <div class="container">
+    <span class="section-label">03 &mdash; The Ask-King Methodology</span>
+    <h2 class="section-title">The Question Framework</h2>
+    <p class="section-intro">
+      The one who asks the questions controls the conversation. The one who answers the questions accepts the premises. Every question challenges the court to prove its authority. Every statement accepts the court's authority as given.
+    </p>
+
+    <div class="epigraph">
+      <strong>Question</strong> &mdash; from Latin <em>quaestionem</em>, "a seeking, inquiry." Contains "quest" &mdash; a purposeful journey.
+      <strong>Ask</strong> &mdash; in many traditions, "ask" and "king" share a root. The one who asks IS the sovereign.
+    </div>
+
+    <h3 style="font-family:Georgia,serif; font-size:1.15rem; color:#e6edf3; font-weight:400; margin-bottom:8px; margin-top:40px;">Challenging Jurisdiction</h3>
+    <p style="color:#8b949e; font-size:0.9rem; margin-bottom:16px;">These questions force the court to identify and justify its jurisdictional basis.</p>
+
+    <div class="question-grid">
+      <div class="question-card">
+        <span class="question-context">Opening</span>
+        <p class="question-text">"Under what specific authority &mdash; natural law, common law, statutory, or commercial &mdash; does this court claim jurisdiction over this matter?"</p>
+      </div>
+      <div class="question-card">
+        <span class="question-context">Consent</span>
+        <p class="question-text">"Has jurisdiction been established by consent of the parties, by statute, or by some other basis? If by consent, when was that consent given and was it informed?"</p>
+      </div>
+      <div class="question-card">
+        <span class="question-context">Court Type</span>
+        <p class="question-text">"Is this court a court of record operating under the common law, or a court of equity operating under legislative authority?"</p>
+      </div>
+      <div class="question-card">
+        <span class="question-context">Jury Rights</span>
+        <p class="question-text">"Does this court recognize my right to a trial by jury? If not, under what jurisdiction has that right been waived, and when did I consent to that waiver?"</p>
+      </div>
+      <div class="question-card">
+        <span class="question-context">Identity</span>
+        <p class="question-text">"Is this court addressing me as a living man, or as the corporate fiction designated by the ALL CAPS name on the filing?"</p>
+      </div>
+      <div class="question-card">
+        <span class="question-context">Scope</span>
+        <p class="question-text">"What are the outer limits of this court's jurisdiction? What matters does it acknowledge are beyond its authority?"</p>
+      </div>
+    </div>
+
+    <h3 style="font-family:Georgia,serif; font-size:1.15rem; color:#e6edf3; font-weight:400; margin-bottom:8px; margin-top:48px;">Demanding Disclosure</h3>
+    <p style="color:#8b949e; font-size:0.9rem; margin-bottom:16px;">These questions require the court to reveal information it may prefer to conceal.</p>
+
+    <div class="question-grid">
+      <div class="question-card">
+        <span class="question-context">Authority Basis</span>
+        <p class="question-text">"What is the source document that establishes this court's authority over the subject matter?"</p>
+      </div>
+      <div class="question-card">
+        <span class="question-context">Consent Proof</span>
+        <p class="question-text">"Can the court identify the specific act or document by which I consented to its jurisdiction?"</p>
+      </div>
+      <div class="question-card">
+        <span class="question-context">Higher Rights</span>
+        <p class="question-text">"Does this court acknowledge that rights exist which are beyond its authority to grant or revoke?"</p>
+      </div>
+      <div class="question-card">
+        <span class="question-context">Oath</span>
+        <p class="question-text">"Has the presiding judge taken an oath to uphold the Constitution? If so, does that oath include the protection of rights that preexist the Constitution?"</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Section: Rules of Engagement -->
+<section id="rules">
+  <div class="container">
+    <span class="section-label">04 &mdash; Rules of Engagement</span>
+    <h2 class="section-title">Strategic Principles</h2>
+    <p class="section-intro">
+      Every legal system is a game with rules defined by the jurisdiction. Questions step outside the rules and examine them. The court cannot punish you for asking about its own authority.
+    </p>
+
+    <div class="rules-list">
+      <div class="rule-item">
+        <span class="rule-num">01</span>
+        <div class="rule-content">
+          <h4>Never Answer a Question with a Statement</h4>
+          <p>A statement can be argued, rebutted, and sanctioned. A question demands a response and puts the burden on the court. Wrong: "I don't recognize this court's authority." Right: "Has this court established its jurisdiction over me? By what specific mechanism?"</p>
+        </div>
+      </div>
+      <div class="rule-item">
+        <span class="rule-num">02</span>
+        <div class="rule-content">
+          <h4>Never Accept Premises</h4>
+          <p>By answering the court's question as framed, you accept its premises &mdash; that it has authority, that you are the designated party, that the obligation exists. Challenge the frame before engaging with the content.</p>
+        </div>
+      </div>
+      <div class="rule-item">
+        <span class="rule-num">03</span>
+        <div class="rule-content">
+          <h4>Always Put Questions on the Record</h4>
+          <p>Questions asked in open court create a permanent trail. If the court refuses to answer, that refusal is on the record. If the court answers, the answer is on the record. Either way, the record preserves the challenge.</p>
+        </div>
+      </div>
+      <div class="rule-item">
+        <span class="rule-num">04</span>
+        <div class="rule-content">
+          <h4>Stack Your Questions</h4>
+          <p>Don't ask one question and wait. Stack them so the court must address a complete framework. Each unanswered question compounds the jurisdictional challenge.</p>
+        </div>
+      </div>
+      <div class="rule-item">
+        <span class="rule-num">05</span>
+        <div class="rule-content">
+          <h4>Never Show Anger &mdash; Show Curiosity</h4>
+          <p>Anger is a statement &mdash; it accepts the court's frame and fights within it. Curiosity is a question &mdash; it steps outside the frame and examines it. "I am simply seeking to understand the basis of its authority, as is my right."</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Section: Response Patterns -->
+<section id="responses">
+  <div class="container">
+    <span class="section-label">05 &mdash; Response Patterns</span>
+    <h2 class="section-title">When the Court Asks You</h2>
+    <p class="section-intro">
+      When the court asks you questions, respond with questions. Never accept the court's premises. The person asking questions maintains sovereignty.
+    </p>
+
+    <div class="response-grid">
+      <div class="response-item">
+        <div class="response-prompt">"How do you plead?"</div>
+        <div class="response-answer">"To what specific charge, under what jurisdiction, and by what authority is a plea demanded?"</div>
+      </div>
+      <div class="response-item">
+        <div class="response-prompt">"Do you understand?"</div>
+        <div class="response-answer">"Do you mean 'understand' as in comprehend, or 'stand under' as in submit to your authority? I comprehend English. I do not consent to standing under any authority that has not established its jurisdiction."</div>
+      </div>
+      <div class="response-item">
+        <div class="response-prompt">"State your name."</div>
+        <div class="response-answer">"Which name does this court require &mdash; the name of the living man, or the name of the corporate fiction on your documents?"</div>
+      </div>
+      <div class="response-item">
+        <div class="response-prompt">"Will you comply with this order?"</div>
+        <div class="response-answer">"Is this an order of a court of competent jurisdiction? Has jurisdiction been established? On what basis?"</div>
+      </div>
+      <div class="response-item">
+        <div class="response-prompt">"Do you have counsel?"</div>
+        <div class="response-answer">"Am I not competent to speak for myself? Does this court presume that a living man requires permission to address a tribunal?"</div>
+      </div>
+    </div>
+
+    <div class="epigraph" style="margin-top:48px;">
+      The goal is not to "win" within the court's system. The goal is to force the court to reveal which system it is using &mdash; because once the system is visible, its limits are visible. And its limits are where your rights begin.
+    </div>
+  </div>
+</section>
+
+<!-- Footer -->
+<footer class="site-footer">
+  <div class="container">
+    <p>Part of the sovereign architecture &mdash; <a href="https://jthorvaldur.github.io" target="_blank" rel="noopener">jthorvaldur.github.io</a></p>
+  </div>
+</footer>
+
+<script>
+(function() {
+  'use strict';
+
+  // -- Layer card expand/collapse --
+  window.toggleLayer = function(card) {
+    const wasExpanded = card.classList.contains('expanded');
+    // Collapse all
+    document.querySelectorAll('.layer-card.expanded').forEach(function(c) {
+      c.classList.remove('expanded');
+    });
+    // Toggle clicked
+    if (!wasExpanded) {
+      card.classList.add('expanded');
+    }
+  };
+
+  // -- Navigation dots: scroll tracking --
+  var sections = ['hero', 'stack', 'translations', 'questions', 'rules', 'responses'];
+  var dots = document.querySelectorAll('.nav-dot');
+
+  function updateActiveDot() {
+    var scrollY = window.scrollY || window.pageYOffset;
+    var windowH = window.innerHeight;
+    var active = 'hero';
+
+    for (var i = 0; i < sections.length; i++) {
+      var el = document.getElementById(sections[i]);
+      if (!el) continue;
+      var rect = el.getBoundingClientRect();
+      // Section is active when its top is in the upper 60% of viewport
+      if (rect.top <= windowH * 0.4) {
+        active = sections[i];
+      }
+    }
+
+    dots.forEach(function(dot) {
+      if (dot.getAttribute('data-section') === active) {
+        dot.classList.add('active');
+      } else {
+        dot.classList.remove('active');
+      }
+    });
+  }
+
+  // Debounced scroll handler
+  var scrollTimer;
+  window.addEventListener('scroll', function() {
+    if (scrollTimer) cancelAnimationFrame(scrollTimer);
+    scrollTimer = requestAnimationFrame(updateActiveDot);
+  }, { passive: true });
+
+  // Click to scroll
+  dots.forEach(function(dot) {
+    dot.addEventListener('click', function() {
+      var sectionId = this.getAttribute('data-section');
+      var el = document.getElementById(sectionId);
+      if (el) {
+        el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }
+    });
+  });
+
+  // Initial state
+  updateActiveDot();
+
+  // -- Fade-in on scroll (intersection observer) --
+  if ('IntersectionObserver' in window) {
+    var fadeEls = document.querySelectorAll('.layer-card, .question-card, .rule-item, .response-item, .courts-move');
+
+    fadeEls.forEach(function(el) {
+      el.style.opacity = '0';
+      el.style.transform = 'translateY(16px)';
+      el.style.transition = 'opacity 0.6s ease, transform 0.6s ease, box-shadow 0.35s cubic-bezier(0.4,0,0.2,1), border-color 0.3s ease';
+    });
+
+    var observer = new IntersectionObserver(function(entries) {
+      entries.forEach(function(entry) {
+        if (entry.isIntersecting) {
+          // Stagger animation for siblings
+          var parent = entry.target.parentElement;
+          var siblings = parent ? Array.from(parent.children).filter(function(c) {
+            return c.style.opacity === '0';
+          }) : [];
+          var idx = siblings.indexOf(entry.target);
+          var delay = Math.max(0, idx) * 80;
+
+          setTimeout(function() {
+            entry.target.style.opacity = '1';
+            entry.target.style.transform = 'translateY(0)';
+          }, delay);
+          observer.unobserve(entry.target);
+        }
+      });
+    }, {
+      threshold: 0.1,
+      rootMargin: '0px 0px -40px 0px'
+    });
+
+    fadeEls.forEach(function(el) { observer.observe(el); });
+  }
+
+  // -- Keyboard navigation --
+  document.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape') {
+      document.querySelectorAll('.layer-card.expanded').forEach(function(c) {
+        c.classList.remove('expanded');
+      });
+    }
+  });
+})();
+</script>
+</body>
+</html>

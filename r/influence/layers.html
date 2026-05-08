@@ -1,0 +1,1171 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="robots" content="noindex, nofollow">
+<title>The Six Cognitive Layers</title>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg: #0d1117;
+    --bg-card: #161b22;
+    --bg-card-hover: #1c2129;
+    --border: #30363d;
+    --text: #c9d1d9;
+    --heading: #e6edf3;
+    --muted: #8b949e;
+    --blue: #58a6ff;
+    --green: #3fb950;
+    --amber: #d29922;
+    --red: #f85149;
+    --purple: #bc8cff;
+    --teal: #39d0d8;
+  }
+
+  html { scroll-behavior: smooth; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: Georgia, 'Times New Roman', serif;
+    line-height: 1.7;
+    min-height: 100vh;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  /* ---- NAV ---- */
+  nav {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    z-index: 100;
+    background: rgba(13, 17, 23, 0.92);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border-bottom: 1px solid var(--border);
+    padding: 0 2rem;
+  }
+  nav ul {
+    list-style: none;
+    display: flex;
+    gap: 2rem;
+    max-width: 1100px;
+    margin: 0 auto;
+    padding: 0.75rem 0;
+    overflow-x: auto;
+  }
+  nav a {
+    color: var(--muted);
+    text-decoration: none;
+    font-family: 'SF Mono', 'Fira Code', 'Consolas', monospace;
+    font-size: 0.8rem;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    white-space: nowrap;
+    transition: color 0.25s;
+  }
+  nav a:hover { color: var(--blue); }
+
+  /* ---- SECTIONS ---- */
+  section {
+    max-width: 1100px;
+    margin: 0 auto;
+    padding: 5rem 2rem 3rem;
+  }
+  section:first-of-type { padding-top: 7rem; }
+
+  h1 {
+    font-family: Georgia, serif;
+    font-size: clamp(2.2rem, 5vw, 3.6rem);
+    color: var(--heading);
+    font-weight: 400;
+    line-height: 1.2;
+    letter-spacing: -0.02em;
+  }
+  h2 {
+    font-family: Georgia, serif;
+    font-size: 1.8rem;
+    color: var(--heading);
+    font-weight: 400;
+    margin-bottom: 1.5rem;
+    letter-spacing: -0.01em;
+  }
+  h3 {
+    font-family: Georgia, serif;
+    font-size: 1.2rem;
+    color: var(--heading);
+    font-weight: 400;
+    margin-bottom: 0.75rem;
+  }
+
+  .subtitle {
+    font-size: 1.15rem;
+    color: var(--muted);
+    margin-top: 1.2rem;
+    max-width: 640px;
+    line-height: 1.8;
+  }
+
+  .section-intro {
+    color: var(--muted);
+    font-size: 1rem;
+    max-width: 700px;
+    margin-bottom: 2.5rem;
+  }
+
+  /* ---- PULL QUOTE ---- */
+  .pull-quote {
+    border-left: 3px solid var(--blue);
+    padding: 1.5rem 2rem;
+    margin: 3rem 0;
+    background: rgba(88, 166, 255, 0.04);
+    font-style: italic;
+    font-size: 1.15rem;
+    color: var(--heading);
+    line-height: 1.8;
+  }
+
+  /* ---- LAYER STACK ---- */
+  .layer-stack {
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+    margin-top: 2rem;
+  }
+  .layer-card {
+    border: 1px solid var(--border);
+    background: var(--bg-card);
+    cursor: pointer;
+    transition: background 0.3s, border-color 0.3s, box-shadow 0.3s;
+    overflow: hidden;
+    position: relative;
+  }
+  .layer-card:first-child { border-radius: 8px 8px 0 0; }
+  .layer-card:last-child { border-radius: 0 0 8px 8px; }
+  .layer-card + .layer-card { border-top: none; }
+
+  .layer-card:hover {
+    background: var(--bg-card-hover);
+  }
+
+  .layer-header {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    padding: 1.25rem 1.75rem;
+    position: relative;
+  }
+  .layer-indicator {
+    width: 4px;
+    position: absolute;
+    left: 0;
+    top: 0;
+    bottom: 0;
+    transition: width 0.3s;
+  }
+  .layer-card.active .layer-indicator { width: 6px; }
+
+  .layer-number {
+    font-family: 'SF Mono', 'Fira Code', 'Consolas', monospace;
+    font-size: 0.75rem;
+    letter-spacing: 0.05em;
+    min-width: 2.5rem;
+  }
+  .layer-name {
+    font-family: 'SF Mono', 'Fira Code', 'Consolas', monospace;
+    font-size: 0.95rem;
+    letter-spacing: 0.08em;
+    font-weight: 600;
+    flex: 1;
+  }
+  .layer-tagline {
+    color: var(--muted);
+    font-size: 0.9rem;
+    flex: 2;
+  }
+  .layer-depth {
+    font-family: 'SF Mono', 'Fira Code', 'Consolas', monospace;
+    font-size: 0.7rem;
+    color: var(--muted);
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+  }
+  .layer-chevron {
+    color: var(--muted);
+    font-size: 1.1rem;
+    transition: transform 0.3s;
+    margin-left: 0.5rem;
+  }
+  .layer-card.active .layer-chevron { transform: rotate(90deg); }
+
+  .layer-body {
+    max-height: 0;
+    overflow: hidden;
+    transition: max-height 0.5s cubic-bezier(0.4, 0, 0.2, 1), padding 0.3s;
+    padding: 0 1.75rem;
+  }
+  .layer-card.active .layer-body {
+    max-height: 800px;
+    padding: 0 1.75rem 1.75rem;
+  }
+  .layer-body-inner {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1.5rem;
+    padding-top: 1rem;
+    border-top: 1px solid var(--border);
+  }
+  .layer-detail h4 {
+    font-family: 'SF Mono', 'Fira Code', 'Consolas', monospace;
+    font-size: 0.7rem;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-bottom: 0.6rem;
+  }
+  .layer-detail p, .layer-detail li {
+    font-size: 0.9rem;
+    line-height: 1.7;
+    color: var(--text);
+  }
+  .layer-detail ul {
+    list-style: none;
+    padding: 0;
+  }
+  .layer-detail li {
+    padding-left: 1em;
+    position: relative;
+    margin-bottom: 0.3rem;
+  }
+  .layer-detail li::before {
+    content: '\2014';
+    position: absolute;
+    left: 0;
+    color: var(--muted);
+  }
+
+  /* ---- Opacity gradient for depth ---- */
+  .layer-card[data-depth="1"] { opacity: 1; }
+  .layer-card[data-depth="2"] { opacity: 0.96; }
+  .layer-card[data-depth="3"] { opacity: 0.92; }
+  .layer-card[data-depth="4"] { opacity: 0.88; }
+  .layer-card[data-depth="5"] { opacity: 0.84; }
+  .layer-card[data-depth="6"] { opacity: 0.80; }
+  .layer-card:hover, .layer-card.active { opacity: 1 !important; }
+
+  /* ---- PATTERN CARDS ---- */
+  .pattern-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+    gap: 1.25rem;
+    margin-top: 2rem;
+  }
+  .pattern-card {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 1.5rem;
+    transition: border-color 0.3s, box-shadow 0.3s, transform 0.25s;
+    cursor: default;
+  }
+  .pattern-card:hover {
+    transform: translateY(-2px);
+  }
+  .pattern-label {
+    font-family: 'SF Mono', 'Fira Code', 'Consolas', monospace;
+    font-size: 0.7rem;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    margin-bottom: 0.5rem;
+  }
+  .pattern-name {
+    font-size: 1.15rem;
+    color: var(--heading);
+    margin-bottom: 0.75rem;
+  }
+  .pattern-template {
+    font-style: italic;
+    color: var(--muted);
+    font-size: 0.95rem;
+    margin-bottom: 0.75rem;
+    padding-left: 0.75rem;
+    border-left: 2px solid var(--border);
+  }
+  .pattern-example {
+    font-size: 0.9rem;
+    line-height: 1.6;
+    margin-bottom: 0.75rem;
+  }
+  .pattern-target {
+    font-family: 'SF Mono', 'Fira Code', 'Consolas', monospace;
+    font-size: 0.7rem;
+    letter-spacing: 0.05em;
+    display: inline-block;
+    padding: 0.2rem 0.6rem;
+    border-radius: 4px;
+    border: 1px solid;
+  }
+
+  /* ---- BORING SURFACE ---- */
+  .surface-demo {
+    margin-top: 2rem;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    overflow: hidden;
+  }
+  .surface-panel {
+    padding: 2rem;
+    position: relative;
+  }
+  .surface-panel:first-child {
+    border-right: 1px solid var(--border);
+  }
+  .surface-label {
+    font-family: 'SF Mono', 'Fira Code', 'Consolas', monospace;
+    font-size: 0.7rem;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-bottom: 1rem;
+    display: block;
+  }
+  .surface-text {
+    font-size: 0.95rem;
+    line-height: 1.9;
+    color: var(--text);
+  }
+  .surface-text .cmd {
+    transition: background 0.4s, color 0.3s, padding 0.3s;
+    border-radius: 3px;
+  }
+  .surface-text .cmd.revealed {
+    padding: 0.1rem 0.3rem;
+    margin: 0 -0.3rem;
+  }
+  .cmd-conscious.revealed, .cmd-blue.revealed { background: rgba(88, 166, 255, 0.15); color: var(--blue); }
+  .cmd-emotional.revealed { background: rgba(248, 81, 73, 0.15); color: var(--red); }
+  .cmd-identity.revealed { background: rgba(188, 140, 255, 0.15); color: var(--purple); }
+  .cmd-social.revealed { background: rgba(63, 185, 80, 0.15); color: var(--green); }
+  .cmd-temporal.revealed { background: rgba(210, 153, 34, 0.15); color: var(--amber); }
+  .cmd-somatic.revealed { background: rgba(57, 208, 216, 0.15); color: var(--teal); }
+
+  .toggle-btn {
+    font-family: 'SF Mono', 'Fira Code', 'Consolas', monospace;
+    font-size: 0.8rem;
+    letter-spacing: 0.05em;
+    background: transparent;
+    border: 1px solid var(--blue);
+    color: var(--blue);
+    padding: 0.6rem 1.5rem;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: background 0.25s, color 0.25s;
+    margin-top: 1.5rem;
+    display: inline-block;
+  }
+  .toggle-btn:hover {
+    background: var(--blue);
+    color: var(--bg);
+  }
+  .toggle-btn.active {
+    background: var(--blue);
+    color: var(--bg);
+  }
+
+  .surface-legend {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1rem;
+    margin-top: 1rem;
+    padding-top: 1rem;
+    border-top: 1px solid var(--border);
+  }
+  .legend-item {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    font-family: 'SF Mono', 'Fira Code', 'Consolas', monospace;
+    font-size: 0.65rem;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    color: var(--muted);
+  }
+  .legend-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+  }
+
+  /* ---- AUDIENCE TABS ---- */
+  .audience-tabs {
+    display: flex;
+    gap: 0;
+    margin-top: 2rem;
+    border-bottom: 1px solid var(--border);
+  }
+  .audience-tab {
+    font-family: 'SF Mono', 'Fira Code', 'Consolas', monospace;
+    font-size: 0.78rem;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    background: transparent;
+    border: none;
+    color: var(--muted);
+    padding: 0.75rem 1.5rem;
+    cursor: pointer;
+    border-bottom: 2px solid transparent;
+    transition: color 0.25s, border-color 0.25s;
+  }
+  .audience-tab:hover { color: var(--heading); }
+  .audience-tab.active {
+    color: var(--blue);
+    border-bottom-color: var(--blue);
+  }
+  .audience-panel {
+    display: none;
+    padding: 2rem 0;
+    animation: fadeIn 0.35s ease;
+  }
+  .audience-panel.active { display: block; }
+  @keyframes fadeIn {
+    from { opacity: 0; transform: translateY(8px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+  .audience-profile {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 2rem;
+  }
+  .audience-col h4 {
+    font-family: 'SF Mono', 'Fira Code', 'Consolas', monospace;
+    font-size: 0.7rem;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-bottom: 0.75rem;
+  }
+  .audience-col p, .audience-col li {
+    font-size: 0.9rem;
+    line-height: 1.7;
+  }
+  .audience-col ul {
+    list-style: none;
+    padding: 0;
+  }
+  .audience-col li {
+    padding-left: 1em;
+    position: relative;
+    margin-bottom: 0.3rem;
+  }
+  .audience-col li::before {
+    content: '\2014';
+    position: absolute;
+    left: 0;
+    color: var(--muted);
+  }
+  .audience-projection {
+    margin-top: 1.5rem;
+    padding: 1.25rem 1.5rem;
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    font-size: 0.9rem;
+    line-height: 1.7;
+  }
+  .audience-projection-label {
+    font-family: 'SF Mono', 'Fira Code', 'Consolas', monospace;
+    font-size: 0.65rem;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-bottom: 0.5rem;
+  }
+
+  /* ---- FOOTER ---- */
+  footer {
+    max-width: 1100px;
+    margin: 0 auto;
+    padding: 3rem 2rem 4rem;
+    border-top: 1px solid var(--border);
+    text-align: center;
+  }
+  footer p {
+    font-family: 'SF Mono', 'Fira Code', 'Consolas', monospace;
+    font-size: 0.75rem;
+    color: var(--muted);
+    letter-spacing: 0.04em;
+  }
+  footer a {
+    color: var(--blue);
+    text-decoration: none;
+  }
+  footer a:hover { text-decoration: underline; }
+
+  /* ---- RESPONSIVE ---- */
+  @media (max-width: 768px) {
+    nav ul { gap: 1rem; padding: 0.6rem 0; }
+    nav a { font-size: 0.7rem; }
+    section { padding: 3.5rem 1.25rem 2rem; }
+    section:first-of-type { padding-top: 5.5rem; }
+    .layer-header { padding: 1rem 1.25rem; flex-wrap: wrap; }
+    .layer-tagline { flex-basis: 100%; margin-top: 0.25rem; font-size: 0.82rem; }
+    .layer-body-inner { grid-template-columns: 1fr; }
+    .surface-demo { grid-template-columns: 1fr; }
+    .surface-panel:first-child { border-right: none; border-bottom: 1px solid var(--border); }
+    .pattern-grid { grid-template-columns: 1fr; }
+    .audience-tabs { overflow-x: auto; }
+    .audience-tab { padding: 0.6rem 1rem; font-size: 0.7rem; }
+    .audience-profile { grid-template-columns: 1fr; }
+    .pull-quote { padding: 1rem 1.25rem; font-size: 1.05rem; }
+  }
+</style>
+</head>
+<body>
+
+<!-- NAV -->
+<nav>
+  <ul>
+    <li><a href="#layers">Layers</a></li>
+    <li><a href="#patterns">Patterns</a></li>
+    <li><a href="#surface">Boring Surface</a></li>
+    <li><a href="#projection">Audience</a></li>
+  </ul>
+</nav>
+
+<!-- TITLE -->
+<section id="top">
+  <h1>The Six Cognitive Layers</h1>
+  <p class="subtitle">Every communication operates on multiple levels simultaneously. Most people only see the surface.</p>
+
+  <div class="pull-quote">
+    If the surface is too interesting, the conscious mind catches the payload.
+  </div>
+</section>
+
+<!-- LAYERS -->
+<section id="layers">
+  <h2>The Layer Stack</h2>
+  <p class="section-intro">Ordered from surface to deepest. The deeper the layer, the harder it is to resist &mdash; and the harder it is to detect. Click any layer to expand.</p>
+
+  <div class="layer-stack">
+
+    <!-- Layer 1: CONSCIOUS -->
+    <div class="layer-card" data-depth="1">
+      <div class="layer-indicator" style="background: var(--blue);"></div>
+      <div class="layer-header">
+        <span class="layer-number" style="color: var(--blue);">01</span>
+        <span class="layer-name" style="color: var(--blue);">CONSCIOUS</span>
+        <span class="layer-tagline">Logical reasoning, facts, evidence &mdash; the "boring surface"</span>
+        <span class="layer-depth">Surface</span>
+        <span class="layer-chevron">&#9656;</span>
+      </div>
+      <div class="layer-body">
+        <div class="layer-body-inner">
+          <div class="layer-detail">
+            <h4>Mechanism</h4>
+            <p>The conscious mind evaluates claims against evidence, checks logic, weighs competing arguments. It is slow, deliberate, and energy-intensive. It is also the layer that people believe controls their decisions &mdash; which is why it is the least powerful.</p>
+            <h4 style="margin-top:1rem;">Embedded Commands</h4>
+            <ul>
+              <li>Direct assertions: "The evidence shows X"</li>
+              <li>Logical structures: "If A, then B"</li>
+              <li>Precedent citation: "In <em>Smith v. Jones</em>, the court held..."</li>
+              <li>Data presentation: statistics, timelines, financials</li>
+            </ul>
+          </div>
+          <div class="layer-detail">
+            <h4>Detection Signals</h4>
+            <ul>
+              <li>Standard logical form (IRAC, chronological)</li>
+              <li>Claims supported by citations or evidence</li>
+              <li>Predictable structure that follows conventions</li>
+            </ul>
+            <h4 style="margin-top:1rem;">Legal Example</h4>
+            <p>A motion reciting procedural history &mdash; boring, expected, necessary. The perfect surface. The conscious mind processes numbers in a financial declaration while embedded commands in the framing go deeper.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Layer 2: EMOTIONAL -->
+    <div class="layer-card" data-depth="2">
+      <div class="layer-indicator" style="background: var(--red);"></div>
+      <div class="layer-header">
+        <span class="layer-number" style="color: var(--red);">02</span>
+        <span class="layer-name" style="color: var(--red);">EMOTIONAL</span>
+        <span class="layer-tagline">Feelings, associations, memories, visceral responses</span>
+        <span class="layer-depth">Shallow</span>
+        <span class="layer-chevron">&#9656;</span>
+      </div>
+      <div class="layer-body">
+        <div class="layer-body-inner">
+          <div class="layer-detail">
+            <h4>Mechanism</h4>
+            <p>The emotional layer processes faster than the conscious layer. By the time the listener has logically evaluated a statement, their emotional response has already formed &mdash; and it biases the logical evaluation without the listener knowing.</p>
+            <h4 style="margin-top:1rem;">Embedded Commands</h4>
+            <ul>
+              <li>Vivid imagery: "The children waited at the window"</li>
+              <li>Sensory language: sounds, textures, temperatures</li>
+              <li>Word choice: "home" vs. "residence," "abandoned" vs. "relocated"</li>
+              <li>Contrast: safety vs. danger, stability vs. chaos</li>
+            </ul>
+          </div>
+          <div class="layer-detail">
+            <h4>Detection Signals</h4>
+            <ul>
+              <li>Language shifts from clinical to vivid/sensory</li>
+              <li>Narrative structures where argument is expected</li>
+              <li>Word choices carry emotional loading beyond denotation</li>
+            </ul>
+            <h4 style="margin-top:1rem;">Counter-Detection</h4>
+            <p>Strip the emotional loading. Replace loaded words with neutral synonyms. If the argument collapses, the emotional layer <em>was</em> the argument &mdash; and you have found their weakness.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Layer 3: IDENTITY -->
+    <div class="layer-card" data-depth="3">
+      <div class="layer-indicator" style="background: var(--purple);"></div>
+      <div class="layer-header">
+        <span class="layer-number" style="color: var(--purple);">03</span>
+        <span class="layer-name" style="color: var(--purple);">IDENTITY</span>
+        <span class="layer-tagline">Self-concept, ego, professional role, personal values</span>
+        <span class="layer-depth">Mid</span>
+        <span class="layer-chevron">&#9656;</span>
+      </div>
+      <div class="layer-body">
+        <div class="layer-body-inner">
+          <div class="layer-detail">
+            <h4>Mechanism</h4>
+            <p>Every person maintains a self-narrative. Commands that align with this identity are accepted without scrutiny. Commands that threaten it trigger defensive reactions. The key: align your request with the listener's existing identity rather than asking them to change.</p>
+            <h4 style="margin-top:1rem;">Embedded Commands</h4>
+            <ul>
+              <li>Role invocation: "As a judge..." "As an officer of the court..."</li>
+              <li>Value alignment: "Your Honor has consistently demonstrated fairness..."</li>
+              <li>Implied identity: "The kind of parent who..."</li>
+              <li>Identity confirmation: "A judge of your experience would recognize..."</li>
+            </ul>
+          </div>
+          <div class="layer-detail">
+            <h4>Detection Signals</h4>
+            <ul>
+              <li>Direct role references ("As a...")</li>
+              <li>Flattery disguised as observation</li>
+              <li>Statements that define the listener's identity for them</li>
+            </ul>
+            <h4 style="margin-top:1rem;">Why It Is Powerful</h4>
+            <p>You cannot reject an identity-level command without rejecting the identity itself. If a judge is told "A court committed to fairness would..." they must either grant the request or accept that they are not committed to fairness. The conscious mind barely notices the trap.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Layer 4: SOCIAL -->
+    <div class="layer-card" data-depth="4">
+      <div class="layer-indicator" style="background: var(--green);"></div>
+      <div class="layer-header">
+        <span class="layer-number" style="color: var(--green);">04</span>
+        <span class="layer-name" style="color: var(--green);">SOCIAL</span>
+        <span class="layer-tagline">Group belonging, peer pressure, norms, consensus</span>
+        <span class="layer-depth">Deep</span>
+        <span class="layer-chevron">&#9656;</span>
+      </div>
+      <div class="layer-body">
+        <div class="layer-body-inner">
+          <div class="layer-detail">
+            <h4>Mechanism</h4>
+            <p>Humans calibrate their behavior to match their perceived in-group. Social-layer commands work by defining the in-group and positioning the desired behavior as the norm. The listener does not feel influenced &mdash; they feel like they are simply doing what everyone does.</p>
+            <h4 style="margin-top:1rem;">Embedded Commands</h4>
+            <ul>
+              <li>Consensus: "Courts across the country have recognized..."</li>
+              <li>Peer comparison: "Every other parent in this situation..."</li>
+              <li>Norm establishment: "The standard practice is..."</li>
+              <li>Exclusion threat: "Only someone with something to hide would..."</li>
+            </ul>
+          </div>
+          <div class="layer-detail">
+            <h4>Detection Signals</h4>
+            <ul>
+              <li>References to what "everyone" or "most people" do</li>
+              <li>One option framed as normal, the other as deviant</li>
+              <li>Implied social consequences for non-compliance</li>
+            </ul>
+            <h4 style="margin-top:1rem;">Counter-Strategy</h4>
+            <p>Social-layer commands collapse when you name them. "Opposing counsel argues that 'everyone' agrees, but the actual case law shows a split..." &mdash; breaking the illusion of consensus breaks the command.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Layer 5: TEMPORAL -->
+    <div class="layer-card" data-depth="5">
+      <div class="layer-indicator" style="background: var(--amber);"></div>
+      <div class="layer-header">
+        <span class="layer-number" style="color: var(--amber);">05</span>
+        <span class="layer-name" style="color: var(--amber);">TEMPORAL</span>
+        <span class="layer-tagline">Past and future anchoring, consequence projection</span>
+        <span class="layer-depth">Deeper</span>
+        <span class="layer-chevron">&#9656;</span>
+      </div>
+      <div class="layer-body">
+        <div class="layer-body-inner">
+          <div class="layer-detail">
+            <h4>Mechanism</h4>
+            <p>The present is ambiguous. The past and future feel more certain (even though they are not). Temporal commands anchor the listener in a time frame where the desired conclusion seems obvious, then carry that certainty back to the present decision.</p>
+            <h4 style="margin-top:1rem;">Embedded Commands</h4>
+            <ul>
+              <li>Future projection: "When you look back on this decision in five years..."</li>
+              <li>Past anchoring: "The court previously found..."</li>
+              <li>Consequence framing: "If this pattern continues, in three years..."</li>
+              <li>Legacy: "The precedent this court sets today will..."</li>
+            </ul>
+          </div>
+          <div class="layer-detail">
+            <h4>Detection Signals</h4>
+            <ul>
+              <li>Shifts from present tense to past or future</li>
+              <li>"Imagine..." or "Consider what happens when..."</li>
+              <li>Framing current decisions as historically significant</li>
+            </ul>
+            <h4 style="margin-top:1rem;">Why It Works</h4>
+            <p>Temporal shifts create real emotional responses to hypothetical time frames. The feelings are present even though the time frame is not. The conscious mind knows it is considering a hypothetical &mdash; but the emotional response is real and present.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Layer 6: SOMATIC -->
+    <div class="layer-card" data-depth="6">
+      <div class="layer-indicator" style="background: var(--teal);"></div>
+      <div class="layer-header">
+        <span class="layer-number" style="color: var(--teal);">06</span>
+        <span class="layer-name" style="color: var(--teal);">SOMATIC</span>
+        <span class="layer-tagline">Body-level responses, rhythm, pacing &mdash; the oldest layer</span>
+        <span class="layer-depth">Deepest</span>
+        <span class="layer-chevron">&#9656;</span>
+      </div>
+      <div class="layer-body">
+        <div class="layer-body-inner">
+          <div class="layer-detail">
+            <h4>Mechanism</h4>
+            <p>The body processes information before the mind does. Posture, breathing rate, vocal rhythm, physical comfort &mdash; these create states that the conscious mind then rationalizes. Somatic commands work by creating physical states consistent with the desired outcome.</p>
+            <h4 style="margin-top:1rem;">Embedded Commands</h4>
+            <ul>
+              <li>Sentence length patterns: short-long-short creates tension-resolution-tension</li>
+              <li>White space: physical breathing room in a document</li>
+              <li>Formatting: bold, italic, headers create somatic micro-responses</li>
+              <li>Document structure: the physical experience of reading</li>
+            </ul>
+          </div>
+          <div class="layer-detail">
+            <h4>Detection Signals</h4>
+            <ul>
+              <li>Unusual rhythm patterns (deliberate variation in length)</li>
+              <li>Strategic use of white space or formatting</li>
+              <li>Documents that "feel" different from their content</li>
+            </ul>
+            <h4 style="margin-top:1rem;">In Legal Writing</h4>
+            <p>Short, punchy sentences in the fact section create urgency. Longer, flowing sentences in the legal analysis create inevitability. A single-sentence paragraph at a key moment forces the reader to pause and absorb. The relief requested, isolated on the page, draws the eye and creates weight.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div><!-- /layer-stack -->
+</section>
+
+<!-- PATTERNS -->
+<section id="patterns">
+  <h2>Command Patterns</h2>
+  <p class="section-intro">The structural forms that carry embedded commands. Each pattern targets specific cognitive layers while maintaining plausible deniability on the surface.</p>
+
+  <div class="pattern-grid">
+
+    <div class="pattern-card" data-glow="var(--blue)">
+      <div class="pattern-label" style="color: var(--blue);">Presupposition</div>
+      <div class="pattern-name">The command hidden in grammar</div>
+      <div class="pattern-template">"When you review the evidence..."</div>
+      <p class="pattern-example"><strong>Legal:</strong> "Since the evidence establishes a pattern of non-compliance..." &mdash; the pattern is presupposed, not argued. The listener must accept it to process the sentence.</p>
+      <span class="pattern-target" style="color: var(--blue); border-color: var(--blue);">Conscious + Emotional</span>
+    </div>
+
+    <div class="pattern-card" data-glow="var(--red)">
+      <div class="pattern-label" style="color: var(--red);">Embedded Question</div>
+      <div class="pattern-name">Planting doubt without asserting</div>
+      <div class="pattern-template">"I wonder whether the court has considered..."</div>
+      <p class="pattern-example"><strong>Legal:</strong> "The Court may wish to consider whether opposing counsel's representations are consistent with the record." &mdash; plants "they may be lying" without saying it.</p>
+      <span class="pattern-target" style="color: var(--red); border-color: var(--red);">Conscious + Emotional</span>
+    </div>
+
+    <div class="pattern-card" data-glow="var(--purple)">
+      <div class="pattern-label" style="color: var(--purple);">Identity Anchor</div>
+      <div class="pattern-name">Binding action to self-concept</div>
+      <div class="pattern-template">"As an officer of the court..."</div>
+      <p class="pattern-example"><strong>Legal:</strong> "This Court has always prioritized the welfare of children." &mdash; defines the court's identity, then aligns the request with it. Refusal means abandoning the identity.</p>
+      <span class="pattern-target" style="color: var(--purple); border-color: var(--purple);">Identity + Social</span>
+    </div>
+
+    <div class="pattern-card" data-glow="var(--red)">
+      <div class="pattern-label" style="color: var(--red);">Negation</div>
+      <div class="pattern-name">Planting by disclaiming</div>
+      <div class="pattern-template">"I'm not suggesting that the court has failed..."</div>
+      <p class="pattern-example"><strong>Legal:</strong> "Petitioner is not suggesting that the Court has been misled." &mdash; the brain processes the content before the negation. By the time "not" registers, the suggestion has been received.</p>
+      <span class="pattern-target" style="color: var(--red); border-color: var(--red);">Conscious + Emotional + Social</span>
+    </div>
+
+    <div class="pattern-card" data-glow="var(--amber)">
+      <div class="pattern-label" style="color: var(--amber);">Temporal Shift</div>
+      <div class="pattern-name">Moving the decision to a different time</div>
+      <div class="pattern-template">"Before you make this decision..."</div>
+      <p class="pattern-example"><strong>Legal:</strong> "When these children are old enough to read this record..." &mdash; creates a future anchor that generates present guilt. The hypothetical feelings are real.</p>
+      <span class="pattern-target" style="color: var(--amber); border-color: var(--amber);">Temporal + Emotional + Identity</span>
+    </div>
+
+    <div class="pattern-card" data-glow="var(--green)">
+      <div class="pattern-label" style="color: var(--green);">Social Proof</div>
+      <div class="pattern-name">Establishing consensus as pressure</div>
+      <div class="pattern-template">"Courts across the country have recognized..."</div>
+      <p class="pattern-example"><strong>Legal:</strong> "Every jurisdiction that has considered this issue has reached the same conclusion." &mdash; peer pressure applied to judicial decision-making. The judge joins the group or stands alone.</p>
+      <span class="pattern-target" style="color: var(--green); border-color: var(--green);">Social + Identity + Conscious</span>
+    </div>
+
+  </div><!-- /pattern-grid -->
+</section>
+
+<!-- BORING SURFACE -->
+<section id="surface">
+  <h2>The Boring Surface</h2>
+  <p class="section-intro">The delivery vehicle must be mundane enough that the conscious mind dismisses it as routine, allowing embedded commands to reach their target layers without interception.</p>
+
+  <div class="pull-quote" style="margin-top: 1.5rem; margin-bottom: 2rem;">
+    The conscious mind is a guard. When it is alert, embedded commands are caught. The solution: give it exactly what it expects. A filing that looks like every other filing. The more normal the surface, the less the guard scrutinizes what is underneath.
+  </div>
+
+  <div style="text-align: center; margin-bottom: 0.5rem;">
+    <button class="toggle-btn" id="toggleBtn" onclick="toggleCommands()">Show Commands</button>
+  </div>
+
+  <div class="surface-demo">
+    <div class="surface-panel" style="background: var(--bg-card);">
+      <span class="surface-label">What the conscious mind reads</span>
+      <p class="surface-text" style="color: var(--muted);">A routine procedural motion. Standard legal writing. Boring. The guard lets it through.</p>
+    </div>
+    <div class="surface-panel" style="background: var(--bg);">
+      <span class="surface-label">The same paragraph &mdash; all six layers</span>
+      <p class="surface-text" id="demoText">On March 3, 2026, the Court entered an order requiring the respondent to provide financial disclosure within thirty days. As of the date of this filing, <span class="cmd cmd-temporal" title="Temporal: magnitude anchor">sixty-three days have elapsed</span>. The respondent has not provided the required disclosure. <span class="cmd cmd-social" title="Social: peer pressure on the judge">Courts that have addressed similar delays have consistently found</span> that such non-compliance warrants enforcement measures. <span class="cmd cmd-emotional" title="Embedded Question: plants idea without asserting">The Court may wish to consider whether</span> <span class="cmd cmd-blue" title="Presupposition: pattern is presupposed, not argued">the respondent's continued failure to comply reflects a pattern</span> that, <span class="cmd cmd-temporal" title="Temporal: future consequence">if permitted to continue</span>, <span class="cmd cmd-identity" title="Identity: court's authority threatened">will undermine the Court's ability to reach an equitable resolution</span>.</p>
+    </div>
+  </div>
+
+  <div class="surface-legend" id="surfaceLegend" style="opacity: 0; transition: opacity 0.4s;">
+    <div class="legend-item"><span class="legend-dot" style="background: var(--amber);"></span> Temporal</div>
+    <div class="legend-item"><span class="legend-dot" style="background: var(--green);"></span> Social</div>
+    <div class="legend-item"><span class="legend-dot" style="background: var(--red);"></span> Embedded Question</div>
+    <div class="legend-item"><span class="legend-dot" style="background: var(--blue);"></span> Presupposition</div>
+    <div class="legend-item"><span class="legend-dot" style="background: var(--purple);"></span> Identity</div>
+  </div>
+
+  <div style="margin-top: 2.5rem;">
+    <h3>The Mundane Carrier Technique</h3>
+    <p style="color: var(--muted); margin-top: 0.75rem; max-width: 700px; font-size: 0.95rem; line-height: 1.8;">The carrier &mdash; document, email, statement &mdash; should be the most boring, expected, routine version of itself possible. All the real work happens in specific positions within that carrier:</p>
+    <div style="margin-top: 1.25rem; display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 0.75rem;">
+      <div style="background: var(--bg-card); border: 1px solid var(--border); border-radius: 6px; padding: 1rem;">
+        <span style="font-family: monospace; font-size: 0.7rem; color: var(--muted); text-transform: uppercase; letter-spacing: 0.08em;">Position 1</span>
+        <p style="font-size: 0.85rem; margin-top: 0.4rem;">First sentence of any paragraph &mdash; the brain gives extra weight to openings</p>
+      </div>
+      <div style="background: var(--bg-card); border: 1px solid var(--border); border-radius: 6px; padding: 1rem;">
+        <span style="font-family: monospace; font-size: 0.7rem; color: var(--muted); text-transform: uppercase; letter-spacing: 0.08em;">Position 2</span>
+        <p style="font-size: 0.85rem; margin-top: 0.4rem;">Last sentence before a section break &mdash; recency effect amplifies processing</p>
+      </div>
+      <div style="background: var(--bg-card); border: 1px solid var(--border); border-radius: 6px; padding: 1rem;">
+        <span style="font-family: monospace; font-size: 0.7rem; color: var(--muted); text-transform: uppercase; letter-spacing: 0.08em;">Position 3</span>
+        <p style="font-size: 0.85rem; margin-top: 0.4rem;">After a boring recitation &mdash; the guard relaxes, the next sentence has a clear path</p>
+      </div>
+      <div style="background: var(--bg-card); border: 1px solid var(--border); border-radius: 6px; padding: 1rem;">
+        <span style="font-family: monospace; font-size: 0.7rem; color: var(--muted); text-transform: uppercase; letter-spacing: 0.08em;">Position 4</span>
+        <p style="font-size: 0.85rem; margin-top: 0.4rem;">Inside lists &mdash; the mind processes mechanically; embed in position 3 of a 5-item list</p>
+      </div>
+      <div style="background: var(--bg-card); border: 1px solid var(--border); border-radius: 6px; padding: 1rem;">
+        <span style="font-family: monospace; font-size: 0.7rem; color: var(--muted); text-transform: uppercase; letter-spacing: 0.08em;">Position 5</span>
+        <p style="font-size: 0.85rem; margin-top: 0.4rem;">Parenthetical asides &mdash; processed as secondary, lower scrutiny, direct path deeper</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- AUDIENCE PROJECTION -->
+<section id="projection">
+  <h2>Audience Projection</h2>
+  <p class="section-intro">The same message lands differently on different audiences. This is not a limitation to manage &mdash; it is a tool to exploit. One boring surface, five different payloads.</p>
+
+  <div class="audience-tabs">
+    <button class="audience-tab active" onclick="showAudience('judge', this)">Judge</button>
+    <button class="audience-tab" onclick="showAudience('counsel', this)">Opposing Counsel</button>
+    <button class="audience-tab" onclick="showAudience('mediator', this)">Mediator</button>
+    <button class="audience-tab" onclick="showAudience('gal', this)">GAL</button>
+    <button class="audience-tab" onclick="showAudience('public', this)">Public</button>
+  </div>
+
+  <!-- Judge -->
+  <div class="audience-panel active" id="panel-judge">
+    <div class="audience-profile">
+      <div class="audience-col">
+        <h4>Receptors</h4>
+        <p>Authority, precedent, fairness, thoroughness, judicial economy</p>
+        <h4 style="margin-top:1rem;">Identity</h4>
+        <p>Impartial arbiter, protector of the law, guardian of the system</p>
+        <h4 style="margin-top:1rem;">Incentives</h4>
+        <ul>
+          <li>Correct ruling, efficient docket</li>
+          <li>Appellate-proof decisions</li>
+          <li>Professional reputation</li>
+        </ul>
+      </div>
+      <div class="audience-col">
+        <h4>Fears</h4>
+        <ul>
+          <li>Reversal on appeal</li>
+          <li>Media scrutiny</li>
+          <li>Harming children</li>
+          <li>Being manipulated</li>
+        </ul>
+        <h4 style="margin-top:1rem;">Effective Layers</h4>
+        <ul>
+          <li>Identity anchors: "This Court has consistently..."</li>
+          <li>Social proof: "The weight of authority..."</li>
+          <li>Temporal: "Appellate review will consider..."</li>
+          <li>Boring surface: standard format, proper citations</li>
+        </ul>
+      </div>
+    </div>
+    <div class="audience-projection">
+      <div class="audience-projection-label">What the judge receives</div>
+      <p>A well-researched, properly cited legal argument. The conscious layer is satisfied. Identity anchors for the judicial role activate below the surface. The judge reads competence and thoroughness &mdash; and unconsciously absorbs the embedded framing of how a "fair court" should rule.</p>
+    </div>
+  </div>
+
+  <!-- Opposing Counsel -->
+  <div class="audience-panel" id="panel-counsel">
+    <div class="audience-profile">
+      <div class="audience-col">
+        <h4>Receptors</h4>
+        <p>Professional competence, ethical obligations, risk assessment, client management</p>
+        <h4 style="margin-top:1rem;">Identity</h4>
+        <p>Zealous advocate, officer of the court, skilled professional</p>
+        <h4 style="margin-top:1rem;">Incentives</h4>
+        <ul>
+          <li>Winning for their client</li>
+          <li>Maintaining reputation</li>
+          <li>Avoiding sanctions</li>
+        </ul>
+      </div>
+      <div class="audience-col">
+        <h4>Fears</h4>
+        <ul>
+          <li>Malpractice exposure</li>
+          <li>Sanctions from the court</li>
+          <li>Looking incompetent</li>
+          <li>Losing</li>
+        </ul>
+        <h4 style="margin-top:1rem;">Effective Layers</h4>
+        <ul>
+          <li>Identity: "As officers of the court, counsel share an obligation..."</li>
+          <li>Presupposition: "When opposing counsel reviews..." (presupposes they have not)</li>
+          <li>Negation: "Petitioner does not suggest counsel was unaware..."</li>
+        </ul>
+      </div>
+    </div>
+    <div class="audience-projection">
+      <div class="audience-projection-label">What opposing counsel receives</div>
+      <p>A filing that exposes gaps in their case while maintaining professional courtesy on the surface. The professional competence threat activates &mdash; they feel the need to respond to things that were never directly asserted. The ethical obligation reminders bind them to standards that constrain their response options.</p>
+    </div>
+  </div>
+
+  <!-- Mediator -->
+  <div class="audience-panel" id="panel-mediator">
+    <div class="audience-profile">
+      <div class="audience-col">
+        <h4>Receptors</h4>
+        <p>Compromise, resolution, practical outcomes, efficiency</p>
+        <h4 style="margin-top:1rem;">Identity</h4>
+        <p>Neutral facilitator, peacemaker, problem-solver</p>
+        <h4 style="margin-top:1rem;">Incentives</h4>
+        <ul>
+          <li>Settlement reached</li>
+          <li>Both parties satisfied</li>
+          <li>Reputation as effective mediator</li>
+        </ul>
+      </div>
+      <div class="audience-col">
+        <h4>Fears</h4>
+        <ul>
+          <li>Impasse</li>
+          <li>Wasting time</li>
+          <li>Parties feeling unheard</li>
+        </ul>
+        <h4 style="margin-top:1rem;">Effective Layers</h4>
+        <ul>
+          <li>Social: "In successful mediations, both parties..."</li>
+          <li>Temporal: "Where do we want to be in two years?"</li>
+          <li>Identity: "As parents who both love their children..."</li>
+          <li>Practical framing: concrete proposals, workable solutions</li>
+        </ul>
+      </div>
+    </div>
+    <div class="audience-projection">
+      <div class="audience-projection-label">What the mediator receives</div>
+      <p>A cooperative, solution-oriented participant who is being reasonable. The mediator's identity as peacemaker is activated &mdash; they unconsciously align with the party that appears most committed to resolution. Future-anchored language frames the desired outcome as the natural destination both parties are working toward.</p>
+    </div>
+  </div>
+
+  <!-- GAL -->
+  <div class="audience-panel" id="panel-gal">
+    <div class="audience-profile">
+      <div class="audience-col">
+        <h4>Receptors</h4>
+        <p>Child welfare, safety, stability, developmental needs</p>
+        <h4 style="margin-top:1rem;">Identity</h4>
+        <p>Child's advocate, protector, investigator</p>
+        <h4 style="margin-top:1rem;">Incentives</h4>
+        <ul>
+          <li>Protecting the child</li>
+          <li>Thorough investigation</li>
+          <li>Defensible recommendation</li>
+        </ul>
+      </div>
+      <div class="audience-col">
+        <h4>Fears</h4>
+        <ul>
+          <li>Missing abuse or neglect</li>
+          <li>Making the wrong recommendation</li>
+          <li>Being manipulated by a parent</li>
+        </ul>
+        <h4 style="margin-top:1rem;">Effective Layers</h4>
+        <ul>
+          <li>Child-focused language: everything framed as child impact</li>
+          <li>Evidence: documentation, third-party observations</li>
+          <li>Temporal: "The children's developmental needs at this stage..."</li>
+          <li>Identity: "As the children's advocate, you have the unique perspective..."</li>
+        </ul>
+      </div>
+    </div>
+    <div class="audience-projection">
+      <div class="audience-projection-label">What the GAL receives</div>
+      <p>A child-focused narrative with specific, verifiable evidence. The GAL's investigative identity is respected &mdash; not manipulated. The child welfare receptor activates on every sentence because every sentence is framed in terms of impact on the children, not parental rights. The GAL reads a parent who thinks like a child advocate.</p>
+    </div>
+  </div>
+
+  <!-- Public -->
+  <div class="audience-panel" id="panel-public">
+    <div class="audience-profile">
+      <div class="audience-col">
+        <h4>Receptors</h4>
+        <p>Narrative, fairness, outrage, sympathy, entertainment</p>
+        <h4 style="margin-top:1rem;">Identity</h4>
+        <p>Varies &mdash; allies want to support, neutrals want to judge, opponents want ammunition</p>
+        <h4 style="margin-top:1rem;">Incentives</h4>
+        <ul>
+          <li>Understanding the story</li>
+          <li>Taking a side</li>
+          <li>Social currency</li>
+        </ul>
+      </div>
+      <div class="audience-col">
+        <h4>Fears</h4>
+        <ul>
+          <li>Being wrong</li>
+          <li>Looking foolish</li>
+          <li>Backing the wrong side</li>
+        </ul>
+        <h4 style="margin-top:1rem;">Effective Layers</h4>
+        <ul>
+          <li>Emotional: vivid, concrete, human stories</li>
+          <li>Social proof: "Everyone who knows the situation..."</li>
+          <li>Identity: "As a parent..." "As someone who cares..."</li>
+          <li>Simple narrative: clear villain, clear victim, clear resolution</li>
+        </ul>
+      </div>
+    </div>
+    <div class="audience-projection">
+      <div class="audience-projection-label">What the public receives</div>
+      <p>A parent fighting for their children against unfairness. The emotional narrative activates immediately &mdash; the public does not read legal arguments, they read stories. The same document that presents boring procedural history to the judge presents a compelling human drama to anyone outside the courtroom. Same words. Different reception.</p>
+    </div>
+  </div>
+
+</section>
+
+<!-- FOOTER -->
+<footer>
+  <p>Part of the sovereign architecture &mdash; <a href="https://jthorvaldur.github.io" target="_blank" rel="noopener">jthorvaldur.github.io</a></p>
+</footer>
+
+<script>
+// Layer card expand/collapse
+document.querySelectorAll('.layer-card').forEach(function(card) {
+  card.querySelector('.layer-header').addEventListener('click', function() {
+    var wasActive = card.classList.contains('active');
+    // Collapse all
+    document.querySelectorAll('.layer-card').forEach(function(c) {
+      c.classList.remove('active');
+    });
+    // Toggle clicked
+    if (!wasActive) {
+      card.classList.add('active');
+    }
+  });
+});
+
+// Boring surface toggle
+var commandsRevealed = false;
+function toggleCommands() {
+  commandsRevealed = !commandsRevealed;
+  var cmds = document.querySelectorAll('#demoText .cmd');
+  var btn = document.getElementById('toggleBtn');
+  var legend = document.getElementById('surfaceLegend');
+
+  cmds.forEach(function(el) {
+    if (commandsRevealed) {
+      el.classList.add('revealed');
+    } else {
+      el.classList.remove('revealed');
+    }
+  });
+
+  btn.textContent = commandsRevealed ? 'Hide Commands' : 'Show Commands';
+  btn.classList.toggle('active', commandsRevealed);
+  legend.style.opacity = commandsRevealed ? '1' : '0';
+}
+
+// Audience tabs
+function showAudience(id, tabEl) {
+  document.querySelectorAll('.audience-panel').forEach(function(p) {
+    p.classList.remove('active');
+  });
+  document.querySelectorAll('.audience-tab').forEach(function(t) {
+    t.classList.remove('active');
+  });
+  document.getElementById('panel-' + id).classList.add('active');
+  tabEl.classList.add('active');
+}
+
+// Pattern card hover glow
+document.querySelectorAll('.pattern-card').forEach(function(card) {
+  var glowColor = card.getAttribute('data-glow');
+  card.addEventListener('mouseenter', function() {
+    card.style.borderColor = glowColor;
+    card.style.boxShadow = '0 0 20px ' + glowColor + '22, 0 4px 16px rgba(0,0,0,0.3)';
+  });
+  card.addEventListener('mouseleave', function() {
+    card.style.borderColor = '';
+    card.style.boxShadow = '';
+  });
+});
+</script>
+
+</body>
+</html>
