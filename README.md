@@ -65,3 +65,7 @@ scripts/              Build and utility scripts
 ## Encryption
 
 Private sections use AES-256-GCM with PBKDF2 key derivation (100,000 iterations) for client-side decryption. See `ENCRYPTION_PROCESS.md` for implementation details.
+
+<!-- AUTO:footer -->
+Managed by [policy-orchestrator](https://github.com/jthorvaldur/policy-orchestrator). Category: web-portfolio. 172 commits, last updated 61 seconds ago.
+<!-- /AUTO:footer -->
