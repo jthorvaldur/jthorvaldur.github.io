@@ -1,0 +1,360 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Data Timeline — Hyperliquid vs Binance</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: 'SF Mono', 'Fira Code', monospace;
+    background: #0d1117;
+    color: #c9d1d9;
+    padding: 24px;
+    max-width: 1600px;
+    margin: 0 auto;
+  }
+  h1 { color: #58a6ff; font-size: 20px; margin-bottom: 4px; }
+  .subtitle { color: #8b949e; font-size: 12px; margin-bottom: 24px; }
+  h2 { color: #8b949e; font-size: 13px; text-transform: uppercase; letter-spacing: 0.1em; margin: 28px 0 10px; }
+  .card {
+    background: #161b22;
+    border: 1px solid #30363d;
+    border-radius: 8px;
+    padding: 16px;
+    margin-bottom: 16px;
+  }
+  .card-title { color: #58a6ff; font-size: 11px; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 10px; }
+  .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 12px; margin-bottom: 8px; }
+  .stat { font-size: 26px; font-weight: bold; color: #f0f6fc; }
+  .stat-label { font-size: 11px; color: #8b949e; margin-top: 2px; }
+  .ok { color: #3fb950; }
+  .warn { color: #d29922; }
+  .neg { color: #f85149; }
+  .neutral { color: #79c0ff; }
+  .pill { display: inline-block; padding: 2px 8px; border-radius: 4px; font-size: 10px; font-weight: bold; }
+  .pill-hl { background: #0d2818; color: #3fb950; border: 1px solid #1b3d2a; }
+  .pill-bn { background: #2a1f00; color: #d29922; border: 1px solid #3d2e00; }
+  .pill-both { background: #0d1830; color: #58a6ff; border: 1px solid #1b2d4a; }
+  .pill-miss { background: #1c1c1c; color: #484f58; border: 1px solid #30363d; }
+  table { width: 100%; border-collapse: collapse; font-size: 12px; }
+  th { text-align: left; color: #8b949e; font-weight: normal; padding: 6px 8px; border-bottom: 1px solid #30363d; position: sticky; top: 0; background: #161b22; }
+  th.r, td.r { text-align: right; }
+  th.c, td.c { text-align: center; }
+  td { padding: 5px 8px; border-bottom: 1px solid #21262d; }
+  tr:hover td { background: #1c2129; }
+  .footer { color: #484f58; font-size: 11px; margin-top: 32px; text-align: center; border-top: 1px solid #21262d; padding-top: 16px; }
+
+  /* Timeline heatmap */
+  .tl-grid { display: grid; gap: 2px; margin: 8px 0; }
+  .tl-cell {
+    border-radius: 3px;
+    height: 28px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 9px;
+    color: #8b949e;
+    position: relative;
+    cursor: default;
+  }
+  .tl-cell .tip {
+    display: none;
+    position: absolute;
+    bottom: 100%;
+    left: 50%;
+    transform: translateX(-50%);
+    background: #30363d;
+    color: #f0f6fc;
+    padding: 6px 10px;
+    border-radius: 6px;
+    font-size: 11px;
+    white-space: nowrap;
+    margin-bottom: 6px;
+    z-index: 10;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.4);
+  }
+  .tl-cell:hover .tip { display: block; }
+  .tl-both { background: #1a3a5c; border: 1px solid #2a5a8c; color: #79c0ff; }
+  .tl-hl   { background: #0d2818; border: 1px solid #1b3d2a; color: #3fb950; }
+  .tl-bn   { background: #2a1f00; border: 1px solid #3d2e00; color: #d29922; }
+  .tl-none { background: #161b22; border: 1px solid #21262d; color: #30363d; }
+  .tl-partial { background: #1c1520; border: 1px solid #2d2040; color: #bb9af7; }
+
+  /* Symbol matrix */
+  .sym-grid { display: grid; grid-template-columns: 100px repeat(var(--cols), 1fr); gap: 1px; font-size: 10px; }
+  .sym-header { color: #8b949e; padding: 4px; text-align: center; writing-mode: vertical-lr; transform: rotate(180deg); height: 60px; }
+  .sym-label { color: #c9d1d9; padding: 4px 8px; display: flex; align-items: center; font-size: 11px; }
+  .sym-cell {
+    width: 100%;
+    height: 22px;
+    border-radius: 2px;
+    position: relative;
+    cursor: default;
+  }
+  .sym-cell .tip {
+    display: none;
+    position: absolute;
+    bottom: 100%;
+    left: 50%;
+    transform: translateX(-50%);
+    background: #30363d;
+    color: #f0f6fc;
+    padding: 4px 8px;
+    border-radius: 4px;
+    font-size: 10px;
+    white-space: nowrap;
+    margin-bottom: 4px;
+    z-index: 10;
+  }
+  .sym-cell:hover .tip { display: block; }
+  .s-yes { background: #3fb950; opacity: 0.7; }
+  .s-no  { background: #21262d; }
+  .s-big { background: #3fb950; opacity: 1.0; }
+
+  .legend { display: flex; gap: 16px; margin: 12px 0; flex-wrap: wrap; }
+  .legend-item { display: flex; align-items: center; gap: 6px; font-size: 11px; color: #8b949e; }
+  .legend-swatch { width: 14px; height: 14px; border-radius: 3px; }
+
+  .vol-bar { display: flex; height: 6px; border-radius: 3px; overflow: hidden; margin: 2px 0; }
+  .vol-hl { background: #3fb950; }
+  .vol-bn { background: #d29922; }
+</style>
+</head>
+<body>
+
+<h1>Data Timeline</h1>
+<div class="subtitle">
+  Hyperliquid fills vs Binance spot trades &middot; May 25 &ndash; Jul 27, 2025 &middot;
+  Updated <span id="ts"></span>
+</div>
+
+<h2>Coverage at a Glance</h2>
+<div class="grid">
+  <div class="card">
+    <div class="card-title">Hyperliquid Fills</div>
+    <div class="stat ok">18 / 64</div>
+    <div class="stat-label">days downloaded so far (downloading...)</div>
+    <div class="stat-label" style="margin-top:4px">29.6 GB total &middot; 1,507 hourly files</div>
+  </div>
+  <div class="card">
+    <div class="card-title">Binance Spot Trades</div>
+    <div class="stat warn">64 / 64</div>
+    <div class="stat-label">days complete &middot; 18 of 23 symbols</div>
+    <div class="stat-label" style="margin-top:4px">~65 GB total &middot; 1,152 daily CSV files</div>
+  </div>
+  <div class="card">
+    <div class="card-title">Overlap Window</div>
+    <div class="stat neutral">18 days</div>
+    <div class="stat-label">both sources available &middot; May 25 &ndash; Jun 11</div>
+    <div class="stat-label" style="margin-top:4px">18 common symbols for cross-comparison</div>
+  </div>
+  <div class="card">
+    <div class="card-title">Missing from Binance</div>
+    <div class="stat" style="color:#484f58; font-size:18px;">FARTCOIN, GRASS, HYPE, MOODENG, POPCAT</div>
+    <div class="stat-label">HL-native tokens &mdash; not listed on Binance spot</div>
+  </div>
+</div>
+
+<h2>Daily Heatmap</h2>
+<div class="card">
+  <div class="legend">
+    <div class="legend-item"><div class="legend-swatch tl-both"></div> Both exchanges</div>
+    <div class="legend-item"><div class="legend-swatch tl-hl"></div> Hyperliquid only</div>
+    <div class="legend-item"><div class="legend-swatch tl-bn"></div> Binance only</div>
+    <div class="legend-item"><div class="legend-swatch tl-partial"></div> HL partial (fewer than 24 hours)</div>
+    <div class="legend-item"><div class="legend-swatch tl-none"></div> No data</div>
+  </div>
+  <div id="heatmap"></div>
+</div>
+
+<h2>Binance Symbol Availability (per day)</h2>
+<div class="card" style="overflow-x:auto;">
+  <div id="symbol-matrix"></div>
+</div>
+
+<h2>Daily Volume Comparison (compressed size on disk)</h2>
+<div class="card" style="overflow-x:auto; max-height: 600px; overflow-y: auto;">
+  <table>
+    <thead>
+      <tr>
+        <th>Date</th>
+        <th>Day</th>
+        <th class="r">HL Size</th>
+        <th class="r">HL Hours</th>
+        <th class="r">BN Size</th>
+        <th class="r">BN Symbols</th>
+        <th style="width:300px">Volume (HL green, BN amber)</th>
+        <th class="c">Status</th>
+      </tr>
+    </thead>
+    <tbody id="daily-table"></tbody>
+  </table>
+</div>
+
+<div class="footer">
+  Hyperliquid: <code>s3://hl-mainnet-node-data/node_fills/</code> &middot;
+  Binance: <code>data.binance.vision/data/spot/daily/trades/</code> &middot;
+  Instance: Vast.ai 36784613 (Delaware)
+</div>
+
+<script>
+const HL = {"20250525":{"n":7,"mb":128.7},"20250526":{"n":24,"mb":387.9},"20250527":{"n":24,"mb":463.4},"20250528":{"n":24,"mb":426.1},"20250529":{"n":24,"mb":454.6},"20250530":{"n":24,"mb":539.8},"20250531":{"n":24,"mb":350.3},"20250601":{"n":24,"mb":280.0},"20250602":{"n":24,"mb":380.5},"20250603":{"n":24,"mb":461.3},"20250604":{"n":24,"mb":424.0},"20250605":{"n":24,"mb":534.3},"20250606":{"n":23,"mb":381.9},"20250607":{"n":23,"mb":253.4},"20250608":{"n":24,"mb":272.4},"20250609":{"n":24,"mb":429.8},"20250610":{"n":24,"mb":533.8},"20250611":{"n":9,"mb":238.1}};
+
+const BN = {"20250525":949.0,"20250526":881.7,"20250527":1182.1,"20250528":946.8,"20250529":1154.0,"20250530":1485.2,"20250531":1006.0,"20250601":725.3,"20250602":933.4,"20250603":927.7,"20250604":789.1,"20250605":1296.0,"20250606":907.6,"20250607":521.7,"20250608":504.3,"20250609":889.3,"20250610":1254.4,"20250611":1191.7,"20250612":1113.7,"20250613":1705.3,"20250614":583.6,"20250615":569.6,"20250616":993.0,"20250617":1166.3,"20250618":963.1,"20250619":540.7,"20250620":882.5,"20250621":752.7,"20250622":1484.3,"20250623":1357.1,"20250624":930.1,"20250625":823.4,"20250626":797.5,"20250627":688.8,"20250628":412.9,"20250629":488.4,"20250630":746.5,"20250701":641.9,"20250702":859.5,"20250703":813.2,"20250704":635.5,"20250705":307.0,"20250706":471.4,"20250707":654.5,"20250708":571.3,"20250709":832.5,"20250710":1171.6,"20250711":1827.0,"20250712":918.3,"20250713":944.4,"20250714":1582.1,"20250715":1506.9,"20250716":1348.7,"20250717":1797.6,"20250718":2123.5,"20250719":1013.4,"20250720":1472.6,"20250721":1834.2,"20250722":1937.0,"20250723":1790.4,"20250724":1686.3,"20250725":1657.0,"20250726":721.3,"20250727":957.0};
+
+const BN_SYMS_PER_DAY = {"20250525":18,"20250526":18,"20250527":18,"20250528":18,"20250529":18,"20250530":18,"20250531":18,"20250601":18,"20250602":18,"20250603":18,"20250604":18,"20250605":18,"20250606":18,"20250607":18,"20250608":18,"20250609":18,"20250610":18,"20250611":18,"20250612":18,"20250613":18,"20250614":18,"20250615":18,"20250616":18,"20250617":18,"20250618":18,"20250619":18,"20250620":18,"20250621":18,"20250622":18,"20250623":18,"20250624":18,"20250625":18,"20250626":18,"20250627":18,"20250628":18,"20250629":18,"20250630":17,"20250701":17,"20250702":17,"20250703":17,"20250704":17,"20250705":17,"20250706":17,"20250707":17,"20250708":17,"20250709":17,"20250710":17,"20250711":17,"20250712":17,"20250713":17,"20250714":17,"20250715":17,"20250716":17,"20250717":17,"20250718":17,"20250719":17,"20250720":17,"20250721":17,"20250722":17,"20250723":17,"20250724":17,"20250725":17,"20250726":17,"20250727":17};
+
+// All symbols found in Binance data
+const BN_ALL_SYMS = ["AAVEUSDT","AVAXUSDT","BERAUSDT","BNBUSDT","BTCUSDT","DOGEUSDT","ENAUSDT","ETHUSDT","INITUSDT","ONDOUSDT","PENGUUSDT","SOLUSDT","SUIUSDT","TRUMPUSDT","VIRTUALUSDT","WIFUSDT","WLDUSDT","XRPUSDT"];
+
+// ONDO missing after Jun 29
+const BN_ONDO_LAST = "20250629";
+
+// Generate all dates May 25 - Jul 27
+function allDates() {
+  const dates = [];
+  const start = new Date(2025, 4, 25);
+  const end = new Date(2025, 6, 27);
+  for (let d = new Date(start); d <= end; d.setDate(d.getDate() + 1)) {
+    const y = d.getFullYear();
+    const m = String(d.getMonth() + 1).padStart(2, '0');
+    const day = String(d.getDate()).padStart(2, '0');
+    dates.push(`${y}${m}${day}`);
+  }
+  return dates;
+}
+
+const DAYS = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+const MONTHS = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+
+function fmtDate(d) {
+  const y = d.slice(0,4), m = parseInt(d.slice(4,6))-1, day = d.slice(6,8);
+  const dt = new Date(parseInt(y), m, parseInt(day));
+  return `${MONTHS[m]} ${parseInt(day)}`;
+}
+
+function fmtDay(d) {
+  const y = d.slice(0,4), m = parseInt(d.slice(4,6))-1, day = d.slice(6,8);
+  const dt = new Date(parseInt(y), m, parseInt(day));
+  return DAYS[dt.getDay()];
+}
+
+function fmtMB(mb) {
+  if (mb >= 1024) return (mb/1024).toFixed(1) + ' GB';
+  return mb.toFixed(0) + ' MB';
+}
+
+const dates = allDates();
+const maxVol = Math.max(...dates.map(d => (HL[d]?.mb || 0) + (BN[d] || 0)));
+
+// Heatmap
+const hm = document.getElementById('heatmap');
+// Group by week
+let weeks = [];
+let currentWeek = [];
+dates.forEach((d, i) => {
+  const dt = new Date(parseInt(d.slice(0,4)), parseInt(d.slice(4,6))-1, parseInt(d.slice(6,8)));
+  if (dt.getDay() === 0 && currentWeek.length > 0) {
+    weeks.push(currentWeek);
+    currentWeek = [];
+  }
+  currentWeek.push(d);
+});
+if (currentWeek.length > 0) weeks.push(currentWeek);
+
+let hmHTML = '<div style="display:flex;gap:2px;flex-wrap:wrap;">';
+dates.forEach(d => {
+  const hasHL = !!HL[d];
+  const hasBN = !!BN[d];
+  const hlHours = HL[d]?.n || 0;
+  let cls = 'tl-none';
+  let label = '';
+  if (hasHL && hasBN) {
+    cls = hlHours < 24 ? 'tl-partial' : 'tl-both';
+    label = fmtDate(d).split(' ')[1];
+  } else if (hasHL) {
+    cls = hlHours < 24 ? 'tl-partial' : 'tl-hl';
+    label = fmtDate(d).split(' ')[1];
+  } else if (hasBN) {
+    cls = 'tl-bn';
+    label = fmtDate(d).split(' ')[1];
+  }
+
+  const hlTip = hasHL ? `HL: ${fmtMB(HL[d].mb)}, ${hlHours}/24 hrs` : 'HL: none';
+  const bnTip = hasBN ? `BN: ${fmtMB(BN[d])}, ${BN_SYMS_PER_DAY[d]} symbols` : 'BN: none';
+
+  hmHTML += `<div class="tl-cell ${cls}" style="width:22px;">
+    ${label}
+    <div class="tip">${fmtDate(d)} (${fmtDay(d)})<br>${hlTip}<br>${bnTip}</div>
+  </div>`;
+});
+hmHTML += '</div>';
+hm.innerHTML = hmHTML;
+
+// Daily table
+const tbody = document.getElementById('daily-table');
+dates.forEach(d => {
+  const hasHL = !!HL[d];
+  const hasBN = !!BN[d];
+  const hlMB = HL[d]?.mb || 0;
+  const hlHrs = HL[d]?.n || 0;
+  const bnMB = BN[d] || 0;
+  const bnSyms = BN_SYMS_PER_DAY[d] || 0;
+  const total = hlMB + bnMB;
+  const hlPct = total > 0 ? (hlMB / maxVol * 100) : 0;
+  const bnPct = total > 0 ? (bnMB / maxVol * 100) : 0;
+
+  let status = '';
+  if (hasHL && hasBN) {
+    status = hlHrs === 24 ? '<span class="pill pill-both">BOTH</span>' : '<span class="pill pill-both">BOTH</span> <span class="pill pill-miss">' + hlHrs + 'h</span>';
+  } else if (hasHL) {
+    status = '<span class="pill pill-hl">HL ONLY</span>';
+  } else if (hasBN) {
+    status = '<span class="pill pill-bn">BN ONLY</span>';
+  } else {
+    status = '<span class="pill pill-miss">NONE</span>';
+  }
+
+  tbody.innerHTML += `<tr>
+    <td>${fmtDate(d)}</td>
+    <td style="color:#484f58">${fmtDay(d)}</td>
+    <td class="r">${hasHL ? fmtMB(hlMB) : '<span style="color:#30363d">—</span>'}</td>
+    <td class="r">${hasHL ? hlHrs + '/24' : '<span style="color:#30363d">—</span>'}</td>
+    <td class="r">${hasBN ? fmtMB(bnMB) : '<span style="color:#30363d">—</span>'}</td>
+    <td class="r">${hasBN ? bnSyms : '<span style="color:#30363d">—</span>'}</td>
+    <td><div class="vol-bar"><div class="vol-hl" style="width:${hlPct}%"></div><div class="vol-bn" style="width:${bnPct}%"></div></div></td>
+    <td class="c">${status}</td>
+  </tr>`;
+});
+
+// Symbol matrix
+const smDiv = document.getElementById('symbol-matrix');
+// Show a subset of dates (every 3rd day for readability)
+const symDates = dates.filter((d, i) => i % 3 === 0 || i === dates.length - 1);
+smDiv.style.setProperty('--cols', symDates.length);
+
+let smHTML = '<div class="sym-grid">';
+smHTML += '<div></div>';
+symDates.forEach(d => {
+  smHTML += `<div class="sym-header">${fmtDate(d)}</div>`;
+});
+
+BN_ALL_SYMS.forEach(sym => {
+  const label = sym.replace('USDT', '');
+  smHTML += `<div class="sym-label">${label}</div>`;
+  symDates.forEach(d => {
+    const hasSym = BN_SYMS_PER_DAY[d] && (sym !== 'ONDOUSDT' || d <= BN_ONDO_LAST);
+    const cls = hasSym ? 's-yes' : 's-no';
+    smHTML += `<div class="sym-cell ${cls}"><div class="tip">${label} ${fmtDate(d)}: ${hasSym ? 'available' : 'missing'}</div></div>`;
+  });
+});
+
+smHTML += '</div>';
+smDiv.innerHTML = smHTML;
+
+// Timestamp
+document.getElementById('ts').textContent = new Date().toISOString().slice(0, 16).replace('T', ' ') + ' UTC';
+</script>
+
+</body>
+</html>
