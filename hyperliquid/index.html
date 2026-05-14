@@ -2,441 +2,485 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>Hyperliquid Trade Fills — Archive Summary</title>
+<title>Hyperliquid / Binance — Trade Fill Archive & Analysis</title>
 <style>
   * { box-sizing: border-box; margin: 0; padding: 0; }
   body {
     font-family: 'SF Mono', 'Fira Code', monospace;
     background: #0d1117;
     color: #c9d1d9;
-    padding: 24px;
+    padding: 0;
+  }
+  a { color: #58a6ff; text-decoration: none; }
+  a:hover { text-decoration: underline; }
+
+  /* Hero */
+  .hero {
+    padding: 60px 32px 40px;
     max-width: 1400px;
     margin: 0 auto;
+    border-bottom: 1px solid #21262d;
   }
-  h1 { color: #58a6ff; font-size: 20px; margin-bottom: 4px; }
-  .subtitle { color: #8b949e; font-size: 12px; margin-bottom: 24px; }
-  h2 { color: #8b949e; font-size: 13px; text-transform: uppercase; letter-spacing: 0.1em; margin: 28px 0 10px; }
-  .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 12px; margin-bottom: 8px; }
-  .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+  .hero h1 { color: #f0f6fc; font-size: 32px; font-weight: 700; margin-bottom: 8px; }
+  .hero .tagline { color: #8b949e; font-size: 14px; line-height: 1.6; max-width: 700px; }
+  .hero .badges { margin-top: 16px; display: flex; gap: 8px; flex-wrap: wrap; }
+  .badge { display: inline-flex; align-items: center; gap: 6px; padding: 4px 12px; border-radius: 16px; font-size: 11px; font-weight: 600; }
+  .badge-green { background: #0d2818; color: #3fb950; border: 1px solid #1b3d2a; }
+  .badge-amber { background: #2a1f00; color: #d29922; border: 1px solid #3d2e00; }
+  .badge-blue { background: #0d1830; color: #58a6ff; border: 1px solid #1b2d4a; }
+  .badge-purple { background: #1c1530; color: #bb9af7; border: 1px solid #2d2050; }
+
+  /* Sections */
+  .section {
+    max-width: 1400px;
+    margin: 0 auto;
+    padding: 32px;
+  }
+  .section-divider { border-top: 1px solid #21262d; }
+  h2 { color: #f0f6fc; font-size: 18px; margin-bottom: 6px; }
+  h3 { color: #8b949e; font-size: 13px; text-transform: uppercase; letter-spacing: 0.1em; margin: 24px 0 10px; }
+  .section-sub { color: #8b949e; font-size: 12px; margin-bottom: 20px; }
   .card {
     background: #161b22;
     border: 1px solid #30363d;
     border-radius: 8px;
-    padding: 16px;
+    padding: 20px;
   }
-  .card-title { color: #58a6ff; font-size: 11px; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 8px; }
-  .stat { font-size: 26px; font-weight: bold; color: #f0f6fc; }
-  .stat-sm { font-size: 18px; font-weight: bold; color: #f0f6fc; }
+  .card-title { color: #58a6ff; font-size: 11px; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 10px; }
+  .grid { display: grid; gap: 16px; }
+  .grid-2 { grid-template-columns: 1fr 1fr; }
+  .grid-3 { grid-template-columns: repeat(3, 1fr); }
+  .grid-4 { grid-template-columns: repeat(4, 1fr); }
+  .stat { font-size: 28px; font-weight: bold; color: #f0f6fc; }
+  .stat-sm { font-size: 20px; font-weight: bold; color: #f0f6fc; }
   .stat-label { font-size: 11px; color: #8b949e; margin-top: 2px; }
   .ok { color: #3fb950; }
   .warn { color: #d29922; }
   .neg { color: #f85149; }
-  .pos { color: #3fb950; }
-  .neutral { color: #79c0ff; }
+
+  /* Nav cards */
+  .nav-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 16px; }
+  .nav-card {
+    background: #161b22;
+    border: 1px solid #30363d;
+    border-radius: 8px;
+    padding: 24px;
+    transition: border-color 0.2s, transform 0.1s;
+    cursor: pointer;
+    text-decoration: none;
+    color: inherit;
+    display: block;
+  }
+  .nav-card:hover { border-color: #58a6ff; transform: translateY(-2px); text-decoration: none; }
+  .nav-card h4 { color: #f0f6fc; font-size: 15px; margin-bottom: 6px; }
+  .nav-card p { color: #8b949e; font-size: 12px; line-height: 1.5; }
+  .nav-card .arrow { color: #58a6ff; font-size: 12px; margin-top: 12px; }
+
+  /* Data state panel */
+  .panel {
+    background: #0d1117;
+    border: 1px solid #30363d;
+    border-radius: 8px;
+    overflow: hidden;
+  }
+  .panel-header {
+    background: #161b22;
+    padding: 12px 16px;
+    border-bottom: 1px solid #30363d;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  .panel-header h4 { color: #f0f6fc; font-size: 13px; }
+  .panel-body { padding: 16px; }
+  .panel-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 8px 0;
+    border-bottom: 1px solid #21262d;
+    font-size: 12px;
+  }
+  .panel-row:last-child { border-bottom: none; }
+  .panel-key { color: #8b949e; }
+  .panel-val { color: #c9d1d9; font-weight: 600; }
+
+  /* Depth levels */
+  .depth { margin: 24px 0; }
+  .depth-toggle {
+    background: #21262d;
+    border: 1px solid #30363d;
+    color: #c9d1d9;
+    padding: 8px 16px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-family: inherit;
+    font-size: 12px;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    transition: background 0.2s;
+  }
+  .depth-toggle:hover { background: #30363d; }
+  .depth-content { display: none; margin-top: 16px; }
+  .depth-content.open { display: block; }
+
+  /* Tech table */
   table { width: 100%; border-collapse: collapse; font-size: 12px; }
-  th { text-align: left; color: #8b949e; font-weight: normal; padding: 6px 8px; border-bottom: 1px solid #30363d; }
-  th.r, td.r { text-align: right; }
-  td { padding: 6px 8px; border-bottom: 1px solid #21262d; }
+  th { text-align: left; color: #8b949e; font-weight: normal; padding: 8px; border-bottom: 1px solid #30363d; }
+  td { padding: 8px; border-bottom: 1px solid #21262d; }
   tr:hover td { background: #1c2129; }
-  .bar-bg { background: #21262d; border-radius: 3px; height: 8px; width: 100%; position: relative; }
-  .bar-fg { border-radius: 3px; height: 8px; position: absolute; top: 0; left: 0; }
-  .bar-blue { background: #58a6ff; }
-  .bar-green { background: #3fb950; }
-  .bar-orange { background: #d29922; }
-  .pill { display: inline-block; padding: 2px 8px; border-radius: 4px; font-size: 10px; font-weight: bold; }
-  .pill-ok { background: #0d2818; color: #3fb950; border: 1px solid #1b3d2a; }
-  .pill-warn { background: #2a1f00; color: #d29922; border: 1px solid #3d2e00; }
-  .badge { display: inline-block; background: #21262d; border: 1px solid #30363d; border-radius: 4px; padding: 2px 6px; font-size: 10px; color: #8b949e; margin: 2px; }
-  .footer { color: #484f58; font-size: 11px; margin-top: 32px; text-align: center; border-top: 1px solid #21262d; padding-top: 16px; }
-  .chart-row { display: flex; align-items: flex-end; gap: 4px; height: 120px; padding: 8px 0; }
-  .chart-bar { flex: 1; background: #58a6ff; border-radius: 3px 3px 0 0; min-width: 20px; position: relative; transition: background 0.2s; }
-  .chart-bar:hover { background: #79c0ff; }
-  .chart-bar .tip { display: none; position: absolute; bottom: 100%; left: 50%; transform: translateX(-50%); background: #30363d; color: #f0f6fc; padding: 4px 8px; border-radius: 4px; font-size: 10px; white-space: nowrap; margin-bottom: 4px; }
-  .chart-bar:hover .tip { display: block; }
-  .chart-labels { display: flex; gap: 4px; }
-  .chart-labels span { flex: 1; text-align: center; font-size: 10px; color: #484f58; min-width: 20px; }
-  .two-col { display: grid; grid-template-columns: 2fr 1fr; gap: 16px; }
-  @media (max-width: 900px) { .two-col, .grid-2 { grid-template-columns: 1fr; } }
+  code { color: #79c0ff; background: #0d1117; padding: 1px 6px; border-radius: 3px; font-size: 11px; }
+
+  /* Pipeline */
+  .pipeline { display: flex; gap: 0; align-items: center; flex-wrap: wrap; margin: 16px 0; }
+  .pipe-step {
+    background: #161b22;
+    border: 1px solid #30363d;
+    padding: 10px 16px;
+    border-radius: 6px;
+    font-size: 11px;
+    text-align: center;
+    min-width: 120px;
+  }
+  .pipe-step strong { display: block; color: #f0f6fc; font-size: 12px; margin-bottom: 2px; }
+  .pipe-step span { color: #8b949e; }
+  .pipe-arrow { color: #30363d; font-size: 20px; padding: 0 8px; }
+
+  .footer { color: #484f58; font-size: 11px; padding: 32px; text-align: center; border-top: 1px solid #21262d; max-width: 1400px; margin: 0 auto; }
+
+  @media (max-width: 900px) {
+    .grid-2, .grid-3, .grid-4 { grid-template-columns: 1fr; }
+    .hero { padding: 32px 16px 24px; }
+    .section { padding: 24px 16px; }
+    .pipeline { flex-direction: column; }
+    .pipe-arrow { transform: rotate(90deg); }
+  }
 </style>
 </head>
 <body>
 
-<h1>Hyperliquid Trade Fill Archive</h1>
-<div class="subtitle">
-  Source: <code>s3://hl-mainnet-node-data/node_fills/</code> &middot;
-  Data validated 2025-05-14 &middot;
-  Sample: 2025-05-25 (1 day, 10 hourly files)
-</div>
-
-<!-- ── Top-line stats ──────────────────────────────────────── -->
-<h2>Overview</h2>
-<div class="grid">
-  <div class="card">
-    <div class="card-title">Total Fills</div>
-    <div class="stat">2,755,608</div>
-    <div class="stat-label">zero parse errors <span class="pill pill-ok">VALID</span></div>
+<!-- ═══════════ HERO ═══════════ -->
+<div class="hero">
+  <h1>Trade Fill Archive</h1>
+  <div class="tagline">
+    Cross-exchange trade data for quantitative analysis and backtesting.
+    Tick-level fills from Hyperliquid L1 and Binance spot markets, aligned by timestamp,
+    coin, and side — ready for signal research, execution analysis, and market microstructure study.
   </div>
-  <div class="card">
-    <div class="card-title">Notional Volume</div>
-    <div class="stat">$8.72B</div>
-    <div class="stat-label">single day (May 25)</div>
-  </div>
-  <div class="card">
-    <div class="card-title">Unique Coins</div>
-    <div class="stat">323</div>
-    <div class="stat-label">perps + spot</div>
-  </div>
-  <div class="card">
-    <div class="card-title">Unique Wallets</div>
-    <div class="stat">18,965</div>
-    <div class="stat-label">distinct addresses</div>
-  </div>
-  <div class="card">
-    <div class="card-title">Net Closed PnL</div>
-    <div class="stat pos">+$2.49M</div>
-    <div class="stat-label">aggregate across all wallets</div>
-  </div>
-  <div class="card">
-    <div class="card-title">Total Fees</div>
-    <div class="stat">$1.34M</div>
-    <div class="stat-label">protocol revenue</div>
+  <div class="badges">
+    <span class="badge badge-green">Hyperliquid L1</span>
+    <span class="badge badge-amber">Binance Spot</span>
+    <span class="badge badge-blue">23 Coins</span>
+    <span class="badge badge-purple">2020 &ndash; Present</span>
   </div>
 </div>
 
-<!-- ── Hourly activity chart ───────────────────────────────── -->
-<h2>Fills by Hour (UTC) &mdash; May 25, 2025</h2>
-<div class="card">
-  <div class="chart-row">
-    <div class="chart-bar" style="height:30.8%"><div class="tip">14:00 — 166,594 fills<br>$471M notional</div></div>
-    <div class="chart-bar" style="height:66.5%"><div class="tip">15:00 — 360,388 fills<br>$1.07B notional</div></div>
-    <div class="chart-bar" style="height:46.9%"><div class="tip">16:00 — 254,106 fills<br>$532M notional</div></div>
-    <div class="chart-bar" style="height:37.2%"><div class="tip">17:00 — 201,210 fills<br>$264M notional</div></div>
-    <div class="chart-bar" style="height:41.8%"><div class="tip">18:00 — 226,572 fills<br>$319M notional</div></div>
-    <div class="chart-bar" style="height:48.4%"><div class="tip">19:00 — 261,916 fills<br>$461M notional</div></div>
-    <div class="chart-bar" style="height:41.0%"><div class="tip">20:00 — 221,800 fills<br>$361M notional</div></div>
-    <div class="chart-bar" style="height:40.0%"><div class="tip">21:00 — 216,392 fills<br>$355M notional</div></div>
-    <div class="chart-bar" style="height:100%"><div class="tip">22:00 — 541,684 fills<br>$4.04B notional</div></div>
-    <div class="chart-bar" style="height:56.3%"><div class="tip">23:00 — 304,946 fills<br>$850M notional</div></div>
-  </div>
-  <div class="chart-labels">
-    <span>14</span><span>15</span><span>16</span><span>17</span><span>18</span>
-    <span>19</span><span>20</span><span>21</span><span>22</span><span>23</span>
-  </div>
-  <div class="stat-label" style="margin-top:8px; text-align:center;">
-    Peak: 22:00 UTC (541,684 fills, $4.04B notional) &mdash; only hours 14-23 available in sample
+<!-- ═══════════ LEVEL 1: What is this ═══════════ -->
+<div class="section">
+  <h2>What is this?</h2>
+  <div class="section-sub">A complete archive of every trade fill on two major crypto exchanges, structured for research.</div>
+
+  <div class="nav-grid">
+    <a href="index.html" class="nav-card" style="border-color:#58a6ff;">
+      <h4>Entry Point</h4>
+      <p>You are here. Project overview, data inventory, technical capabilities, and navigation.</p>
+      <div class="arrow">Current page</div>
+    </a>
+    <a href="summary.html" class="nav-card">
+      <h4>Data Summary</h4>
+      <p>Validated sample analysis &mdash; fill counts, notional volume, top coins, PnL breakdown, hourly activity, and schema documentation.</p>
+      <div class="arrow">View summary &rarr;</div>
+    </a>
+    <a href="timeline.html" class="nav-card">
+      <h4>Coverage Timeline</h4>
+      <p>Interactive heatmap showing daily data availability across both exchanges. Symbol coverage matrix and volume comparison.</p>
+      <div class="arrow">View timeline &rarr;</div>
+    </a>
   </div>
 </div>
 
-<!-- ── Top coins + Trade directions ────────────────────────── -->
-<h2>Top 30 Coins by Fill Count</h2>
-<div class="two-col">
-  <div class="card" style="overflow-x:auto;">
+<!-- ═══════════ LEVEL 2: The Data ═══════════ -->
+<div class="section section-divider">
+  <h2>The Data</h2>
+  <div class="section-sub">Two exchange feeds, one timestamp axis.</div>
+
+  <div class="grid grid-2" style="margin-bottom: 20px;">
+    <div class="panel">
+      <div class="panel-header">
+        <h4><span class="ok">&bull;</span> Hyperliquid L1 Fills</h4>
+        <span class="badge badge-green">On-chain</span>
+      </div>
+      <div class="panel-body">
+        <div class="panel-row"><span class="panel-key">Source</span><span class="panel-val">s3://hl-mainnet-node-data/node_fills/</span></div>
+        <div class="panel-row"><span class="panel-key">Window</span><span class="panel-val">Rolling ~2 months (latest 64 days)</span></div>
+        <div class="panel-row"><span class="panel-key">Granularity</span><span class="panel-val">Every fill, ms timestamps</span></div>
+        <div class="panel-row"><span class="panel-key">Format</span><span class="panel-val">LZ4-compressed NDJSON, hourly files</span></div>
+        <div class="panel-row"><span class="panel-key">Unique fields</span><span class="panel-val">wallet, closedPnl, startPosition, dir</span></div>
+        <div class="panel-row"><span class="panel-key">Size</span><span class="panel-val">~30 GB / 64 days</span></div>
+        <div class="panel-row"><span class="panel-key">Coins</span><span class="panel-val">323 (perps + spot + indices)</span></div>
+        <div class="panel-row"><span class="panel-key">Wallets</span><span class="panel-val">~19,000 unique addresses / day</span></div>
+      </div>
+    </div>
+
+    <div class="panel">
+      <div class="panel-header">
+        <h4><span class="warn">&bull;</span> Binance Spot Trades</h4>
+        <span class="badge badge-amber">CEX</span>
+      </div>
+      <div class="panel-body">
+        <div class="panel-row"><span class="panel-key">Source</span><span class="panel-val">data.binance.vision (public, free)</span></div>
+        <div class="panel-row"><span class="panel-key">Window</span><span class="panel-val">Jan 2020 &ndash; present (5.5 years)</span></div>
+        <div class="panel-row"><span class="panel-key">Granularity</span><span class="panel-val">Every trade, &mu;s timestamps</span></div>
+        <div class="panel-row"><span class="panel-key">Format</span><span class="panel-val">CSV (zipped), daily + monthly archives</span></div>
+        <div class="panel-row"><span class="panel-key">Unique fields</span><span class="panel-val">trade_id, quote_qty, is_buyer_maker</span></div>
+        <div class="panel-row"><span class="panel-key">Size</span><span class="panel-val">~150 GB / 5.5 years (est.)</span></div>
+        <div class="panel-row"><span class="panel-key">Symbols</span><span class="panel-val">18 USDT pairs (of 23 mapped)</span></div>
+        <div class="panel-row"><span class="panel-key">Depth</span><span class="panel-val">3M+ trades/day for BTC alone</span></div>
+      </div>
+    </div>
+  </div>
+
+  <h3>Common Fields (Cross-Exchange)</h3>
+  <div class="card">
     <table>
-      <tr>
-        <th>#</th>
-        <th>Coin</th>
-        <th class="r">Fills</th>
-        <th class="r">% of Total</th>
-        <th class="r">Notional</th>
-        <th class="r">Net PnL</th>
-        <th style="width:120px">Volume</th>
-      </tr>
-      <tr>
-        <td>1</td><td>HYPE</td><td class="r">624,808</td><td class="r">22.7%</td>
-        <td class="r">$527.9M</td><td class="r pos">+$1.03M</td>
-        <td><div class="bar-bg"><div class="bar-fg bar-blue" style="width:100%"></div></div></td>
-      </tr>
-      <tr>
-        <td>2</td><td>BTC</td><td class="r">430,316</td><td class="r">15.6%</td>
-        <td class="r">$5.69B</td><td class="r neg">-$5.45M</td>
-        <td><div class="bar-bg"><div class="bar-fg bar-blue" style="width:68.9%"></div></div></td>
-      </tr>
-      <tr>
-        <td>3</td><td>@107</td><td class="r">263,402</td><td class="r">9.6%</td>
-        <td class="r">$241.7M</td><td class="r pos">+$9.26M</td>
-        <td><div class="bar-bg"><div class="bar-fg bar-blue" style="width:42.2%"></div></div></td>
-      </tr>
-      <tr>
-        <td>4</td><td>ETH</td><td class="r">167,504</td><td class="r">6.1%</td>
-        <td class="r">$983.6M</td><td class="r neg">-$391.7K</td>
-        <td><div class="bar-bg"><div class="bar-fg bar-blue" style="width:26.8%"></div></div></td>
-      </tr>
-      <tr>
-        <td>5</td><td>SOL</td><td class="r">83,954</td><td class="r">3.0%</td>
-        <td class="r">$444.8M</td><td class="r neg">-$230.8K</td>
-        <td><div class="bar-bg"><div class="bar-fg bar-blue" style="width:13.4%"></div></div></td>
-      </tr>
-      <tr>
-        <td>6</td><td>FARTCOIN</td><td class="r">79,494</td><td class="r">2.9%</td>
-        <td class="r">$79.4M</td><td class="r neg">-$61.5K</td>
-        <td><div class="bar-bg"><div class="bar-fg bar-blue" style="width:12.7%"></div></div></td>
-      </tr>
-      <tr>
-        <td>7</td><td>PURR/USDC</td><td class="r">77,354</td><td class="r">2.8%</td>
-        <td class="r">$23.1M</td><td class="r pos">+$2.29M</td>
-        <td><div class="bar-bg"><div class="bar-fg bar-blue" style="width:12.4%"></div></div></td>
-      </tr>
-      <tr>
-        <td>8</td><td>@142</td><td class="r">69,726</td><td class="r">2.5%</td>
-        <td class="r">$35.3M</td><td class="r pos">+$24.2K</td>
-        <td><div class="bar-bg"><div class="bar-fg bar-blue" style="width:11.2%"></div></div></td>
-      </tr>
-      <tr>
-        <td>9</td><td>kPEPE</td><td class="r">45,620</td><td class="r">1.7%</td>
-        <td class="r">$72.0M</td><td class="r neg">-$179.3K</td>
-        <td><div class="bar-bg"><div class="bar-fg bar-blue" style="width:7.3%"></div></div></td>
-      </tr>
-      <tr>
-        <td>10</td><td>WLD</td><td class="r">38,122</td><td class="r">1.4%</td>
-        <td class="r">$34.3M</td><td class="r pos">+$125.9K</td>
-        <td><div class="bar-bg"><div class="bar-fg bar-blue" style="width:6.1%"></div></div></td>
-      </tr>
-      <tr>
-        <td>11</td><td>XRP</td><td class="r">32,174</td><td class="r">1.2%</td>
-        <td class="r">$74.3M</td><td class="r pos">+$114.6K</td>
-        <td><div class="bar-bg"><div class="bar-fg bar-blue" style="width:5.1%"></div></div></td>
-      </tr>
-      <tr>
-        <td>12</td><td>AAVE</td><td class="r">28,530</td><td class="r">1.0%</td>
-        <td class="r">$24.7M</td><td class="r pos">+$96.1K</td>
-        <td><div class="bar-bg"><div class="bar-fg bar-blue" style="width:4.6%"></div></div></td>
-      </tr>
-      <tr>
-        <td>13</td><td>SUI</td><td class="r">27,558</td><td class="r">1.0%</td>
-        <td class="r">$56.7M</td><td class="r neg">-$88.1K</td>
-        <td><div class="bar-bg"><div class="bar-fg bar-blue" style="width:4.4%"></div></div></td>
-      </tr>
-      <tr>
-        <td>14</td><td>WIF</td><td class="r">25,590</td><td class="r">0.9%</td>
-        <td class="r">$33.4M</td><td class="r pos">+$14.8K</td>
-        <td><div class="bar-bg"><div class="bar-fg bar-blue" style="width:4.1%"></div></div></td>
-      </tr>
-      <tr>
-        <td>15</td><td>VIRTUAL</td><td class="r">22,614</td><td class="r">0.8%</td>
-        <td class="r">$17.9M</td><td class="r pos">+$52.8K</td>
-        <td><div class="bar-bg"><div class="bar-fg bar-blue" style="width:3.6%"></div></div></td>
-      </tr>
-      <tr>
-        <td>16</td><td>POPCAT</td><td class="r">22,450</td><td class="r">0.8%</td>
-        <td class="r">$24.8M</td><td class="r pos">+$15.7K</td>
-        <td><div class="bar-bg"><div class="bar-fg bar-blue" style="width:3.6%"></div></div></td>
-      </tr>
-      <tr>
-        <td>17</td><td>MOODENG</td><td class="r">21,616</td><td class="r">0.8%</td>
-        <td class="r">$18.8M</td><td class="r pos">+$19.9K</td>
-        <td><div class="bar-bg"><div class="bar-fg bar-blue" style="width:3.5%"></div></div></td>
-      </tr>
-      <tr>
-        <td>18</td><td>LAUNCHCOIN</td><td class="r">19,576</td><td class="r">0.7%</td>
-        <td class="r">$9.2M</td><td class="r neg">-$9.4K</td>
-        <td><div class="bar-bg"><div class="bar-fg bar-blue" style="width:3.1%"></div></div></td>
-      </tr>
-      <tr>
-        <td>19</td><td>@156</td><td class="r">18,800</td><td class="r">0.7%</td>
-        <td class="r">$12.8M</td><td class="r neg">-$6.5K</td>
-        <td><div class="bar-bg"><div class="bar-fg bar-blue" style="width:3.0%"></div></div></td>
-      </tr>
-      <tr>
-        <td>20</td><td>@151</td><td class="r">18,508</td><td class="r">0.7%</td>
-        <td class="r">$12.0M</td><td class="r pos">+$6.0K</td>
-        <td><div class="bar-bg"><div class="bar-fg bar-blue" style="width:3.0%"></div></div></td>
-      </tr>
-      <tr>
-        <td>21</td><td>@160</td><td class="r">17,824</td><td class="r">0.6%</td>
-        <td class="r">$2.0M</td><td class="r pos">+$123.5K</td>
-        <td><div class="bar-bg"><div class="bar-fg bar-blue" style="width:2.9%"></div></div></td>
-      </tr>
-      <tr>
-        <td>22</td><td>TRUMP</td><td class="r">17,408</td><td class="r">0.6%</td>
-        <td class="r">$17.6M</td><td class="r pos">+$43.1K</td>
-        <td><div class="bar-bg"><div class="bar-fg bar-blue" style="width:2.8%"></div></div></td>
-      </tr>
-      <tr>
-        <td>23</td><td>ENA</td><td class="r">17,146</td><td class="r">0.6%</td>
-        <td class="r">$18.7M</td><td class="r neg">-$112.2K</td>
-        <td><div class="bar-bg"><div class="bar-fg bar-blue" style="width:2.7%"></div></div></td>
-      </tr>
-      <tr>
-        <td>24</td><td>kBONK</td><td class="r">15,940</td><td class="r">0.6%</td>
-        <td class="r">$12.9M</td><td class="r pos">+$32.1K</td>
-        <td><div class="bar-bg"><div class="bar-fg bar-blue" style="width:2.6%"></div></div></td>
-      </tr>
-      <tr>
-        <td>25</td><td>AVAX</td><td class="r">15,584</td><td class="r">0.6%</td>
-        <td class="r">$8.7M</td><td class="r pos">+$8.8K</td>
-        <td><div class="bar-bg"><div class="bar-fg bar-blue" style="width:2.5%"></div></div></td>
-      </tr>
-      <tr>
-        <td>26</td><td>DOGE</td><td class="r">14,208</td><td class="r">0.5%</td>
-        <td class="r">$29.4M</td><td class="r pos">+$12.9K</td>
-        <td><div class="bar-bg"><div class="bar-fg bar-blue" style="width:2.3%"></div></div></td>
-      </tr>
-      <tr>
-        <td>27</td><td>GRASS</td><td class="r">12,132</td><td class="r">0.4%</td>
-        <td class="r">$6.6M</td><td class="r pos">+$52.7K</td>
-        <td><div class="bar-bg"><div class="bar-fg bar-blue" style="width:1.9%"></div></div></td>
-      </tr>
-      <tr>
-        <td>28</td><td>PENGU</td><td class="r">11,512</td><td class="r">0.4%</td>
-        <td class="r">$5.6M</td><td class="r pos">+$14.8K</td>
-        <td><div class="bar-bg"><div class="bar-fg bar-blue" style="width:1.8%"></div></div></td>
-      </tr>
-      <tr>
-        <td>29</td><td>BERA</td><td class="r">10,590</td><td class="r">0.4%</td>
-        <td class="r">$3.3M</td><td class="r neg">-$6.4K</td>
-        <td><div class="bar-bg"><div class="bar-fg bar-blue" style="width:1.7%"></div></div></td>
-      </tr>
-      <tr>
-        <td>30</td><td>BNB</td><td class="r">9,760</td><td class="r">0.4%</td>
-        <td class="r">$5.2M</td><td class="r pos">+$504</td>
-        <td><div class="bar-bg"><div class="bar-fg bar-blue" style="width:1.6%"></div></div></td>
-      </tr>
+      <tr><th>Concept</th><th>Hyperliquid</th><th>Binance</th><th>Join Key</th></tr>
+      <tr><td>Price</td><td><code>px</code></td><td><code>price</code></td><td>Direct comparison</td></tr>
+      <tr><td>Size</td><td><code>sz</code></td><td><code>qty</code></td><td>Same base unit</td></tr>
+      <tr><td>Timestamp</td><td><code>time</code> (ms epoch)</td><td><code>time</code> (&mu;s epoch)</td><td>Normalize to ms</td></tr>
+      <tr><td>Side</td><td><code>side</code> (B/A)</td><td><code>is_buyer_maker</code> (bool)</td><td>B=!maker, A=maker</td></tr>
+      <tr><td>Coin</td><td><code>coin</code> (e.g. BTC)</td><td>Symbol (e.g. BTCUSDT)</td><td>Strip USDT suffix</td></tr>
+      <tr><td>Notional</td><td><code>px &times; sz</code></td><td><code>quote_qty</code></td><td>Both in USDT</td></tr>
     </table>
   </div>
 
-  <div>
-    <div class="card" style="margin-bottom:16px;">
-      <div class="card-title">Trade Directions</div>
+  <h3>HL-Only Fields (Not on Binance)</h3>
+  <div class="card">
+    <table>
+      <tr><th>Field</th><th>Type</th><th>Research Value</th></tr>
+      <tr><td><code>wallet</code></td><td>address</td><td>Track individual trader PnL, identify smart money</td></tr>
+      <tr><td><code>closedPnl</code></td><td>USDC</td><td>Realized profit/loss per fill — aggregate by wallet for trader skill</td></tr>
+      <tr><td><code>startPosition</code></td><td>float</td><td>Position size before fill — reveals conviction, scaling behavior</td></tr>
+      <tr><td><code>dir</code></td><td>enum</td><td>Open/Close/Flip — distinguishes entry from exit, long from short</td></tr>
+      <tr><td><code>crossed</code></td><td>bool</td><td>Aggressive (taker) vs passive (maker) — execution quality signal</td></tr>
+      <tr><td><code>fee</code></td><td>USDC</td><td>Negative = rebate (maker), positive = fee (taker)</td></tr>
+    </table>
+  </div>
+
+  <button class="depth-toggle" onclick="toggle('coin-map')">&#9660; 23 Coin Mapping (HL &harr; Binance)</button>
+  <div id="coin-map" class="depth-content">
+    <div class="card">
       <table>
-        <tr><th>Direction</th><th class="r">Count</th><th class="r">%</th></tr>
-        <tr><td>Open Long</td><td class="r">561,443</td><td class="r">20.4%</td></tr>
-        <tr><td>Close Long</td><td class="r">564,321</td><td class="r">20.5%</td></tr>
-        <tr><td>Open Short</td><td class="r">499,455</td><td class="r">18.1%</td></tr>
-        <tr><td>Close Short</td><td class="r">502,836</td><td class="r">18.3%</td></tr>
-        <tr><td>Buy (spot)</td><td class="r">298,005</td><td class="r">10.8%</td></tr>
-        <tr><td>Sell (spot)</td><td class="r">298,005</td><td class="r">10.8%</td></tr>
-        <tr><td>Long &gt; Short</td><td class="r">15,537</td><td class="r">0.6%</td></tr>
-        <tr><td>Short &gt; Long</td><td class="r">15,034</td><td class="r">0.5%</td></tr>
-        <tr><td>Net Child Vaults</td><td class="r">972</td><td class="r">0.0%</td></tr>
+        <tr><th>HL Coin</th><th>Binance Symbol</th><th>Binance Spot</th><th>Note</th></tr>
+        <tr><td>BTC</td><td>BTCUSDT</td><td class="ok">Since 2017</td><td>Full history</td></tr>
+        <tr><td>ETH</td><td>ETHUSDT</td><td class="ok">Since 2017</td><td>Full history</td></tr>
+        <tr><td>SOL</td><td>SOLUSDT</td><td class="ok">Since 2020</td><td></td></tr>
+        <tr><td>XRP</td><td>XRPUSDT</td><td class="ok">Since 2018</td><td></td></tr>
+        <tr><td>DOGE</td><td>DOGEUSDT</td><td class="ok">Since 2019</td><td></td></tr>
+        <tr><td>BNB</td><td>BNBUSDT</td><td class="ok">Since 2017</td><td></td></tr>
+        <tr><td>AVAX</td><td>AVAXUSDT</td><td class="ok">Since 2020</td><td></td></tr>
+        <tr><td>SUI</td><td>SUIUSDT</td><td class="ok">Since 2023</td><td></td></tr>
+        <tr><td>AAVE</td><td>AAVEUSDT</td><td class="ok">Since 2020</td><td></td></tr>
+        <tr><td>WLD</td><td>WLDUSDT</td><td class="ok">Since 2023</td><td></td></tr>
+        <tr><td>WIF</td><td>WIFUSDT</td><td class="ok">Since 2024</td><td></td></tr>
+        <tr><td>ENA</td><td>ENAUSDT</td><td class="ok">Since 2024</td><td></td></tr>
+        <tr><td>TRUMP</td><td>TRUMPUSDT</td><td class="ok">Since 2025</td><td></td></tr>
+        <tr><td>VIRTUAL</td><td>VIRTUALUSDT</td><td class="ok">Since 2024</td><td></td></tr>
+        <tr><td>ONDO</td><td>ONDOUSDT</td><td class="ok">Since 2024</td><td>Gaps after Jun 29</td></tr>
+        <tr><td>PENGU</td><td>PENGUUSDT</td><td class="ok">Since 2024</td><td></td></tr>
+        <tr><td>INIT</td><td>INITUSDT</td><td class="ok">Since 2025</td><td></td></tr>
+        <tr><td>BERA</td><td>BERAUSDT</td><td class="ok">Since 2025</td><td></td></tr>
+        <tr><td>HYPE</td><td>&mdash;</td><td class="neg">Not listed</td><td>HL-native token</td></tr>
+        <tr><td>FARTCOIN</td><td>&mdash;</td><td class="neg">Not listed</td><td>HL-native / Solana</td></tr>
+        <tr><td>MOODENG</td><td>&mdash;</td><td class="neg">Not listed</td><td>HL-native / Solana</td></tr>
+        <tr><td>POPCAT</td><td>&mdash;</td><td class="neg">Not listed</td><td>HL-native / Solana</td></tr>
+        <tr><td>GRASS</td><td>&mdash;</td><td class="neg">Not listed</td><td>HL-native / Solana</td></tr>
       </table>
     </div>
+  </div>
+</div>
 
-    <div class="card" style="margin-bottom:16px;">
-      <div class="card-title">Side Balance</div>
-      <div style="display:flex;gap:24px;margin:8px 0;">
-        <div>
-          <div class="stat-sm ok">1,377,804</div>
-          <div class="stat-label">Buy (B)</div>
-        </div>
-        <div>
-          <div class="stat-sm neg">1,377,804</div>
-          <div class="stat-label">Sell (A)</div>
-        </div>
-      </div>
-      <div class="stat-label"><span class="pill pill-ok">BALANCED</span> Every fill has a matching counterparty</div>
-    </div>
+<!-- ═══════════ LEVEL 3: Analysis Framework ═══════════ -->
+<div class="section section-divider">
+  <h2>Analysis Framework</h2>
+  <div class="section-sub">What this data enables, mapped to available tooling.</div>
 
+  <h3>Data Pipeline</h3>
+  <div class="pipeline">
+    <div class="pipe-step"><strong>Ingest</strong><span>hl_trade_dl<br>binance_dl</span></div>
+    <div class="pipe-arrow">&rarr;</div>
+    <div class="pipe-step"><strong>Normalize</strong><span>Align timestamps<br>Map symbols</span></div>
+    <div class="pipe-arrow">&rarr;</div>
+    <div class="pipe-step"><strong>Feature Eng</strong><span>tsfresh<br>VPIN / OFI</span></div>
+    <div class="pipe-arrow">&rarr;</div>
+    <div class="pipe-step"><strong>Model</strong><span>LightGBM<br>HMM / GARCH</span></div>
+    <div class="pipe-arrow">&rarr;</div>
+    <div class="pipe-step"><strong>Backtest</strong><span>alpha_research<br>engine</span></div>
+    <div class="pipe-arrow">&rarr;</div>
+    <div class="pipe-step"><strong>Evaluate</strong><span>Sharpe, PnL<br>Regime splits</span></div>
+  </div>
+
+  <h3>Research Directions</h3>
+  <div class="grid grid-3">
     <div class="card">
-      <div class="card-title">Data Schema</div>
-      <div class="stat-label" style="margin-bottom:8px;">Each line: <code style="color:#79c0ff;">[wallet, {fill}]</code></div>
-      <div>
-        <span class="badge">coin</span>
-        <span class="badge">px</span>
-        <span class="badge">sz</span>
-        <span class="badge">side</span>
-        <span class="badge">time</span>
-        <span class="badge">startPosition</span>
-        <span class="badge">dir</span>
-        <span class="badge">closedPnl</span>
-        <span class="badge">hash</span>
-        <span class="badge">oid</span>
-        <span class="badge">crossed</span>
-        <span class="badge">fee</span>
-        <span class="badge">tid</span>
-        <span class="badge">cloid</span>
-        <span class="badge">feeToken</span>
+      <div class="card-title">Cross-Exchange Arbitrage</div>
+      <p style="font-size:12px; color:#8b949e; line-height:1.6;">
+        Compare HL fill prices to Binance trades at the same millisecond.
+        Measure price impact, latency premium, and venue selection alpha.
+        HL has wallet-level attribution that Binance lacks.
+      </p>
+      <div style="margin-top:10px; font-size:11px;">
+        <code>alpha_research/src/alpha/</code><br>
+        <span style="color:#8b949e">26 alpha implementations including momentum, mean reversion, carry</span>
       </div>
+    </div>
+    <div class="card">
+      <div class="card-title">Smart Money Tracking</div>
+      <p style="font-size:12px; color:#8b949e; line-height:1.6;">
+        HL exposes wallet addresses on every fill. Rank wallets by cumulative
+        <code>closedPnl</code>, then forward-test: do top wallets predict direction?
+        Cluster by trading style using <code>dir</code>, <code>crossed</code>, position sizing.
+      </p>
+      <div style="margin-top:10px; font-size:11px;">
+        <code>ts_embed/skills/embedding/</code><br>
+        <span style="color:#8b949e">Embed trade sequences, find similar patterns via vector search</span>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-title">Regime Detection</div>
+      <p style="font-size:12px; color:#8b949e; line-height:1.6;">
+        Binance 5-year history covers multiple regimes: 2020 COVID crash,
+        2021 bull run, 2022 bear market, 2023-24 recovery. Train HMM on volatility
+        and volume to label regimes, then condition alpha signals.
+      </p>
+      <div style="margin-top:10px; font-size:11px;">
+        <code>hmmlearn</code> + <code>arch</code> (GARCH)<br>
+        <span style="color:#8b949e">Already used in alpha_research for regime-conditional strategies</span>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-title">Market Microstructure</div>
+      <p style="font-size:12px; color:#8b949e; line-height:1.6;">
+        Compute VPIN (volume-synchronized probability of informed trading) from
+        tick data. HL's <code>crossed</code> flag directly labels aggressor vs passive.
+        Compare maker/taker composition between DEX (HL) and CEX (Binance).
+      </p>
+      <div style="margin-top:10px; font-size:11px;">
+        <code>vpin</code> repo + <code>svpy/pyprod/</code><br>
+        <span style="color:#8b949e">Volume profile analysis, intraday session management</span>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-title">Execution Quality</div>
+      <p style="font-size:12px; color:#8b949e; line-height:1.6;">
+        HL fills include <code>fee</code> (negative = maker rebate). Compare effective
+        cost (fee + slippage) between HL and Binance for the same coin.
+        Build venue selection model: when is HL cheaper than Binance?
+      </p>
+      <div style="margin-top:10px; font-size:11px;">
+        <code>svstrat/src/pyexecution/</code><br>
+        <span style="color:#8b949e">Execution algorithms, optimal routing, cost analysis</span>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-title">Time Series Forecasting</div>
+      <p style="font-size:12px; color:#8b949e; line-height:1.6;">
+        Aggregate tick data to bars (1m, 5m, 1h). Run ARIMA/GARCH for
+        short-term vol forecasting. Use tsfresh for automated feature extraction.
+        Ensemble with LightGBM, CatBoost for cross-sectional prediction.
+      </p>
+      <div style="margin-top:10px; font-size:11px;">
+        <code>tsprojection</code>: pmdarima, tsfresh, optuna<br>
+        <span style="color:#8b949e">Bayesian hyperparameter tuning, multi-model ensemble</span>
+      </div>
+    </div>
+  </div>
+
+  <button class="depth-toggle" onclick="toggle('tech-stack')">&#9660; Full Technical Stack</button>
+  <div id="tech-stack" class="depth-content">
+    <div class="card">
+      <table>
+        <tr><th>Layer</th><th>Tool</th><th>Repo</th><th>Use in This Project</th></tr>
+        <tr><td>Data Ingest</td><td><code>boto3</code> (S3), <code>urllib</code> (CDN)</td><td>hyperliquid</td><td>HL fill download (requester-pays S3), Binance public archive</td></tr>
+        <tr><td>Data Ingest</td><td><code>yfinance</code>, <code>tradingview-ta</code></td><td>etfdata</td><td>Reference prices, technical indicators for cross-validation</td></tr>
+        <tr><td>Backtest</td><td>Custom engine (Sharpe, PnL)</td><td>alpha_research</td><td>Walk-forward backtest on HL+Binance alpha signals</td></tr>
+        <tr><td>Alpha Library</td><td>26 signal implementations</td><td>alpha_research</td><td>Momentum, mean reversion, carry, HMM regime, seasonality</td></tr>
+        <tr><td>Portfolio</td><td><code>cvxpy</code>, <code>cvxopt</code></td><td>svstrat, cyfopt</td><td>Optimal position sizing, risk parity, min-variance</td></tr>
+        <tr><td>Time Series</td><td><code>pmdarima</code>, <code>arch</code></td><td>tsprojection</td><td>ARIMA/GARCH forecasting on aggregated bars</td></tr>
+        <tr><td>Feature Eng</td><td><code>tsfresh</code></td><td>tsprojection</td><td>Automated feature extraction from trade sequences</td></tr>
+        <tr><td>ML Models</td><td>LightGBM, CatBoost, XGBoost</td><td>svpy, nova</td><td>Cross-sectional return prediction, regime classification</td></tr>
+        <tr><td>Regime</td><td><code>hmmlearn</code></td><td>alpha_research</td><td>Hidden Markov Model for volatility regime detection</td></tr>
+        <tr><td>Embeddings</td><td>PyTorch, sentence-transformers</td><td>ts_embed</td><td>Embed trade sequences, semantic pattern matching</td></tr>
+        <tr><td>Vector Search</td><td>Qdrant, LanceDB</td><td>ts_embed, docvec</td><td>Find similar trading patterns across time</td></tr>
+        <tr><td>Risk</td><td>Custom metrics</td><td>svrisk</td><td>Drawdown, VaR, portfolio risk decomposition</td></tr>
+        <tr><td>Execution</td><td>Execution algorithms</td><td>svstrat</td><td>Venue selection, cost analysis, optimal routing</td></tr>
+        <tr><td>Visualization</td><td>Plotly, matplotlib</td><td>svpy, alpha_research</td><td>Interactive PnL curves, heatmaps, signal plots</td></tr>
+        <tr><td>Experiment</td><td>MLflow, wandb</td><td>nova, tsprojection</td><td>Track model versions, hyperparameter sweeps</td></tr>
+        <tr><td>Compute</td><td>Vast.ai (GPU), Dask</td><td>gpu-workers</td><td>Distributed feature engineering, model training</td></tr>
+        <tr><td>Optimization</td><td><code>optuna</code></td><td>tsprojection</td><td>Bayesian hyperparameter tuning for alpha parameters</td></tr>
+        <tr><td>Database</td><td>PostgreSQL, Redis</td><td>svpy, nova</td><td>Persistent trade storage, cached feature sets</td></tr>
+      </table>
     </div>
   </div>
 </div>
 
-<!-- ── Archive info ────────────────────────────────────────── -->
-<h2>Archive Details</h2>
-<div class="grid" style="grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));">
-  <div class="card">
-    <div class="card-title">S3 Source</div>
-    <table>
-      <tr><td style="color:#8b949e">Bucket</td><td><code style="color:#79c0ff">hl-mainnet-node-data</code></td></tr>
-      <tr><td style="color:#8b949e">Prefix</td><td><code style="color:#79c0ff">node_fills/hourly/</code></td></tr>
-      <tr><td style="color:#8b949e">Billing</td><td>Requester Pays</td></tr>
-      <tr><td style="color:#8b949e">Region</td><td>us-east-1</td></tr>
-      <tr><td style="color:#8b949e">Format</td><td>LZ4-compressed NDJSON</td></tr>
-      <tr><td style="color:#8b949e">Granularity</td><td>1 file per hour per day</td></tr>
-      <tr><td style="color:#8b949e">Key pattern</td><td><code style="color:#79c0ff">hourly/YYYYMMDD/{hour}.lz4</code></td></tr>
-    </table>
-  </div>
-  <div class="card">
-    <div class="card-title">Sample Day Metrics (May 25)</div>
-    <table>
-      <tr><td style="color:#8b949e">Files</td><td>10 (hours 14-23)</td></tr>
-      <tr><td style="color:#8b949e">Compressed size</td><td>184.8 MB</td></tr>
-      <tr><td style="color:#8b949e">Avg file size</td><td>18.5 MB</td></tr>
-      <tr><td style="color:#8b949e">Largest file</td><td>22:00 — 37.5 MB</td></tr>
-      <tr><td style="color:#8b949e">Download time</td><td>59s (3.1 MB/s, single-threaded)</td></tr>
-      <tr><td style="color:#8b949e">Egress cost</td><td>~$0.017</td></tr>
-    </table>
-  </div>
-  <div class="card">
-    <div class="card-title">Estimated Full Backfill</div>
-    <table>
-      <tr><td style="color:#8b949e">Date range</td><td>2023-01 &mdash; present</td></tr>
-      <tr><td style="color:#8b949e">Est. compressed</td><td>100 &ndash; 400 GB</td></tr>
-      <tr><td style="color:#8b949e">Est. egress cost</td><td>$10 &ndash; $40</td></tr>
-      <tr><td style="color:#8b949e">Est. time (1 thread)</td><td>9 &ndash; 36 hours</td></tr>
-      <tr><td style="color:#8b949e">Est. time (6 threads)</td><td>1.5 &ndash; 6 hours</td></tr>
-      <tr><td style="color:#8b949e">Idempotent</td><td><span class="pill pill-ok">YES</span> safe to re-run</td></tr>
-    </table>
-  </div>
-</div>
+<!-- ═══════════ LEVEL 4: Infrastructure ═══════════ -->
+<div class="section section-divider">
+  <h2>Infrastructure</h2>
+  <div class="section-sub">How the data gets from exchange to analysis-ready.</div>
 
-<!-- ── Validation ──────────────────────────────────────────── -->
-<h2>Data Validation</h2>
-<div class="card">
-  <table>
-    <tr><th>Check</th><th>Result</th><th>Details</th></tr>
-    <tr>
-      <td>JSON parse</td>
-      <td><span class="pill pill-ok">PASS</span></td>
-      <td>2,755,608 / 2,755,608 lines parsed (0 errors)</td>
-    </tr>
-    <tr>
-      <td>Schema consistency</td>
-      <td><span class="pill pill-ok">PASS</span></td>
-      <td>All 15 fields present in every record</td>
-    </tr>
-    <tr>
-      <td>Side balance</td>
-      <td><span class="pill pill-ok">PASS</span></td>
-      <td>Buy count = Sell count (1,377,804 each)</td>
-    </tr>
-    <tr>
-      <td>Date regex match</td>
-      <td><span class="pill pill-ok">PASS</span></td>
-      <td><code>(20\d{6})</code> matched all 10 files, no false positives</td>
-    </tr>
-    <tr>
-      <td>Size-based skip</td>
-      <td><span class="pill pill-ok">PASS</span></td>
-      <td>Re-run downloaded 0 files, skipped 10 (idempotent)</td>
-    </tr>
-    <tr>
-      <td>LZ4 decompression</td>
-      <td><span class="pill pill-ok">PASS</span></td>
-      <td>All files decompress cleanly via lz4cat</td>
-    </tr>
-    <tr>
-      <td>Timestamp range</td>
-      <td><span class="pill pill-ok">PASS</span></td>
-      <td>All timestamps fall within 2025-05-25 UTC</td>
-    </tr>
-  </table>
+  <div class="grid grid-2">
+    <div class="panel">
+      <div class="panel-header">
+        <h4>Download Infrastructure</h4>
+      </div>
+      <div class="panel-body">
+        <div class="panel-row"><span class="panel-key">Compute</span><span class="panel-val">Vast.ai RTX A4000, Delaware</span></div>
+        <div class="panel-row"><span class="panel-key">Disk</span><span class="panel-val">500 GB NVMe</span></div>
+        <div class="panel-row"><span class="panel-key">Network</span><span class="panel-val">7.8 Gbps (same-region to S3)</span></div>
+        <div class="panel-row"><span class="panel-key">Cost</span><span class="panel-val">$0.12/hr ($2.88/day)</span></div>
+        <div class="panel-row"><span class="panel-key">HL egress</span><span class="panel-val">$0 (same AWS region)</span></div>
+        <div class="panel-row"><span class="panel-key">BN egress</span><span class="panel-val">$0 (public CDN, no charge)</span></div>
+        <div class="panel-row"><span class="panel-key">Parallelism</span><span class="panel-val">6 worker threads per job</span></div>
+        <div class="panel-row"><span class="panel-key">Idempotent</span><span class="panel-val">Safe to re-run (size-based skip)</span></div>
+      </div>
+    </div>
+
+    <div class="panel">
+      <div class="panel-header">
+        <h4>Data Scripts</h4>
+      </div>
+      <div class="panel-body">
+        <div class="panel-row"><span class="panel-key"><code>hl_trade_dl_standalone.py</code></span><span class="panel-val">HL S3 downloader</span></div>
+        <div class="panel-row"><span class="panel-key">&nbsp;&nbsp;probe</span><span class="panel-val">Verify credentials + bucket access</span></div>
+        <div class="panel-row"><span class="panel-key">&nbsp;&nbsp;list</span><span class="panel-val">Inspect keys, validate date regex</span></div>
+        <div class="panel-row"><span class="panel-key">&nbsp;&nbsp;download</span><span class="panel-val">Parallel download with retry + streaming</span></div>
+        <div class="panel-row" style="margin-top:8px"><span class="panel-key"><code>binance_dl.py</code></span><span class="panel-val">Binance public archive downloader</span></div>
+        <div class="panel-row"><span class="panel-key">&nbsp;&nbsp;download</span><span class="panel-val">Daily trades for a date range</span></div>
+        <div class="panel-row"><span class="panel-key">&nbsp;&nbsp;backfill</span><span class="panel-val">Monthly archives for bulk history</span></div>
+        <div class="panel-row"><span class="panel-key">&nbsp;&nbsp;symbols</span><span class="panel-val">HL &harr; Binance coin mapping</span></div>
+      </div>
+    </div>
+  </div>
 </div>
 
 <div class="footer">
-  Generated by <code>hl_trade_dl_standalone.py</code> &middot;
-  AWS account <code>561552143174</code> (thorvaldur) &middot;
-  Hyperliquid L1 mainnet archive
+  <a href="https://github.com/jthorvaldur">jthorvaldur</a> &middot;
+  Built with <a href="https://hyperliquid.xyz">Hyperliquid</a> L1 archive +
+  <a href="https://data.binance.vision">Binance</a> public data &middot;
+  Analysis tooling from alpha_research, svstrat, ts_embed, tsprojection
 </div>
+
+<script>
+function toggle(id) {
+  const el = document.getElementById(id);
+  el.classList.toggle('open');
+  const btn = el.previousElementSibling;
+  btn.innerHTML = el.classList.contains('open')
+    ? btn.innerHTML.replace('▼', '▲')
+    : btn.innerHTML.replace('▲', '▼');
+}
+</script>
 
 </body>
 </html>
