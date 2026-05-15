@@ -1,0 +1,849 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Cross-Exchange Alpha Analysis — ETH, May 25 2025</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: 'SF Mono', 'Fira Code', monospace;
+    background: #0d1117;
+    color: #c9d1d9;
+    padding: 0;
+  }
+  a { color: #58a6ff; text-decoration: none; }
+  a:hover { text-decoration: underline; }
+
+  /* Hero */
+  .hero {
+    padding: 60px 32px 40px;
+    max-width: 1400px;
+    margin: 0 auto;
+    border-bottom: 1px solid #21262d;
+  }
+  .hero h1 { color: #f0f6fc; font-size: 32px; font-weight: 700; margin-bottom: 8px; }
+  .hero .tagline { color: #8b949e; font-size: 14px; line-height: 1.6; max-width: 700px; }
+  .hero .badges { margin-top: 16px; display: flex; gap: 8px; flex-wrap: wrap; }
+  .badge { display: inline-flex; align-items: center; gap: 6px; padding: 4px 12px; border-radius: 16px; font-size: 11px; font-weight: 600; }
+  .badge-green { background: #0d2818; color: #3fb950; border: 1px solid #1b3d2a; }
+  .badge-amber { background: #2a1f00; color: #d29922; border: 1px solid #3d2e00; }
+  .badge-blue { background: #0d1830; color: #58a6ff; border: 1px solid #1b2d4a; }
+  .badge-purple { background: #1c1530; color: #bb9af7; border: 1px solid #2d2050; }
+  .badge-red { background: #2a0d0d; color: #f85149; border: 1px solid #3d1b1b; }
+
+  /* Sections */
+  .section {
+    max-width: 1400px;
+    margin: 0 auto;
+    padding: 32px;
+  }
+  .section-divider { border-top: 1px solid #21262d; }
+  h2 { color: #f0f6fc; font-size: 18px; margin-bottom: 6px; }
+  h3 { color: #8b949e; font-size: 13px; text-transform: uppercase; letter-spacing: 0.1em; margin: 24px 0 10px; }
+  .section-sub { color: #8b949e; font-size: 12px; margin-bottom: 20px; }
+  .card {
+    background: #161b22;
+    border: 1px solid #30363d;
+    border-radius: 8px;
+    padding: 20px;
+  }
+  .card-title { color: #58a6ff; font-size: 11px; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 10px; }
+  .grid { display: grid; gap: 16px; }
+  .grid-2 { grid-template-columns: 1fr 1fr; }
+  .grid-3 { grid-template-columns: repeat(3, 1fr); }
+  .grid-4 { grid-template-columns: repeat(4, 1fr); }
+  .grid-5 { grid-template-columns: repeat(5, 1fr); }
+  .stat { font-size: 28px; font-weight: bold; color: #f0f6fc; }
+  .stat-sm { font-size: 20px; font-weight: bold; color: #f0f6fc; }
+  .stat-label { font-size: 11px; color: #8b949e; margin-top: 2px; }
+  .ok { color: #3fb950; }
+  .warn { color: #d29922; }
+  .neg { color: #f85149; }
+
+  /* Tables */
+  table { width: 100%; border-collapse: collapse; font-size: 12px; }
+  th { text-align: left; color: #8b949e; font-weight: normal; padding: 8px; border-bottom: 1px solid #30363d; }
+  td { padding: 8px; border-bottom: 1px solid #21262d; }
+  tr:hover td { background: #1c2129; }
+  code { color: #79c0ff; background: #0d1117; padding: 1px 6px; border-radius: 3px; font-size: 11px; }
+
+  /* Panels */
+  .panel {
+    background: #0d1117;
+    border: 1px solid #30363d;
+    border-radius: 8px;
+    overflow: hidden;
+  }
+  .panel-header {
+    background: #161b22;
+    padding: 12px 16px;
+    border-bottom: 1px solid #30363d;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  .panel-header h4 { color: #f0f6fc; font-size: 13px; }
+  .panel-body { padding: 16px; }
+  .panel-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 8px 0;
+    border-bottom: 1px solid #21262d;
+    font-size: 12px;
+  }
+  .panel-row:last-child { border-bottom: none; }
+  .panel-key { color: #8b949e; }
+  .panel-val { color: #c9d1d9; font-weight: 600; }
+
+  /* Nav link */
+  .nav-back {
+    max-width: 1400px;
+    margin: 0 auto;
+    padding: 16px 32px 0;
+    font-size: 12px;
+  }
+
+  /* Callout */
+  .callout {
+    background: #161b22;
+    border: 1px solid #30363d;
+    border-left: 3px solid #d29922;
+    border-radius: 8px;
+    padding: 24px;
+  }
+  .callout-title { color: #d29922; font-size: 14px; font-weight: 700; margin-bottom: 12px; }
+
+  /* Correlation bar */
+  .corr-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 8px 0;
+    border-bottom: 1px solid #21262d;
+    font-size: 12px;
+  }
+  .corr-row:last-child { border-bottom: none; }
+  .corr-label { width: 200px; color: #c9d1d9; flex-shrink: 0; }
+  .corr-bar-bg {
+    flex: 1;
+    height: 24px;
+    background: #0d1117;
+    border-radius: 4px;
+    overflow: hidden;
+    position: relative;
+  }
+  .corr-bar {
+    height: 100%;
+    border-radius: 4px;
+    transition: width 0.5s ease;
+  }
+  .corr-val { width: 60px; text-align: right; color: #f0f6fc; font-weight: 600; flex-shrink: 0; }
+
+  /* Volume bar chart */
+  .vol-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 4px 0;
+    font-size: 11px;
+  }
+  .vol-label { width: 60px; color: #8b949e; text-align: right; flex-shrink: 0; }
+  .vol-bars { flex: 1; display: flex; flex-direction: column; gap: 2px; }
+  .vol-bar-wrap { display: flex; align-items: center; gap: 6px; height: 14px; }
+  .vol-bar {
+    height: 12px;
+    border-radius: 2px;
+    min-width: 2px;
+  }
+  .vol-count { font-size: 10px; color: #8b949e; white-space: nowrap; }
+  .vol-ratio { width: 50px; text-align: right; color: #d29922; font-weight: 600; flex-shrink: 0; }
+
+  /* Research cards */
+  .research-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 16px; }
+  .research-card {
+    background: #161b22;
+    border: 1px solid #30363d;
+    border-radius: 8px;
+    padding: 20px;
+    border-top: 2px solid #58a6ff;
+  }
+  .research-card h4 { color: #f0f6fc; font-size: 13px; margin-bottom: 8px; }
+  .research-card p { color: #8b949e; font-size: 11px; line-height: 1.6; }
+
+  .footer { color: #484f58; font-size: 11px; padding: 32px; text-align: center; border-top: 1px solid #21262d; max-width: 1400px; margin: 0 auto; }
+
+  /* Highlight row in table */
+  tr.highlight td { background: #1c1a12; }
+
+  /* Two-col comparison */
+  .compare-col h4 { color: #f0f6fc; font-size: 14px; margin-bottom: 12px; }
+
+  @media (max-width: 900px) {
+    .grid-2, .grid-3, .grid-4, .grid-5 { grid-template-columns: 1fr; }
+    .hero { padding: 32px 16px 24px; }
+    .section { padding: 24px 16px; }
+    .nav-back { padding: 12px 16px 0; }
+    .corr-label { width: 140px; font-size: 11px; }
+    .vol-label { width: 40px; }
+  }
+</style>
+</head>
+<body>
+
+<!-- ═══════════ NAV ═══════════ -->
+<div class="nav-back">
+  <a href="index.html">&larr; Back to Trade Fill Archive</a>
+</div>
+
+<!-- ═══════════ HERO ═══════════ -->
+<div class="hero">
+  <h1>Cross-Exchange Alpha Analysis</h1>
+  <div class="tagline">
+    ETH microstructure comparison between Hyperliquid L1 and Binance Spot.
+    One day of tick data, every fill on both venues, aligned and dissected.
+  </div>
+  <div class="badges">
+    <span class="badge badge-green">Hyperliquid L1</span>
+    <span class="badge badge-amber">Binance Spot</span>
+    <span class="badge badge-blue">ETH</span>
+    <span class="badge badge-purple">May 25, 2025</span>
+  </div>
+</div>
+
+<!-- ═══════════ SECTION 1: Price Spread ═══════════ -->
+<div class="section">
+  <h2>1. Price Spread (HL vs Binance)</h2>
+  <div class="section-sub">HL consistently trades ETH at a discount to Binance. This is structural, not noise.</div>
+
+  <div class="grid grid-4">
+    <div class="card">
+      <div class="card-title">Mean Spread</div>
+      <div class="stat" style="color: #58a6ff;">-3.8 bps</div>
+      <div class="stat-label">HL trades below Binance on average</div>
+    </div>
+    <div class="card">
+      <div class="card-title">Max Spread</div>
+      <div class="stat neg">17 bps</div>
+      <div class="stat-label">Maximum observed divergence</div>
+    </div>
+    <div class="card">
+      <div class="card-title">Std Deviation</div>
+      <div class="stat warn">1.97 bps</div>
+      <div class="stat-label">Spread volatility (tight)</div>
+    </div>
+    <div class="card">
+      <div class="card-title">Signal</div>
+      <div class="stat ok">Persistent</div>
+      <div class="stat-label">Discount is structural, not random</div>
+    </div>
+  </div>
+
+  <div style="margin-top: 16px; padding: 12px 16px; background: #0d1830; border: 1px solid #1b2d4a; border-radius: 6px; font-size: 12px; color: #8b949e; line-height: 1.6;">
+    A mean spread of -3.8 bps with std dev of 1.97 bps means the discount is ~1.9 standard deviations from zero.
+    On $1M notional, this is a $380 edge per round-trip before fees. The question is whether this compensates for HL's higher execution risk and lower liquidity.
+  </div>
+</div>
+
+<!-- ═══════════ SECTION 2: Lead-Lag Correlation ═══════════ -->
+<div class="section section-divider">
+  <h2>2. Lead-Lag Correlation</h2>
+  <div class="section-sub">Cross-correlation of 10-second return buckets. Binance slightly leads Hyperliquid, but both carry signal.</div>
+
+  <div class="card">
+    <div class="corr-row">
+      <span class="corr-label" style="color: #f0f6fc; font-weight: 600;">Contemporaneous (0s)</span>
+      <div class="corr-bar-bg">
+        <div class="corr-bar" style="width: 81.61%; background: #58a6ff;"></div>
+      </div>
+      <span class="corr-val">0.8161</span>
+    </div>
+    <div class="corr-row">
+      <span class="corr-label"><span class="warn">BN leads HL</span> by 10s</span>
+      <div class="corr-bar-bg">
+        <div class="corr-bar" style="width: 28.04%; background: #d29922;"></div>
+      </div>
+      <span class="corr-val">0.2804</span>
+    </div>
+    <div class="corr-row">
+      <span class="corr-label"><span class="ok">HL leads BN</span> by 10s</span>
+      <div class="corr-bar-bg">
+        <div class="corr-bar" style="width: 22.15%; background: #3fb950;"></div>
+      </div>
+      <span class="corr-val">0.2215</span>
+    </div>
+    <div class="corr-row">
+      <span class="corr-label"><span class="warn">BN leads HL</span> by 20s</span>
+      <div class="corr-bar-bg">
+        <div class="corr-bar" style="width: 0.5%; background: #484f58; min-width: 3px;"></div>
+      </div>
+      <span class="corr-val">0.0005</span>
+    </div>
+    <div class="corr-row">
+      <span class="corr-label"><span class="ok">HL leads BN</span> by 20s</span>
+      <div class="corr-bar-bg">
+        <div class="corr-bar" style="width: 0.99%; background: #484f58; min-width: 3px;"></div>
+      </div>
+      <span class="corr-val">0.0099</span>
+    </div>
+  </div>
+
+  <div class="grid grid-2" style="margin-top: 16px;">
+    <div style="padding: 12px 16px; background: #2a1f00; border: 1px solid #3d2e00; border-radius: 6px; font-size: 12px; color: #d29922; line-height: 1.6;">
+      Binance leads HL at the 10s horizon (0.28 &gt; 0.22). Price discovery happens on the deeper book first.
+    </div>
+    <div style="padding: 12px 16px; background: #0d2818; border: 1px solid #1b3d2a; border-radius: 6px; font-size: 12px; color: #3fb950; line-height: 1.6;">
+      Information is fully priced within 20 seconds. Both lag-20 correlations are near zero. No stale signal beyond that window.
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════ SECTION 3: Smart Money Leaderboard ═══════════ -->
+<div class="section section-divider">
+  <h2>3. Smart Money Leaderboard</h2>
+  <div class="section-sub">Top 15 wallets by realized PnL on Hyperliquid ETH, May 25 2025. Sorted by total closedPnl.</div>
+
+  <div class="card" style="overflow-x: auto;">
+    <table>
+      <thead>
+        <tr>
+          <th>#</th>
+          <th>Wallet</th>
+          <th style="text-align:right">Trades</th>
+          <th style="text-align:right">Win%</th>
+          <th style="text-align:right">Total PnL</th>
+          <th style="text-align:right">Avg PnL/Trade</th>
+          <th style="text-align:right">Notional</th>
+          <th style="text-align:right">Coins</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>1</td>
+          <td><code>0x225864ad...</code></td>
+          <td style="text-align:right">1,632</td>
+          <td style="text-align:right"><span class="ok">99.9%</span></td>
+          <td style="text-align:right"><span class="ok">+$3,133,784</span></td>
+          <td style="text-align:right">$1,920</td>
+          <td style="text-align:right">$182M</td>
+          <td style="text-align:right">2</td>
+        </tr>
+        <tr>
+          <td>2</td>
+          <td><code>0x8af700ba...</code></td>
+          <td style="text-align:right">289</td>
+          <td style="text-align:right"><span class="ok">100.0%</span></td>
+          <td style="text-align:right"><span class="ok">+$1,607,539</span></td>
+          <td style="text-align:right">$5,562</td>
+          <td style="text-align:right">$116M</td>
+          <td style="text-align:right">1</td>
+        </tr>
+        <tr>
+          <td>3</td>
+          <td><code>0xffffffff...</code></td>
+          <td style="text-align:right">27,710</td>
+          <td style="text-align:right"><span class="ok">80.1%</span></td>
+          <td style="text-align:right"><span class="ok">+$1,519,118</span></td>
+          <td style="text-align:right">$55</td>
+          <td style="text-align:right">$5.4M</td>
+          <td style="text-align:right">116</td>
+        </tr>
+        <tr>
+          <td>4</td>
+          <td><code>0xd9a1ed9a...</code></td>
+          <td style="text-align:right">263</td>
+          <td style="text-align:right"><span class="ok">95.8%</span></td>
+          <td style="text-align:right"><span class="ok">+$776,363</span></td>
+          <td style="text-align:right">$2,952</td>
+          <td style="text-align:right">$51M</td>
+          <td style="text-align:right">2</td>
+        </tr>
+        <tr>
+          <td>5</td>
+          <td><code>0x1d52fe9b...</code></td>
+          <td style="text-align:right">3,029</td>
+          <td style="text-align:right"><span class="ok">95.8%</span></td>
+          <td style="text-align:right"><span class="ok">+$562,003</span></td>
+          <td style="text-align:right">$186</td>
+          <td style="text-align:right">$22M</td>
+          <td style="text-align:right">12</td>
+        </tr>
+        <tr>
+          <td>6</td>
+          <td><code>0x4a207d28...</code></td>
+          <td style="text-align:right">600</td>
+          <td style="text-align:right"><span class="ok">99.0%</span></td>
+          <td style="text-align:right"><span class="ok">+$518,627</span></td>
+          <td style="text-align:right">$864</td>
+          <td style="text-align:right">$1.1M</td>
+          <td style="text-align:right">2</td>
+        </tr>
+        <tr>
+          <td>7</td>
+          <td><code>0x507e0d7c...</code></td>
+          <td style="text-align:right">319</td>
+          <td style="text-align:right"><span class="ok">100.0%</span></td>
+          <td style="text-align:right"><span class="ok">+$506,171</span></td>
+          <td style="text-align:right">$1,587</td>
+          <td style="text-align:right">$1.8M</td>
+          <td style="text-align:right">1</td>
+        </tr>
+        <tr>
+          <td>8</td>
+          <td><code>0xdf052b53...</code></td>
+          <td style="text-align:right">330</td>
+          <td style="text-align:right"><span class="ok">100.0%</span></td>
+          <td style="text-align:right"><span class="ok">+$492,887</span></td>
+          <td style="text-align:right">$1,494</td>
+          <td style="text-align:right">$881K</td>
+          <td style="text-align:right">1</td>
+        </tr>
+        <tr>
+          <td>9</td>
+          <td><code>0x4a96036f...</code></td>
+          <td style="text-align:right">473</td>
+          <td style="text-align:right"><span class="ok">100.0%</span></td>
+          <td style="text-align:right"><span class="ok">+$459,817</span></td>
+          <td style="text-align:right">$972</td>
+          <td style="text-align:right">$46M</td>
+          <td style="text-align:right">1</td>
+        </tr>
+        <tr>
+          <td>10</td>
+          <td><code>0x2ba553d9...</code></td>
+          <td style="text-align:right">2,467</td>
+          <td style="text-align:right"><span class="ok">86.3%</span></td>
+          <td style="text-align:right"><span class="ok">+$457,487</span></td>
+          <td style="text-align:right">$185</td>
+          <td style="text-align:right">$41M</td>
+          <td style="text-align:right">5</td>
+        </tr>
+        <tr>
+          <td>11</td>
+          <td><code>0x023a3d05...</code></td>
+          <td style="text-align:right">25,354</td>
+          <td style="text-align:right"><span class="ok">74.7%</span></td>
+          <td style="text-align:right"><span class="ok">+$432,459</span></td>
+          <td style="text-align:right">$17</td>
+          <td style="text-align:right">$135M</td>
+          <td style="text-align:right">138</td>
+        </tr>
+        <tr>
+          <td>12</td>
+          <td><code>0xecb63caa...</code></td>
+          <td style="text-align:right">39,788</td>
+          <td style="text-align:right"><span class="ok">56.7%</span></td>
+          <td style="text-align:right"><span class="ok">+$392,183</span></td>
+          <td style="text-align:right">$10</td>
+          <td style="text-align:right">$119M</td>
+          <td style="text-align:right">48</td>
+        </tr>
+        <tr class="highlight">
+          <td>13</td>
+          <td><code>0x629af4d7...</code> <span class="warn">*</span></td>
+          <td style="text-align:right">449</td>
+          <td style="text-align:right"><span class="neg">1.8%</span></td>
+          <td style="text-align:right"><span class="ok">+$372,695</span></td>
+          <td style="text-align:right">$830</td>
+          <td style="text-align:right">$61M</td>
+          <td style="text-align:right">1</td>
+        </tr>
+        <tr>
+          <td>14</td>
+          <td><code>0x210c6a8d...</code></td>
+          <td style="text-align:right">120</td>
+          <td style="text-align:right"><span class="ok">100.0%</span></td>
+          <td style="text-align:right"><span class="ok">+$344,697</span></td>
+          <td style="text-align:right">$2,872</td>
+          <td style="text-align:right">$454K</td>
+          <td style="text-align:right">1</td>
+        </tr>
+        <tr>
+          <td>15</td>
+          <td><code>0xf9109ada...</code></td>
+          <td style="text-align:right">26,017</td>
+          <td style="text-align:right"><span class="ok">69.2%</span></td>
+          <td style="text-align:right"><span class="ok">+$335,984</span></td>
+          <td style="text-align:right">$13</td>
+          <td style="text-align:right">$109M</td>
+          <td style="text-align:right">30</td>
+        </tr>
+      </tbody>
+    </table>
+    <div style="margin-top: 10px; font-size: 11px; color: #8b949e;">
+      <span class="warn">*</span> See Section 4 for the 1.8% win rate anomaly
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════ SECTION 4: The 1.8% Win Rate Whale ═══════════ -->
+<div class="section section-divider">
+  <h2>4. The 1.8% Win Rate Whale</h2>
+  <div class="section-sub">The most interesting wallet on the leaderboard is the one that loses 98.2% of its trades.</div>
+
+  <div class="callout">
+    <div class="callout-title">0x629af4d7... &mdash; Textbook Breakout / Trend-Following with Tight Stops</div>
+
+    <div class="grid grid-3" style="margin-bottom: 20px;">
+      <div>
+        <div class="stat-sm ok">+$372,695</div>
+        <div class="stat-label">Total realized PnL</div>
+      </div>
+      <div>
+        <div class="stat-sm neg">1.8% win rate</div>
+        <div class="stat-label">8 wins / 441 losses</div>
+      </div>
+      <div>
+        <div class="stat-sm" style="color: #58a6ff;">BTC only</div>
+        <div class="stat-label">Single coin, single strategy</div>
+      </div>
+    </div>
+
+    <div class="grid grid-2" style="margin-bottom: 20px;">
+      <div class="panel">
+        <div class="panel-header">
+          <h4><span class="ok">&bull;</span> Winning Trades</h4>
+          <span class="badge badge-green">8 trades</span>
+        </div>
+        <div class="panel-body">
+          <div class="panel-row"><span class="panel-key">Average win</span><span class="panel-val ok">$52,500</span></div>
+          <div class="panel-row"><span class="panel-key">Biggest single win</span><span class="panel-val ok">$184,474</span></div>
+        </div>
+      </div>
+      <div class="panel">
+        <div class="panel-header">
+          <h4><span class="neg">&bull;</span> Losing Trades</h4>
+          <span class="badge badge-red">441 trades</span>
+        </div>
+        <div class="panel-body">
+          <div class="panel-row"><span class="panel-key">Average loss</span><span class="panel-val neg">-$107</span></div>
+          <div class="panel-row"><span class="panel-key">Loss pattern</span><span class="panel-val">Tight stops, small cuts</span></div>
+        </div>
+      </div>
+    </div>
+
+    <div style="padding: 16px; background: #0d1117; border: 1px solid #30363d; border-radius: 6px; font-size: 13px; line-height: 1.8;">
+      <span style="color: #8b949e;">The math:</span><br>
+      <span style="color: #f0f6fc;">E[trade] = 0.018 &times; $52,500 + 0.982 &times; (-$107)</span><br>
+      <span style="color: #f0f6fc;">E[trade] = $945 - $105</span><br>
+      <span style="color: #3fb950; font-weight: 700;">E[trade] = +$840 per trade</span><br>
+      <span style="color: #8b949e; font-size: 11px; margin-top: 4px; display: inline-block;">
+        Massive asymmetry: winners are 490x the size of losers. Win rate is irrelevant when the payoff ratio is this extreme.
+      </span>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════ SECTION 5: Maker vs Taker ═══════════ -->
+<div class="section section-divider">
+  <h2>5. Maker vs Taker</h2>
+  <div class="section-sub">HL's crossed field separates aggressive (taker) from passive (maker) fills. The difference is stark.</div>
+
+  <div class="grid grid-2">
+    <div class="panel">
+      <div class="panel-header">
+        <h4><span class="ok">&bull;</span> Takers (Aggressive)</h4>
+        <span class="badge badge-green">Profitable</span>
+      </div>
+      <div class="panel-body">
+        <div class="panel-row"><span class="panel-key">Trade count</span><span class="panel-val">1.38M</span></div>
+        <div class="panel-row"><span class="panel-key">Avg fee / trade</span><span class="panel-val">$0.007</span></div>
+        <div class="panel-row"><span class="panel-key">Total fees paid</span><span class="panel-val">$10K</span></div>
+        <div class="panel-row"><span class="panel-key">Avg PnL / trade</span><span class="panel-val ok">+$15.87</span></div>
+      </div>
+    </div>
+    <div class="panel">
+      <div class="panel-header">
+        <h4><span class="neg">&bull;</span> Makers (Passive)</h4>
+        <span class="badge badge-red">Unprofitable</span>
+      </div>
+      <div class="panel-body">
+        <div class="panel-row"><span class="panel-key">Trade count</span><span class="panel-val">1.38M</span></div>
+        <div class="panel-row"><span class="panel-key">Avg fee / trade</span><span class="panel-val">$0.967</span></div>
+        <div class="panel-row"><span class="panel-key">Total fees paid</span><span class="panel-val neg">$1.33M</span></div>
+        <div class="panel-row"><span class="panel-key">Avg PnL / trade</span><span class="panel-val neg">-$14.34</span></div>
+      </div>
+    </div>
+  </div>
+
+  <div style="margin-top: 16px; padding: 12px 16px; background: #2a0d0d; border: 1px solid #3d1b1b; border-radius: 6px; font-size: 12px; color: #f85149; line-height: 1.6;">
+    <strong>Key insight:</strong> Takers are systematically profitable. Makers get adverse-selected &mdash; they provide liquidity and get picked off
+    by informed flow. The fee structure (takers pay ~$0.007, makers pay ~$0.967) does not compensate for the information asymmetry.
+    Maker PnL is -$14.34/trade <em>after</em> rebates.
+  </div>
+</div>
+
+<!-- ═══════════ SECTION 6: Volume Profile ═══════════ -->
+<div class="section section-divider">
+  <h2>6. Volume Profile (Hourly)</h2>
+  <div class="section-sub">HL trade count vs Binance by hour (UTC). HL has 1.7x to 4.3x Binance activity across all hours observed.</div>
+
+  <div class="card">
+    <div style="display: flex; gap: 12px; margin-bottom: 16px; font-size: 11px;">
+      <span><span style="display: inline-block; width: 12px; height: 12px; background: #3fb950; border-radius: 2px; vertical-align: middle;"></span> Hyperliquid</span>
+      <span><span style="display: inline-block; width: 12px; height: 12px; background: #d29922; border-radius: 2px; vertical-align: middle;"></span> Binance</span>
+      <span style="color: #8b949e;">Bar width = trade count (max: 541K)</span>
+    </div>
+
+    <div class="vol-row">
+      <span class="vol-label">14:00</span>
+      <div class="vol-bars">
+        <div class="vol-bar-wrap">
+          <div class="vol-bar" style="width: 52%; background: #3fb950;"></div>
+          <span class="vol-count">281K</span>
+        </div>
+        <div class="vol-bar-wrap">
+          <div class="vol-bar" style="width: 32%; background: #d29922;"></div>
+          <span class="vol-count">171K</span>
+        </div>
+      </div>
+      <span class="vol-ratio">164%</span>
+    </div>
+
+    <div class="vol-row">
+      <span class="vol-label">15:00</span>
+      <div class="vol-bars">
+        <div class="vol-bar-wrap">
+          <div class="vol-bar" style="width: 58%; background: #3fb950;"></div>
+          <span class="vol-count">314K</span>
+        </div>
+        <div class="vol-bar-wrap">
+          <div class="vol-bar" style="width: 30%; background: #d29922;"></div>
+          <span class="vol-count">163K</span>
+        </div>
+      </div>
+      <span class="vol-ratio">193%</span>
+    </div>
+
+    <div class="vol-row">
+      <span class="vol-label">16:00</span>
+      <div class="vol-bars">
+        <div class="vol-bar-wrap">
+          <div class="vol-bar" style="width: 60%; background: #3fb950;"></div>
+          <span class="vol-count">325K</span>
+        </div>
+        <div class="vol-bar-wrap">
+          <div class="vol-bar" style="width: 28%; background: #d29922;"></div>
+          <span class="vol-count">150K</span>
+        </div>
+      </div>
+      <span class="vol-ratio">217%</span>
+    </div>
+
+    <div class="vol-row">
+      <span class="vol-label">17:00</span>
+      <div class="vol-bars">
+        <div class="vol-bar-wrap">
+          <div class="vol-bar" style="width: 68%; background: #3fb950;"></div>
+          <span class="vol-count">368K</span>
+        </div>
+        <div class="vol-bar-wrap">
+          <div class="vol-bar" style="width: 26%; background: #d29922;"></div>
+          <span class="vol-count">141K</span>
+        </div>
+      </div>
+      <span class="vol-ratio">261%</span>
+    </div>
+
+    <div class="vol-row">
+      <span class="vol-label">18:00</span>
+      <div class="vol-bars">
+        <div class="vol-bar-wrap">
+          <div class="vol-bar" style="width: 78%; background: #3fb950;"></div>
+          <span class="vol-count">422K</span>
+        </div>
+        <div class="vol-bar-wrap">
+          <div class="vol-bar" style="width: 24%; background: #d29922;"></div>
+          <span class="vol-count">130K</span>
+        </div>
+      </div>
+      <span class="vol-ratio">325%</span>
+    </div>
+
+    <div class="vol-row" style="background: #1c1a12; border-radius: 4px; padding: 8px;">
+      <span class="vol-label" style="color: #d29922; font-weight: 600;">19:00</span>
+      <div class="vol-bars">
+        <div class="vol-bar-wrap">
+          <div class="vol-bar" style="width: 85%; background: #3fb950;"></div>
+          <span class="vol-count">460K</span>
+        </div>
+        <div class="vol-bar-wrap">
+          <div class="vol-bar" style="width: 20%; background: #d29922;"></div>
+          <span class="vol-count">108K</span>
+        </div>
+      </div>
+      <span class="vol-ratio" style="color: #f0f6fc; font-size: 12px;">427%</span>
+    </div>
+
+    <div class="vol-row">
+      <span class="vol-label">20:00</span>
+      <div class="vol-bars">
+        <div class="vol-bar-wrap">
+          <div class="vol-bar" style="width: 82%; background: #3fb950;"></div>
+          <span class="vol-count">444K</span>
+        </div>
+        <div class="vol-bar-wrap">
+          <div class="vol-bar" style="width: 25%; background: #d29922;"></div>
+          <span class="vol-count">135K</span>
+        </div>
+      </div>
+      <span class="vol-ratio">329%</span>
+    </div>
+
+    <div class="vol-row">
+      <span class="vol-label">21:00</span>
+      <div class="vol-bars">
+        <div class="vol-bar-wrap">
+          <div class="vol-bar" style="width: 88%; background: #3fb950;"></div>
+          <span class="vol-count">476K</span>
+        </div>
+        <div class="vol-bar-wrap">
+          <div class="vol-bar" style="width: 36%; background: #d29922;"></div>
+          <span class="vol-count">195K</span>
+        </div>
+      </div>
+      <span class="vol-ratio">244%</span>
+    </div>
+
+    <div class="vol-row">
+      <span class="vol-label" style="color: #3fb950; font-weight: 600;">22:00</span>
+      <div class="vol-bars">
+        <div class="vol-bar-wrap">
+          <div class="vol-bar" style="width: 100%; background: #3fb950;"></div>
+          <span class="vol-count" style="color: #f0f6fc; font-weight: 600;">541K</span>
+        </div>
+        <div class="vol-bar-wrap">
+          <div class="vol-bar" style="width: 42.7%; background: #d29922;"></div>
+          <span class="vol-count">231K</span>
+        </div>
+      </div>
+      <span class="vol-ratio">234%</span>
+    </div>
+
+    <div class="vol-row">
+      <span class="vol-label">23:00</span>
+      <div class="vol-bars">
+        <div class="vol-bar-wrap">
+          <div class="vol-bar" style="width: 72%; background: #3fb950;"></div>
+          <span class="vol-count">390K</span>
+        </div>
+        <div class="vol-bar-wrap">
+          <div class="vol-bar" style="width: 42%; background: #d29922;"></div>
+          <span class="vol-count">227K</span>
+        </div>
+      </div>
+      <span class="vol-ratio">172%</span>
+    </div>
+
+    <div style="margin-top: 16px; font-size: 11px; color: #8b949e; line-height: 1.6;">
+      <strong style="color: #d29922;">Peak ratio:</strong> Hour 19 UTC (427%) &mdash; HL has 4.3x Binance trade count.
+      <strong style="color: #3fb950;">Peak volume:</strong> Hour 22 UTC &mdash; 541K HL trades, 231K Binance trades.
+      The ratio column shows HL trade count as a percentage of Binance trade count.
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════ SECTION 7: Volatility Comparison ═══════════ -->
+<div class="section section-divider">
+  <h2>7. Volatility Comparison</h2>
+  <div class="section-sub">Same asset, same day, different microstructure. Average volatility is nearly identical, but the tails diverge.</div>
+
+  <div class="grid grid-2">
+    <div class="panel">
+      <div class="panel-header">
+        <h4><span class="ok">&bull;</span> Hyperliquid</h4>
+      </div>
+      <div class="panel-body">
+        <div class="panel-row"><span class="panel-key">Avg volatility</span><span class="panel-val">5.76 bps</span></div>
+        <div class="panel-row"><span class="panel-key">Max volatility</span><span class="panel-val">21.47 bps</span></div>
+        <div class="panel-row"><span class="panel-key">Vol-of-vol</span><span class="panel-val">4.00</span></div>
+        <div class="panel-row"><span class="panel-key">Volume-vol correlation</span><span class="panel-val">0.651</span></div>
+      </div>
+    </div>
+    <div class="panel">
+      <div class="panel-header">
+        <h4><span class="warn">&bull;</span> Binance</h4>
+      </div>
+      <div class="panel-body">
+        <div class="panel-row"><span class="panel-key">Avg volatility</span><span class="panel-val">5.70 bps</span></div>
+        <div class="panel-row"><span class="panel-key">Max volatility</span><span class="panel-val warn">48.23 bps</span></div>
+        <div class="panel-row"><span class="panel-key">Vol-of-vol</span><span class="panel-val">4.36</span></div>
+        <div class="panel-row"><span class="panel-key">Volume-vol correlation</span><span class="panel-val">0.836</span></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="grid grid-3" style="margin-top: 16px;">
+    <div style="padding: 12px 16px; background: #161b22; border: 1px solid #30363d; border-radius: 6px; font-size: 12px; line-height: 1.6;">
+      <span style="color: #58a6ff; font-weight: 600;">Same mean</span><br>
+      <span style="color: #8b949e;">5.76 vs 5.70 bps &mdash; no meaningful difference in average realized vol. Both venues see the same asset dynamics.</span>
+    </div>
+    <div style="padding: 12px 16px; background: #161b22; border: 1px solid #30363d; border-radius: 6px; font-size: 12px; line-height: 1.6;">
+      <span style="color: #d29922; font-weight: 600;">Different tails</span><br>
+      <span style="color: #8b949e;">Binance max vol (48 bps) is 2.2x HL (21 bps). CEX has fatter tails &mdash; likely from larger single trades hitting the book.</span>
+    </div>
+    <div style="padding: 12px 16px; background: #161b22; border: 1px solid #30363d; border-radius: 6px; font-size: 12px; line-height: 1.6;">
+      <span style="color: #3fb950; font-weight: 600;">Volume-vol coupling</span><br>
+      <span style="color: #8b949e;">Binance (0.836) has tighter volume-vol coupling than HL (0.651). Volume spikes on BN predict vol better.</span>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════ SECTION 8: Missing Math ═══════════ -->
+<div class="section section-divider">
+  <h2>8. Missing Math &mdash; Research Directions</h2>
+  <div class="section-sub">Quantities we can compute from this data but haven't yet. Each represents a publishable microstructure result.</div>
+
+  <div class="research-grid">
+    <div class="research-card">
+      <h4>VPIN</h4>
+      <p>
+        <strong style="color: #c9d1d9;">Volume-Synchronized Probability of Informed Trading</strong><br><br>
+        HL's <code>crossed</code> field directly labels aggressor vs passive on every fill. No need to estimate trade direction
+        (Lee-Ready, tick test) &mdash; we have ground truth. This enables exact VPIN calculation, which is typically noisy on CEX data.
+      </p>
+    </div>
+    <div class="research-card">
+      <h4>Kyle's Lambda</h4>
+      <p>
+        <strong style="color: #c9d1d9;">Price impact per unit volume</strong><br><br>
+        Regress price change on signed order flow (net buy volume). Lambda measures how much prices move per dollar of informed trading.
+        Compare HL lambda vs BN lambda to quantify which venue has deeper effective liquidity.
+      </p>
+    </div>
+    <div class="research-card">
+      <h4>Hasbrouck Information Shares</h4>
+      <p>
+        <strong style="color: #c9d1d9;">Price discovery attribution</strong><br><br>
+        Decompose the common efficient price into contributions from each venue. What fraction of new information enters
+        through HL vs Binance? The lead-lag data suggests BN leads, but Hasbrouck gives the precise split.
+      </p>
+    </div>
+    <div class="research-card">
+      <h4>Amihud Illiquidity Ratio</h4>
+      <p>
+        <strong style="color: #c9d1d9;">|return| / volume, cross-exchange</strong><br><br>
+        Simple but powerful: how much does price move per dollar of volume? Lower = more liquid. Compute hourly for both venues
+        to find windows where HL is more liquid than BN (and vice versa).
+      </p>
+    </div>
+    <div class="research-card">
+      <h4>Optimal Execution Split</h4>
+      <p>
+        <strong style="color: #c9d1d9;">Given maker rebate + price discount, what % routes to HL?</strong><br><br>
+        HL offers: (a) 3.8 bps price discount, (b) maker rebates, (c) lower taker fees. Binance offers: deeper book, less slippage.
+        Solve for the optimal split ratio as a function of order size.
+      </p>
+    </div>
+  </div>
+</div>
+
+<div class="footer">
+  <a href="https://github.com/jthorvaldur">jthorvaldur</a> &middot;
+  Cross-exchange analysis: <a href="https://hyperliquid.xyz">Hyperliquid</a> L1 +
+  <a href="https://data.binance.vision">Binance</a> Spot &middot;
+  ETH &middot; May 25, 2025
+</div>
+
+</body>
+</html>
