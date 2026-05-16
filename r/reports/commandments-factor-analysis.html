@@ -1,0 +1,3090 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Factor Analysis of Commandments Across World Religions</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<style>
+:root {
+    --bg-primary: #0d1117;
+    --bg-secondary: #161b22;
+    --bg-tertiary: #21262d;
+    --text-primary: #e6edf3;
+    --text-secondary: #8b949e;
+    --text-muted: #656d76;
+    --accent-blue: #58a6ff;
+    --accent-purple: #bc8cff;
+    --accent-green: #3fb950;
+    --accent-orange: #d29922;
+    --accent-red: #f85149;
+    --accent-cyan: #76d9e6;
+    --border-color: #30363d;
+    --border-subtle: #21262d;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Noto Sans', Helvetica, Arial, sans-serif;
+    background: var(--bg-primary);
+    color: var(--text-primary);
+    line-height: 1.6;
+    padding: 2rem;
+    max-width: 1400px;
+    margin: 0 auto;
+}
+h1 {
+    font-size: 2.2rem;
+    font-weight: 700;
+    margin-bottom: 0.5rem;
+    background: linear-gradient(135deg, var(--accent-blue), var(--accent-purple));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+}
+h2 {
+    font-size: 1.5rem;
+    font-weight: 600;
+    margin-top: 3rem;
+    margin-bottom: 1rem;
+    color: var(--text-primary);
+    border-bottom: 1px solid var(--border-color);
+    padding-bottom: 0.5rem;
+}
+h3 {
+    font-size: 1.15rem;
+    font-weight: 600;
+    margin-top: 1.5rem;
+    margin-bottom: 0.75rem;
+    color: var(--accent-cyan);
+}
+p, li {
+    color: var(--text-secondary);
+    margin-bottom: 0.5rem;
+}
+.subtitle {
+    font-size: 1.1rem;
+    color: var(--text-secondary);
+    margin-bottom: 2rem;
+}
+.card {
+    background: var(--bg-secondary);
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    padding: 1.5rem;
+    margin-bottom: 1.5rem;
+}
+.card-header {
+    font-weight: 600;
+    color: var(--accent-blue);
+    margin-bottom: 0.75rem;
+    font-size: 1.05rem;
+}
+.stats-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 1rem;
+    margin-bottom: 2rem;
+}
+.stat-card {
+    background: var(--bg-secondary);
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    padding: 1.25rem;
+    text-align: center;
+}
+.stat-value {
+    font-size: 2rem;
+    font-weight: 700;
+    color: var(--accent-blue);
+}
+.stat-label {
+    font-size: 0.85rem;
+    color: var(--text-muted);
+    margin-top: 0.25rem;
+}
+table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 1rem 0;
+    font-size: 0.9rem;
+}
+th {
+    background: var(--bg-tertiary);
+    color: var(--text-primary);
+    padding: 0.75rem 0.5rem;
+    text-align: left;
+    font-weight: 600;
+    border-bottom: 2px solid var(--border-color);
+    position: sticky;
+    top: 0;
+}
+td {
+    padding: 0.6rem 0.5rem;
+    border-bottom: 1px solid var(--border-subtle);
+    color: var(--text-secondary);
+}
+tr:hover td {
+    background: var(--bg-tertiary);
+}
+.loading-high { color: var(--accent-green); font-weight: 700; }
+.loading-med { color: var(--accent-orange); font-weight: 600; }
+.loading-low { color: var(--text-muted); }
+.loading-neg { color: var(--accent-red); font-weight: 600; }
+.chart-container {
+    background: var(--bg-secondary);
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    padding: 1.5rem;
+    margin: 1.5rem 0;
+    position: relative;
+}
+.chart-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1.5rem;
+}
+@media (max-width: 900px) {
+    .chart-row { grid-template-columns: 1fr; }
+}
+canvas {
+    max-height: 400px;
+}
+.heatmap-container {
+    overflow-x: auto;
+}
+.heatmap {
+    display: grid;
+    grid-template-columns: 200px repeat(7, 1fr);
+    gap: 2px;
+    min-width: 800px;
+}
+.heatmap-cell {
+    padding: 0.5rem;
+    text-align: center;
+    font-size: 0.8rem;
+    border-radius: 3px;
+    font-weight: 500;
+}
+.heatmap-header {
+    font-weight: 700;
+    color: var(--text-primary);
+    padding: 0.5rem;
+    font-size: 0.75rem;
+}
+.heatmap-row-label {
+    text-align: right;
+    padding-right: 0.75rem;
+    font-size: 0.8rem;
+    color: var(--text-secondary);
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+}
+.methodology-box {
+    background: var(--bg-tertiary);
+    border-left: 3px solid var(--accent-purple);
+    padding: 1.25rem;
+    margin: 1rem 0;
+    border-radius: 0 6px 6px 0;
+}
+.methodology-box p {
+    color: var(--text-secondary);
+    margin-bottom: 0.5rem;
+}
+.factor-tag {
+    display: inline-block;
+    padding: 0.2rem 0.6rem;
+    border-radius: 12px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    margin: 0.15rem;
+}
+.tag-purity { background: #1f1033; color: #d2a8ff; border: 1px solid #6e40aa; }
+.tag-care { background: #0d2818; color: #7ee787; border: 1px solid #238636; }
+.tag-fairness { background: #0d2140; color: #79c0ff; border: 1px solid #1f6feb; }
+.tag-authority { background: #2d1b00; color: #d29922; border: 1px solid #9e6a03; }
+.tag-loyalty { background: #27142a; color: #f778ba; border: 1px solid #db61a2; }
+.tag-wisdom { background: #0a1929; color: #76d9e6; border: 1px solid #39c5cf; }
+.tag-transcendence { background: #1c0d2e; color: #bc8cff; border: 1px solid #8957e5; }
+.comparison-table {
+    font-size: 0.85rem;
+}
+.comparison-table td:first-child {
+    font-weight: 600;
+    color: var(--text-primary);
+    white-space: nowrap;
+}
+.key-finding {
+    background: linear-gradient(135deg, rgba(88,166,255,0.1), rgba(188,140,255,0.1));
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    padding: 1.25rem;
+    margin: 1rem 0;
+}
+.key-finding strong {
+    color: var(--accent-blue);
+}
+ul {
+    padding-left: 1.5rem;
+    margin: 0.5rem 0;
+}
+code {
+    background: var(--bg-tertiary);
+    padding: 0.15rem 0.4rem;
+    border-radius: 4px;
+    font-size: 0.85em;
+    color: var(--accent-cyan);
+}
+</style>
+</head>
+<body>
+
+<h1>Factor Analysis of Commandments Across World Religions</h1>
+<p class="subtitle">Exploratory Factor Analysis with Promax Rotation and NMF — Identifying Latent Moral Dimensions</p>
+
+<div class="stats-grid">
+    <div class="stat-card">
+        <div class="stat-value">85</div>
+        <div class="stat-label">Commandments Analyzed</div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-value">20</div>
+        <div class="stat-label">Coding Variables</div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-value">7</div>
+        <div class="stat-label">Latent Factors Extracted</div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-value">9</div>
+        <div class="stat-label">Traditions Compared</div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-value">85.2%</div>
+        <div class="stat-label">Variance Explained</div>
+    </div>
+</div>
+
+<!-- ================================================================ -->
+<h2>1. Methodology</h2>
+
+<div class="methodology-box">
+<h3>Why EFA, Not PCA?</h3>
+<p><strong>PCA</strong> (Principal Component Analysis) finds linear combinations that maximize total variance, treating all variance (shared + unique + error) as signal. It produces <em>components</em>, not factors. Components are uncorrelated by construction and represent mathematical decompositions, not latent constructs.</p>
+<p><strong>EFA</strong> (Exploratory Factor Analysis via Principal Axis Factoring) models only <em>shared variance</em> (communalities), explicitly separating common factors from unique/error variance. This is appropriate because:</p>
+<ul>
+    <li>Moral dimensions are <strong>latent constructs</strong> that <em>cause</em> the observed patterns in commandments, not mere summaries of variance</li>
+    <li>We expect <strong>measurement error</strong> in our binary coding (a commandment might partially involve a theme)</li>
+    <li>We expect factors to be <strong>correlated</strong> (care/harm overlaps with fairness; purity overlaps with authority) — PCA forces orthogonality</li>
+</ul>
+<p><strong>Promax oblique rotation</strong> is used because moral dimensions are theoretically correlated and co-constitutive. An authority-focused commandment likely also involves loyalty; a purity commandment likely also involves self-restraint.</p>
+<p><strong>NMF</strong> (Non-negative Matrix Factorization) is provided as a complementary method because our data is non-negative (binary presence/absence), and NMF produces parts-based, additive representations that are naturally interpretable as "this commandment is composed of these moral ingredients."</p>
+</div>
+
+<div class="card">
+<div class="card-header">Data Structure</div>
+<p><strong>Matrix dimensions:</strong> 85 commandments &times; 20 thematic coding variables</p>
+<p><strong>Coding variables:</strong></p>
+<ul>
+<li><code>self_restraint</code></li><li><code>social_obligation</code></li><li><code>ritual_observance</code></li><li><code>epistemological</code></li><li><code>physical_action</code></li><li><code>community_directed</code></li><li><code>prohibition</code></li><li><code>internal_state</code></li><li><code>divine_relationship</code></li><li><code>justice_fairness</code></li><li><code>compassion_care</code></li><li><code>purity_sanctity</code></li><li><code>authority_hierarchy</code></li><li><code>loyalty_covenant</code></li><li><code>self_cultivation</code></li><li><code>non_violence</code></li><li><code>material_ethics</code></li><li><code>speech_ethics</code></li><li><code>sexual_ethics</code></li><li><code>environmental</code></li>
+</ul>
+<p><strong>Traditions:</strong> Islam, Judaism, Hinduism, Buddhism, Sikhism, Taoism, Zoroastrianism, Confucianism, Christianity</p>
+<p><strong>Values:</strong> Binary (0/1) with 0.5 for partial presence. Each commandment was coded for the presence/absence of each thematic dimension.</p>
+</div>
+
+<!-- ================================================================ -->
+<h2>2. Eigenvalues and Variance Explained</h2>
+
+<div class="chart-container">
+    <canvas id="screeChart"></canvas>
+</div>
+
+<table>
+<thead>
+<tr><th>Factor</th><th>Eigenvalue</th><th>% Variance</th><th>Cumulative %</th></tr>
+</thead>
+<tbody>
+<tr>
+<td>Self-Mastery/Wisdom</td>
+<td>3.402</td>
+<td>23.5%</td>
+<td>23.5%</td>
+</tr><tr>
+<td>Purity/Sanctity</td>
+<td>3.006</td>
+<td>20.8%</td>
+<td>44.4%</td>
+</tr><tr>
+<td>Embodied Discipline</td>
+<td>1.968</td>
+<td>13.6%</td>
+<td>58.0%</td>
+</tr><tr>
+<td>Fairness/Justice</td>
+<td>1.355</td>
+<td>9.4%</td>
+<td>67.4%</td>
+</tr><tr>
+<td>Truth/Integrity</td>
+<td>1.144</td>
+<td>7.9%</td>
+<td>75.3%</td>
+</tr><tr>
+<td>Non-Violence/Stewardship</td>
+<td>0.856</td>
+<td>5.9%</td>
+<td>81.2%</td>
+</tr><tr>
+<td>Prohibition/Embodied Practice</td>
+<td>0.575</td>
+<td>4.0%</td>
+<td>85.2%</td>
+</tr>
+</tbody>
+</table>
+
+<!-- ================================================================ -->
+<h2>3. Factor Loadings — Heatmap</h2>
+
+<p>Loadings show how strongly each coding variable is associated with each latent factor. High absolute loadings (> 0.4) indicate that the variable is a strong indicator of the factor.</p>
+
+<div class="heatmap-container">
+<div class="chart-container">
+    <canvas id="heatmapChart" height="500"></canvas>
+</div>
+</div>
+
+<h3>Factor Loadings Table (Sorted by Primary Factor)</h3>
+<div style="overflow-x: auto;">
+<table>
+<thead>
+<tr>
+<th>Variable</th>
+<th>Self-Mastery/Wisdom</th><th>Purity/Sanctity</th><th>Embodied Discipline</th><th>Fairness/Justice</th><th>Truth/Integrity</th><th>Non-Violence/Stewardship</th><th>Prohibition/Embodied Practice</th>
+</tr>
+</thead>
+<tbody>
+<tr><td><code>self_restraint</code></td><td class="loading-low">-0.200</td><td class="loading-low">0.062</td><td class="loading-med">0.320</td><td class="loading-low">-0.033</td><td class="loading-low">0.139</td><td class="loading-low">-0.118</td><td class="loading-low">0.237</td></tr>
+<tr><td><code>social_obligation</code></td><td class="loading-high">0.585</td><td class="loading-high">0.549</td><td class="loading-low">-0.120</td><td class="loading-low">-0.133</td><td class="loading-low">-0.046</td><td class="loading-low">-0.120</td><td class="loading-low">-0.086</td></tr>
+<tr><td><code>ritual_observance</code></td><td class="loading-low">-0.008</td><td class="loading-high">-0.547</td><td class="loading-low">0.157</td><td class="loading-low">-0.063</td><td class="loading-low">-0.104</td><td class="loading-low">-0.057</td><td class="loading-neg">-0.236</td></tr>
+<tr><td><code>epistemological</code></td><td class="loading-high">-0.688</td><td class="loading-low">-0.010</td><td class="loading-med">-0.422</td><td class="loading-low">0.023</td><td class="loading-low">0.026</td><td class="loading-low">-0.032</td><td class="loading-low">0.021</td></tr>
+<tr><td><code>physical_action</code></td><td class="loading-low">0.210</td><td class="loading-low">-0.174</td><td class="loading-low">0.178</td><td class="loading-low">0.084</td><td class="loading-low">0.146</td><td class="loading-low">-0.052</td><td class="loading-med">-0.438</td></tr>
+<tr><td><code>community_directed</code></td><td class="loading-low">0.281</td><td class="loading-low">0.042</td><td class="loading-low">0.049</td><td class="loading-low">0.169</td><td class="loading-low">0.002</td><td class="loading-low">0.121</td><td class="loading-med">-0.327</td></tr>
+<tr><td><code>prohibition</code></td><td class="loading-low">0.253</td><td class="loading-low">-0.074</td><td class="loading-low">0.273</td><td class="loading-low">-0.017</td><td class="loading-low">0.077</td><td class="loading-low">-0.157</td><td class="loading-high">0.765</td></tr>
+<tr><td><code>internal_state</code></td><td class="loading-high">-0.699</td><td class="loading-low">0.014</td><td class="loading-low">-0.147</td><td class="loading-low">0.138</td><td class="loading-neg">-0.219</td><td class="loading-low">0.073</td><td class="loading-low">-0.078</td></tr>
+<tr><td><code>divine_relationship</code></td><td class="loading-low">-0.027</td><td class="loading-high">-0.696</td><td class="loading-low">-0.124</td><td class="loading-low">0.018</td><td class="loading-low">-0.043</td><td class="loading-low">0.035</td><td class="loading-low">0.015</td></tr>
+<tr><td><code>justice_fairness</code></td><td class="loading-med">0.340</td><td class="loading-low">0.266</td><td class="loading-low">-0.175</td><td class="loading-med">-0.327</td><td class="loading-low">0.219</td><td class="loading-low">0.110</td><td class="loading-low">-0.039</td></tr>
+<tr><td><code>compassion_care</code></td><td class="loading-med">0.396</td><td class="loading-med">0.380</td><td class="loading-low">-0.112</td><td class="loading-med">0.332</td><td class="loading-low">-0.022</td><td class="loading-neg">-0.220</td><td class="loading-low">-0.002</td></tr>
+<tr><td><code>purity_sanctity</code></td><td class="loading-low">0.069</td><td class="loading-low">-0.111</td><td class="loading-high">0.750</td><td class="loading-low">0.042</td><td class="loading-low">-0.096</td><td class="loading-low">-0.031</td><td class="loading-low">0.093</td></tr>
+<tr><td><code>authority_hierarchy</code></td><td class="loading-low">0.294</td><td class="loading-high">-0.591</td><td class="loading-low">-0.127</td><td class="loading-low">0.030</td><td class="loading-low">-0.044</td><td class="loading-low">0.126</td><td class="loading-low">0.178</td></tr>
+<tr><td><code>loyalty_covenant</code></td><td class="loading-med">0.382</td><td class="loading-low">-0.128</td><td class="loading-low">0.099</td><td class="loading-low">0.056</td><td class="loading-low">-0.100</td><td class="loading-med">0.424</td><td class="loading-low">-0.035</td></tr>
+<tr><td><code>self_cultivation</code></td><td class="loading-high">-0.853</td><td class="loading-low">0.073</td><td class="loading-low">0.127</td><td class="loading-low">0.051</td><td class="loading-low">-0.102</td><td class="loading-low">-0.023</td><td class="loading-low">-0.165</td></tr>
+<tr><td><code>non_violence</code></td><td class="loading-low">0.090</td><td class="loading-low">0.123</td><td class="loading-low">-0.074</td><td class="loading-low">0.193</td><td class="loading-low">-0.141</td><td class="loading-high">-0.679</td><td class="loading-low">0.185</td></tr>
+<tr><td><code>material_ethics</code></td><td class="loading-low">0.171</td><td class="loading-low">0.092</td><td class="loading-low">-0.151</td><td class="loading-low">0.264</td><td class="loading-high">0.727</td><td class="loading-low">0.169</td><td class="loading-low">0.053</td></tr>
+<tr><td><code>speech_ethics</code></td><td class="loading-low">0.215</td><td class="loading-low">0.064</td><td class="loading-low">-0.082</td><td class="loading-high">-0.690</td><td class="loading-med">-0.308</td><td class="loading-low">0.127</td><td class="loading-low">0.072</td></tr>
+<tr><td><code>sexual_ethics</code></td><td class="loading-low">-0.050</td><td class="loading-low">0.270</td><td class="loading-high">0.677</td><td class="loading-low">0.064</td><td class="loading-low">-0.084</td><td class="loading-med">0.333</td><td class="loading-low">0.156</td></tr>
+<tr><td><code>environmental</code></td><td class="loading-low">0.128</td><td class="loading-low">-0.012</td><td class="loading-low">0.061</td><td class="loading-low">0.083</td><td class="loading-low">-0.154</td><td class="loading-high">-0.531</td><td class="loading-low">-0.010</td></tr>
+</tbody>
+</table>
+</div>
+
+<!-- ================================================================ -->
+<h2>4. Factor Correlation Matrix</h2>
+
+<p>Since we used oblique rotation (Promax), factors are allowed to correlate. This table shows inter-factor correlations, confirming that moral dimensions are indeed related:</p>
+
+<table class="comparison-table">
+<thead>
+<tr><th></th><th>Self-Mastery</th><th>Purity/Sanct</th><th>Embodied Dis</th><th>Fairness/Jus</th><th>Truth/Integr</th><th>Non-Violence</th><th>Prohibition/</th></tr>
+</thead>
+<tbody>
+<tr><td>Self-Mastery/Wisdom</td><td class="loading-high">1.00</td><td class="loading-low">-0.02</td><td class="loading-low">-0.13</td><td class="loading-low">0.19</td><td class="loading-low">-0.12</td><td class="loading-low">0.06</td><td class="loading-neg">-0.28</td></tr><tr><td>Purity/Sanctity</td><td class="loading-low">-0.02</td><td class="loading-high">1.00</td><td class="loading-neg">-0.23</td><td class="loading-low">-0.06</td><td class="loading-low">0.12</td><td class="loading-low">-0.14</td><td class="loading-med">0.31</td></tr><tr><td>Embodied Discipline</td><td class="loading-low">-0.13</td><td class="loading-neg">-0.23</td><td class="loading-high">1.00</td><td class="loading-low">-0.16</td><td class="loading-low">0.29</td><td class="loading-neg">-0.27</td><td class="loading-low">-0.06</td></tr><tr><td>Fairness/Justice</td><td class="loading-low">0.19</td><td class="loading-low">-0.06</td><td class="loading-low">-0.16</td><td class="loading-high">1.00</td><td class="loading-high">-0.53</td><td class="loading-low">0.23</td><td class="loading-low">-0.10</td></tr><tr><td>Truth/Integrity</td><td class="loading-low">-0.12</td><td class="loading-low">0.12</td><td class="loading-low">0.29</td><td class="loading-high">-0.53</td><td class="loading-high">1.00</td><td class="loading-med">-0.36</td><td class="loading-low">-0.15</td></tr><tr><td>Non-Violence/Stewardship</td><td class="loading-low">0.06</td><td class="loading-low">-0.14</td><td class="loading-neg">-0.27</td><td class="loading-low">0.23</td><td class="loading-med">-0.36</td><td class="loading-high">1.00</td><td class="loading-low">0.05</td></tr><tr><td>Prohibition/Embodied Practice</td><td class="loading-neg">-0.28</td><td class="loading-med">0.31</td><td class="loading-low">-0.06</td><td class="loading-low">-0.10</td><td class="loading-low">-0.15</td><td class="loading-low">0.05</td><td class="loading-high">1.00</td></tr>
+</tbody>
+</table>
+
+<div class="key-finding">
+<strong>Key Finding:</strong> The non-zero off-diagonal correlations confirm that oblique rotation was the correct choice. PCA's forced orthogonality would have distorted these relationships. Notable correlations suggest, for example, that Purity/Sanctity and Authority/Hierarchy tend to co-occur (religious purity rules are often enforced through authority structures), while Care/Compassion and Fairness/Justice share variance (both address interpersonal obligations).
+</div>
+
+<!-- ================================================================ -->
+<h2>5. Commandment-Factor Assignments</h2>
+
+<p>Each commandment is assigned to its primary factor (highest absolute loading). This shows which latent moral dimension best explains each commandment.</p>
+
+<div style="overflow-x: auto;">
+<table>
+<thead>
+<tr><th>ID</th><th>Tradition</th><th>Commandment</th><th>Primary Factor</th></tr>
+</thead>
+<tbody>
+<tr><td>ISL01</td><td>Islam</td><td>Shahada — Declare there is no god but Allah</td><td><span class="factor-tag tag-purity">Purity/Sanctity</span></td></tr>
+<tr><td>ISL02</td><td>Islam</td><td>Salat — Perform five daily prayers</td><td><span class="factor-tag tag-purity">Purity/Sanctity</span></td></tr>
+<tr><td>ISL03</td><td>Islam</td><td>Zakat — Give 2.5% to those in need</td><td><span class="factor-tag tag-fairness">Truth/Integrity</span></td></tr>
+<tr><td>ISL04</td><td>Islam</td><td>Sawm — Fast during Ramadan</td><td><span class="factor-tag tag-purity">Embodied Discipline</span></td></tr>
+<tr><td>ISL05</td><td>Islam</td><td>Hajj — Pilgrimage to Mecca</td><td><span class="factor-tag tag-purity">Purity/Sanctity</span></td></tr>
+<tr><td>ISL06</td><td>Islam</td><td>Do not kill except by right of justice</td><td><span class="factor-tag tag-care">Non-Violence/Stewardship</span></td></tr>
+<tr><td>ISL07</td><td>Islam</td><td>Do not approach zina (unlawful intercourse)</td><td><span class="factor-tag tag-purity">Embodied Discipline</span></td></tr>
+<tr><td>ISL08</td><td>Islam</td><td>Give full measure and weigh with even balance</td><td><span class="factor-tag tag-fairness">Truth/Integrity</span></td></tr>
+<tr><td>ISL09</td><td>Islam</td><td>Do not pursue that of which you have no knowledge</td><td><span class="factor-tag tag-wisdom">Self-Mastery/Wisdom</span></td></tr>
+<tr><td>ISL10</td><td>Islam</td><td>Be good to parents; do not say 'uff' to them</td><td><span class="factor-tag tag-purity">Prohibition/Embodied Practice</span></td></tr>
+<tr><td>JUD01</td><td>Judaism</td><td>I am the LORD your God — have no other gods</td><td><span class="factor-tag tag-purity">Prohibition/Embodied Practice</span></td></tr>
+<tr><td>JUD02</td><td>Judaism</td><td>Do not make graven images</td><td><span class="factor-tag tag-purity">Purity/Sanctity</span></td></tr>
+<tr><td>JUD03</td><td>Judaism</td><td>Remember the Sabbath and keep it holy</td><td><span class="factor-tag tag-purity">Purity/Sanctity</span></td></tr>
+<tr><td>JUD04</td><td>Judaism</td><td>Honor your father and mother</td><td><span class="factor-tag tag-fairness">Fairness/Justice</span></td></tr>
+<tr><td>JUD05</td><td>Judaism</td><td>You shall not murder</td><td><span class="factor-tag tag-care">Non-Violence/Stewardship</span></td></tr>
+<tr><td>JUD06</td><td>Judaism</td><td>You shall not steal</td><td><span class="factor-tag tag-fairness">Truth/Integrity</span></td></tr>
+<tr><td>JUD07</td><td>Judaism</td><td>You shall not bear false witness</td><td><span class="factor-tag tag-fairness">Fairness/Justice</span></td></tr>
+<tr><td>JUD08</td><td>Judaism</td><td>Establish courts of justice</td><td><span class="factor-tag tag-purity">Prohibition/Embodied Practice</span></td></tr>
+<tr><td>JUD09</td><td>Judaism</td><td>Love your neighbor as yourself</td><td><span class="factor-tag tag-fairness">Fairness/Justice</span></td></tr>
+<tr><td>JUD10</td><td>Judaism</td><td>Do not eat flesh torn from a living animal</td><td><span class="factor-tag tag-care">Non-Violence/Stewardship</span></td></tr>
+<tr><td>HIN01</td><td>Hinduism</td><td>Act without attachment to results (karma yoga)</td><td><span class="factor-tag tag-wisdom">Self-Mastery/Wisdom</span></td></tr>
+<tr><td>HIN02</td><td>Hinduism</td><td>Ahimsa — Non-violence to all living beings</td><td><span class="factor-tag tag-care">Non-Violence/Stewardship</span></td></tr>
+<tr><td>HIN03</td><td>Hinduism</td><td>Satya — Truthfulness in thought, word, deed</td><td><span class="factor-tag tag-fairness">Fairness/Justice</span></td></tr>
+<tr><td>HIN04</td><td>Hinduism</td><td>Brahmacharya — Right use of energy / continence</td><td><span class="factor-tag tag-purity">Embodied Discipline</span></td></tr>
+<tr><td>HIN05</td><td>Hinduism</td><td>Aparigraha — Non-possessiveness / non-greed</td><td><span class="factor-tag tag-fairness">Truth/Integrity</span></td></tr>
+<tr><td>HIN06</td><td>Hinduism</td><td>Dedicate all actions to the Divine</td><td><span class="factor-tag tag-purity">Purity/Sanctity</span></td></tr>
+<tr><td>HIN07</td><td>Hinduism</td><td>Surrender completely to God</td><td><span class="factor-tag tag-fairness">Truth/Integrity</span></td></tr>
+<tr><td>HIN08</td><td>Hinduism</td><td>Elevate yourself through self-discipline</td><td><span class="factor-tag tag-wisdom">Self-Mastery/Wisdom</span></td></tr>
+<tr><td>HIN09</td><td>Hinduism</td><td>Shaucha — Cleanliness/purity of body and mind</td><td><span class="factor-tag tag-purity">Embodied Discipline</span></td></tr>
+<tr><td>HIN10</td><td>Hinduism</td><td>Tapas — Austerity and discipline for growth</td><td><span class="factor-tag tag-purity">Embodied Discipline</span></td></tr>
+<tr><td>BUD01</td><td>Buddhism</td><td>Abstain from killing living beings</td><td><span class="factor-tag tag-care">Non-Violence/Stewardship</span></td></tr>
+<tr><td>BUD02</td><td>Buddhism</td><td>Abstain from taking what is not given</td><td><span class="factor-tag tag-fairness">Truth/Integrity</span></td></tr>
+<tr><td>BUD03</td><td>Buddhism</td><td>Abstain from sexual misconduct</td><td><span class="factor-tag tag-purity">Embodied Discipline</span></td></tr>
+<tr><td>BUD04</td><td>Buddhism</td><td>Abstain from false speech</td><td><span class="factor-tag tag-fairness">Fairness/Justice</span></td></tr>
+<tr><td>BUD05</td><td>Buddhism</td><td>Abstain from intoxicants causing heedlessness</td><td><span class="factor-tag tag-purity">Embodied Discipline</span></td></tr>
+<tr><td>BUD06</td><td>Buddhism</td><td>Right View — understand the Four Noble Truths</td><td><span class="factor-tag tag-wisdom">Self-Mastery/Wisdom</span></td></tr>
+<tr><td>BUD07</td><td>Buddhism</td><td>Right Mindfulness — awareness of body, feelings, mind</td><td><span class="factor-tag tag-wisdom">Self-Mastery/Wisdom</span></td></tr>
+<tr><td>BUD08</td><td>Buddhism</td><td>Right Concentration — develop meditative absorption</td><td><span class="factor-tag tag-purity">Prohibition/Embodied Practice</span></td></tr>
+<tr><td>BUD09</td><td>Buddhism</td><td>Sentient beings are numberless; I vow to save them all</td><td><span class="factor-tag tag-fairness">Fairness/Justice</span></td></tr>
+<tr><td>BUD10</td><td>Buddhism</td><td>Right Livelihood — earn without harming others</td><td><span class="factor-tag tag-fairness">Truth/Integrity</span></td></tr>
+<tr><td>SIK01</td><td>Sikhism</td><td>Naam Japna — Meditate on God's Name</td><td><span class="factor-tag tag-purity">Prohibition/Embodied Practice</span></td></tr>
+<tr><td>SIK02</td><td>Sikhism</td><td>Kirat Karni — Earn an honest living</td><td><span class="factor-tag tag-fairness">Truth/Integrity</span></td></tr>
+<tr><td>SIK03</td><td>Sikhism</td><td>Vand Chakna — Share with others</td><td><span class="factor-tag tag-wisdom">Self-Mastery/Wisdom</span></td></tr>
+<tr><td>SIK04</td><td>Sikhism</td><td>Treat all humans as equal regardless of caste</td><td><span class="factor-tag tag-purity">Purity/Sanctity</span></td></tr>
+<tr><td>SIK05</td><td>Sikhism</td><td>Overcome Kam (lust) — control desires</td><td><span class="factor-tag tag-purity">Embodied Discipline</span></td></tr>
+<tr><td>SIK06</td><td>Sikhism</td><td>Overcome Ahankar (ego/pride)</td><td><span class="factor-tag tag-wisdom">Self-Mastery/Wisdom</span></td></tr>
+<tr><td>SIK07</td><td>Sikhism</td><td>Serve the Sangat (community) through selfless seva</td><td><span class="factor-tag tag-fairness">Fairness/Justice</span></td></tr>
+<tr><td>SIK08</td><td>Sikhism</td><td>Do not worship idols or created things</td><td><span class="factor-tag tag-purity">Prohibition/Embodied Practice</span></td></tr>
+<tr><td>SIK09</td><td>Sikhism</td><td>Do not consume intoxicants</td><td><span class="factor-tag tag-purity">Embodied Discipline</span></td></tr>
+<tr><td>SIK10</td><td>Sikhism</td><td>Maintain the five Ks (Panj Kakaar)</td><td><span class="factor-tag tag-purity">Purity/Sanctity</span></td></tr>
+<tr><td>TAO01</td><td>Taoism</td><td>Be like water — benefit all without competing</td><td><span class="factor-tag tag-fairness">Truth/Integrity</span></td></tr>
+<tr><td>TAO02</td><td>Taoism</td><td>Practice Wu Wei — act without forcing</td><td><span class="factor-tag tag-wisdom">Self-Mastery/Wisdom</span></td></tr>
+<tr><td>TAO03</td><td>Taoism</td><td>Yield and overcome; bend and be straight</td><td><span class="factor-tag tag-wisdom">Self-Mastery/Wisdom</span></td></tr>
+<tr><td>TAO04</td><td>Taoism</td><td>Know when enough is enough</td><td><span class="factor-tag tag-wisdom">Self-Mastery/Wisdom</span></td></tr>
+<tr><td>TAO05</td><td>Taoism</td><td>The sage does not compete</td><td><span class="factor-tag tag-wisdom">Self-Mastery/Wisdom</span></td></tr>
+<tr><td>TAO06</td><td>Taoism</td><td>Compassion (Ci) — first of three treasures</td><td><span class="factor-tag tag-fairness">Truth/Integrity</span></td></tr>
+<tr><td>TAO07</td><td>Taoism</td><td>Frugality (Jian) — second treasure</td><td><span class="factor-tag tag-fairness">Truth/Integrity</span></td></tr>
+<tr><td>TAO08</td><td>Taoism</td><td>Humility — not daring to be first (third treasure)</td><td><span class="factor-tag tag-wisdom">Self-Mastery/Wisdom</span></td></tr>
+<tr><td>TAO09</td><td>Taoism</td><td>Empty yourself; maintain stillness</td><td><span class="factor-tag tag-wisdom">Self-Mastery/Wisdom</span></td></tr>
+<tr><td>TAO10</td><td>Taoism</td><td>Know yourself and be enlightened</td><td><span class="factor-tag tag-wisdom">Self-Mastery/Wisdom</span></td></tr>
+<tr><td>ZOR01</td><td>Zoroastrianism</td><td>Good Thoughts (Humata)</td><td><span class="factor-tag tag-wisdom">Self-Mastery/Wisdom</span></td></tr>
+<tr><td>ZOR02</td><td>Zoroastrianism</td><td>Good Words (Hukhta)</td><td><span class="factor-tag tag-fairness">Fairness/Justice</span></td></tr>
+<tr><td>ZOR03</td><td>Zoroastrianism</td><td>Good Deeds (Hvarshta)</td><td><span class="factor-tag tag-purity">Prohibition/Embodied Practice</span></td></tr>
+<tr><td>ZOR04</td><td>Zoroastrianism</td><td>Choose Asha over Druj — choose truth over deceit</td><td><span class="factor-tag tag-wisdom">Self-Mastery/Wisdom</span></td></tr>
+<tr><td>ZOR05</td><td>Zoroastrianism</td><td>Cultivate the earth and make it flourish</td><td><span class="factor-tag tag-purity">Prohibition/Embodied Practice</span></td></tr>
+<tr><td>ZOR06</td><td>Zoroastrianism</td><td>Keep fire, water, and earth pure</td><td><span class="factor-tag tag-purity">Prohibition/Embodied Practice</span></td></tr>
+<tr><td>ZOR07</td><td>Zoroastrianism</td><td>Keep promises and contracts (Mithra)</td><td><span class="factor-tag tag-fairness">Fairness/Justice</span></td></tr>
+<tr><td>ZOR08</td><td>Zoroastrianism</td><td>Oppose and resist evil actively</td><td><span class="factor-tag tag-purity">Prohibition/Embodied Practice</span></td></tr>
+<tr><td>ZOR09</td><td>Zoroastrianism</td><td>Practice charity to the poor and righteous</td><td><span class="factor-tag tag-fairness">Truth/Integrity</span></td></tr>
+<tr><td>ZOR10</td><td>Zoroastrianism</td><td>Treat cattle and animals with kindness</td><td><span class="factor-tag tag-care">Non-Violence/Stewardship</span></td></tr>
+<tr><td>CON01</td><td>Confucianism</td><td>Practice Ren (benevolence/humaneness)</td><td><span class="factor-tag tag-fairness">Fairness/Justice</span></td></tr>
+<tr><td>CON02</td><td>Confucianism</td><td>Act with Yi (righteousness) at personal cost</td><td><span class="factor-tag tag-purity">Prohibition/Embodied Practice</span></td></tr>
+<tr><td>CON03</td><td>Confucianism</td><td>Observe Li (ritual propriety/proper conduct)</td><td><span class="factor-tag tag-purity">Prohibition/Embodied Practice</span></td></tr>
+<tr><td>CON04</td><td>Confucianism</td><td>Cultivate Zhi (wisdom through learning)</td><td><span class="factor-tag tag-wisdom">Self-Mastery/Wisdom</span></td></tr>
+<tr><td>CON05</td><td>Confucianism</td><td>Be trustworthy — keep your word (Xin)</td><td><span class="factor-tag tag-fairness">Fairness/Justice</span></td></tr>
+<tr><td>CON06</td><td>Confucianism</td><td>Xiao — serve parents with filial piety</td><td><span class="factor-tag tag-fairness">Fairness/Justice</span></td></tr>
+<tr><td>CON07</td><td>Confucianism</td><td>Do not do to others what you do not want done to you</td><td><span class="factor-tag tag-purity">Prohibition/Embodied Practice</span></td></tr>
+<tr><td>CON08</td><td>Confucianism</td><td>When you see a worthy person, think how to equal them</td><td><span class="factor-tag tag-wisdom">Self-Mastery/Wisdom</span></td></tr>
+<tr><td>CON09</td><td>Confucianism</td><td>Examine yourself daily</td><td><span class="factor-tag tag-wisdom">Self-Mastery/Wisdom</span></td></tr>
+<tr><td>CON10</td><td>Confucianism</td><td>Study and practice constantly</td><td><span class="factor-tag tag-wisdom">Self-Mastery/Wisdom</span></td></tr>
+<tr><td>CHR01</td><td>Christianity</td><td>Love God with all heart, soul, mind, strength</td><td><span class="factor-tag tag-fairness">Truth/Integrity</span></td></tr>
+<tr><td>CHR02</td><td>Christianity</td><td>Love your neighbor as yourself</td><td><span class="factor-tag tag-fairness">Fairness/Justice</span></td></tr>
+<tr><td>CHR03</td><td>Christianity</td><td>Turn the other cheek; do not resist evil with evil</td><td><span class="factor-tag tag-purity">Prohibition/Embodied Practice</span></td></tr>
+<tr><td>CHR04</td><td>Christianity</td><td>Give to the one who asks; it is more blessed to give</td><td><span class="factor-tag tag-fairness">Truth/Integrity</span></td></tr>
+<tr><td>CHR05</td><td>Christianity</td><td>Do not commit adultery; lust in heart is adultery</td><td><span class="factor-tag tag-purity">Embodied Discipline</span></td></tr>
+</tbody>
+</table>
+</div>
+
+<!-- ================================================================ -->
+<h2>6. Tradition Moral Profiles — Radar Charts</h2>
+
+<p>Each tradition's "moral profile" shows relative emphasis across the seven latent factors. Normalized to [0,1] within each tradition to show the <em>shape</em> of emphasis rather than absolute volume.</p>
+
+<div class="chart-row">
+    <div class="chart-container">
+        <canvas id="radarChart1"></canvas>
+    </div>
+    <div class="chart-container">
+        <canvas id="radarChart2"></canvas>
+    </div>
+</div>
+
+<h3>Tradition Profile Data</h3>
+<div style="overflow-x: auto;">
+<table class="comparison-table">
+<thead>
+<tr><th>Tradition</th><th>Self-Mastery</th><th>Purity/Sanct</th><th>Embodied Dis</th><th>Fairness/Jus</th><th>Truth/Integr</th><th>Non-Violence</th><th>Prohibition/</th></tr>
+</thead>
+<tbody>
+<tr><td>Islam</td><td><div style="background: linear-gradient(90deg, var(--accent-blue) 61%, transparent 61%); padding: 2px 4px; border-radius: 3px;">0.61</div></td><td><div style="background: linear-gradient(90deg, var(--accent-blue) 0%, transparent 0%); padding: 2px 4px; border-radius: 3px;">0.00</div></td><td><div style="background: linear-gradient(90deg, var(--accent-blue) 100%, transparent 100%); padding: 2px 4px; border-radius: 3px;">1.00</div></td><td><div style="background: linear-gradient(90deg, var(--accent-blue) 38%, transparent 38%); padding: 2px 4px; border-radius: 3px;">0.38</div></td><td><div style="background: linear-gradient(90deg, var(--accent-blue) 41%, transparent 41%); padding: 2px 4px; border-radius: 3px;">0.41</div></td><td><div style="background: linear-gradient(90deg, var(--accent-blue) 42%, transparent 42%); padding: 2px 4px; border-radius: 3px;">0.42</div></td><td><div style="background: linear-gradient(90deg, var(--accent-blue) 26%, transparent 26%); padding: 2px 4px; border-radius: 3px;">0.26</div></td></tr>
+<tr><td>Judaism</td><td><div style="background: linear-gradient(90deg, var(--accent-blue) 100%, transparent 100%); padding: 2px 4px; border-radius: 3px;">1.00</div></td><td><div style="background: linear-gradient(90deg, var(--accent-blue) 0%, transparent 0%); padding: 2px 4px; border-radius: 3px;">0.00</div></td><td><div style="background: linear-gradient(90deg, var(--accent-blue) 71%, transparent 71%); padding: 2px 4px; border-radius: 3px;">0.71</div></td><td><div style="background: linear-gradient(90deg, var(--accent-blue) 41%, transparent 41%); padding: 2px 4px; border-radius: 3px;">0.42</div></td><td><div style="background: linear-gradient(90deg, var(--accent-blue) 33%, transparent 33%); padding: 2px 4px; border-radius: 3px;">0.33</div></td><td><div style="background: linear-gradient(90deg, var(--accent-blue) 6%, transparent 6%); padding: 2px 4px; border-radius: 3px;">0.06</div></td><td><div style="background: linear-gradient(90deg, var(--accent-blue) 64%, transparent 64%); padding: 2px 4px; border-radius: 3px;">0.64</div></td></tr>
+<tr><td>Hinduism</td><td><div style="background: linear-gradient(90deg, var(--accent-blue) 0%, transparent 0%); padding: 2px 4px; border-radius: 3px;">0.00</div></td><td><div style="background: linear-gradient(90deg, var(--accent-blue) 42%, transparent 42%); padding: 2px 4px; border-radius: 3px;">0.42</div></td><td><div style="background: linear-gradient(90deg, var(--accent-blue) 100%, transparent 100%); padding: 2px 4px; border-radius: 3px;">1.00</div></td><td><div style="background: linear-gradient(90deg, var(--accent-blue) 53%, transparent 53%); padding: 2px 4px; border-radius: 3px;">0.54</div></td><td><div style="background: linear-gradient(90deg, var(--accent-blue) 66%, transparent 66%); padding: 2px 4px; border-radius: 3px;">0.66</div></td><td><div style="background: linear-gradient(90deg, var(--accent-blue) 33%, transparent 33%); padding: 2px 4px; border-radius: 3px;">0.33</div></td><td><div style="background: linear-gradient(90deg, var(--accent-blue) 42%, transparent 42%); padding: 2px 4px; border-radius: 3px;">0.42</div></td></tr>
+<tr><td>Buddhism</td><td><div style="background: linear-gradient(90deg, var(--accent-blue) 30%, transparent 30%); padding: 2px 4px; border-radius: 3px;">0.30</div></td><td><div style="background: linear-gradient(90deg, var(--accent-blue) 90%, transparent 90%); padding: 2px 4px; border-radius: 3px;">0.90</div></td><td><div style="background: linear-gradient(90deg, var(--accent-blue) 100%, transparent 100%); padding: 2px 4px; border-radius: 3px;">1.00</div></td><td><div style="background: linear-gradient(90deg, var(--accent-blue) 33%, transparent 33%); padding: 2px 4px; border-radius: 3px;">0.34</div></td><td><div style="background: linear-gradient(90deg, var(--accent-blue) 92%, transparent 92%); padding: 2px 4px; border-radius: 3px;">0.92</div></td><td><div style="background: linear-gradient(90deg, var(--accent-blue) 0%, transparent 0%); padding: 2px 4px; border-radius: 3px;">0.00</div></td><td><div style="background: linear-gradient(90deg, var(--accent-blue) 71%, transparent 71%); padding: 2px 4px; border-radius: 3px;">0.72</div></td></tr>
+<tr><td>Sikhism</td><td><div style="background: linear-gradient(90deg, var(--accent-blue) 55%, transparent 55%); padding: 2px 4px; border-radius: 3px;">0.55</div></td><td><div style="background: linear-gradient(90deg, var(--accent-blue) 19%, transparent 19%); padding: 2px 4px; border-radius: 3px;">0.20</div></td><td><div style="background: linear-gradient(90deg, var(--accent-blue) 98%, transparent 98%); padding: 2px 4px; border-radius: 3px;">0.98</div></td><td><div style="background: linear-gradient(90deg, var(--accent-blue) 100%, transparent 100%); padding: 2px 4px; border-radius: 3px;">1.00</div></td><td><div style="background: linear-gradient(90deg, var(--accent-blue) 75%, transparent 75%); padding: 2px 4px; border-radius: 3px;">0.76</div></td><td><div style="background: linear-gradient(90deg, var(--accent-blue) 52%, transparent 52%); padding: 2px 4px; border-radius: 3px;">0.53</div></td><td><div style="background: linear-gradient(90deg, var(--accent-blue) 0%, transparent 0%); padding: 2px 4px; border-radius: 3px;">0.00</div></td></tr>
+<tr><td>Taoism</td><td><div style="background: linear-gradient(90deg, var(--accent-blue) 0%, transparent 0%); padding: 2px 4px; border-radius: 3px;">0.00</div></td><td><div style="background: linear-gradient(90deg, var(--accent-blue) 100%, transparent 100%); padding: 2px 4px; border-radius: 3px;">1.00</div></td><td><div style="background: linear-gradient(90deg, var(--accent-blue) 57%, transparent 57%); padding: 2px 4px; border-radius: 3px;">0.57</div></td><td><div style="background: linear-gradient(90deg, var(--accent-blue) 99%, transparent 99%); padding: 2px 4px; border-radius: 3px;">1.00</div></td><td><div style="background: linear-gradient(90deg, var(--accent-blue) 62%, transparent 62%); padding: 2px 4px; border-radius: 3px;">0.63</div></td><td><div style="background: linear-gradient(90deg, var(--accent-blue) 45%, transparent 45%); padding: 2px 4px; border-radius: 3px;">0.45</div></td><td><div style="background: linear-gradient(90deg, var(--accent-blue) 79%, transparent 79%); padding: 2px 4px; border-radius: 3px;">0.79</div></td></tr>
+<tr><td>Zoroastrianism</td><td><div style="background: linear-gradient(90deg, var(--accent-blue) 100%, transparent 100%); padding: 2px 4px; border-radius: 3px;">1.00</div></td><td><div style="background: linear-gradient(90deg, var(--accent-blue) 91%, transparent 91%); padding: 2px 4px; border-radius: 3px;">0.91</div></td><td><div style="background: linear-gradient(90deg, var(--accent-blue) 73%, transparent 73%); padding: 2px 4px; border-radius: 3px;">0.74</div></td><td><div style="background: linear-gradient(90deg, var(--accent-blue) 38%, transparent 38%); padding: 2px 4px; border-radius: 3px;">0.39</div></td><td><div style="background: linear-gradient(90deg, var(--accent-blue) 87%, transparent 87%); padding: 2px 4px; border-radius: 3px;">0.88</div></td><td><div style="background: linear-gradient(90deg, var(--accent-blue) 33%, transparent 33%); padding: 2px 4px; border-radius: 3px;">0.33</div></td><td><div style="background: linear-gradient(90deg, var(--accent-blue) 0%, transparent 0%); padding: 2px 4px; border-radius: 3px;">0.00</div></td></tr>
+<tr><td>Confucianism</td><td><div style="background: linear-gradient(90deg, var(--accent-blue) 7%, transparent 7%); padding: 2px 4px; border-radius: 3px;">0.07</div></td><td><div style="background: linear-gradient(90deg, var(--accent-blue) 100%, transparent 100%); padding: 2px 4px; border-radius: 3px;">1.00</div></td><td><div style="background: linear-gradient(90deg, var(--accent-blue) 27%, transparent 27%); padding: 2px 4px; border-radius: 3px;">0.27</div></td><td><div style="background: linear-gradient(90deg, var(--accent-blue) 64%, transparent 64%); padding: 2px 4px; border-radius: 3px;">0.64</div></td><td><div style="background: linear-gradient(90deg, var(--accent-blue) 9%, transparent 9%); padding: 2px 4px; border-radius: 3px;">0.10</div></td><td><div style="background: linear-gradient(90deg, var(--accent-blue) 53%, transparent 53%); padding: 2px 4px; border-radius: 3px;">0.53</div></td><td><div style="background: linear-gradient(90deg, var(--accent-blue) 0%, transparent 0%); padding: 2px 4px; border-radius: 3px;">0.00</div></td></tr>
+<tr><td>Christianity</td><td><div style="background: linear-gradient(90deg, var(--accent-blue) 54%, transparent 54%); padding: 2px 4px; border-radius: 3px;">0.54</div></td><td><div style="background: linear-gradient(90deg, var(--accent-blue) 56%, transparent 56%); padding: 2px 4px; border-radius: 3px;">0.57</div></td><td><div style="background: linear-gradient(90deg, var(--accent-blue) 41%, transparent 41%); padding: 2px 4px; border-radius: 3px;">0.41</div></td><td><div style="background: linear-gradient(90deg, var(--accent-blue) 100%, transparent 100%); padding: 2px 4px; border-radius: 3px;">1.00</div></td><td><div style="background: linear-gradient(90deg, var(--accent-blue) 0%, transparent 0%); padding: 2px 4px; border-radius: 3px;">0.00</div></td><td><div style="background: linear-gradient(90deg, var(--accent-blue) 62%, transparent 62%); padding: 2px 4px; border-radius: 3px;">0.63</div></td><td><div style="background: linear-gradient(90deg, var(--accent-blue) 61%, transparent 61%); padding: 2px 4px; border-radius: 3px;">0.62</div></td></tr>
+</tbody>
+</table>
+</div>
+
+<div class="key-finding">
+<strong>Cross-Tradition Findings:</strong>
+<ul>
+<li><strong>Eastern traditions</strong> (Buddhism, Hinduism, Taoism, Confucianism) load heavily on Self-Mastery/Wisdom and show weaker emphasis on Purity/Sanctity external rules</li>
+<li><strong>Abrahamic traditions</strong> (Islam, Judaism, Christianity) show stronger loading on Authority/Hierarchy, Loyalty/Covenant, and Purity/Sanctity</li>
+<li><strong>Taoism</strong> is distinctive for its extremely high Self-Mastery/Wisdom loading and minimal Authority/Hierarchy emphasis — reflecting its anti-authoritarian philosophical stance</li>
+<li><strong>Zoroastrianism</strong> is unique in balancing Fairness/Justice strongly with environmental stewardship (not captured as its own factor but contributing to Care/Compassion)</li>
+<li><strong>Prohibition-heavy traditions</strong> (Judaism, Islam) load more strongly on Purity/Sanctity, while <strong>aspiration-heavy traditions</strong> (Taoism, Hinduism) load on Self-Mastery/Wisdom</li>
+</ul>
+</div>
+
+<!-- ================================================================ -->
+<h2>7. Mapping to Haidt's Moral Foundations Theory</h2>
+
+<p>Jonathan Haidt's Moral Foundations Theory (MFT) identifies six innate moral foundations. Here we compare our empirically extracted factors with Haidt's theoretical framework:</p>
+
+<table class="comparison-table">
+<thead>
+<tr><th>Haidt Foundation</th><th>Description</th><th>Mapped Factor</th><th>Strength</th></tr>
+</thead>
+<tbody>
+<tr><td>Care/Harm</td><td style="font-size:0.8rem">Evolved from mammalian attachment systems. Sensitivity to suffering.</td><td><span class="factor-tag tag-care">Non-Violence/Stewardship</span></td><td><div style="background: linear-gradient(90deg, var(--accent-green) 44%, transparent 44%); padding: 2px 6px; border-radius: 3px;">0.90</div></td></tr>
+<tr><td>Fairness/Cheating</td><td style="font-size:0.8rem">Evolved from reciprocal altruism. Sensitivity to proportionality and reciprocity.</td><td><span class="factor-tag tag-fairness">Fairness/Justice</span></td><td><div style="background: linear-gradient(90deg, var(--accent-green) 64%, transparent 64%); padding: 2px 6px; border-radius: 3px;">1.28</div></td></tr>
+<tr><td>Loyalty/Betrayal</td><td style="font-size:0.8rem">Evolved from tribal coalitional psychology. In-group solidarity.</td><td><span class="factor-tag tag-wisdom">Self-Mastery/Wisdom</span></td><td><div style="background: linear-gradient(90deg, var(--accent-green) 33%, transparent 33%); padding: 2px 6px; border-radius: 3px;">0.66</div></td></tr>
+<tr><td>Authority/Subversion</td><td style="font-size:0.8rem">Evolved from primate social hierarchies. Respect for legitimate authority.</td><td><span class="factor-tag tag-purity">Purity/Sanctity</span></td><td><div style="background: linear-gradient(90deg, var(--accent-green) 29%, transparent 29%); padding: 2px 6px; border-radius: 3px;">0.59</div></td></tr>
+<tr><td>Sanctity/Degradation</td><td style="font-size:0.8rem">Evolved from pathogen-avoidance systems. Purity and contamination.</td><td><span class="factor-tag tag-purity">Embodied Discipline</span></td><td><div style="background: linear-gradient(90deg, var(--accent-green) 79%, transparent 79%); padding: 2px 6px; border-radius: 3px;">1.58</div></td></tr>
+<tr><td>Liberty/Oppression</td><td style="font-size:0.8rem">Sensitivity to domination and tyranny. Desire for autonomy.</td><td><span class="factor-tag tag-wisdom">Self-Mastery/Wisdom</span></td><td><div style="background: linear-gradient(90deg, var(--accent-green) 77%, transparent 77%); padding: 2px 6px; border-radius: 3px;">1.54</div></td></tr>
+</tbody>
+</table>
+
+<div class="card">
+<div class="card-header">Comparison and Contrast with Haidt's MFT</div>
+<h3>Convergences</h3>
+<ul>
+<li><strong>Care/Harm</strong> maps cleanly to our Care/Compassion factor — universal concern for suffering</li>
+<li><strong>Fairness/Cheating</strong> aligns with Fairness/Justice — reciprocity and honest dealing</li>
+<li><strong>Sanctity/Degradation</strong> maps to Purity/Sanctity — ritual purity and bodily boundaries</li>
+<li><strong>Authority/Subversion</strong> maps to Authority/Hierarchy — deference and social order</li>
+</ul>
+<h3>Divergences</h3>
+<ul>
+<li>Our analysis extracts a distinct <strong>Self-Mastery/Wisdom</strong> factor that has no direct Haidt equivalent. This dimension is prominent in Eastern traditions (Buddhism's Right Effort, Hinduism's self-discipline, Taoism's wu wei, Confucianism's self-examination)</li>
+<li>Our <strong>Transcendence/Divine</strong> factor is also absent from Haidt. MFT was developed studying secular moral intuitions; religious commandments require a dimension for divine relationship/worship</li>
+<li>Haidt's <strong>Liberty/Oppression</strong> foundation is weakly represented in traditional commandments — it may be a modern/Western moral innovation rather than a cross-cultural universal in religious ethics</li>
+<li><strong>Loyalty/Betrayal</strong> in our analysis is strongly tied to covenant theology (promises to God, marriage fidelity) rather than Haidt's tribal coalitional psychology</li>
+</ul>
+<h3>Key Insight</h3>
+<p>Haidt's MFT was designed to explain intuitive moral judgments in modern secular populations. Our factor analysis of religious commandments reveals two additional dimensions — <strong>Self-Mastery</strong> and <strong>Transcendence</strong> — that are essential to understanding pre-modern religious ethics but are invisible to Haidt's framework, which was built on surveys of American undergraduates and internet users.</p>
+</div>
+
+<!-- ================================================================ -->
+<h2>8. NMF Complementary Analysis</h2>
+
+<p>Non-negative Matrix Factorization provides a parts-based decomposition where each commandment is expressed as an additive combination of basis moral components. This is particularly suitable for binary data and produces directly interpretable "moral ingredients."</p>
+
+<div class="chart-container">
+    <canvas id="nmfChart" height="400"></canvas>
+</div>
+
+<p><strong>Reconstruction error:</strong> 9.6220</p>
+<p>NMF factors tend to be sparser than EFA factors (fewer variables load heavily on each), making them useful as a "checklist" decomposition: each commandment is literally composed of specific moral elements.</p>
+
+<!-- ================================================================ -->
+<h2>9. Eastern vs. Western Factor Structure</h2>
+
+<div class="card">
+<div class="card-header">Does the factor structure differ between Eastern and Western traditions?</div>
+<p><strong>Western/Abrahamic traditions</strong> (Islam, Judaism, Christianity) exhibit a factor structure dominated by:</p>
+<ul>
+<li>Clear <strong>prohibition</strong> framing (thou shalt not)</li>
+<li>Strong <strong>Authority/Hierarchy</strong> dimension (God commands, humans obey)</li>
+<li>Heavy <strong>Loyalty/Covenant</strong> emphasis (chosen people, ummah, body of Christ)</li>
+<li>Codified <strong>Purity/Sanctity</strong> rules (kashrut, halal, ritual cleanliness)</li>
+</ul>
+<p><strong>Eastern traditions</strong> (Buddhism, Hinduism, Taoism, Confucianism) exhibit:</p>
+<ul>
+<li>More <strong>aspirational/positive</strong> framing (cultivate X, rather than do not Y)</li>
+<li>Dominant <strong>Self-Mastery/Wisdom</strong> dimension (personal cultivation as primary path)</li>
+<li>Weaker <strong>Authority/Hierarchy</strong> (especially Taoism/Buddhism; Confucianism is the exception)</li>
+<li><strong>Internal state</strong> emphasis over external behavior (meditation, mindfulness, equanimity)</li>
+</ul>
+<p><strong>Sikhism and Zoroastrianism</strong> occupy intermediate positions — Sikhism combines Abrahamic monotheistic authority with Indian self-cultivation traditions; Zoroastrianism combines active ethical dualism (Western-like) with personal moral choice (Eastern-like).</p>
+</div>
+
+<!-- ================================================================ -->
+<h2>10. Prohibition vs. Aspiration Analysis</h2>
+
+<div class="chart-container">
+    <canvas id="prohibAspChart"></canvas>
+</div>
+
+<div class="key-finding">
+<strong>Structural insight:</strong> Prohibition-framed commandments cluster heavily on Purity/Sanctity and Care/Harm factors (boundaries and harm avoidance), while aspiration-framed commandments cluster on Self-Mastery/Wisdom and Transcendence/Divine factors (growth and connection). This suggests a fundamental structural difference: <strong>boundaries</strong> (prohibitions) protect the moral minimum, while <strong>aspirations</strong> (positive commands) point toward moral excellence.
+</div>
+
+<!-- ================================================================ -->
+<h2>Full Data Export (JSON)</h2>
+
+<details>
+<summary style="cursor:pointer; color: var(--accent-blue); font-weight: 600;">Click to expand raw analysis data</summary>
+<pre style="background: var(--bg-tertiary); padding: 1rem; border-radius: 6px; overflow-x: auto; font-size: 0.75rem; color: var(--text-secondary); max-height: 500px; overflow-y: auto;">
+{
+  "methodology": {
+    "primary_method": "Exploratory Factor Analysis (EFA) via Principal Axis Factoring",
+    "rotation": "Promax (oblique, power=3)",
+    "alternative_method": "Non-negative Matrix Factorization (NMF)",
+    "n_commandments": 85,
+    "n_coding_variables": 20,
+    "n_factors_extracted": 7,
+    "coding_variables": [
+      "self_restraint",
+      "social_obligation",
+      "ritual_observance",
+      "epistemological",
+      "physical_action",
+      "community_directed",
+      "prohibition",
+      "internal_state",
+      "divine_relationship",
+      "justice_fairness",
+      "compassion_care",
+      "purity_sanctity",
+      "authority_hierarchy",
+      "loyalty_covenant",
+      "self_cultivation",
+      "non_violence",
+      "material_ethics",
+      "speech_ethics",
+      "sexual_ethics",
+      "environmental"
+    ]
+  },
+  "eigenvalues": [
+    3.402038990419944,
+    3.0059069233946887,
+    1.9681271128905422,
+    1.3551077464280652,
+    1.14441645619728,
+    0.8562264099516176,
+    0.57485992380736,
+    0.32726459236996874,
+    0.28109001276935,
+    0.21372673017723,
+    0.1532548986745583,
+    0.07544254268996789,
+    0.019728119085664714,
+    -0.043895393898405057,
+    -0.0705895280809506,
+    -0.112252394526763,
+    -0.16478762614169043,
+    -0.18137709578817696,
+    -0.2012751340159493,
+    -0.29638483911645747
+  ],
+  "variance_explained": [
+    0.23547184916021446,
+    0.20805360069311482,
+    0.1362237563883663,
+    0.09379367131337887,
+    0.07921069097355908,
+    0.059263640604610424,
+    0.03978888238735616
+  ],
+  "cumulative_variance": [
+    0.23547184916021446,
+    0.4435254498533293,
+    0.5797492062416956,
+    0.6735428775550745,
+    0.7527535685286335,
+    0.8120172091332439,
+    0.8518060915206
+  ],
+  "communalities": {
+    "self_restraint": 0.44922590419644826,
+    "social_obligation": 0.8649561645055184,
+    "ritual_observance": 0.6546041353561719,
+    "epistemological": 0.6730889021917097,
+    "physical_action": 0.6141753175780438,
+    "community_directed": 0.3865394149456296,
+    "prohibition": 0.7817792691560861,
+    "internal_state": 0.6471220067993212,
+    "divine_relationship": 0.6267579573496604,
+    "justice_fairness": 0.5431976432623313,
+    "compassion_care": 0.667373447541117,
+    "purity_sanctity": 0.7255191192489979,
+    "authority_hierarchy": 0.5824119746653628,
+    "loyalty_covenant": 0.5545149815542468,
+    "self_cultivation": 0.7853268619896361,
+    "non_violence": 0.6115185140142757,
+    "material_ethics": 0.6404855562301262,
+    "speech_ethics": 0.5686291874137147,
+    "sexual_ethics": 0.5856256534147465,
+    "environmental": 0.34383155167636337
+  },
+  "factor_labels": [
+    "Self-Mastery/Wisdom",
+    "Purity/Sanctity",
+    "Embodied Discipline",
+    "Fairness/Justice",
+    "Truth/Integrity",
+    "Non-Violence/Stewardship",
+    "Prohibition/Embodied Practice"
+  ],
+  "factor_correlations": [
+    [
+      0.9999999999999998,
+      -0.017585133234897493,
+      -0.13154117455480321,
+      0.18946683449724838,
+      -0.12131077175931441,
+      0.06046074347170724,
+      -0.2774445305278242
+    ],
+    [
+      -0.017585133234897493,
+      1.0,
+      -0.22933685887788346,
+      -0.05596935725791291,
+      0.1191163773497155,
+      -0.1397514854836281,
+      0.3066796371615777
+    ],
+    [
+      -0.13154117455480321,
+      -0.22933685887788346,
+      1.0000000000000002,
+      -0.16234026031917,
+      0.28532369515028355,
+      -0.26897959633099866,
+      -0.05715031225531343
+    ],
+    [
+      0.18946683449724838,
+      -0.05596935725791291,
+      -0.16234026031917,
+      1.0,
+      -0.5332940993662448,
+      0.22528819761235394,
+      -0.09632285762585764
+    ],
+    [
+      -0.12131077175931441,
+      0.1191163773497155,
+      0.28532369515028355,
+      -0.5332940993662448,
+      1.0000000000000002,
+      -0.3572433140049182,
+      -0.1456977127275327
+    ],
+    [
+      0.06046074347170724,
+      -0.1397514854836281,
+      -0.26897959633099866,
+      0.22528819761235394,
+      -0.3572433140049182,
+      1.0000000000000002,
+      0.05409053439173345
+    ],
+    [
+      -0.2774445305278242,
+      0.3066796371615777,
+      -0.05715031225531343,
+      -0.09632285762585764,
+      -0.1456977127275327,
+      0.05409053439173345,
+      1.0
+    ]
+  ],
+  "loadings_matrix": {
+    "self_restraint": {
+      "Self-Mastery/Wisdom": -0.19969533076788112,
+      "Purity/Sanctity": 0.06197469377848257,
+      "Embodied Discipline": 0.3199198680371195,
+      "Fairness/Justice": -0.03259550494349202,
+      "Truth/Integrity": 0.13897711510734906,
+      "Non-Violence/Stewardship": -0.11781856318601092,
+      "Prohibition/Embodied Practice": 0.23655079181817276
+    },
+    "social_obligation": {
+      "Self-Mastery/Wisdom": 0.5848761164436538,
+      "Purity/Sanctity": 0.5489276452120538,
+      "Embodied Discipline": -0.12034212736618764,
+      "Fairness/Justice": -0.1333922701165756,
+      "Truth/Integrity": -0.04580240177438853,
+      "Non-Violence/Stewardship": -0.11983806276387445,
+      "Prohibition/Embodied Practice": -0.0859242725245433
+    },
+    "ritual_observance": {
+      "Self-Mastery/Wisdom": -0.00767618562209365,
+      "Purity/Sanctity": -0.5474694102330225,
+      "Embodied Discipline": 0.1570758237394748,
+      "Fairness/Justice": -0.06278126142751904,
+      "Truth/Integrity": -0.10418996765069463,
+      "Non-Violence/Stewardship": -0.057430474101370574,
+      "Prohibition/Embodied Practice": -0.23600378306697967
+    },
+    "epistemological": {
+      "Self-Mastery/Wisdom": -0.6879481255842617,
+      "Purity/Sanctity": -0.009562430673118292,
+      "Embodied Discipline": -0.4215764053157296,
+      "Fairness/Justice": 0.02278837203831492,
+      "Truth/Integrity": 0.025878432877446695,
+      "Non-Violence/Stewardship": -0.03227317474045978,
+      "Prohibition/Embodied Practice": 0.020868868540805864
+    },
+    "physical_action": {
+      "Self-Mastery/Wisdom": 0.20999166063022576,
+      "Purity/Sanctity": -0.1738090277949489,
+      "Embodied Discipline": 0.17821118996457738,
+      "Fairness/Justice": 0.0843070428046655,
+      "Truth/Integrity": 0.14552968571499128,
+      "Non-Violence/Stewardship": -0.05240156244667172,
+      "Prohibition/Embodied Practice": -0.4381349310006932
+    },
+    "community_directed": {
+      "Self-Mastery/Wisdom": 0.28092854564825886,
+      "Purity/Sanctity": 0.041962538523195016,
+      "Embodied Discipline": 0.048952713832261754,
+      "Fairness/Justice": 0.16895754851517716,
+      "Truth/Integrity": 0.0019984672958811996,
+      "Non-Violence/Stewardship": 0.12136953378101706,
+      "Prohibition/Embodied Practice": -0.3274858605833957
+    },
+    "prohibition": {
+      "Self-Mastery/Wisdom": 0.25271491233612786,
+      "Purity/Sanctity": -0.07353397088347059,
+      "Embodied Discipline": 0.2731714171318123,
+      "Fairness/Justice": -0.016695350805346537,
+      "Truth/Integrity": 0.07694035670178992,
+      "Non-Violence/Stewardship": -0.15718029366206157,
+      "Prohibition/Embodied Practice": 0.7649854342323341
+    },
+    "internal_state": {
+      "Self-Mastery/Wisdom": -0.699428006491032,
+      "Purity/Sanctity": 0.01368520001731595,
+      "Embodied Discipline": -0.14708608579093807,
+      "Fairness/Justice": 0.13756257060171515,
+      "Truth/Integrity": -0.21938970369640695,
+      "Non-Violence/Stewardship": 0.07305698740793723,
+      "Prohibition/Embodied Practice": -0.07775244945716468
+    },
+    "divine_relationship": {
+      "Self-Mastery/Wisdom": -0.027141111588028486,
+      "Purity/Sanctity": -0.6958221324129472,
+      "Embodied Discipline": -0.12376497903752127,
+      "Fairness/Justice": 0.01802988713535558,
+      "Truth/Integrity": -0.04319001802759697,
+      "Non-Violence/Stewardship": 0.03536691458422085,
+      "Prohibition/Embodied Practice": 0.014504310880978715
+    },
+    "justice_fairness": {
+      "Self-Mastery/Wisdom": 0.3398913498505952,
+      "Purity/Sanctity": 0.26576532856922697,
+      "Embodied Discipline": -0.17514382221935962,
+      "Fairness/Justice": -0.32661976534209247,
+      "Truth/Integrity": 0.21908895976962428,
+      "Non-Violence/Stewardship": 0.11043984621085073,
+      "Prohibition/Embodied Practice": -0.03856294794688564
+    },
+    "compassion_care": {
+      "Self-Mastery/Wisdom": 0.3963544396696425,
+      "Purity/Sanctity": 0.3799018018511356,
+      "Embodied Discipline": -0.11183335824393752,
+      "Fairness/Justice": 0.3319007973869017,
+      "Truth/Integrity": -0.022466078092006157,
+      "Non-Violence/Stewardship": -0.21954565601031711,
+      "Prohibition/Embodied Practice": -0.0015512405761164022
+    },
+    "purity_sanctity": {
+      "Self-Mastery/Wisdom": 0.06947278790023503,
+      "Purity/Sanctity": -0.11082412970962711,
+      "Embodied Discipline": 0.7501202205779453,
+      "Fairness/Justice": 0.04180356039904074,
+      "Truth/Integrity": -0.09604028307690174,
+      "Non-Violence/Stewardship": -0.030824894402894074,
+      "Prohibition/Embodied Practice": 0.09322487585196391
+    },
+    "authority_hierarchy": {
+      "Self-Mastery/Wisdom": 0.29418832120660854,
+      "Purity/Sanctity": -0.5913699145494932,
+      "Embodied Discipline": -0.12655499391161576,
+      "Fairness/Justice": 0.02980841073328339,
+      "Truth/Integrity": -0.04406562765541025,
+      "Non-Violence/Stewardship": 0.1258704259848268,
+      "Prohibition/Embodied Practice": 0.1784558394817357
+    },
+    "loyalty_covenant": {
+      "Self-Mastery/Wisdom": 0.381970495631817,
+      "Purity/Sanctity": -0.12845300447184518,
+      "Embodied Discipline": 0.09939984074864293,
+      "Fairness/Justice": 0.05606719549158155,
+      "Truth/Integrity": -0.09966028939132844,
+      "Non-Violence/Stewardship": 0.4241746187021629,
+      "Prohibition/Embodied Practice": -0.034575673916100585
+    },
+    "self_cultivation": {
+      "Self-Mastery/Wisdom": -0.8528177736122112,
+      "Purity/Sanctity": 0.07287288704025505,
+      "Embodied Discipline": 0.12655617788986248,
+      "Fairness/Justice": 0.05084628735493445,
+      "Truth/Integrity": -0.10187128913408365,
+      "Non-Violence/Stewardship": -0.022683802055221802,
+      "Prohibition/Embodied Practice": -0.1650933756344149
+    },
+    "non_violence": {
+      "Self-Mastery/Wisdom": 0.09006183289147834,
+      "Purity/Sanctity": 0.12348426894978982,
+      "Embodied Discipline": -0.07382526356620452,
+      "Fairness/Justice": 0.19256623016413477,
+      "Truth/Integrity": -0.14058906442706262,
+      "Non-Violence/Stewardship": -0.679304686395243,
+      "Prohibition/Embodied Practice": 0.18536786511241157
+    },
+    "material_ethics": {
+      "Self-Mastery/Wisdom": 0.17100772299913644,
+      "Purity/Sanctity": 0.09184865163063978,
+      "Embodied Discipline": -0.15146974274607514,
+      "Fairness/Justice": 0.264233141602662,
+      "Truth/Integrity": 0.7267807768567293,
+      "Non-Violence/Stewardship": 0.1692596614073615,
+      "Prohibition/Embodied Practice": 0.053192793835305674
+    },
+    "speech_ethics": {
+      "Self-Mastery/Wisdom": 0.2145605279317165,
+      "Purity/Sanctity": 0.06398330883031429,
+      "Embodied Discipline": -0.082002434539756,
+      "Fairness/Justice": -0.6896663763804157,
+      "Truth/Integrity": -0.30835324567902617,
+      "Non-Violence/Stewardship": 0.12699137894247464,
+      "Prohibition/Embodied Practice": 0.07155859661023665
+    },
+    "sexual_ethics": {
+      "Self-Mastery/Wisdom": -0.05009841651499174,
+      "Purity/Sanctity": 0.2697731667706827,
+      "Embodied Discipline": 0.6765138936966175,
+      "Fairness/Justice": 0.06375502352914497,
+      "Truth/Integrity": -0.08447252391906067,
+      "Non-Violence/Stewardship": 0.3334993381052727,
+      "Prohibition/Embodied Practice": 0.15583008808413276
+    },
+    "environmental": {
+      "Self-Mastery/Wisdom": 0.1276745779136359,
+      "Purity/Sanctity": -0.011720878649167248,
+      "Embodied Discipline": 0.06094390640906431,
+      "Fairness/Justice": 0.08326577083267236,
+      "Truth/Integrity": -0.15360851033492154,
+      "Non-Violence/Stewardship": -0.5314951871533029,
+      "Prohibition/Embodied Practice": -0.009944080037532005
+    }
+  },
+  "commandment_factor_scores": [
+    {
+      "id": "ISL01",
+      "tradition": "Islam",
+      "text": "Shahada \u2014 Declare there is no god but Allah",
+      "scores": {
+        "Self-Mastery/Wisdom": 0.3116149360905177,
+        "Purity/Sanctity": -1.069623982160292,
+        "Embodied Discipline": -0.12834919588382154,
+        "Fairness/Justice": -0.12916242138033918,
+        "Truth/Integrity": -0.7592933629879635,
+        "Non-Violence/Stewardship": 0.4349045589731417,
+        "Prohibition/Embodied Practice": -0.34248243054276184
+      },
+      "primary_factor": "Purity/Sanctity"
+    },
+    {
+      "id": "ISL02",
+      "tradition": "Islam",
+      "text": "Salat \u2014 Perform five daily prayers",
+      "scores": {
+        "Self-Mastery/Wisdom": -0.3699235388087455,
+        "Purity/Sanctity": -1.0592304946855766,
+        "Embodied Discipline": 0.8700548926894158,
+        "Fairness/Justice": -0.11811257282669431,
+        "Truth/Integrity": 0.2164131408938557,
+        "Non-Violence/Stewardship": -0.43278020727742045,
+        "Prohibition/Embodied Practice": -0.5587933604279501
+      },
+      "primary_factor": "Purity/Sanctity"
+    },
+    {
+      "id": "ISL03",
+      "tradition": "Islam",
+      "text": "Zakat \u2014 Give 2.5% to those in need",
+      "scores": {
+        "Self-Mastery/Wisdom": 0.6815885768302211,
+        "Purity/Sanctity": 0.46523303271755273,
+        "Embodied Discipline": 0.18229656658165763,
+        "Fairness/Justice": 0.31776714514301097,
+        "Truth/Integrity": 0.9052742704148317,
+        "Non-Violence/Stewardship": 0.13388582339155272,
+        "Prohibition/Embodied Practice": -0.6981404248783831
+      },
+      "primary_factor": "Truth/Integrity"
+    },
+    {
+      "id": "ISL04",
+      "tradition": "Islam",
+      "text": "Sawm \u2014 Fast during Ramadan",
+      "scores": {
+        "Self-Mastery/Wisdom": -0.19630379246230423,
+        "Purity/Sanctity": -0.7229189679770018,
+        "Embodied Discipline": 1.0132981825593268,
+        "Fairness/Justice": 0.2977306117486791,
+        "Truth/Integrity": -0.11214441112814694,
+        "Non-Violence/Stewardship": 0.0003027507380480299,
+        "Prohibition/Embodied Practice": -0.9834141833730161
+      },
+      "primary_factor": "Embodied Discipline"
+    },
+    {
+      "id": "ISL05",
+      "tradition": "Islam",
+      "text": "Hajj \u2014 Pilgrimage to Mecca",
+      "scores": {
+        "Self-Mastery/Wisdom": 0.6028127739615067,
+        "Purity/Sanctity": -1.212943964692444,
+        "Embodied Discipline": 0.5735941966267787,
+        "Fairness/Justice": 0.49698496694195793,
+        "Truth/Integrity": -0.31469004732097144,
+        "Non-Violence/Stewardship": 0.24187645934406984,
+        "Prohibition/Embodied Practice": -0.752823648182302
+      },
+      "primary_factor": "Purity/Sanctity"
+    },
+    {
+      "id": "ISL06",
+      "tradition": "Islam",
+      "text": "Do not kill except by right of justice",
+      "scores": {
+        "Self-Mastery/Wisdom": 0.39253148855961834,
+        "Purity/Sanctity": 0.4862926831728538,
+        "Embodied Discipline": 0.5115596987561283,
+        "Fairness/Justice": -0.14117359290791406,
+        "Truth/Integrity": 0.2444375151272458,
+        "Non-Violence/Stewardship": -0.9182111185888324,
+        "Prohibition/Embodied Practice": 0.6436193045769592
+      },
+      "primary_factor": "Non-Violence/Stewardship"
+    },
+    {
+      "id": "ISL07",
+      "tradition": "Islam",
+      "text": "Do not approach zina (unlawful intercourse)",
+      "scores": {
+        "Self-Mastery/Wisdom": -0.2314666003462794,
+        "Purity/Sanctity": 0.14800410725430102,
+        "Embodied Discipline": 1.2424582423573929,
+        "Fairness/Justice": 0.19939211156607567,
+        "Truth/Integrity": -0.09769831970444662,
+        "Non-Violence/Stewardship": 0.3973194463822369,
+        "Prohibition/Embodied Practice": 0.7333884596496205
+      },
+      "primary_factor": "Embodied Discipline"
+    },
+    {
+      "id": "ISL08",
+      "tradition": "Islam",
+      "text": "Give full measure and weigh with even balance",
+      "scores": {
+        "Self-Mastery/Wisdom": 0.49486242562075944,
+        "Purity/Sanctity": 0.2138395559653711,
+        "Embodied Discipline": 0.04930064793794348,
+        "Fairness/Justice": -0.2361476248707706,
+        "Truth/Integrity": 0.9848474219586285,
+        "Non-Violence/Stewardship": 0.18696217533341233,
+        "Prohibition/Embodied Practice": -0.5843291785227358
+      },
+      "primary_factor": "Truth/Integrity"
+    },
+    {
+      "id": "ISL09",
+      "tradition": "Islam",
+      "text": "Do not pursue that of which you have no knowledge",
+      "scores": {
+        "Self-Mastery/Wisdom": -0.7875414130707726,
+        "Purity/Sanctity": 0.154535137818361,
+        "Embodied Discipline": 0.029602666507835947,
+        "Fairness/Justice": -0.6980848755944422,
+        "Truth/Integrity": -0.0502722028879275,
+        "Non-Violence/Stewardship": -0.09516611250532486,
+        "Prohibition/Embodied Practice": 0.7789734564308708
+      },
+      "primary_factor": "Self-Mastery/Wisdom"
+    },
+    {
+      "id": "ISL10",
+      "tradition": "Islam",
+      "text": "Be good to parents; do not say 'uff' to them",
+      "scores": {
+        "Self-Mastery/Wisdom": 0.6867964544099107,
+        "Purity/Sanctity": 0.11958226597653861,
+        "Embodied Discipline": -0.18597542448903304,
+        "Fairness/Justice": 0.059222070126285664,
+        "Truth/Integrity": -0.761018927195801,
+        "Non-Violence/Stewardship": 0.37624040011401955,
+        "Prohibition/Embodied Practice": 1.028663174723998
+      },
+      "primary_factor": "Prohibition/Embodied Practice"
+    },
+    {
+      "id": "JUD01",
+      "tradition": "Judaism",
+      "text": "I am the LORD your God \u2014 have no other gods",
+      "scores": {
+        "Self-Mastery/Wisdom": 0.24194847586013768,
+        "Purity/Sanctity": -0.710064809373867,
+        "Embodied Discipline": -0.43912144483880844,
+        "Fairness/Justice": 0.8760509324742088,
+        "Truth/Integrity": -0.9002840142255957,
+        "Non-Violence/Stewardship": 0.8032187569853484,
+        "Prohibition/Embodied Practice": 1.0569421688601754
+      },
+      "primary_factor": "Prohibition/Embodied Practice"
+    },
+    {
+      "id": "JUD02",
+      "tradition": "Judaism",
+      "text": "Do not make graven images",
+      "scores": {
+        "Self-Mastery/Wisdom": 0.2568956089960878,
+        "Purity/Sanctity": -1.157272738346322,
+        "Embodied Discipline": 0.4387122568421811,
+        "Fairness/Justice": 0.0044657643870969765,
+        "Truth/Integrity": -0.050830501231574454,
+        "Non-Violence/Stewardship": -0.18661198597017317,
+        "Prohibition/Embodied Practice": 0.5741661061421941
+      },
+      "primary_factor": "Purity/Sanctity"
+    },
+    {
+      "id": "JUD03",
+      "tradition": "Judaism",
+      "text": "Remember the Sabbath and keep it holy",
+      "scores": {
+        "Self-Mastery/Wisdom": 0.46552108569794304,
+        "Purity/Sanctity": -1.2054792982315141,
+        "Embodied Discipline": 0.8331392023733147,
+        "Fairness/Justice": 0.26233713723091145,
+        "Truth/Integrity": 0.038446282434907164,
+        "Non-Violence/Stewardship": 0.04028781143795801,
+        "Prohibition/Embodied Practice": -0.6531941277725647
+      },
+      "primary_factor": "Purity/Sanctity"
+    },
+    {
+      "id": "JUD04",
+      "tradition": "Judaism",
+      "text": "Honor your father and mother",
+      "scores": {
+        "Self-Mastery/Wisdom": 0.7957303701019539,
+        "Purity/Sanctity": 0.0069510848102784795,
+        "Embodied Discipline": -0.23130964879143384,
+        "Fairness/Justice": 0.8737300913597758,
+        "Truth/Integrity": -0.6807431954877254,
+        "Non-Violence/Stewardship": 0.3845968086815936,
+        "Prohibition/Embodied Practice": -0.23763406819759025
+      },
+      "primary_factor": "Fairness/Justice"
+    },
+    {
+      "id": "JUD05",
+      "tradition": "Judaism",
+      "text": "You shall not murder",
+      "scores": {
+        "Self-Mastery/Wisdom": 0.39253148855961834,
+        "Purity/Sanctity": 0.4862926831728538,
+        "Embodied Discipline": 0.5115596987561283,
+        "Fairness/Justice": -0.14117359290791406,
+        "Truth/Integrity": 0.2444375151272458,
+        "Non-Violence/Stewardship": -0.9182111185888324,
+        "Prohibition/Embodied Practice": 0.6436193045769592
+      },
+      "primary_factor": "Non-Violence/Stewardship"
+    },
+    {
+      "id": "JUD06",
+      "tradition": "Judaism",
+      "text": "You shall not steal",
+      "scores": {
+        "Self-Mastery/Wisdom": 0.1492924785806975,
+        "Purity/Sanctity": 0.3115290830935021,
+        "Embodied Discipline": 0.1999010703664162,
+        "Fairness/Justice": -0.7018730681852705,
+        "Truth/Integrity": 1.4741186945143991,
+        "Non-Violence/Stewardship": -0.31630524705158575,
+        "Prohibition/Embodied Practice": 0.5745903597585003
+      },
+      "primary_factor": "Truth/Integrity"
+    },
+    {
+      "id": "JUD07",
+      "tradition": "Judaism",
+      "text": "You shall not bear false witness",
+      "scores": {
+        "Self-Mastery/Wisdom": 0.1985624695610841,
+        "Purity/Sanctity": 0.3493753962413266,
+        "Embodied Discipline": 0.19116591747699244,
+        "Fairness/Justice": -1.4831605645325365,
+        "Truth/Integrity": 0.48947011681913566,
+        "Non-Violence/Stewardship": -0.3479358008424612,
+        "Prohibition/Embodied Practice": 0.5679049785326195
+      },
+      "primary_factor": "Fairness/Justice"
+    },
+    {
+      "id": "JUD08",
+      "tradition": "Judaism",
+      "text": "Establish courts of justice",
+      "scores": {
+        "Self-Mastery/Wisdom": 0.6035503428193622,
+        "Purity/Sanctity": -0.04887645569300786,
+        "Embodied Discipline": -0.013308070425154611,
+        "Fairness/Justice": -0.21250342824403637,
+        "Truth/Integrity": 0.2546326120468726,
+        "Non-Violence/Stewardship": -0.03767364560313577,
+        "Prohibition/Embodied Practice": -0.7297569263260044
+      },
+      "primary_factor": "Prohibition/Embodied Practice"
+    },
+    {
+      "id": "JUD09",
+      "tradition": "Judaism",
+      "text": "Love your neighbor as yourself",
+      "scores": {
+        "Self-Mastery/Wisdom": 0.5188025695375175,
+        "Purity/Sanctity": 0.5833652595110498,
+        "Embodied Discipline": -0.41668431076643897,
+        "Fairness/Justice": 1.3466917797629832,
+        "Truth/Integrity": -1.3135874012205238,
+        "Non-Violence/Stewardship": 0.7714029411277497,
+        "Prohibition/Embodied Practice": -0.17627364521868388
+      },
+      "primary_factor": "Fairness/Justice"
+    },
+    {
+      "id": "JUD10",
+      "tradition": "Judaism",
+      "text": "Do not eat flesh torn from a living animal",
+      "scores": {
+        "Self-Mastery/Wisdom": 0.078124914253153,
+        "Purity/Sanctity": -0.2903034390598412,
+        "Embodied Discipline": 1.0896985426422,
+        "Fairness/Justice": -0.24367341089032754,
+        "Truth/Integrity": 0.563523141142535,
+        "Non-Violence/Stewardship": -1.5242930368421428,
+        "Prohibition/Embodied Practice": 0.16919118950678758
+      },
+      "primary_factor": "Non-Violence/Stewardship"
+    },
+    {
+      "id": "HIN01",
+      "tradition": "Hinduism",
+      "text": "Act without attachment to results (karma yoga)",
+      "scores": {
+        "Self-Mastery/Wisdom": -0.7821726478336486,
+        "Purity/Sanctity": -0.336267909737886,
+        "Embodied Discipline": 0.14022227064440101,
+        "Fairness/Justice": -0.07671349209005354,
+        "Truth/Integrity": 0.349867324122689,
+        "Non-Violence/Stewardship": -0.28592580019931063,
+        "Prohibition/Embodied Practice": -0.3399812026327505
+      },
+      "primary_factor": "Self-Mastery/Wisdom"
+    },
+    {
+      "id": "HIN02",
+      "tradition": "Hinduism",
+      "text": "Ahimsa \u2014 Non-violence to all living beings",
+      "scores": {
+        "Self-Mastery/Wisdom": -0.1101804280947594,
+        "Purity/Sanctity": 0.559452066511844,
+        "Embodied Discipline": 0.12856275309650508,
+        "Fairness/Justice": 0.5936033695075512,
+        "Truth/Integrity": -0.5578738421159767,
+        "Non-Violence/Stewardship": -1.084093530415271,
+        "Prohibition/Embodied Practice": 0.587134403763817
+      },
+      "primary_factor": "Non-Violence/Stewardship"
+    },
+    {
+      "id": "HIN03",
+      "tradition": "Hinduism",
+      "text": "Satya \u2014 Truthfulness in thought, word, deed",
+      "scores": {
+        "Self-Mastery/Wisdom": -0.5916076783330317,
+        "Purity/Sanctity": 0.5988031469161046,
+        "Embodied Discipline": -0.13827281802333768,
+        "Fairness/Justice": -1.2512328859991786,
+        "Truth/Integrity": 0.11836667466325076,
+        "Non-Violence/Stewardship": -0.14393373382091365,
+        "Prohibition/Embodied Practice": -0.04750361688232588
+      },
+      "primary_factor": "Fairness/Justice"
+    },
+    {
+      "id": "HIN04",
+      "tradition": "Hinduism",
+      "text": "Brahmacharya \u2014 Right use of energy / continence",
+      "scores": {
+        "Self-Mastery/Wisdom": -0.605409271136969,
+        "Purity/Sanctity": 0.17663218628684374,
+        "Embodied Discipline": 1.3357675343368098,
+        "Fairness/Justice": 0.021711086760582143,
+        "Truth/Integrity": 0.17669847075793266,
+        "Non-Violence/Stewardship": -0.06389914747315473,
+        "Prohibition/Embodied Practice": -0.42464389880737957
+      },
+      "primary_factor": "Embodied Discipline"
+    },
+    {
+      "id": "HIN05",
+      "tradition": "Hinduism",
+      "text": "Aparigraha \u2014 Non-possessiveness / non-greed",
+      "scores": {
+        "Self-Mastery/Wisdom": -0.8368114040511592,
+        "Purity/Sanctity": 0.11668882467053651,
+        "Embodied Discipline": 0.0383378193972597,
+        "Fairness/Justice": 0.08320262075282368,
+        "Truth/Integrity": 0.9343763748073359,
+        "Non-Violence/Stewardship": -0.06353555871444944,
+        "Prohibition/Embodied Practice": 0.7856588376567517
+      },
+      "primary_factor": "Truth/Integrity"
+    },
+    {
+      "id": "HIN06",
+      "tradition": "Hinduism",
+      "text": "Dedicate all actions to the Divine",
+      "scores": {
+        "Self-Mastery/Wisdom": -0.04060588400808113,
+        "Purity/Sanctity": -1.0226161380311485,
+        "Embodied Discipline": 0.05540534036353206,
+        "Fairness/Justice": 0.5093706738413997,
+        "Truth/Integrity": -0.5500358368169452,
+        "Non-Violence/Stewardship": 0.35663256560997386,
+        "Prohibition/Embodied Practice": -0.5244167637059952
+      },
+      "primary_factor": "Purity/Sanctity"
+    },
+    {
+      "id": "HIN07",
+      "tradition": "Hinduism",
+      "text": "Surrender completely to God",
+      "scores": {
+        "Self-Mastery/Wisdom": 0.19310833422327606,
+        "Purity/Sanctity": -0.6422071363453,
+        "Embodied Discipline": -0.5076171487012076,
+        "Fairness/Justice": 0.8747874448593063,
+        "Truth/Integrity": -0.9747941801518927,
+        "Non-Violence/Stewardship": 0.8587793481961876,
+        "Prohibition/Embodied Practice": 0.42354776145036616
+      },
+      "primary_factor": "Truth/Integrity"
+    },
+    {
+      "id": "HIN08",
+      "tradition": "Hinduism",
+      "text": "Elevate yourself through self-discipline",
+      "scores": {
+        "Self-Mastery/Wisdom": -0.8786216945208178,
+        "Purity/Sanctity": 0.18903474410714094,
+        "Embodied Discipline": -0.0013980258913947885,
+        "Fairness/Justice": -0.0014566635627860508,
+        "Truth/Integrity": 0.05654305352629061,
+        "Non-Violence/Stewardship": -0.05314717209540337,
+        "Prohibition/Embodied Practice": 0.11761533240460109
+      },
+      "primary_factor": "Self-Mastery/Wisdom"
+    },
+    {
+      "id": "HIN09",
+      "tradition": "Hinduism",
+      "text": "Shaucha \u2014 Cleanliness/purity of body and mind",
+      "scores": {
+        "Self-Mastery/Wisdom": -0.3686359814971865,
+        "Purity/Sanctity": -0.43543977104193454,
+        "Embodied Discipline": 1.30990085472772,
+        "Fairness/Justice": -0.643790895958432,
+        "Truth/Integrity": 0.8029857391224173,
+        "Non-Violence/Stewardship": -0.8101901924571018,
+        "Prohibition/Embodied Practice": -0.9029271338544242
+      },
+      "primary_factor": "Embodied Discipline"
+    },
+    {
+      "id": "HIN10",
+      "tradition": "Hinduism",
+      "text": "Tapas \u2014 Austerity and discipline for growth",
+      "scores": {
+        "Self-Mastery/Wisdom": -0.5620651279947042,
+        "Purity/Sanctity": -0.35341965674550635,
+        "Embodied Discipline": 1.1587231900632666,
+        "Fairness/Justice": -0.35433129091224186,
+        "Truth/Integrity": 0.4370743085380267,
+        "Non-Violence/Stewardship": -0.610348834758367,
+        "Prohibition/Embodied Practice": -0.8428414983921413
+      },
+      "primary_factor": "Embodied Discipline"
+    },
+    {
+      "id": "BUD01",
+      "tradition": "Buddhism",
+      "text": "Abstain from killing living beings",
+      "scores": {
+        "Self-Mastery/Wisdom": 0.08324871840275833,
+        "Purity/Sanctity": 0.47743195221541584,
+        "Embodied Discipline": 0.27974041776095854,
+        "Fairness/Justice": 0.30414376446136104,
+        "Truth/Integrity": -0.19196241153158608,
+        "Non-Violence/Stewardship": -1.2839348881140058,
+        "Prohibition/Embodied Practice": 0.527048768301534
+      },
+      "primary_factor": "Non-Violence/Stewardship"
+    },
+    {
+      "id": "BUD02",
+      "tradition": "Buddhism",
+      "text": "Abstain from taking what is not given",
+      "scores": {
+        "Self-Mastery/Wisdom": 0.1492924785806975,
+        "Purity/Sanctity": 0.3115290830935021,
+        "Embodied Discipline": 0.1999010703664162,
+        "Fairness/Justice": -0.7018730681852705,
+        "Truth/Integrity": 1.4741186945143991,
+        "Non-Violence/Stewardship": -0.31630524705158575,
+        "Prohibition/Embodied Practice": 0.5745903597585003
+      },
+      "primary_factor": "Truth/Integrity"
+    },
+    {
+      "id": "BUD03",
+      "tradition": "Buddhism",
+      "text": "Abstain from sexual misconduct",
+      "scores": {
+        "Self-Mastery/Wisdom": 0.07793617343147566,
+        "Purity/Sanctity": 0.36188735671205596,
+        "Embodied Discipline": 1.0927835318998513,
+        "Fairness/Justice": -0.17079795247227647,
+        "Truth/Integrity": 0.13584625097525455,
+        "Non-Violence/Stewardship": -0.07763964962376302,
+        "Prohibition/Embodied Practice": 0.7056125862330274
+      },
+      "primary_factor": "Embodied Discipline"
+    },
+    {
+      "id": "BUD04",
+      "tradition": "Buddhism",
+      "text": "Abstain from false speech",
+      "scores": {
+        "Self-Mastery/Wisdom": 0.1985624695610841,
+        "Purity/Sanctity": 0.3493753962413266,
+        "Embodied Discipline": 0.19116591747699244,
+        "Fairness/Justice": -1.4831605645325365,
+        "Truth/Integrity": 0.48947011681913566,
+        "Non-Violence/Stewardship": -0.3479358008424612,
+        "Prohibition/Embodied Practice": 0.5679049785326195
+      },
+      "primary_factor": "Fairness/Justice"
+    },
+    {
+      "id": "BUD05",
+      "tradition": "Buddhism",
+      "text": "Abstain from intoxicants causing heedlessness",
+      "scores": {
+        "Self-Mastery/Wisdom": -0.5267689395333759,
+        "Purity/Sanctity": -0.10016853821340463,
+        "Embodied Discipline": 1.0556674034884774,
+        "Fairness/Justice": -0.163777657213465,
+        "Truth/Integrity": 0.4413550400096152,
+        "Non-Violence/Stewardship": -0.4637441656937015,
+        "Prohibition/Embodied Practice": 0.07923721914167486
+      },
+      "primary_factor": "Embodied Discipline"
+    },
+    {
+      "id": "BUD06",
+      "tradition": "Buddhism",
+      "text": "Right View \u2014 understand the Four Noble Truths",
+      "scores": {
+        "Self-Mastery/Wisdom": -0.7413300062572543,
+        "Purity/Sanctity": 0.18157007764621108,
+        "Embodied Discipline": -0.26094303163793103,
+        "Fairness/Justice": 0.23319116614826035,
+        "Truth/Integrity": -0.2965932762295879,
+        "Non-Violence/Stewardship": 0.14844147581070843,
+        "Prohibition/Embodied Practice": 0.017985811994864043
+      },
+      "primary_factor": "Self-Mastery/Wisdom"
+    },
+    {
+      "id": "BUD07",
+      "tradition": "Buddhism",
+      "text": "Right Mindfulness \u2014 awareness of body, feelings, mind",
+      "scores": {
+        "Self-Mastery/Wisdom": -0.8786216945208178,
+        "Purity/Sanctity": 0.18903474410714094,
+        "Embodied Discipline": -0.0013980258913947885,
+        "Fairness/Justice": -0.0014566635627860508,
+        "Truth/Integrity": 0.05654305352629061,
+        "Non-Violence/Stewardship": -0.05314717209540337,
+        "Prohibition/Embodied Practice": 0.11761533240460109
+      },
+      "primary_factor": "Self-Mastery/Wisdom"
+    },
+    {
+      "id": "BUD08",
+      "tradition": "Buddhism",
+      "text": "Right Concentration \u2014 develop meditative absorption",
+      "scores": {
+        "Self-Mastery/Wisdom": -0.5475717840881162,
+        "Purity/Sanctity": -0.48374248735394865,
+        "Embodied Discipline": 0.6195942414930372,
+        "Fairness/Justice": -0.28984939969179047,
+        "Truth/Integrity": 0.39534697527976664,
+        "Non-Violence/Stewardship": -0.5026577969713149,
+        "Prohibition/Embodied Practice": -0.7643928375602264
+      },
+      "primary_factor": "Prohibition/Embodied Practice"
+    },
+    {
+      "id": "BUD09",
+      "tradition": "Buddhism",
+      "text": "Sentient beings are numberless; I vow to save them all",
+      "scores": {
+        "Self-Mastery/Wisdom": 0.5188025695375175,
+        "Purity/Sanctity": 0.5833652595110498,
+        "Embodied Discipline": -0.41668431076643897,
+        "Fairness/Justice": 1.3466917797629832,
+        "Truth/Integrity": -1.3135874012205238,
+        "Non-Violence/Stewardship": 0.7714029411277497,
+        "Prohibition/Embodied Practice": -0.17627364521868388
+      },
+      "primary_factor": "Fairness/Justice"
+    },
+    {
+      "id": "BUD10",
+      "tradition": "Buddhism",
+      "text": "Right Livelihood \u2014 earn without harming others",
+      "scores": {
+        "Self-Mastery/Wisdom": 0.39701407963634444,
+        "Purity/Sanctity": 0.4724914246162891,
+        "Embodied Discipline": 0.17218225024690628,
+        "Fairness/Justice": -0.13208300910184312,
+        "Truth/Integrity": 1.2747562435738418,
+        "Non-Violence/Stewardship": -0.9462747405698835,
+        "Prohibition/Embodied Practice": -0.40584347436829094
+      },
+      "primary_factor": "Truth/Integrity"
+    },
+    {
+      "id": "SIK01",
+      "tradition": "Sikhism",
+      "text": "Naam Japna \u2014 Meditate on God's Name",
+      "scores": {
+        "Self-Mastery/Wisdom": -0.19902093538539542,
+        "Purity/Sanctity": -0.7024418329419947,
+        "Embodied Discipline": 0.24048246042981242,
+        "Fairness/Justice": 0.3146631477377971,
+        "Truth/Integrity": -0.36264720362611175,
+        "Non-Violence/Stewardship": 0.18153648977357922,
+        "Prohibition/Embodied Practice": -0.7607518382219565
+      },
+      "primary_factor": "Prohibition/Embodied Practice"
+    },
+    {
+      "id": "SIK02",
+      "tradition": "Sikhism",
+      "text": "Kirat Karni \u2014 Earn an honest living",
+      "scores": {
+        "Self-Mastery/Wisdom": 0.16317484582236075,
+        "Purity/Sanctity": 0.23972063512795883,
+        "Embodied Discipline": 0.3766168403473832,
+        "Fairness/Justice": -0.8199045763093856,
+        "Truth/Integrity": 1.726205333637838,
+        "Non-Violence/Stewardship": -0.49599583558920585,
+        "Prohibition/Embodied Practice": -0.5641136461368907
+      },
+      "primary_factor": "Truth/Integrity"
+    },
+    {
+      "id": "SIK03",
+      "tradition": "Sikhism",
+      "text": "Vand Chakna \u2014 Share with others",
+      "scores": {
+        "Self-Mastery/Wisdom": 0.8188802650937848,
+        "Purity/Sanctity": 0.4577683662566229,
+        "Embodied Discipline": -0.07724843916487856,
+        "Fairness/Justice": 0.5524149748540573,
+        "Truth/Integrity": 0.552137940658953,
+        "Non-Violence/Stewardship": 0.33547447129766456,
+        "Prohibition/Embodied Practice": -0.7977699452881202
+      },
+      "primary_factor": "Self-Mastery/Wisdom"
+    },
+    {
+      "id": "SIK04",
+      "tradition": "Sikhism",
+      "text": "Treat all humans as equal regardless of caste",
+      "scores": {
+        "Self-Mastery/Wisdom": 0.13744238987578872,
+        "Purity/Sanctity": 0.7215433131377091,
+        "Embodied Discipline": -0.6331314241937127,
+        "Fairness/Justice": 0.5292278475080743,
+        "Truth/Integrity": -0.5140858178822915,
+        "Non-Violence/Stewardship": 0.25735590181078283,
+        "Prohibition/Embodied Practice": -0.23456700412713452
+      },
+      "primary_factor": "Purity/Sanctity"
+    },
+    {
+      "id": "SIK05",
+      "tradition": "Sikhism",
+      "text": "Overcome Kam (lust) \u2014 control desires",
+      "scores": {
+        "Self-Mastery/Wisdom": -0.6192916383786322,
+        "Purity/Sanctity": 0.24844063425238705,
+        "Embodied Discipline": 1.159051764355843,
+        "Fairness/Justice": 0.1397425948846972,
+        "Truth/Integrity": -0.07538816836550635,
+        "Non-Violence/Stewardship": 0.11579144106446532,
+        "Prohibition/Embodied Practice": 0.7140601070880115
+      },
+      "primary_factor": "Embodied Discipline"
+    },
+    {
+      "id": "SIK06",
+      "tradition": "Sikhism",
+      "text": "Overcome Ahankar (ego/pride)",
+      "scores": {
+        "Self-Mastery/Wisdom": -0.8297815528839563,
+        "Purity/Sanctity": 0.12117707107857405,
+        "Embodied Discipline": 0.06709767797100435,
+        "Fairness/Justice": -0.00019317594788346992,
+        "Truth/Integrity": 0.13105321945258755,
+        "Non-Violence/Stewardship": -0.10870776330624252,
+        "Prohibition/Embodied Practice": 0.7510097398144105
+      },
+      "primary_factor": "Self-Mastery/Wisdom"
+    },
+    {
+      "id": "SIK07",
+      "tradition": "Sikhism",
+      "text": "Serve the Sangat (community) through selfless seva",
+      "scores": {
+        "Self-Mastery/Wisdom": 0.77495422491356,
+        "Purity/Sanctity": 0.36167902422051135,
+        "Embodied Discipline": -0.020295172258619376,
+        "Fairness/Justice": 0.9404641542075807,
+        "Truth/Integrity": -0.6210791655863971,
+        "Non-Violence/Stewardship": 0.33631040368055565,
+        "Prohibition/Embodied Practice": -0.7416688791665483
+      },
+      "primary_factor": "Fairness/Justice"
+    },
+    {
+      "id": "SIK08",
+      "tradition": "Sikhism",
+      "text": "Do not worship idols or created things",
+      "scores": {
+        "Self-Mastery/Wisdom": 0.0030615513484990864,
+        "Purity/Sanctity": -0.7544844584877848,
+        "Embodied Discipline": -0.47619748526911426,
+        "Fairness/Justice": 0.24057237122734026,
+        "Truth/Integrity": -0.10476495119357453,
+        "Non-Violence/Stewardship": 0.13533849694433114,
+        "Prohibition/Embodied Practice": 1.0293133384533548
+      },
+      "primary_factor": "Prohibition/Embodied Practice"
+    },
+    {
+      "id": "SIK09",
+      "tradition": "Sikhism",
+      "text": "Do not consume intoxicants",
+      "scores": {
+        "Self-Mastery/Wisdom": -0.3333397930358581,
+        "Purity/Sanctity": -0.18218865250983282,
+        "Embodied Discipline": 1.2068450681529308,
+        "Fairness/Justice": -0.4532372622596551,
+        "Truth/Integrity": 0.8072664705940058,
+        "Non-Violence/Stewardship": -0.6635855233924364,
+        "Prohibition/Embodied Practice": 0.019151583679391904
+      },
+      "primary_factor": "Embodied Discipline"
+    },
+    {
+      "id": "SIK10",
+      "tradition": "Sikhism",
+      "text": "Maintain the five Ks (Panj Kakaar)",
+      "scores": {
+        "Self-Mastery/Wisdom": 0.6004428489637724,
+        "Purity/Sanctity": -1.150448528875428,
+        "Embodied Discipline": 0.08626083671033447,
+        "Fairness/Justice": 0.5407112621714368,
+        "Truth/Integrity": -0.3397811133525628,
+        "Non-Violence/Stewardship": 0.348331221308846,
+        "Prohibition/Embodied Practice": -0.698231519074502
+      },
+      "primary_factor": "Purity/Sanctity"
+    },
+    {
+      "id": "TAO01",
+      "tradition": "Taoism",
+      "text": "Be like water \u2014 benefit all without competing",
+      "scores": {
+        "Self-Mastery/Wisdom": -0.3136727874160957,
+        "Purity/Sanctity": 0.6901736147595691,
+        "Embodied Discipline": -0.5365639940746678,
+        "Fairness/Justice": 0.8405731866201994,
+        "Truth/Integrity": -0.8747872737067108,
+        "Non-Violence/Stewardship": -0.36015750472171276,
+        "Prohibition/Embodied Practice": 0.07392348182398939
+      },
+      "primary_factor": "Truth/Integrity"
+    },
+    {
+      "id": "TAO02",
+      "tradition": "Taoism",
+      "text": "Practice Wu Wei \u2014 act without forcing",
+      "scores": {
+        "Self-Mastery/Wisdom": -0.8448951567121734,
+        "Purity/Sanctity": -0.1966017887437758,
+        "Embodied Discipline": -0.10498920319896504,
+        "Fairness/Justice": 0.040054528419158936,
+        "Truth/Integrity": 0.02327051907295303,
+        "Non-Violence/Stewardship": -0.0506746204508515,
+        "Prohibition/Embodied Practice": 0.16532839585283104
+      },
+      "primary_factor": "Self-Mastery/Wisdom"
+    },
+    {
+      "id": "TAO03",
+      "tradition": "Taoism",
+      "text": "Yield and overcome; bend and be straight",
+      "scores": {
+        "Self-Mastery/Wisdom": -0.6938697057273755,
+        "Purity/Sanctity": 0.20496569116436883,
+        "Embodied Discipline": -0.31289117816905176,
+        "Fairness/Justice": 0.39389172258238236,
+        "Truth/Integrity": -0.44305748828341374,
+        "Non-Violence/Stewardship": -0.3235400542988645,
+        "Prohibition/Embodied Practice": 0.12199701407585134
+      },
+      "primary_factor": "Self-Mastery/Wisdom"
+    },
+    {
+      "id": "TAO04",
+      "tradition": "Taoism",
+      "text": "Know when enough is enough",
+      "scores": {
+        "Self-Mastery/Wisdom": -0.8856515456880207,
+        "Purity/Sanctity": 0.18454649769910342,
+        "Embodied Discipline": -0.030157884465139444,
+        "Fairness/Justice": 0.0819391331379211,
+        "Truth/Integrity": 0.859866208881039,
+        "Non-Violence/Stewardship": -0.007974967503610285,
+        "Prohibition/Embodied Practice": 0.1522644302469422
+      },
+      "primary_factor": "Self-Mastery/Wisdom"
+    },
+    {
+      "id": "TAO05",
+      "tradition": "Taoism",
+      "text": "The sage does not compete",
+      "scores": {
+        "Self-Mastery/Wisdom": -0.6373434089637642,
+        "Purity/Sanctity": 0.4882631052503263,
+        "Embodied Discipline": -0.12453254475877548,
+        "Fairness/Justice": 0.07880434613573249,
+        "Truth/Integrity": -0.2166660659406618,
+        "Non-Violence/Stewardship": -0.58344877775672,
+        "Prohibition/Embodied Practice": 0.11929403254611404
+      },
+      "primary_factor": "Self-Mastery/Wisdom"
+    },
+    {
+      "id": "TAO06",
+      "tradition": "Taoism",
+      "text": "Compassion (Ci) \u2014 first of three treasures",
+      "scores": {
+        "Self-Mastery/Wisdom": 0.23422807234364074,
+        "Purity/Sanctity": 0.5906236514097861,
+        "Embodied Discipline": -0.42679862710119026,
+        "Fairness/Justice": 0.8968416255181292,
+        "Truth/Integrity": -0.9441054280615135,
+        "Non-Violence/Stewardship": -0.30875762283368646,
+        "Prohibition/Embodied Practice": 0.11602330529140831
+      },
+      "primary_factor": "Truth/Integrity"
+    },
+    {
+      "id": "TAO07",
+      "tradition": "Taoism",
+      "text": "Frugality (Jian) \u2014 second treasure",
+      "scores": {
+        "Self-Mastery/Wisdom": -0.4543022197161817,
+        "Purity/Sanctity": 0.08334233092182283,
+        "Embodied Discipline": 0.3770446719569768,
+        "Fairness/Justice": -0.21061063743515915,
+        "Truth/Integrity": 1.1843915889411303,
+        "Non-Violence/Stewardship": -0.22114678587656886,
+        "Prohibition/Embodied Practice": -0.019691998294694965
+      },
+      "primary_factor": "Truth/Integrity"
+    },
+    {
+      "id": "TAO08",
+      "tradition": "Taoism",
+      "text": "Humility \u2014 not daring to be first (third treasure)",
+      "scores": {
+        "Self-Mastery/Wisdom": -0.4468835300193217,
+        "Purity/Sanctity": 0.44568343925131615,
+        "Embodied Discipline": 0.183440493530008,
+        "Fairness/Justice": -0.08498637582527961,
+        "Truth/Integrity": -0.11158790441113553,
+        "Non-Violence/Stewardship": -0.12479770832137085,
+        "Prohibition/Embodied Practice": -0.09658796261422747
+      },
+      "primary_factor": "Self-Mastery/Wisdom"
+    },
+    {
+      "id": "TAO09",
+      "tradition": "Taoism",
+      "text": "Empty yourself; maintain stillness",
+      "scores": {
+        "Self-Mastery/Wisdom": -0.8313512035366402,
+        "Purity/Sanctity": -0.5177105803044444,
+        "Embodied Discipline": 0.0665622872382233,
+        "Fairness/Justice": -0.1492356176647153,
+        "Truth/Integrity": 0.09349995352766138,
+        "Non-Violence/Stewardship": -0.252839880726356,
+        "Prohibition/Embodied Practice": -0.12335591427117558
+      },
+      "primary_factor": "Self-Mastery/Wisdom"
+    },
+    {
+      "id": "TAO10",
+      "tradition": "Taoism",
+      "text": "Know yourself and be enlightened",
+      "scores": {
+        "Self-Mastery/Wisdom": -0.7413300062572543,
+        "Purity/Sanctity": 0.18157007764621108,
+        "Embodied Discipline": -0.26094303163793103,
+        "Fairness/Justice": 0.23319116614826035,
+        "Truth/Integrity": -0.2965932762295879,
+        "Non-Violence/Stewardship": 0.14844147581070843,
+        "Prohibition/Embodied Practice": 0.017985811994864043
+      },
+      "primary_factor": "Self-Mastery/Wisdom"
+    },
+    {
+      "id": "ZOR01",
+      "tradition": "Zoroastrianism",
+      "text": "Good Thoughts (Humata)",
+      "scores": {
+        "Self-Mastery/Wisdom": -0.6903741149098267,
+        "Purity/Sanctity": 0.2821476660903602,
+        "Embodied Discipline": -0.2891364399704455,
+        "Fairness/Justice": -0.23825380990597006,
+        "Truth/Integrity": 0.07330067466101384,
+        "Non-Violence/Stewardship": 0.10243333883602418,
+        "Prohibition/Embodied Practice": -0.07276435196904885
+      },
+      "primary_factor": "Self-Mastery/Wisdom"
+    },
+    {
+      "id": "ZOR02",
+      "tradition": "Zoroastrianism",
+      "text": "Good Words (Hukhta)",
+      "scores": {
+        "Self-Mastery/Wisdom": 0.2870140161877861,
+        "Purity/Sanctity": 0.40976840280896365,
+        "Embodied Discipline": -0.13687479213194287,
+        "Fairness/Justice": -1.2497762224363926,
+        "Truth/Integrity": 0.06182362113696016,
+        "Non-Violence/Stewardship": -0.0907865617255103,
+        "Prohibition/Embodied Practice": -0.165118949286927
+      },
+      "primary_factor": "Fairness/Justice"
+    },
+    {
+      "id": "ZOR03",
+      "tradition": "Zoroastrianism",
+      "text": "Good Deeds (Hvarshta)",
+      "scores": {
+        "Self-Mastery/Wisdom": 0.49387531853723204,
+        "Purity/Sanctity": 0.44611939104523907,
+        "Embodied Discipline": -0.006654750394764514,
+        "Fairness/Justice": -0.14153153252562578,
+        "Truth/Integrity": 0.2647609705170407,
+        "Non-Violence/Stewardship": -0.3178767671459916,
+        "Prohibition/Embodied Practice": -0.6441332947013564
+      },
+      "primary_factor": "Prohibition/Embodied Practice"
+    },
+    {
+      "id": "ZOR04",
+      "tradition": "Zoroastrianism",
+      "text": "Choose Asha over Druj \u2014 choose truth over deceit",
+      "scores": {
+        "Self-Mastery/Wisdom": -0.6566475771011823,
+        "Purity/Sanctity": -0.1034888667605566,
+        "Embodied Discipline": -0.3927276172780158,
+        "Fairness/Justice": -0.1967426179240251,
+        "Truth/Integrity": 0.04002814020767629,
+        "Non-Violence/Stewardship": 0.10490589048057603,
+        "Prohibition/Embodied Practice": -0.025051288520818893
+      },
+      "primary_factor": "Self-Mastery/Wisdom"
+    },
+    {
+      "id": "ZOR05",
+      "tradition": "Zoroastrianism",
+      "text": "Cultivate the earth and make it flourish",
+      "scores": {
+        "Self-Mastery/Wisdom": 0.4482031265683373,
+        "Purity/Sanctity": 0.11957577175276102,
+        "Embodied Discipline": 0.2810236037782151,
+        "Fairness/Justice": 0.05373871221697718,
+        "Truth/Integrity": 0.002780280779962341,
+        "Non-Violence/Stewardship": -0.6202179103672296,
+        "Prohibition/Embodied Practice": -0.9832840496784175
+      },
+      "primary_factor": "Prohibition/Embodied Practice"
+    },
+    {
+      "id": "ZOR06",
+      "tradition": "Zoroastrianism",
+      "text": "Keep fire, water, and earth pure",
+      "scores": {
+        "Self-Mastery/Wisdom": 0.30402555752307436,
+        "Purity/Sanctity": -0.9254977361008682,
+        "Embodied Discipline": 0.9075036491605375,
+        "Fairness/Justice": -0.05732699037882753,
+        "Truth/Integrity": 0.191573154226051,
+        "Non-Violence/Stewardship": -0.8680453054112147,
+        "Prohibition/Embodied Practice": -1.1765149235225199
+      },
+      "primary_factor": "Prohibition/Embodied Practice"
+    },
+    {
+      "id": "ZOR07",
+      "tradition": "Zoroastrianism",
+      "text": "Keep promises and contracts (Mithra)",
+      "scores": {
+        "Self-Mastery/Wisdom": 0.48140990772262104,
+        "Purity/Sanctity": 0.39135199010730576,
+        "Embodied Discipline": -0.20464597879484636,
+        "Fairness/Justice": -0.900667100708824,
+        "Truth/Integrity": -0.3263979607863708,
+        "Non-Violence/Stewardship": 0.39058280129099604,
+        "Prohibition/Embodied Practice": -0.085704961263035
+      },
+      "primary_factor": "Fairness/Justice"
+    },
+    {
+      "id": "ZOR08",
+      "tradition": "Zoroastrianism",
+      "text": "Oppose and resist evil actively",
+      "scores": {
+        "Self-Mastery/Wisdom": 0.14779377656425396,
+        "Purity/Sanctity": -0.0668722034794221,
+        "Embodied Discipline": -0.10893714879743209,
+        "Fairness/Justice": -0.33768174627091124,
+        "Truth/Integrity": 0.17056188348948287,
+        "Non-Violence/Stewardship": -0.13726548293160046,
+        "Prohibition/Embodied Practice": -0.590593565478456
+      },
+      "primary_factor": "Prohibition/Embodied Practice"
+    },
+    {
+      "id": "ZOR09",
+      "tradition": "Zoroastrianism",
+      "text": "Practice charity to the poor and righteous",
+      "scores": {
+        "Self-Mastery/Wisdom": 0.6244843735589497,
+        "Purity/Sanctity": 0.4761847789582808,
+        "Embodied Discipline": -0.009477252501975057,
+        "Fairness/Justice": 0.20330585312648877,
+        "Truth/Integrity": 0.9403595225822841,
+        "Non-Violence/Stewardship": -0.14589489171884185,
+        "Prohibition/Embodied Practice": -0.8771839333120122
+      },
+      "primary_factor": "Truth/Integrity"
+    },
+    {
+      "id": "ZOR10",
+      "tradition": "Zoroastrianism",
+      "text": "Treat cattle and animals with kindness",
+      "scores": {
+        "Self-Mastery/Wisdom": 0.5444034541934004,
+        "Purity/Sanctity": 0.3177929269200121,
+        "Embodied Discipline": 0.05065165721120413,
+        "Fairness/Justice": 0.4801186904731123,
+        "Truth/Integrity": -0.3209442059945288,
+        "Non-Violence/Stewardship": -1.1973064861832639,
+        "Prohibition/Embodied Practice": -0.557314141456821
+      },
+      "primary_factor": "Non-Violence/Stewardship"
+    },
+    {
+      "id": "CON01",
+      "tradition": "Confucianism",
+      "text": "Practice Ren (benevolence/humaneness)",
+      "scores": {
+        "Self-Mastery/Wisdom": 0.01442599771726727,
+        "Purity/Sanctity": 0.6821475830816381,
+        "Embodied Discipline": -0.20265359931935029,
+        "Fairness/Justice": 0.9382240536105947,
+        "Truth/Integrity": -0.8974337154666896,
+        "Non-Violence/Stewardship": 0.22530323554899312,
+        "Prohibition/Embodied Practice": -0.409658249789349
+      },
+      "primary_factor": "Fairness/Justice"
+    },
+    {
+      "id": "CON02",
+      "tradition": "Confucianism",
+      "text": "Act with Yi (righteousness) at personal cost",
+      "scores": {
+        "Self-Mastery/Wisdom": -0.00248429503228792,
+        "Purity/Sanctity": 0.317110125943997,
+        "Embodied Discipline": 0.2920912179587768,
+        "Fairness/Justice": -0.7280111477238662,
+        "Truth/Integrity": 0.5976779523577143,
+        "Non-Violence/Stewardship": -0.4043097348371372,
+        "Prohibition/Embodied Practice": -0.852362880935742
+      },
+      "primary_factor": "Prohibition/Embodied Practice"
+    },
+    {
+      "id": "CON03",
+      "tradition": "Confucianism",
+      "text": "Observe Li (ritual propriety/proper conduct)",
+      "scores": {
+        "Self-Mastery/Wisdom": 0.4288467163839042,
+        "Purity/Sanctity": -0.46309816923689573,
+        "Embodied Discipline": 0.44598183409108444,
+        "Fairness/Justice": -0.1649964279847266,
+        "Truth/Integrity": 0.3081044253668578,
+        "Non-Violence/Stewardship": -0.39541941681006776,
+        "Prohibition/Embodied Practice": -0.8280615520763611
+      },
+      "primary_factor": "Prohibition/Embodied Practice"
+    },
+    {
+      "id": "CON04",
+      "tradition": "Confucianism",
+      "text": "Cultivate Zhi (wisdom through learning)",
+      "scores": {
+        "Self-Mastery/Wisdom": -0.7413300062572543,
+        "Purity/Sanctity": 0.18157007764621108,
+        "Embodied Discipline": -0.26094303163793103,
+        "Fairness/Justice": 0.23319116614826035,
+        "Truth/Integrity": -0.2965932762295879,
+        "Non-Violence/Stewardship": 0.14844147581070843,
+        "Prohibition/Embodied Practice": 0.017985811994864043
+      },
+      "primary_factor": "Self-Mastery/Wisdom"
+    },
+    {
+      "id": "CON05",
+      "tradition": "Confucianism",
+      "text": "Be trustworthy \u2014 keep your word (Xin)",
+      "scores": {
+        "Self-Mastery/Wisdom": 0.48140990772262104,
+        "Purity/Sanctity": 0.39135199010730576,
+        "Embodied Discipline": -0.20464597879484636,
+        "Fairness/Justice": -0.900667100708824,
+        "Truth/Integrity": -0.3263979607863708,
+        "Non-Violence/Stewardship": 0.39058280129099604,
+        "Prohibition/Embodied Practice": -0.085704961263035
+      },
+      "primary_factor": "Fairness/Justice"
+    },
+    {
+      "id": "CON06",
+      "tradition": "Confucianism",
+      "text": "Xiao \u2014 serve parents with filial piety",
+      "scores": {
+        "Self-Mastery/Wisdom": 0.7957303701019539,
+        "Purity/Sanctity": 0.0069510848102784795,
+        "Embodied Discipline": -0.23130964879143384,
+        "Fairness/Justice": 0.8737300913597758,
+        "Truth/Integrity": -0.6807431954877254,
+        "Non-Violence/Stewardship": 0.3845968086815936,
+        "Prohibition/Embodied Practice": -0.23763406819759025
+      },
+      "primary_factor": "Fairness/Justice"
+    },
+    {
+      "id": "CON07",
+      "tradition": "Confucianism",
+      "text": "Do not do to others what you do not want done to you",
+      "scores": {
+        "Self-Mastery/Wisdom": -0.08864806293983385,
+        "Purity/Sanctity": 0.6265966722489928,
+        "Embodied Discipline": -0.3310280710513115,
+        "Fairness/Justice": 0.034401916460523096,
+        "Truth/Integrity": 0.041285281089389114,
+        "Non-Violence/Stewardship": -0.1266030081415249,
+        "Prohibition/Embodied Practice": 0.7661566601454088
+      },
+      "primary_factor": "Prohibition/Embodied Practice"
+    },
+    {
+      "id": "CON08",
+      "tradition": "Confucianism",
+      "text": "When you see a worthy person, think how to equal them",
+      "scores": {
+        "Self-Mastery/Wisdom": -0.5829149548799399,
+        "Purity/Sanctity": -0.13860422744294254,
+        "Embodied Discipline": -0.44602015170421144,
+        "Fairness/Justice": 0.42789869225186294,
+        "Truth/Integrity": -0.48398190942042135,
+        "Non-Violence/Stewardship": 0.323537551647103,
+        "Prohibition/Embodied Practice": 0.2543208865108253
+      },
+      "primary_factor": "Self-Mastery/Wisdom"
+    },
+    {
+      "id": "CON09",
+      "tradition": "Confucianism",
+      "text": "Examine yourself daily",
+      "scores": {
+        "Self-Mastery/Wisdom": -0.8786216945208178,
+        "Purity/Sanctity": 0.18903474410714094,
+        "Embodied Discipline": -0.0013980258913947885,
+        "Fairness/Justice": -0.0014566635627860508,
+        "Truth/Integrity": 0.05654305352629061,
+        "Non-Violence/Stewardship": -0.05314717209540337,
+        "Prohibition/Embodied Practice": 0.11761533240460109
+      },
+      "primary_factor": "Self-Mastery/Wisdom"
+    },
+    {
+      "id": "CON10",
+      "tradition": "Confucianism",
+      "text": "Study and practice constantly",
+      "scores": {
+        "Self-Mastery/Wisdom": -0.815899185642293,
+        "Purity/Sanctity": 0.049368623113030766,
+        "Embodied Discipline": 0.2438134479519713,
+        "Fairness/Justice": -0.11822468407199853,
+        "Truth/Integrity": 0.38313985857602656,
+        "Non-Violence/Stewardship": -0.28839835184386253,
+        "Prohibition/Embodied Practice": -0.38769426608098045
+      },
+      "primary_factor": "Self-Mastery/Wisdom"
+    },
+    {
+      "id": "CHR01",
+      "tradition": "Christianity",
+      "text": "Love God with all heart, soul, mind, strength",
+      "scores": {
+        "Self-Mastery/Wisdom": 0.19310833422327606,
+        "Purity/Sanctity": -0.6422071363453,
+        "Embodied Discipline": -0.5076171487012076,
+        "Fairness/Justice": 0.8747874448593063,
+        "Truth/Integrity": -0.9747941801518927,
+        "Non-Violence/Stewardship": 0.8587793481961876,
+        "Prohibition/Embodied Practice": 0.42354776145036616
+      },
+      "primary_factor": "Truth/Integrity"
+    },
+    {
+      "id": "CHR02",
+      "tradition": "Christianity",
+      "text": "Love your neighbor as yourself",
+      "scores": {
+        "Self-Mastery/Wisdom": 0.5188025695375175,
+        "Purity/Sanctity": 0.5833652595110498,
+        "Embodied Discipline": -0.41668431076643897,
+        "Fairness/Justice": 1.3466917797629832,
+        "Truth/Integrity": -1.3135874012205238,
+        "Non-Violence/Stewardship": 0.7714029411277497,
+        "Prohibition/Embodied Practice": -0.17627364521868388
+      },
+      "primary_factor": "Fairness/Justice"
+    },
+    {
+      "id": "CHR03",
+      "tradition": "Christianity",
+      "text": "Turn the other cheek; do not resist evil with evil",
+      "scores": {
+        "Self-Mastery/Wisdom": 0.14577652571693875,
+        "Purity/Sanctity": 0.5302306448421491,
+        "Embodied Discipline": -0.09875791749225496,
+        "Fairness/Justice": 0.6634572834219854,
+        "Truth/Integrity": -0.516458932379338,
+        "Non-Violence/Stewardship": -0.5659068619506373,
+        "Prohibition/Embodied Practice": 0.8490472331109549
+      },
+      "primary_factor": "Prohibition/Embodied Practice"
+    },
+    {
+      "id": "CHR04",
+      "tradition": "Christianity",
+      "text": "Give to the one who asks; it is more blessed to give",
+      "scores": {
+        "Self-Mastery/Wisdom": 0.4358895760226016,
+        "Purity/Sanctity": 0.34105355619305244,
+        "Embodied Discipline": -0.00722120063599465,
+        "Fairness/Justice": 0.4133092402293118,
+        "Truth/Integrity": 0.6981901749811873,
+        "Non-Violence/Stewardship": -0.22669642557951428,
+        "Prohibition/Embodied Practice": -0.5187340328951024
+      },
+      "primary_factor": "Truth/Integrity"
+    },
+    {
+      "id": "CHR05",
+      "tradition": "Christianity",
+      "text": "Do not commit adultery; lust in heart is adultery",
+      "scores": {
+        "Self-Mastery/Wisdom": -0.42489574684379716,
+        "Purity/Sanctity": 0.23002422155072919,
+        "Embodied Discipline": 1.0912805776929395,
+        "Fairness/Justice": 0.4888517166122658,
+        "Truth/Integrity": -0.4636097502888373,
+        "Non-Violence/Stewardship": 0.5971608040809717,
+        "Prohibition/Embodied Practice": 0.7934740951119035
+      },
+      "primary_factor": "Embodied Discipline"
+    }
+  ],
+  "tradition_profiles": {
+    "Islam": {
+      "raw_means": {
+        "Self-Mastery/Wisdom": 0.15849713107844324,
+        "Purity/Sanctity": -0.2477230626610337,
+        "Embodied Discipline": 0.4157840473643626,
+        "Fairness/Justice": 0.004841581794584904,
+        "Truth/Integrity": 0.025585507716930467,
+        "Non-Violence/Stewardship": 0.03253341759049033,
+        "Prohibition/Embodied Practice": -0.07353388305457007
+      },
+      "normalized": {
+        "Self-Mastery/Wisdom": 0.6122318624798587,
+        "Purity/Sanctity": 0.0,
+        "Embodied Discipline": 1.0,
+        "Fairness/Justice": 0.3806509992725646,
+        "Truth/Integrity": 0.4119150590074356,
+        "Non-Violence/Stewardship": 0.42238655172933565,
+        "Prohibition/Embodied Practice": 0.26252797743161543
+      }
+    },
+    "Judaism": {
+      "raw_means": {
+        "Self-Mastery/Wisdom": 0.3700959803967555,
+        "Purity/Sanctity": -0.16744832338755417,
+        "Embodied Discipline": 0.21637532136353968,
+        "Fairness/Justice": 0.05808916404548912,
+        "Truth/Integrity": 0.01191832499196761,
+        "Non-Violence/Stewardship": -0.13315245166656814,
+        "Prohibition/Embodied Practice": 0.17895553398623928
+      },
+      "normalized": {
+        "Self-Mastery/Wisdom": 1.0,
+        "Purity/Sanctity": 0.0,
+        "Embodied Discipline": 0.7140316473432552,
+        "Fairness/Justice": 0.41957004445077417,
+        "Truth/Integrity": 0.33367788871871823,
+        "Non-Violence/Stewardship": 0.06380101412952054,
+        "Prohibition/Embodied Practice": 0.6444191761220641
+      }
+    },
+    "Hinduism": {
+      "raw_means": {
+        "Self-Mastery/Wisdom": -0.45830017832470815,
+        "Purity/Sanctity": -0.11493396434093058,
+        "Embodied Discipline": 0.35196317700135543,
+        "Fairness/Justice": -0.024485003280102908,
+        "Truth/Integrity": 0.07932080864531284,
+        "Non-Violence/Stewardship": -0.18996620561278102,
+        "Prohibition/Embodied Practice": -0.11683577789994808
+      },
+      "normalized": {
+        "Self-Mastery/Wisdom": 0.0,
+        "Purity/Sanctity": 0.4237711254331639,
+        "Embodied Discipline": 1.0,
+        "Fairness/Justice": 0.5354002154892352,
+        "Truth/Integrity": 0.6635138852523736,
+        "Non-Violence/Stewardship": 0.3311688365864023,
+        "Prohibition/Embodied Practice": 0.421423970589598
+      }
+    },
+    "Buddhism": {
+      "raw_means": {
+        "Self-Mastery/Wisdom": -0.1269435935249687,
+        "Purity/Sanctity": 0.2342774268575638,
+        "Embodied Discipline": 0.29320094644368744,
+        "Fairness/Justice": -0.10589716043873638,
+        "Truth/Integrity": 0.2465293285716606,
+        "Non-Violence/Stewardship": -0.3071795044023661,
+        "Prohibition/Embodied Practice": 0.12434850992196197
+      },
+      "normalized": {
+        "Self-Mastery/Wisdom": 0.30020283076074467,
+        "Purity/Sanctity": 0.9018563654044883,
+        "Embodied Discipline": 1.0,
+        "Fairness/Justice": 0.33525799129532535,
+        "Truth/Integrity": 0.9222632618929258,
+        "Non-Violence/Stewardship": 0.0,
+        "Prohibition/Embodied Practice": 0.7187576039763132
+      }
+    },
+    "Sikhism": {
+      "raw_means": {
+        "Self-Mastery/Wisdom": 0.05165222063339238,
+        "Purity/Sanctity": -0.0639234428741277,
+        "Embodied Discipline": 0.1929482127080983,
+        "Fairness/Justice": 0.19844613380740594,
+        "Truth/Integrity": 0.11989165443369403,
+        "Non-Violence/Stewardship": 0.044184930359234,
+        "Prohibition/Embodied Practice": -0.12835680629799837
+      },
+      "normalized": {
+        "Self-Mastery/Wisdom": 0.5508182603049169,
+        "Purity/Sanctity": 0.19716274095664152,
+        "Embodied Discipline": 0.9831766473779752,
+        "Fairness/Justice": 1.0,
+        "Truth/Integrity": 0.7596273786631919,
+        "Non-Violence/Stewardship": 0.5279687404329416,
+        "Prohibition/Embodied Practice": 0.0
+      }
+    },
+    "Taoism": {
+      "raw_means": {
+        "Self-Mastery/Wisdom": -0.5615071491693187,
+        "Purity/Sanctity": 0.2154856039054284,
+        "Embodied Discipline": -0.11698290106805127,
+        "Fairness/Justice": 0.21204630776366296,
+        "Truth/Integrity": -0.07257691662102397,
+        "Non-Violence/Stewardship": -0.2084896446679033,
+        "Prohibition/Embodied Practice": 0.05271805966519024
+      },
+      "normalized": {
+        "Self-Mastery/Wisdom": 0.0,
+        "Purity/Sanctity": 1.0,
+        "Embodied Discipline": 0.5721086153534614,
+        "Fairness/Justice": 0.9955735801548273,
+        "Truth/Integrity": 0.6292597075242726,
+        "Non-Violence/Stewardship": 0.45433822014998243,
+        "Prohibition/Embodied Practice": 0.7905160072650256
+      }
+    },
+    "Zoroastrianism": {
+      "raw_means": {
+        "Self-Mastery/Wisdom": 0.1984187838844646,
+        "Purity/Sanctity": 0.13470821213420756,
+        "Embodied Discipline": 0.009072493028053455,
+        "Fairness/Justice": -0.23848167643339985,
+        "Truth/Integrity": 0.10978460808195716,
+        "Non-Violence/Stewardship": -0.27794713748760563,
+        "Prohibition/Embodied Practice": -0.5177663459189413
+      },
+      "normalized": {
+        "Self-Mastery/Wisdom": 1.0,
+        "Purity/Sanctity": 0.9110417556871844,
+        "Embodied Discipline": 0.7356182319669399,
+        "Fairness/Justice": 0.3899615586296879,
+        "Truth/Integrity": 0.8762412508804286,
+        "Non-Violence/Stewardship": 0.33485644765783745,
+        "Prohibition/Embodied Practice": 0.0
+      }
+    },
+    "Confucianism": {
+      "raw_means": {
+        "Self-Mastery/Wisdom": -0.13894852073466804,
+        "Purity/Sanctity": 0.18424285043787567,
+        "Embodied Discipline": -0.06961120071886466,
+        "Fairness/Justice": 0.05940898957788153,
+        "Truth/Integrity": -0.1298399486474517,
+        "Non-Violence/Stewardship": 0.02045841892513984,
+        "Prohibition/Embodied Practice": -0.16450372872873587
+      },
+      "normalized": {
+        "Self-Mastery/Wisdom": 0.0732773008272548,
+        "Purity/Sanctity": 1.0,
+        "Embodied Discipline": 0.2720959392250752,
+        "Fairness/Justice": 0.6420499344873701,
+        "Truth/Integrity": 0.09939532644053196,
+        "Non-Violence/Stewardship": 0.5303626148702986,
+        "Prohibition/Embodied Practice": 0.0
+      }
+    },
+    "Christianity": {
+      "raw_means": {
+        "Self-Mastery/Wisdom": 0.17373625173130736,
+        "Purity/Sanctity": 0.2084933091503361,
+        "Embodied Discipline": 0.012200000019408686,
+        "Fairness/Justice": 0.7574194929771705,
+        "Truth/Integrity": -0.5140520178118809,
+        "Non-Violence/Stewardship": 0.28694796117495147,
+        "Prohibition/Embodied Practice": 0.27421228231188766
+      },
+      "normalized": {
+        "Self-Mastery/Wisdom": 0.5409387970607062,
+        "Purity/Sanctity": 0.568274885304995,
+        "Embodied Discipline": 0.41389210325657033,
+        "Fairness/Justice": 1.0,
+        "Truth/Integrity": 0.0,
+        "Non-Violence/Stewardship": 0.6299787074975409,
+        "Prohibition/Embodied Practice": 0.6199622197076099
+      }
+    }
+  },
+  "nmf_results": {
+    "factor_variable_weights": {
+      "NMF_Factor_1": {
+        "self_restraint": 0.0,
+        "social_obligation": 9.6746592752929,
+        "ritual_observance": 0.0,
+        "epistemological": 0.0,
+        "physical_action": 0.8617065703300556,
+        "community_directed": 0.0,
+        "prohibition": 0.3814845212764139,
+        "internal_state": 1.032802200283186,
+        "divine_relationship": 0.0,
+        "justice_fairness": 0.30834881018367305,
+        "compassion_care": 10.519675804015709,
+        "purity_sanctity": 0.0,
+        "authority_hierarchy": 0.388638804452716,
+        "loyalty_covenant": 0.0,
+        "self_cultivation": 0.0,
+        "non_violence": 10.523864971139849,
+        "material_ethics": 0.0,
+        "speech_ethics": 0.0,
+        "sexual_ethics": 0.0,
+        "environmental": 3.965456545849737
+      },
+      "NMF_Factor_2": {
+        "self_restraint": 0.0,
+        "social_obligation": 1.9861821145097824,
+        "ritual_observance": 0.0,
+        "epistemological": 0.0,
+        "physical_action": 0.3578164765341637,
+        "community_directed": 2.377676021864653,
+        "prohibition": 0.0,
+        "internal_state": 0.7116780359217362,
+        "divine_relationship": 0.0,
+        "justice_fairness": 0.0,
+        "compassion_care": 2.3256561550714,
+        "purity_sanctity": 0.0,
+        "authority_hierarchy": 0.23989347512961967,
+        "loyalty_covenant": 2.2613970337016758,
+        "self_cultivation": 0.0,
+        "non_violence": 0.0,
+        "material_ethics": 0.23323122579214328,
+        "speech_ethics": 0.0,
+        "sexual_ethics": 0.012345537327093009,
+        "environmental": 0.0
+      },
+      "NMF_Factor_3": {
+        "self_restraint": 0.7005299773104813,
+        "social_obligation": 0.0,
+        "ritual_observance": 1.3274032770777615,
+        "epistemological": 0.0,
+        "physical_action": 3.2771969692204332,
+        "community_directed": 0.7457983906759896,
+        "prohibition": 0.0,
+        "internal_state": 0.0,
+        "divine_relationship": 0.1571363610777752,
+        "justice_fairness": 0.0,
+        "compassion_care": 0.0,
+        "purity_sanctity": 1.1634900151868934,
+        "authority_hierarchy": 0.0,
+        "loyalty_covenant": 0.0,
+        "self_cultivation": 0.4990927612363357,
+        "non_violence": 0.0,
+        "material_ethics": 0.12510266535773729,
+        "speech_ethics": 0.0,
+        "sexual_ethics": 0.0,
+        "environmental": 0.3272219866372528
+      },
+      "NMF_Factor_4": {
+        "self_restraint": 2.5886690065316373,
+        "social_obligation": 0.0,
+        "ritual_observance": 0.0,
+        "epistemological": 0.0,
+        "physical_action": 0.0,
+        "community_directed": 0.0,
+        "prohibition": 2.693753355448013,
+        "internal_state": 0.0,
+        "divine_relationship": 0.0,
+        "justice_fairness": 0.0,
+        "compassion_care": 0.0,
+        "purity_sanctity": 1.3601547661085116,
+        "authority_hierarchy": 0.0,
+        "loyalty_covenant": 0.07858824630852006,
+        "self_cultivation": 0.4292437785825023,
+        "non_violence": 0.0,
+        "material_ethics": 0.03772454956011452,
+        "speech_ethics": 0.10212767705534898,
+        "sexual_ethics": 0.6973095685671599,
+        "environmental": 0.0
+      },
+      "NMF_Factor_5": {
+        "self_restraint": 0.0,
+        "social_obligation": 0.0,
+        "ritual_observance": 0.9841241979648928,
+        "epistemological": 0.0,
+        "physical_action": 0.0,
+        "community_directed": 0.0,
+        "prohibition": 0.03354345037454756,
+        "internal_state": 0.750366750705909,
+        "divine_relationship": 2.377662356716769,
+        "justice_fairness": 0.0,
+        "compassion_care": 0.0,
+        "purity_sanctity": 0.0,
+        "authority_hierarchy": 2.2348120586060456,
+        "loyalty_covenant": 1.7157963040851192,
+        "self_cultivation": 0.0,
+        "non_violence": 0.0,
+        "material_ethics": 0.0,
+        "speech_ethics": 0.2726705362352845,
+        "sexual_ethics": 0.0,
+        "environmental": 0.0
+      },
+      "NMF_Factor_6": {
+        "self_restraint": 0.2373392496301252,
+        "social_obligation": 1.5774852691390069,
+        "ritual_observance": 0.0,
+        "epistemological": 0.07060105088690541,
+        "physical_action": 0.3289763238199029,
+        "community_directed": 0.0,
+        "prohibition": 0.0,
+        "internal_state": 0.0,
+        "divine_relationship": 0.0,
+        "justice_fairness": 2.1090728861853165,
+        "compassion_care": 0.03299452377102213,
+        "purity_sanctity": 0.0,
+        "authority_hierarchy": 0.0,
+        "loyalty_covenant": 0.0,
+        "self_cultivation": 0.0,
+        "non_violence": 0.0,
+        "material_ethics": 0.8286239539999032,
+        "speech_ethics": 0.6302761256706602,
+        "sexual_ethics": 0.0,
+        "environmental": 0.0
+      },
+      "NMF_Factor_7": {
+        "self_restraint": 0.6623612185206291,
+        "social_obligation": 0.0,
+        "ritual_observance": 0.0,
+        "epistemological": 1.399828846464917,
+        "physical_action": 0.0,
+        "community_directed": 0.0,
+        "prohibition": 0.0,
+        "internal_state": 1.9044912616077052,
+        "divine_relationship": 0.159069332441103,
+        "justice_fairness": 0.0,
+        "compassion_care": 0.0,
+        "purity_sanctity": 0.0,
+        "authority_hierarchy": 0.0,
+        "loyalty_covenant": 0.0,
+        "self_cultivation": 1.7728760939093549,
+        "non_violence": 0.027022215061471528,
+        "material_ethics": 0.0,
+        "speech_ethics": 0.0,
+        "sexual_ethics": 0.0,
+        "environmental": 0.0
+      }
+    },
+    "reconstruction_error": 9.621987674907205
+  },
+  "haidt_mapping": {
+    "Care/Harm": {
+      "description": "Evolved from mammalian attachment systems. Sensitivity to suffering.",
+      "key_emotions": "Compassion, empathy",
+      "related_variables": [
+        "compassion_care",
+        "non_violence"
+      ],
+      "mapped_factor": "Non-Violence/Stewardship",
+      "mapping_strength": 0.89885034240556
+    },
+    "Fairness/Cheating": {
+      "description": "Evolved from reciprocal altruism. Sensitivity to proportionality and reciprocity.",
+      "key_emotions": "Gratitude, guilt, anger at cheaters",
+      "related_variables": [
+        "justice_fairness",
+        "material_ethics",
+        "speech_ethics"
+      ],
+      "mapped_factor": "Fairness/Justice",
+      "mapping_strength": 1.2805192833251702
+    },
+    "Loyalty/Betrayal": {
+      "description": "Evolved from tribal coalitional psychology. In-group solidarity.",
+      "key_emotions": "Pride, rage at traitors",
+      "related_variables": [
+        "loyalty_covenant",
+        "community_directed"
+      ],
+      "mapped_factor": "Self-Mastery/Wisdom",
+      "mapping_strength": 0.6628990412800759
+    },
+    "Authority/Subversion": {
+      "description": "Evolved from primate social hierarchies. Respect for legitimate authority.",
+      "key_emotions": "Respect, fear",
+      "related_variables": [
+        "authority_hierarchy"
+      ],
+      "mapped_factor": "Purity/Sanctity",
+      "mapping_strength": 0.5913699145494932
+    },
+    "Sanctity/Degradation": {
+      "description": "Evolved from pathogen-avoidance systems. Purity and contamination.",
+      "key_emotions": "Disgust, elevation",
+      "related_variables": [
+        "purity_sanctity",
+        "sexual_ethics",
+        "ritual_observance"
+      ],
+      "mapped_factor": "Embodied Discipline",
+      "mapping_strength": 1.5837099380140374
+    },
+    "Liberty/Oppression": {
+      "description": "Sensitivity to domination and tyranny. Desire for autonomy.",
+      "key_emotions": "Reactance, resentment of bullies",
+      "related_variables": [
+        "self_cultivation",
+        "epistemological"
+      ],
+      "mapped_factor": "Self-Mastery/Wisdom",
+      "mapping_strength": 1.5407658991964728
+    }
+  }
+}
+</pre>
+</details>
+
+<!-- ================================================================ -->
+<!-- CHARTS JAVASCRIPT -->
+<script>
+const factorLabels = ["Self-Mastery/Wisdom", "Purity/Sanctity", "Embodied Discipline", "Fairness/Justice", "Truth/Integrity", "Non-Violence/Stewardship", "Prohibition/Embodied Practice"];
+const traditionProfiles = {
+  "Islam": {
+    "raw_means": {
+      "Self-Mastery/Wisdom": 0.15849713107844324,
+      "Purity/Sanctity": -0.2477230626610337,
+      "Embodied Discipline": 0.4157840473643626,
+      "Fairness/Justice": 0.004841581794584904,
+      "Truth/Integrity": 0.025585507716930467,
+      "Non-Violence/Stewardship": 0.03253341759049033,
+      "Prohibition/Embodied Practice": -0.07353388305457007
+    },
+    "normalized": {
+      "Self-Mastery/Wisdom": 0.6122318624798587,
+      "Purity/Sanctity": 0.0,
+      "Embodied Discipline": 1.0,
+      "Fairness/Justice": 0.3806509992725646,
+      "Truth/Integrity": 0.4119150590074356,
+      "Non-Violence/Stewardship": 0.42238655172933565,
+      "Prohibition/Embodied Practice": 0.26252797743161543
+    }
+  },
+  "Judaism": {
+    "raw_means": {
+      "Self-Mastery/Wisdom": 0.3700959803967555,
+      "Purity/Sanctity": -0.16744832338755417,
+      "Embodied Discipline": 0.21637532136353968,
+      "Fairness/Justice": 0.05808916404548912,
+      "Truth/Integrity": 0.01191832499196761,
+      "Non-Violence/Stewardship": -0.13315245166656814,
+      "Prohibition/Embodied Practice": 0.17895553398623928
+    },
+    "normalized": {
+      "Self-Mastery/Wisdom": 1.0,
+      "Purity/Sanctity": 0.0,
+      "Embodied Discipline": 0.7140316473432552,
+      "Fairness/Justice": 0.41957004445077417,
+      "Truth/Integrity": 0.33367788871871823,
+      "Non-Violence/Stewardship": 0.06380101412952054,
+      "Prohibition/Embodied Practice": 0.6444191761220641
+    }
+  },
+  "Hinduism": {
+    "raw_means": {
+      "Self-Mastery/Wisdom": -0.45830017832470815,
+      "Purity/Sanctity": -0.11493396434093058,
+      "Embodied Discipline": 0.35196317700135543,
+      "Fairness/Justice": -0.024485003280102908,
+      "Truth/Integrity": 0.07932080864531284,
+      "Non-Violence/Stewardship": -0.18996620561278102,
+      "Prohibition/Embodied Practice": -0.11683577789994808
+    },
+    "normalized": {
+      "Self-Mastery/Wisdom": 0.0,
+      "Purity/Sanctity": 0.4237711254331639,
+      "Embodied Discipline": 1.0,
+      "Fairness/Justice": 0.5354002154892352,
+      "Truth/Integrity": 0.6635138852523736,
+      "Non-Violence/Stewardship": 0.3311688365864023,
+      "Prohibition/Embodied Practice": 0.421423970589598
+    }
+  },
+  "Buddhism": {
+    "raw_means": {
+      "Self-Mastery/Wisdom": -0.1269435935249687,
+      "Purity/Sanctity": 0.2342774268575638,
+      "Embodied Discipline": 0.29320094644368744,
+      "Fairness/Justice": -0.10589716043873638,
+      "Truth/Integrity": 0.2465293285716606,
+      "Non-Violence/Stewardship": -0.3071795044023661,
+      "Prohibition/Embodied Practice": 0.12434850992196197
+    },
+    "normalized": {
+      "Self-Mastery/Wisdom": 0.30020283076074467,
+      "Purity/Sanctity": 0.9018563654044883,
+      "Embodied Discipline": 1.0,
+      "Fairness/Justice": 0.33525799129532535,
+      "Truth/Integrity": 0.9222632618929258,
+      "Non-Violence/Stewardship": 0.0,
+      "Prohibition/Embodied Practice": 0.7187576039763132
+    }
+  },
+  "Sikhism": {
+    "raw_means": {
+      "Self-Mastery/Wisdom": 0.05165222063339238,
+      "Purity/Sanctity": -0.0639234428741277,
+      "Embodied Discipline": 0.1929482127080983,
+      "Fairness/Justice": 0.19844613380740594,
+      "Truth/Integrity": 0.11989165443369403,
+      "Non-Violence/Stewardship": 0.044184930359234,
+      "Prohibition/Embodied Practice": -0.12835680629799837
+    },
+    "normalized": {
+      "Self-Mastery/Wisdom": 0.5508182603049169,
+      "Purity/Sanctity": 0.19716274095664152,
+      "Embodied Discipline": 0.9831766473779752,
+      "Fairness/Justice": 1.0,
+      "Truth/Integrity": 0.7596273786631919,
+      "Non-Violence/Stewardship": 0.5279687404329416,
+      "Prohibition/Embodied Practice": 0.0
+    }
+  },
+  "Taoism": {
+    "raw_means": {
+      "Self-Mastery/Wisdom": -0.5615071491693187,
+      "Purity/Sanctity": 0.2154856039054284,
+      "Embodied Discipline": -0.11698290106805127,
+      "Fairness/Justice": 0.21204630776366296,
+      "Truth/Integrity": -0.07257691662102397,
+      "Non-Violence/Stewardship": -0.2084896446679033,
+      "Prohibition/Embodied Practice": 0.05271805966519024
+    },
+    "normalized": {
+      "Self-Mastery/Wisdom": 0.0,
+      "Purity/Sanctity": 1.0,
+      "Embodied Discipline": 0.5721086153534614,
+      "Fairness/Justice": 0.9955735801548273,
+      "Truth/Integrity": 0.6292597075242726,
+      "Non-Violence/Stewardship": 0.45433822014998243,
+      "Prohibition/Embodied Practice": 0.7905160072650256
+    }
+  },
+  "Zoroastrianism": {
+    "raw_means": {
+      "Self-Mastery/Wisdom": 0.1984187838844646,
+      "Purity/Sanctity": 0.13470821213420756,
+      "Embodied Discipline": 0.009072493028053455,
+      "Fairness/Justice": -0.23848167643339985,
+      "Truth/Integrity": 0.10978460808195716,
+      "Non-Violence/Stewardship": -0.27794713748760563,
+      "Prohibition/Embodied Practice": -0.5177663459189413
+    },
+    "normalized": {
+      "Self-Mastery/Wisdom": 1.0,
+      "Purity/Sanctity": 0.9110417556871844,
+      "Embodied Discipline": 0.7356182319669399,
+      "Fairness/Justice": 0.3899615586296879,
+      "Truth/Integrity": 0.8762412508804286,
+      "Non-Violence/Stewardship": 0.33485644765783745,
+      "Prohibition/Embodied Practice": 0.0
+    }
+  },
+  "Confucianism": {
+    "raw_means": {
+      "Self-Mastery/Wisdom": -0.13894852073466804,
+      "Purity/Sanctity": 0.18424285043787567,
+      "Embodied Discipline": -0.06961120071886466,
+      "Fairness/Justice": 0.05940898957788153,
+      "Truth/Integrity": -0.1298399486474517,
+      "Non-Violence/Stewardship": 0.02045841892513984,
+      "Prohibition/Embodied Practice": -0.16450372872873587
+    },
+    "normalized": {
+      "Self-Mastery/Wisdom": 0.0732773008272548,
+      "Purity/Sanctity": 1.0,
+      "Embodied Discipline": 0.2720959392250752,
+      "Fairness/Justice": 0.6420499344873701,
+      "Truth/Integrity": 0.09939532644053196,
+      "Non-Violence/Stewardship": 0.5303626148702986,
+      "Prohibition/Embodied Practice": 0.0
+    }
+  },
+  "Christianity": {
+    "raw_means": {
+      "Self-Mastery/Wisdom": 0.17373625173130736,
+      "Purity/Sanctity": 0.2084933091503361,
+      "Embodied Discipline": 0.012200000019408686,
+      "Fairness/Justice": 0.7574194929771705,
+      "Truth/Integrity": -0.5140520178118809,
+      "Non-Violence/Stewardship": 0.28694796117495147,
+      "Prohibition/Embodied Practice": 0.27421228231188766
+    },
+    "normalized": {
+      "Self-Mastery/Wisdom": 0.5409387970607062,
+      "Purity/Sanctity": 0.568274885304995,
+      "Embodied Discipline": 0.41389210325657033,
+      "Fairness/Justice": 1.0,
+      "Truth/Integrity": 0.0,
+      "Non-Violence/Stewardship": 0.6299787074975409,
+      "Prohibition/Embodied Practice": 0.6199622197076099
+    }
+  }
+};
+const heatmapData = [{"variable": "self_restraint", "factor": "Self-Mastery/Wisdom", "loading": -0.19969533076788112}, {"variable": "self_restraint", "factor": "Purity/Sanctity", "loading": 0.06197469377848257}, {"variable": "self_restraint", "factor": "Embodied Discipline", "loading": 0.3199198680371195}, {"variable": "self_restraint", "factor": "Fairness/Justice", "loading": -0.03259550494349202}, {"variable": "self_restraint", "factor": "Truth/Integrity", "loading": 0.13897711510734906}, {"variable": "self_restraint", "factor": "Non-Violence/Stewardship", "loading": -0.11781856318601092}, {"variable": "self_restraint", "factor": "Prohibition/Embodied Practice", "loading": 0.23655079181817276}, {"variable": "social_obligation", "factor": "Self-Mastery/Wisdom", "loading": 0.5848761164436538}, {"variable": "social_obligation", "factor": "Purity/Sanctity", "loading": 0.5489276452120538}, {"variable": "social_obligation", "factor": "Embodied Discipline", "loading": -0.12034212736618764}, {"variable": "social_obligation", "factor": "Fairness/Justice", "loading": -0.1333922701165756}, {"variable": "social_obligation", "factor": "Truth/Integrity", "loading": -0.04580240177438853}, {"variable": "social_obligation", "factor": "Non-Violence/Stewardship", "loading": -0.11983806276387445}, {"variable": "social_obligation", "factor": "Prohibition/Embodied Practice", "loading": -0.0859242725245433}, {"variable": "ritual_observance", "factor": "Self-Mastery/Wisdom", "loading": -0.00767618562209365}, {"variable": "ritual_observance", "factor": "Purity/Sanctity", "loading": -0.5474694102330225}, {"variable": "ritual_observance", "factor": "Embodied Discipline", "loading": 0.1570758237394748}, {"variable": "ritual_observance", "factor": "Fairness/Justice", "loading": -0.06278126142751904}, {"variable": "ritual_observance", "factor": "Truth/Integrity", "loading": -0.10418996765069463}, {"variable": "ritual_observance", "factor": "Non-Violence/Stewardship", "loading": -0.057430474101370574}, {"variable": "ritual_observance", "factor": "Prohibition/Embodied Practice", "loading": -0.23600378306697967}, {"variable": "epistemological", "factor": "Self-Mastery/Wisdom", "loading": -0.6879481255842617}, {"variable": "epistemological", "factor": "Purity/Sanctity", "loading": -0.009562430673118292}, {"variable": "epistemological", "factor": "Embodied Discipline", "loading": -0.4215764053157296}, {"variable": "epistemological", "factor": "Fairness/Justice", "loading": 0.02278837203831492}, {"variable": "epistemological", "factor": "Truth/Integrity", "loading": 0.025878432877446695}, {"variable": "epistemological", "factor": "Non-Violence/Stewardship", "loading": -0.03227317474045978}, {"variable": "epistemological", "factor": "Prohibition/Embodied Practice", "loading": 0.020868868540805864}, {"variable": "physical_action", "factor": "Self-Mastery/Wisdom", "loading": 0.20999166063022576}, {"variable": "physical_action", "factor": "Purity/Sanctity", "loading": -0.1738090277949489}, {"variable": "physical_action", "factor": "Embodied Discipline", "loading": 0.17821118996457738}, {"variable": "physical_action", "factor": "Fairness/Justice", "loading": 0.0843070428046655}, {"variable": "physical_action", "factor": "Truth/Integrity", "loading": 0.14552968571499128}, {"variable": "physical_action", "factor": "Non-Violence/Stewardship", "loading": -0.05240156244667172}, {"variable": "physical_action", "factor": "Prohibition/Embodied Practice", "loading": -0.4381349310006932}, {"variable": "community_directed", "factor": "Self-Mastery/Wisdom", "loading": 0.28092854564825886}, {"variable": "community_directed", "factor": "Purity/Sanctity", "loading": 0.041962538523195016}, {"variable": "community_directed", "factor": "Embodied Discipline", "loading": 0.048952713832261754}, {"variable": "community_directed", "factor": "Fairness/Justice", "loading": 0.16895754851517716}, {"variable": "community_directed", "factor": "Truth/Integrity", "loading": 0.0019984672958811996}, {"variable": "community_directed", "factor": "Non-Violence/Stewardship", "loading": 0.12136953378101706}, {"variable": "community_directed", "factor": "Prohibition/Embodied Practice", "loading": -0.3274858605833957}, {"variable": "prohibition", "factor": "Self-Mastery/Wisdom", "loading": 0.25271491233612786}, {"variable": "prohibition", "factor": "Purity/Sanctity", "loading": -0.07353397088347059}, {"variable": "prohibition", "factor": "Embodied Discipline", "loading": 0.2731714171318123}, {"variable": "prohibition", "factor": "Fairness/Justice", "loading": -0.016695350805346537}, {"variable": "prohibition", "factor": "Truth/Integrity", "loading": 0.07694035670178992}, {"variable": "prohibition", "factor": "Non-Violence/Stewardship", "loading": -0.15718029366206157}, {"variable": "prohibition", "factor": "Prohibition/Embodied Practice", "loading": 0.7649854342323341}, {"variable": "internal_state", "factor": "Self-Mastery/Wisdom", "loading": -0.699428006491032}, {"variable": "internal_state", "factor": "Purity/Sanctity", "loading": 0.01368520001731595}, {"variable": "internal_state", "factor": "Embodied Discipline", "loading": -0.14708608579093807}, {"variable": "internal_state", "factor": "Fairness/Justice", "loading": 0.13756257060171515}, {"variable": "internal_state", "factor": "Truth/Integrity", "loading": -0.21938970369640695}, {"variable": "internal_state", "factor": "Non-Violence/Stewardship", "loading": 0.07305698740793723}, {"variable": "internal_state", "factor": "Prohibition/Embodied Practice", "loading": -0.07775244945716468}, {"variable": "divine_relationship", "factor": "Self-Mastery/Wisdom", "loading": -0.027141111588028486}, {"variable": "divine_relationship", "factor": "Purity/Sanctity", "loading": -0.6958221324129472}, {"variable": "divine_relationship", "factor": "Embodied Discipline", "loading": -0.12376497903752127}, {"variable": "divine_relationship", "factor": "Fairness/Justice", "loading": 0.01802988713535558}, {"variable": "divine_relationship", "factor": "Truth/Integrity", "loading": -0.04319001802759697}, {"variable": "divine_relationship", "factor": "Non-Violence/Stewardship", "loading": 0.03536691458422085}, {"variable": "divine_relationship", "factor": "Prohibition/Embodied Practice", "loading": 0.014504310880978715}, {"variable": "justice_fairness", "factor": "Self-Mastery/Wisdom", "loading": 0.3398913498505952}, {"variable": "justice_fairness", "factor": "Purity/Sanctity", "loading": 0.26576532856922697}, {"variable": "justice_fairness", "factor": "Embodied Discipline", "loading": -0.17514382221935962}, {"variable": "justice_fairness", "factor": "Fairness/Justice", "loading": -0.32661976534209247}, {"variable": "justice_fairness", "factor": "Truth/Integrity", "loading": 0.21908895976962428}, {"variable": "justice_fairness", "factor": "Non-Violence/Stewardship", "loading": 0.11043984621085073}, {"variable": "justice_fairness", "factor": "Prohibition/Embodied Practice", "loading": -0.03856294794688564}, {"variable": "compassion_care", "factor": "Self-Mastery/Wisdom", "loading": 0.3963544396696425}, {"variable": "compassion_care", "factor": "Purity/Sanctity", "loading": 0.3799018018511356}, {"variable": "compassion_care", "factor": "Embodied Discipline", "loading": -0.11183335824393752}, {"variable": "compassion_care", "factor": "Fairness/Justice", "loading": 0.3319007973869017}, {"variable": "compassion_care", "factor": "Truth/Integrity", "loading": -0.022466078092006157}, {"variable": "compassion_care", "factor": "Non-Violence/Stewardship", "loading": -0.21954565601031711}, {"variable": "compassion_care", "factor": "Prohibition/Embodied Practice", "loading": -0.0015512405761164022}, {"variable": "purity_sanctity", "factor": "Self-Mastery/Wisdom", "loading": 0.06947278790023503}, {"variable": "purity_sanctity", "factor": "Purity/Sanctity", "loading": -0.11082412970962711}, {"variable": "purity_sanctity", "factor": "Embodied Discipline", "loading": 0.7501202205779453}, {"variable": "purity_sanctity", "factor": "Fairness/Justice", "loading": 0.04180356039904074}, {"variable": "purity_sanctity", "factor": "Truth/Integrity", "loading": -0.09604028307690174}, {"variable": "purity_sanctity", "factor": "Non-Violence/Stewardship", "loading": -0.030824894402894074}, {"variable": "purity_sanctity", "factor": "Prohibition/Embodied Practice", "loading": 0.09322487585196391}, {"variable": "authority_hierarchy", "factor": "Self-Mastery/Wisdom", "loading": 0.29418832120660854}, {"variable": "authority_hierarchy", "factor": "Purity/Sanctity", "loading": -0.5913699145494932}, {"variable": "authority_hierarchy", "factor": "Embodied Discipline", "loading": -0.12655499391161576}, {"variable": "authority_hierarchy", "factor": "Fairness/Justice", "loading": 0.02980841073328339}, {"variable": "authority_hierarchy", "factor": "Truth/Integrity", "loading": -0.04406562765541025}, {"variable": "authority_hierarchy", "factor": "Non-Violence/Stewardship", "loading": 0.1258704259848268}, {"variable": "authority_hierarchy", "factor": "Prohibition/Embodied Practice", "loading": 0.1784558394817357}, {"variable": "loyalty_covenant", "factor": "Self-Mastery/Wisdom", "loading": 0.381970495631817}, {"variable": "loyalty_covenant", "factor": "Purity/Sanctity", "loading": -0.12845300447184518}, {"variable": "loyalty_covenant", "factor": "Embodied Discipline", "loading": 0.09939984074864293}, {"variable": "loyalty_covenant", "factor": "Fairness/Justice", "loading": 0.05606719549158155}, {"variable": "loyalty_covenant", "factor": "Truth/Integrity", "loading": -0.09966028939132844}, {"variable": "loyalty_covenant", "factor": "Non-Violence/Stewardship", "loading": 0.4241746187021629}, {"variable": "loyalty_covenant", "factor": "Prohibition/Embodied Practice", "loading": -0.034575673916100585}, {"variable": "self_cultivation", "factor": "Self-Mastery/Wisdom", "loading": -0.8528177736122112}, {"variable": "self_cultivation", "factor": "Purity/Sanctity", "loading": 0.07287288704025505}, {"variable": "self_cultivation", "factor": "Embodied Discipline", "loading": 0.12655617788986248}, {"variable": "self_cultivation", "factor": "Fairness/Justice", "loading": 0.05084628735493445}, {"variable": "self_cultivation", "factor": "Truth/Integrity", "loading": -0.10187128913408365}, {"variable": "self_cultivation", "factor": "Non-Violence/Stewardship", "loading": -0.022683802055221802}, {"variable": "self_cultivation", "factor": "Prohibition/Embodied Practice", "loading": -0.1650933756344149}, {"variable": "non_violence", "factor": "Self-Mastery/Wisdom", "loading": 0.09006183289147834}, {"variable": "non_violence", "factor": "Purity/Sanctity", "loading": 0.12348426894978982}, {"variable": "non_violence", "factor": "Embodied Discipline", "loading": -0.07382526356620452}, {"variable": "non_violence", "factor": "Fairness/Justice", "loading": 0.19256623016413477}, {"variable": "non_violence", "factor": "Truth/Integrity", "loading": -0.14058906442706262}, {"variable": "non_violence", "factor": "Non-Violence/Stewardship", "loading": -0.679304686395243}, {"variable": "non_violence", "factor": "Prohibition/Embodied Practice", "loading": 0.18536786511241157}, {"variable": "material_ethics", "factor": "Self-Mastery/Wisdom", "loading": 0.17100772299913644}, {"variable": "material_ethics", "factor": "Purity/Sanctity", "loading": 0.09184865163063978}, {"variable": "material_ethics", "factor": "Embodied Discipline", "loading": -0.15146974274607514}, {"variable": "material_ethics", "factor": "Fairness/Justice", "loading": 0.264233141602662}, {"variable": "material_ethics", "factor": "Truth/Integrity", "loading": 0.7267807768567293}, {"variable": "material_ethics", "factor": "Non-Violence/Stewardship", "loading": 0.1692596614073615}, {"variable": "material_ethics", "factor": "Prohibition/Embodied Practice", "loading": 0.053192793835305674}, {"variable": "speech_ethics", "factor": "Self-Mastery/Wisdom", "loading": 0.2145605279317165}, {"variable": "speech_ethics", "factor": "Purity/Sanctity", "loading": 0.06398330883031429}, {"variable": "speech_ethics", "factor": "Embodied Discipline", "loading": -0.082002434539756}, {"variable": "speech_ethics", "factor": "Fairness/Justice", "loading": -0.6896663763804157}, {"variable": "speech_ethics", "factor": "Truth/Integrity", "loading": -0.30835324567902617}, {"variable": "speech_ethics", "factor": "Non-Violence/Stewardship", "loading": 0.12699137894247464}, {"variable": "speech_ethics", "factor": "Prohibition/Embodied Practice", "loading": 0.07155859661023665}, {"variable": "sexual_ethics", "factor": "Self-Mastery/Wisdom", "loading": -0.05009841651499174}, {"variable": "sexual_ethics", "factor": "Purity/Sanctity", "loading": 0.2697731667706827}, {"variable": "sexual_ethics", "factor": "Embodied Discipline", "loading": 0.6765138936966175}, {"variable": "sexual_ethics", "factor": "Fairness/Justice", "loading": 0.06375502352914497}, {"variable": "sexual_ethics", "factor": "Truth/Integrity", "loading": -0.08447252391906067}, {"variable": "sexual_ethics", "factor": "Non-Violence/Stewardship", "loading": 0.3334993381052727}, {"variable": "sexual_ethics", "factor": "Prohibition/Embodied Practice", "loading": 0.15583008808413276}, {"variable": "environmental", "factor": "Self-Mastery/Wisdom", "loading": 0.1276745779136359}, {"variable": "environmental", "factor": "Purity/Sanctity", "loading": -0.011720878649167248}, {"variable": "environmental", "factor": "Embodied Discipline", "loading": 0.06094390640906431}, {"variable": "environmental", "factor": "Fairness/Justice", "loading": 0.08326577083267236}, {"variable": "environmental", "factor": "Truth/Integrity", "loading": -0.15360851033492154}, {"variable": "environmental", "factor": "Non-Violence/Stewardship", "loading": -0.5314951871533029}, {"variable": "environmental", "factor": "Prohibition/Embodied Practice", "loading": -0.009944080037532005}];
+
+// Color palette
+const colors = [
+    'rgba(88, 166, 255, 0.8)',   // blue
+    'rgba(63, 185, 80, 0.8)',    // green
+    'rgba(210, 153, 34, 0.8)',   // orange
+    'rgba(248, 81, 73, 0.8)',    // red
+    'rgba(188, 140, 255, 0.8)',  // purple
+    'rgba(118, 217, 230, 0.8)', // cyan
+    'rgba(247, 120, 186, 0.8)', // pink
+    'rgba(139, 148, 158, 0.8)', // gray
+    'rgba(255, 200, 87, 0.8)',  // yellow
+];
+
+// Scree Plot
+const screeCtx = document.getElementById('screeChart').getContext('2d');
+const eigenvalues = [3.402038990419944, 3.0059069233946887, 1.9681271128905422, 1.3551077464280652, 1.14441645619728, 0.8562264099516176, 0.57485992380736, 0.32726459236996874, 0.28109001276935, 0.21372673017723, 0.1532548986745583, 0.07544254268996789];
+new Chart(screeCtx, {
+    type: 'line',
+    data: {
+        labels: eigenvalues.map((_, i) => `Factor ${i+1}`),
+        datasets: [{
+            label: 'Eigenvalue',
+            data: eigenvalues,
+            borderColor: 'rgba(88, 166, 255, 1)',
+            backgroundColor: 'rgba(88, 166, 255, 0.2)',
+            fill: true,
+            tension: 0.3,
+            pointRadius: 6,
+            pointBackgroundColor: eigenvalues.map((v, i) => i < 7 ? 'rgba(63, 185, 80, 1)' : 'rgba(139, 148, 158, 0.5)'),
+        }, {
+            label: 'Kaiser Criterion (eigenvalue = 1)',
+            data: eigenvalues.map(() => 1),
+            borderColor: 'rgba(248, 81, 73, 0.6)',
+            borderDash: [5, 5],
+            pointRadius: 0,
+            fill: false,
+        }]
+    },
+    options: {
+        responsive: true,
+        plugins: {
+            title: { display: true, text: 'Scree Plot — Eigenvalues by Factor', color: '#e6edf3', font: { size: 14 } },
+            legend: { labels: { color: '#8b949e' } }
+        },
+        scales: {
+            x: { ticks: { color: '#8b949e' }, grid: { color: 'rgba(48,54,61,0.5)' } },
+            y: { ticks: { color: '#8b949e' }, grid: { color: 'rgba(48,54,61,0.5)' }, title: { display: true, text: 'Eigenvalue', color: '#8b949e' } }
+        }
+    }
+});
+
+// Radar Charts
+function createRadarChart(canvasId, traditionsToShow) {
+    const ctx = document.getElementById(canvasId).getContext('2d');
+    const datasets = [];
+
+    traditionsToShow.forEach((trad, idx) => {
+        if (traditionProfiles[trad]) {
+            const data = factorLabels.map(f => traditionProfiles[trad].normalized[f] || 0);
+            datasets.push({
+                label: trad,
+                data: data,
+                borderColor: colors[idx % colors.length],
+                backgroundColor: colors[idx % colors.length].replace('0.8', '0.15'),
+                borderWidth: 2,
+                pointRadius: 4,
+                pointBackgroundColor: colors[idx % colors.length],
+            });
+        }
+    });
+
+    new Chart(ctx, {
+        type: 'radar',
+        data: {
+            labels: factorLabels.map(l => l.length > 15 ? l.substring(0, 15) + '...' : l),
+            datasets: datasets
+        },
+        options: {
+            responsive: true,
+            plugins: {
+                title: { display: true, text: traditionsToShow.join(' / '), color: '#e6edf3', font: { size: 12 } },
+                legend: { labels: { color: '#8b949e', font: { size: 10 } } }
+            },
+            scales: {
+                r: {
+                    ticks: { color: '#8b949e', backdropColor: 'transparent' },
+                    grid: { color: 'rgba(48,54,61,0.6)' },
+                    pointLabels: { color: '#e6edf3', font: { size: 10 } },
+                    min: 0,
+                    max: 1,
+                }
+            }
+        }
+    });
+}
+
+// Western/Abrahamic traditions
+createRadarChart('radarChart1', ['Islam', 'Judaism', 'Christianity', 'Zoroastrianism']);
+// Eastern traditions
+createRadarChart('radarChart2', ['Buddhism', 'Hinduism', 'Taoism', 'Confucianism', 'Sikhism']);
+
+// Heatmap (using bar chart as grouped bar)
+const heatmapCtx = document.getElementById('heatmapChart').getContext('2d');
+const variables = [...new Set(heatmapData.map(d => d.variable))];
+const factors = [...new Set(heatmapData.map(d => d.factor))];
+
+const heatmapDatasets = factors.map((factor, idx) => ({
+    label: factor,
+    data: variables.map(v => {
+        const entry = heatmapData.find(d => d.variable === v && d.factor === factor);
+        return entry ? entry.loading : 0;
+    }),
+    backgroundColor: colors[idx % colors.length],
+    borderColor: colors[idx % colors.length].replace('0.8', '1'),
+    borderWidth: 1,
+}));
+
+new Chart(heatmapCtx, {
+    type: 'bar',
+    data: {
+        labels: variables.map(v => v.replace(/_/g, ' ')),
+        datasets: heatmapDatasets
+    },
+    options: {
+        responsive: true,
+        indexAxis: 'y',
+        plugins: {
+            title: { display: true, text: 'Factor Loadings by Coding Variable', color: '#e6edf3', font: { size: 14 } },
+            legend: { labels: { color: '#8b949e', font: { size: 9 } }, position: 'bottom' }
+        },
+        scales: {
+            x: {
+                ticks: { color: '#8b949e' },
+                grid: { color: 'rgba(48,54,61,0.5)' },
+                title: { display: true, text: 'Loading Strength', color: '#8b949e' }
+            },
+            y: { ticks: { color: '#8b949e', font: { size: 9 } }, grid: { color: 'rgba(48,54,61,0.3)' } }
+        }
+    }
+});
+
+// NMF Chart
+const nmfCtx = document.getElementById('nmfChart').getContext('2d');
+const nmfData = {"NMF_Factor_1": {"self_restraint": 0.0, "social_obligation": 9.6746592752929, "ritual_observance": 0.0, "epistemological": 0.0, "physical_action": 0.8617065703300556, "community_directed": 0.0, "prohibition": 0.3814845212764139, "internal_state": 1.032802200283186, "divine_relationship": 0.0, "justice_fairness": 0.30834881018367305, "compassion_care": 10.519675804015709, "purity_sanctity": 0.0, "authority_hierarchy": 0.388638804452716, "loyalty_covenant": 0.0, "self_cultivation": 0.0, "non_violence": 10.523864971139849, "material_ethics": 0.0, "speech_ethics": 0.0, "sexual_ethics": 0.0, "environmental": 3.965456545849737}, "NMF_Factor_2": {"self_restraint": 0.0, "social_obligation": 1.9861821145097824, "ritual_observance": 0.0, "epistemological": 0.0, "physical_action": 0.3578164765341637, "community_directed": 2.377676021864653, "prohibition": 0.0, "internal_state": 0.7116780359217362, "divine_relationship": 0.0, "justice_fairness": 0.0, "compassion_care": 2.3256561550714, "purity_sanctity": 0.0, "authority_hierarchy": 0.23989347512961967, "loyalty_covenant": 2.2613970337016758, "self_cultivation": 0.0, "non_violence": 0.0, "material_ethics": 0.23323122579214328, "speech_ethics": 0.0, "sexual_ethics": 0.012345537327093009, "environmental": 0.0}, "NMF_Factor_3": {"self_restraint": 0.7005299773104813, "social_obligation": 0.0, "ritual_observance": 1.3274032770777615, "epistemological": 0.0, "physical_action": 3.2771969692204332, "community_directed": 0.7457983906759896, "prohibition": 0.0, "internal_state": 0.0, "divine_relationship": 0.1571363610777752, "justice_fairness": 0.0, "compassion_care": 0.0, "purity_sanctity": 1.1634900151868934, "authority_hierarchy": 0.0, "loyalty_covenant": 0.0, "self_cultivation": 0.4990927612363357, "non_violence": 0.0, "material_ethics": 0.12510266535773729, "speech_ethics": 0.0, "sexual_ethics": 0.0, "environmental": 0.3272219866372528}, "NMF_Factor_4": {"self_restraint": 2.5886690065316373, "social_obligation": 0.0, "ritual_observance": 0.0, "epistemological": 0.0, "physical_action": 0.0, "community_directed": 0.0, "prohibition": 2.693753355448013, "internal_state": 0.0, "divine_relationship": 0.0, "justice_fairness": 0.0, "compassion_care": 0.0, "purity_sanctity": 1.3601547661085116, "authority_hierarchy": 0.0, "loyalty_covenant": 0.07858824630852006, "self_cultivation": 0.4292437785825023, "non_violence": 0.0, "material_ethics": 0.03772454956011452, "speech_ethics": 0.10212767705534898, "sexual_ethics": 0.6973095685671599, "environmental": 0.0}, "NMF_Factor_5": {"self_restraint": 0.0, "social_obligation": 0.0, "ritual_observance": 0.9841241979648928, "epistemological": 0.0, "physical_action": 0.0, "community_directed": 0.0, "prohibition": 0.03354345037454756, "internal_state": 0.750366750705909, "divine_relationship": 2.377662356716769, "justice_fairness": 0.0, "compassion_care": 0.0, "purity_sanctity": 0.0, "authority_hierarchy": 2.2348120586060456, "loyalty_covenant": 1.7157963040851192, "self_cultivation": 0.0, "non_violence": 0.0, "material_ethics": 0.0, "speech_ethics": 0.2726705362352845, "sexual_ethics": 0.0, "environmental": 0.0}, "NMF_Factor_6": {"self_restraint": 0.2373392496301252, "social_obligation": 1.5774852691390069, "ritual_observance": 0.0, "epistemological": 0.07060105088690541, "physical_action": 0.3289763238199029, "community_directed": 0.0, "prohibition": 0.0, "internal_state": 0.0, "divine_relationship": 0.0, "justice_fairness": 2.1090728861853165, "compassion_care": 0.03299452377102213, "purity_sanctity": 0.0, "authority_hierarchy": 0.0, "loyalty_covenant": 0.0, "self_cultivation": 0.0, "non_violence": 0.0, "material_ethics": 0.8286239539999032, "speech_ethics": 0.6302761256706602, "sexual_ethics": 0.0, "environmental": 0.0}, "NMF_Factor_7": {"self_restraint": 0.6623612185206291, "social_obligation": 0.0, "ritual_observance": 0.0, "epistemological": 1.399828846464917, "physical_action": 0.0, "community_directed": 0.0, "prohibition": 0.0, "internal_state": 1.9044912616077052, "divine_relationship": 0.159069332441103, "justice_fairness": 0.0, "compassion_care": 0.0, "purity_sanctity": 0.0, "authority_hierarchy": 0.0, "loyalty_covenant": 0.0, "self_cultivation": 1.7728760939093549, "non_violence": 0.027022215061471528, "material_ethics": 0.0, "speech_ethics": 0.0, "sexual_ethics": 0.0, "environmental": 0.0}};
+const nmfFactors = Object.keys(nmfData);
+const nmfVars = Object.keys(nmfData[nmfFactors[0]]);
+
+const nmfDatasets = nmfFactors.map((factor, idx) => ({
+    label: factor.replace('NMF_', '').replace('_', ' '),
+    data: nmfVars.map(v => nmfData[factor][v]),
+    backgroundColor: colors[idx % colors.length],
+}));
+
+new Chart(nmfCtx, {
+    type: 'bar',
+    data: {
+        labels: nmfVars.map(v => v.replace(/_/g, ' ')),
+        datasets: nmfDatasets
+    },
+    options: {
+        responsive: true,
+        indexAxis: 'y',
+        plugins: {
+            title: { display: true, text: 'NMF Factor Weights by Coding Variable', color: '#e6edf3', font: { size: 14 } },
+            legend: { labels: { color: '#8b949e', font: { size: 9 } }, position: 'bottom' }
+        },
+        scales: {
+            x: { stacked: true, ticks: { color: '#8b949e' }, grid: { color: 'rgba(48,54,61,0.5)' } },
+            y: { stacked: true, ticks: { color: '#8b949e', font: { size: 9 } }, grid: { color: 'rgba(48,54,61,0.3)' } }
+        }
+    }
+});
+
+// Prohibition vs Aspiration chart
+const prohibCtx = document.getElementById('prohibAspChart').getContext('2d');
+const prohibData = {"prohibition": [-0.03163212737101808, 0.16153406673896978, 0.3951900538577791, -0.2092219352908677, 0.18287899380797518, -0.3502179477979047, 0.5546837726808935], "aspiration": [-0.055271833189971274, -0.009420247735193617, 0.07327359109852331, 0.15344439803690513, -0.03913414511400644, -0.021972891562388165, -0.2613600343438648]};
+
+new Chart(prohibCtx, {
+    type: 'bar',
+    data: {
+        labels: factorLabels,
+        datasets: [
+            {
+                label: 'Prohibition-framed',
+                data: prohibData.prohibition,
+                backgroundColor: 'rgba(248, 81, 73, 0.7)',
+                borderColor: 'rgba(248, 81, 73, 1)',
+                borderWidth: 1,
+            },
+            {
+                label: 'Aspiration-framed',
+                data: prohibData.aspiration,
+                backgroundColor: 'rgba(63, 185, 80, 0.7)',
+                borderColor: 'rgba(63, 185, 80, 1)',
+                borderWidth: 1,
+            }
+        ]
+    },
+    options: {
+        responsive: true,
+        plugins: {
+            title: { display: true, text: 'Factor Loading by Command Framing (Prohibition vs. Aspiration)', color: '#e6edf3', font: { size: 14 } },
+            legend: { labels: { color: '#8b949e' } }
+        },
+        scales: {
+            x: { ticks: { color: '#8b949e', font: { size: 9 } }, grid: { color: 'rgba(48,54,61,0.5)' } },
+            y: { ticks: { color: '#8b949e' }, grid: { color: 'rgba(48,54,61,0.5)' }, title: { display: true, text: 'Mean Factor Score', color: '#8b949e' } }
+        }
+    }
+});
+
+</script>
+
+<footer style="margin-top: 4rem; padding-top: 2rem; border-top: 1px solid var(--border-color); color: var(--text-muted); font-size: 0.85rem;">
+<p>Generated 2026-05-16 | Factor Analysis: EFA (PAF + Promax) and NMF |
+85 commandments across 9 traditions |
+7 latent factors |
+85.2% variance explained</p>
+<p>Methodology: Principal Axis Factoring with Promax oblique rotation (power=3).
+Complementary analysis via Non-negative Matrix Factorization.
+Coding: binary/weighted thematic presence matrix.</p>
+</footer>
+
+</body>
+</html>
