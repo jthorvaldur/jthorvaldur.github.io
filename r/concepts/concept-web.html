@@ -166,7 +166,40 @@ body {
 <div class="layer-badge" id="layerBadge">OpenAI 6-Layer: <strong>4 of 6 active</strong> &mdash; Layer 4 &amp; 6 in design</div>
 
 <script>
-// ── Data Model ──
+// ── Live Data Loader ──
+// Try fetching from Daylight API (local). Falls back to embedded data on GitHub Pages.
+
+const DOMAIN_COLORS = {
+  legal: '#6366f1', architecture: '#22d3ee', research: '#fbbf24',
+  philosophy: '#c084fc', category: '#34d399',
+};
+let LIVE_MODE = false;
+
+async function tryFetchLive() {
+  try {
+    const resp = await fetch('http://localhost:8000/knowledge', { signal: AbortSignal.timeout(2000) });
+    if (!resp.ok) return null;
+    const data = await resp.json();
+    LIVE_MODE = true;
+    document.getElementById('layerBadge').innerHTML =
+      'Live from Neo4j: <strong>' + data.stats.Concept + ' concepts</strong>, ' +
+      data.stats.Fact + ' facts, ' + data.stats.total_edges + ' edges';
+    // Transform API nodes → our format
+    const nodes = data.nodes.map(n => ({
+      id: n.id, label: n.name.replace(/ & /g, ' &\n').replace(/ \(/g, '\n('),
+      domain: n.domain, color: DOMAIN_COLORS[n.domain] || '#94a3b8',
+      desc: n.description || '', concepts: n.tags || [],
+      links: n.source_url ? [{ label: 'Source', url: n.source_url }] : [],
+    }));
+    const edges = data.edges.map(e => ({
+      from: e.from, to: e.to, label: e.type.toLowerCase().replace(/_/g, ' '),
+      desc: e.description || '',
+    }));
+    return { nodes, edges };
+  } catch { return null; }
+}
+
+// ── Data Model (embedded fallback) ──
 
 const NODES = [
   {
@@ -577,8 +610,28 @@ function closePanel() {
   document.getElementById('panel').classList.remove('open');
 }
 
-// Start
-draw();
+// Start — try live data first, fall back to embedded
+(async () => {
+  const live = await tryFetchLive();
+  if (live) {
+    // Replace embedded data with live data
+    NODES.length = 0;
+    live.nodes.forEach(n => NODES.push(n));
+    EDGES.length = 0;
+    live.edges.forEach(e => EDGES.push(e));
+    // Re-initialize positions
+    const angleStep = (2 * Math.PI) / NODES.length;
+    NODES.forEach((n, i) => {
+      const angle = angleStep * i - Math.PI / 2;
+      const r = Math.min(W(), H()) * 0.3;
+      n.x = W()/2 + r * Math.cos(angle);
+      n.y = H()/2 + r * Math.sin(angle);
+      n.vx = 0; n.vy = 0;
+      n.radius = 36; n.visible = true;
+    });
+  }
+  draw();
+})();
 </script>
 </body>
 </html>
