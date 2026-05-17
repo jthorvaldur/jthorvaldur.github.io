@@ -1,0 +1,795 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Data Inventory — Backblaze B2 Archive</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: 'SF Mono', 'Fira Code', monospace;
+    background: #0d1117;
+    color: #c9d1d9;
+    padding: 0;
+  }
+  a { color: #58a6ff; text-decoration: none; }
+  a:hover { text-decoration: underline; }
+
+  /* Hero */
+  .hero {
+    padding: 60px 32px 40px;
+    max-width: 1400px;
+    margin: 0 auto;
+    border-bottom: 1px solid #21262d;
+  }
+  .hero h1 { color: #f0f6fc; font-size: 32px; font-weight: 700; margin-bottom: 8px; }
+  .hero .tagline { color: #8b949e; font-size: 14px; line-height: 1.6; max-width: 700px; }
+  .hero .badges { margin-top: 16px; display: flex; gap: 8px; flex-wrap: wrap; }
+  .badge { display: inline-flex; align-items: center; gap: 6px; padding: 4px 12px; border-radius: 16px; font-size: 11px; font-weight: 600; }
+  .badge-green { background: #0d2818; color: #3fb950; border: 1px solid #1b3d2a; }
+  .badge-amber { background: #2a1f00; color: #d29922; border: 1px solid #3d2e00; }
+  .badge-blue { background: #0d1830; color: #58a6ff; border: 1px solid #1b2d4a; }
+  .badge-purple { background: #1c1530; color: #bb9af7; border: 1px solid #2d2050; }
+
+  /* Sections */
+  .section {
+    max-width: 1400px;
+    margin: 0 auto;
+    padding: 32px;
+  }
+  .section-divider { border-top: 1px solid #21262d; }
+  h2 { color: #f0f6fc; font-size: 18px; margin-bottom: 6px; }
+  h3 { color: #8b949e; font-size: 13px; text-transform: uppercase; letter-spacing: 0.1em; margin: 24px 0 10px; }
+  .section-sub { color: #8b949e; font-size: 12px; margin-bottom: 20px; }
+  .card {
+    background: #161b22;
+    border: 1px solid #30363d;
+    border-radius: 8px;
+    padding: 20px;
+  }
+  .card-title { color: #58a6ff; font-size: 11px; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 10px; }
+  .grid { display: grid; gap: 16px; }
+  .grid-2 { grid-template-columns: 1fr 1fr; }
+  .grid-3 { grid-template-columns: repeat(3, 1fr); }
+  .grid-4 { grid-template-columns: repeat(4, 1fr); }
+  .stat { font-size: 28px; font-weight: bold; color: #f0f6fc; }
+  .stat-sm { font-size: 20px; font-weight: bold; color: #f0f6fc; }
+  .stat-label { font-size: 11px; color: #8b949e; margin-top: 2px; }
+  .ok { color: #3fb950; }
+  .warn { color: #d29922; }
+  .neg { color: #f85149; }
+
+  /* Nav cards */
+  .nav-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 16px; }
+  .nav-card {
+    background: #161b22;
+    border: 1px solid #30363d;
+    border-radius: 8px;
+    padding: 24px;
+    transition: border-color 0.2s, transform 0.1s;
+    cursor: pointer;
+    text-decoration: none;
+    color: inherit;
+    display: block;
+  }
+  .nav-card:hover { border-color: #58a6ff; transform: translateY(-2px); text-decoration: none; }
+  .nav-card h4 { color: #f0f6fc; font-size: 15px; margin-bottom: 6px; }
+  .nav-card p { color: #8b949e; font-size: 12px; line-height: 1.5; }
+  .nav-card .arrow { color: #58a6ff; font-size: 12px; margin-top: 12px; }
+
+  /* Panel */
+  .panel {
+    background: #0d1117;
+    border: 1px solid #30363d;
+    border-radius: 8px;
+    overflow: hidden;
+  }
+  .panel-header {
+    background: #161b22;
+    padding: 12px 16px;
+    border-bottom: 1px solid #30363d;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  .panel-header h4 { color: #f0f6fc; font-size: 13px; }
+  .panel-body { padding: 16px; }
+  .panel-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 8px 0;
+    border-bottom: 1px solid #21262d;
+    font-size: 12px;
+  }
+  .panel-row:last-child { border-bottom: none; }
+  .panel-key { color: #8b949e; }
+  .panel-val { color: #c9d1d9; font-weight: 600; }
+
+  /* Depth levels */
+  .depth { margin: 24px 0; }
+  .depth-toggle {
+    background: #21262d;
+    border: 1px solid #30363d;
+    color: #c9d1d9;
+    padding: 8px 16px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-family: inherit;
+    font-size: 12px;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    transition: background 0.2s;
+  }
+  .depth-toggle:hover { background: #30363d; }
+  .depth-content { display: none; margin-top: 16px; }
+  .depth-content.open { display: block; }
+
+  /* Tables */
+  table { width: 100%; border-collapse: collapse; font-size: 12px; }
+  th { text-align: left; color: #8b949e; font-weight: normal; padding: 8px; border-bottom: 1px solid #30363d; }
+  td { padding: 8px; border-bottom: 1px solid #21262d; }
+  tr:hover td { background: #1c2129; }
+  code { color: #79c0ff; background: #0d1117; padding: 1px 6px; border-radius: 3px; font-size: 11px; }
+
+  /* Timeline */
+  .timeline-container {
+    background: #161b22;
+    border: 1px solid #30363d;
+    border-radius: 8px;
+    padding: 24px;
+    overflow-x: auto;
+  }
+  .timeline-row {
+    display: flex;
+    align-items: center;
+    margin-bottom: 8px;
+  }
+  .timeline-label {
+    width: 180px;
+    min-width: 180px;
+    font-size: 11px;
+    color: #c9d1d9;
+    padding-right: 12px;
+    text-align: right;
+  }
+  .timeline-bar-container {
+    flex: 1;
+    height: 20px;
+    position: relative;
+    background: #21262d;
+    border-radius: 3px;
+  }
+  .timeline-bar {
+    position: absolute;
+    height: 100%;
+    border-radius: 3px;
+    opacity: 0.9;
+    display: flex;
+    align-items: center;
+    padding-left: 6px;
+    font-size: 9px;
+    color: #f0f6fc;
+    white-space: nowrap;
+    overflow: hidden;
+  }
+  .timeline-axis {
+    display: flex;
+    margin-top: 6px;
+    padding-left: 180px;
+  }
+  .timeline-axis span {
+    flex: 1;
+    font-size: 10px;
+    color: #484f58;
+  }
+
+  /* Hero stats */
+  .hero-stats {
+    display: flex;
+    gap: 40px;
+    margin-top: 24px;
+    flex-wrap: wrap;
+  }
+  .hero-stat-block .stat { font-size: 36px; }
+  .hero-stat-block .stat-label { font-size: 12px; color: #8b949e; margin-top: 4px; }
+
+  /* Dataset cards */
+  .dataset-card {
+    background: #161b22;
+    border: 1px solid #30363d;
+    border-radius: 8px;
+    padding: 20px;
+    margin-bottom: 16px;
+  }
+  .dataset-card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 12px;
+  }
+  .dataset-card-header h4 { color: #f0f6fc; font-size: 14px; }
+  .dataset-card-header .size { color: #58a6ff; font-size: 14px; font-weight: 700; }
+  .dataset-meta {
+    display: flex;
+    gap: 24px;
+    flex-wrap: wrap;
+    font-size: 11px;
+    color: #8b949e;
+    margin-bottom: 12px;
+  }
+  .dataset-meta span { display: inline-flex; align-items: center; gap: 4px; }
+  .schema-block {
+    background: #0d1117;
+    border: 1px solid #21262d;
+    border-radius: 6px;
+    padding: 12px 16px;
+    font-size: 11px;
+    margin-top: 12px;
+    overflow-x: auto;
+  }
+  .schema-block code { background: none; padding: 0; }
+
+  .footer { color: #484f58; font-size: 11px; padding: 32px; text-align: center; border-top: 1px solid #21262d; max-width: 1400px; margin: 0 auto; }
+
+  @media (max-width: 900px) {
+    .grid-2, .grid-3, .grid-4 { grid-template-columns: 1fr; }
+    .hero { padding: 32px 16px 24px; }
+    .section { padding: 24px 16px; }
+    .hero-stats { gap: 24px; }
+    .timeline-label { width: 120px; min-width: 120px; font-size: 10px; }
+    .timeline-axis { padding-left: 120px; }
+  }
+</style>
+</head>
+<body>
+
+<!-- HERO -->
+<div class="hero">
+  <h1>Data Inventory</h1>
+  <div class="tagline">
+    Complete catalog of trade data stored in Backblaze B2. Nine datasets spanning
+    Hyperliquid L1 on-chain data, Binance spot, Bybit perps, and derived market data.
+  </div>
+  <div class="badges">
+    <span class="badge badge-green">Backblaze B2</span>
+    <span class="badge badge-amber">b2:jthor-trade-data/</span>
+    <span class="badge badge-blue">9 Datasets</span>
+    <span class="badge badge-purple">Apr 2020 &ndash; May 2026</span>
+  </div>
+  <div class="hero-stats">
+    <div class="hero-stat-block">
+      <div class="stat">1.59 TB</div>
+      <div class="stat-label">Total archive size</div>
+    </div>
+    <div class="hero-stat-block">
+      <div class="stat">263,322</div>
+      <div class="stat-label">Objects in bucket</div>
+    </div>
+    <div class="hero-stat-block">
+      <div class="stat-sm">$9.54/mo</div>
+      <div class="stat-label">Storage cost</div>
+    </div>
+    <div class="hero-stat-block">
+      <div class="stat-sm">$0</div>
+      <div class="stat-label">Egress (3x/day free)</div>
+    </div>
+  </div>
+</div>
+
+<!-- COVERAGE TIMELINE -->
+<div class="section">
+  <h2>Coverage Timeline</h2>
+  <div class="section-sub">Horizontal coverage per dataset, April 2020 through May 2026 (38 months total span).</div>
+
+  <div class="timeline-container">
+    <!-- Total span: Jan 2020 to May 2026 = 77 months. Each month ~ 1.3% -->
+    <div class="timeline-row">
+      <div class="timeline-label">Binance Spot Trades</div>
+      <div class="timeline-bar-container">
+        <div class="timeline-bar" style="left: 0%; width: 83.1%; background: #d29922;" title="Jan 2020 - May 2025">Jan 2020 &ndash; May 2025 (5.4 yr)</div>
+      </div>
+    </div>
+    <div class="timeline-row">
+      <div class="timeline-label">Bybit Perp Trades</div>
+      <div class="timeline-bar-container">
+        <div class="timeline-bar" style="left: 2.6%; width: 80.5%; background: #d29922;" title="Mar 2020 - May 2025">Mar 2020 &ndash; May 2025 (5 yr)</div>
+      </div>
+    </div>
+    <div class="timeline-row">
+      <div class="timeline-label">HL L2 Book</div>
+      <div class="timeline-bar-container">
+        <div class="timeline-bar" style="left: 50.6%; width: 49.4%; background: #58a6ff;" title="Apr 2023 - May 2026">Apr 2023 &ndash; May 2026 (3.1 yr)</div>
+      </div>
+    </div>
+    <div class="timeline-row">
+      <div class="timeline-label">HL Asset Contexts</div>
+      <div class="timeline-bar-container">
+        <div class="timeline-bar" style="left: 52.0%; width: 48.0%; background: #58a6ff;" title="May 2023 - May 2026">May 2023 &ndash; May 2026 (3 yr)</div>
+      </div>
+    </div>
+    <div class="timeline-row">
+      <div class="timeline-label">HL Trades (node_trades)</div>
+      <div class="timeline-bar-container">
+        <div class="timeline-bar" style="left: 80.5%; width: 3.9%; background: #3fb950;" title="Mar 2025 - Jun 2025">Mar &ndash; Jun 2025 (92 d)</div>
+      </div>
+    </div>
+    <div class="timeline-row">
+      <div class="timeline-label">HL Fills (node_fills)</div>
+      <div class="timeline-bar-container">
+        <div class="timeline-bar" style="left: 83.1%; width: 2.6%; background: #3fb950;" title="May 2025 - Jul 2025">May &ndash; Jul 2025 (64 d)</div>
+      </div>
+    </div>
+    <div class="timeline-row">
+      <div class="timeline-label">HL Fills by Block</div>
+      <div class="timeline-bar-container">
+        <div class="timeline-bar" style="left: 85.7%; width: 14.3%; background: #bb9af7;" title="Jul 2025 - May 2026">Jul 2025 &ndash; May 2026 (293 d)</div>
+      </div>
+    </div>
+    <div class="timeline-axis">
+      <span>2020</span>
+      <span>2021</span>
+      <span>2022</span>
+      <span>2023</span>
+      <span>2024</span>
+      <span>2025</span>
+      <span>2026</span>
+    </div>
+  </div>
+</div>
+
+<!-- DATASET TABLE -->
+<div class="section section-divider">
+  <h2>Dataset Summary</h2>
+  <div class="section-sub">All datasets in b2:jthor-trade-data/ ordered by size.</div>
+
+  <div class="card" style="overflow-x: auto;">
+    <table>
+      <tr>
+        <th>Dataset</th>
+        <th>Files</th>
+        <th>Size</th>
+        <th>Coverage</th>
+        <th>Format</th>
+        <th>Granularity</th>
+      </tr>
+      <tr>
+        <td><strong style="color:#f0f6fc">Binance Spot Trades</strong></td>
+        <td>828</td>
+        <td><strong>888.1 GB</strong></td>
+        <td>Jan 2020 &ndash; May 2025</td>
+        <td>CSV</td>
+        <td>Monthly + daily, 18 symbols</td>
+      </tr>
+      <tr>
+        <td><strong style="color:#f0f6fc">Bybit Perp Trades</strong></td>
+        <td>13,477</td>
+        <td><strong>209.8 GB</strong></td>
+        <td>Mar 2020 &ndash; May 2025</td>
+        <td>GZ CSV</td>
+        <td>Daily, 11 symbols</td>
+      </tr>
+      <tr>
+        <td><strong style="color:#f0f6fc">HL L2 Book</strong></td>
+        <td>237,656</td>
+        <td><strong>165.7 GB</strong></td>
+        <td>Apr 2023 &ndash; May 2026</td>
+        <td>LZ4 NDJSON</td>
+        <td>Hourly per coin, 10 coins</td>
+      </tr>
+      <tr>
+        <td><strong style="color:#f0f6fc">HL Fills by Block</strong></td>
+        <td>7,022</td>
+        <td><strong>164.4 GB</strong></td>
+        <td>Jul 2025 &ndash; May 2026</td>
+        <td>LZ4 NDJSON</td>
+        <td>Hourly, batched by L1 block</td>
+      </tr>
+      <tr>
+        <td><strong style="color:#f0f6fc">HL Fills (node_fills)</strong></td>
+        <td>1,507</td>
+        <td><strong>29.6 GB</strong></td>
+        <td>May &ndash; Jul 2025</td>
+        <td>LZ4 NDJSON</td>
+        <td>Hourly</td>
+      </tr>
+      <tr>
+        <td><strong style="color:#f0f6fc">HL Trades (node_trades)</strong></td>
+        <td>1,542</td>
+        <td><strong>14.1 GB</strong></td>
+        <td>Mar &ndash; Jun 2025</td>
+        <td>LZ4 NDJSON</td>
+        <td>Hourly</td>
+      </tr>
+      <tr>
+        <td><strong style="color:#f0f6fc">HL Asset Contexts</strong></td>
+        <td>1,077</td>
+        <td><strong>8.1 GB</strong></td>
+        <td>May 2023 &ndash; May 2026</td>
+        <td>LZ4 CSV</td>
+        <td>Daily</td>
+      </tr>
+      <tr>
+        <td><strong style="color:#f0f6fc">Coherence Research</strong></td>
+        <td>213</td>
+        <td><strong>794 MB</strong></td>
+        <td>&mdash;</td>
+        <td>Various</td>
+        <td>Anomaly detection datasets</td>
+      </tr>
+    </table>
+  </div>
+</div>
+
+<!-- DETAILED DATASETS -->
+<div class="section section-divider">
+  <h2>Dataset Details</h2>
+  <div class="section-sub">Schema, unique fields, and notes for each dataset.</div>
+
+  <!-- 1. HL Fills -->
+  <div class="dataset-card">
+    <div class="dataset-card-header">
+      <h4><span class="ok">&#9679;</span> HL Fills (node_fills)</h4>
+      <span class="size">29.6 GB</span>
+    </div>
+    <div class="dataset-meta">
+      <span>1,507 files</span>
+      <span>May 25 &ndash; Jul 27, 2025 (64 days)</span>
+      <span>LZ4 NDJSON, hourly</span>
+    </div>
+    <p style="font-size:12px; color:#8b949e; margin-bottom:8px;">
+      Per-wallet fill data from HL L1. Each record is one fill event attributed to a specific wallet address,
+      with realized PnL, position tracking, and maker/taker classification.
+    </p>
+    <strong style="font-size:11px; color:#8b949e;">Unique value:</strong>
+    <span style="font-size:11px; color:#c9d1d9;"> wallet addresses, per-fill PnL, maker/taker flag</span>
+    <button class="depth-toggle" onclick="toggle('schema-fills')" style="margin-top:12px;">&#9660; Schema</button>
+    <div id="schema-fills" class="depth-content">
+      <div class="schema-block">
+        <code>[wallet, {coin, px, sz, side, time, closedPnl, fee, dir, crossed, startPosition, hash, tid, oid, ...}]</code>
+      </div>
+    </div>
+  </div>
+
+  <!-- 2. HL Trades -->
+  <div class="dataset-card">
+    <div class="dataset-card-header">
+      <h4><span class="ok">&#9679;</span> HL Trades (node_trades)</h4>
+      <span class="size">14.1 GB</span>
+    </div>
+    <div class="dataset-meta">
+      <span>1,542 files</span>
+      <span>Mar 22 &ndash; Jun 21, 2025 (92 days)</span>
+      <span>LZ4 NDJSON, hourly</span>
+    </div>
+    <p style="font-size:12px; color:#8b949e; margin-bottom:8px;">
+      Matched trades from HL L1. Unlike fills, each record shows both sides of the trade &mdash;
+      the maker and taker are both visible in the side_info array.
+    </p>
+    <strong style="font-size:11px; color:#8b949e;">Unique value:</strong>
+    <span style="font-size:11px; color:#c9d1d9;"> both parties visible in side_info array</span>
+    <button class="depth-toggle" onclick="toggle('schema-trades')" style="margin-top:12px;">&#9660; Schema</button>
+    <div id="schema-trades" class="depth-content">
+      <div class="schema-block">
+        <code>{coin, side, time, px, sz, hash, side_info: [{user, startPosition, dir, ...}, ...]}</code>
+      </div>
+    </div>
+  </div>
+
+  <!-- 3. HL Fills by Block -->
+  <div class="dataset-card">
+    <div class="dataset-card-header">
+      <h4><span class="ok">&#9679;</span> HL Fills by Block</h4>
+      <span class="size">164.4 GB</span>
+    </div>
+    <div class="dataset-meta">
+      <span>7,022 files</span>
+      <span>Jul 27, 2025 &ndash; May 15, 2026 (293 days)</span>
+      <span>LZ4 NDJSON, hourly</span>
+    </div>
+    <p style="font-size:12px; color:#8b949e; margin-bottom:8px;">
+      Successor to node_fills. Fills grouped by L1 block number with block timestamps.
+      Continuous live stream that is still actively recording.
+    </p>
+    <strong style="font-size:11px; color:#8b949e;">Unique value:</strong>
+    <span style="font-size:11px; color:#c9d1d9;"> fills grouped by block, continuous live stream</span>
+    <button class="depth-toggle" onclick="toggle('schema-block')" style="margin-top:12px;">&#9660; Schema</button>
+    <div id="schema-block" class="depth-content">
+      <div class="schema-block">
+        <code>{local_time, block_time, block_number, events: [...fills...]}</code>
+      </div>
+    </div>
+  </div>
+
+  <!-- 4. HL Asset Contexts -->
+  <div class="dataset-card">
+    <div class="dataset-card-header">
+      <h4><span class="ok">&#9679;</span> HL Asset Contexts</h4>
+      <span class="size">8.1 GB</span>
+    </div>
+    <div class="dataset-meta">
+      <span>1,077 files</span>
+      <span>May 20, 2023 &ndash; May 15, 2026 (1,092 days / 3 years)</span>
+      <span>LZ4 CSV, daily</span>
+    </div>
+    <p style="font-size:12px; color:#8b949e; margin-bottom:8px;">
+      Daily snapshots of all HL perp market context: funding rates, open interest,
+      oracle prices, mark prices, and volume. Covers entire HL history.
+    </p>
+    <strong style="font-size:11px; color:#8b949e;">Unique value:</strong>
+    <span style="font-size:11px; color:#c9d1d9;"> funding rates, open interest, oracle prices</span>
+    <button class="depth-toggle" onclick="toggle('schema-ctx')" style="margin-top:12px;">&#9660; Schema</button>
+    <div id="schema-ctx" class="depth-content">
+      <div class="schema-block">
+        <code>time, coin, funding, open_interest, prev_day_px, day_ntl_vlm, premium, oracle_px, mark_px, mid_px</code>
+      </div>
+    </div>
+  </div>
+
+  <!-- 5. HL L2 Book -->
+  <div class="dataset-card">
+    <div class="dataset-card-header">
+      <h4><span class="ok">&#9679;</span> HL L2 Book</h4>
+      <span class="size">165.7 GB</span>
+    </div>
+    <div class="dataset-meta">
+      <span>237,656 files</span>
+      <span>Apr 15, 2023 &ndash; May 15, 2026 (1,127 days / 3.1 years)</span>
+      <span>LZ4 NDJSON, hourly per coin</span>
+    </div>
+    <p style="font-size:12px; color:#8b949e; margin-bottom:8px;">
+      Full order book snapshots (bid/ask depth) for 10 coins. Hourly files per coin,
+      enabling order flow analysis, liquidity measurement, and spread decomposition.
+    </p>
+    <strong style="font-size:11px; color:#8b949e;">Coins:</strong>
+    <span style="font-size:11px; color:#c9d1d9;"> BTC, ETH, SOL, HYPE, XRP, DOGE, AVAX, SUI, AAVE, WIF</span>
+    <button class="depth-toggle" onclick="toggle('schema-l2')" style="margin-top:12px;">&#9660; Schema</button>
+    <div id="schema-l2" class="depth-content">
+      <div class="schema-block">
+        <code>{time, levels: [[{px, sz, n}, ...], [{px, sz, n}, ...]]}  // [bids, asks] full depth</code>
+      </div>
+    </div>
+  </div>
+
+  <!-- 6. Binance Spot Trades -->
+  <div class="dataset-card">
+    <div class="dataset-card-header">
+      <h4><span class="warn">&#9679;</span> Binance Spot Trades</h4>
+      <span class="size">888.1 GB</span>
+    </div>
+    <div class="dataset-meta">
+      <span>828 files</span>
+      <span>Jan 2020 &ndash; May 2025 (5.4 years)</span>
+      <span>CSV (monthly + daily), 18 symbols</span>
+    </div>
+    <p style="font-size:12px; color:#8b949e; margin-bottom:8px;">
+      Every spot trade on Binance for 18 USDT pairs. Monthly bulk archives plus
+      daily files for recent data. The largest dataset by far.
+    </p>
+    <strong style="font-size:11px; color:#8b949e;">Symbols:</strong>
+    <span style="font-size:11px; color:#c9d1d9;"> BTCUSDT, ETHUSDT, SOLUSDT, XRPUSDT, DOGEUSDT, BNBUSDT, AVAXUSDT, SUIUSDT, AAVEUSDT, WLDUSDT, WIFUSDT, ENAUSDT, TRUMPUSDT, VIRTUALUSDT, POPCATUSDT, MOODENGUSDT, BERAUSDT, PENGUUSDT</span>
+    <button class="depth-toggle" onclick="toggle('schema-bn')" style="margin-top:12px;">&#9660; Schema</button>
+    <div id="schema-bn" class="depth-content">
+      <div class="schema-block">
+        <code>trade_id, price, qty, quote_qty, time, is_buyer_maker, is_best_match</code>
+      </div>
+    </div>
+  </div>
+
+  <!-- 7. Bybit Perp Trades -->
+  <div class="dataset-card">
+    <div class="dataset-card-header">
+      <h4><span class="warn">&#9679;</span> Bybit Perp Trades</h4>
+      <span class="size">209.8 GB</span>
+    </div>
+    <div class="dataset-meta">
+      <span>13,477 files</span>
+      <span>Mar 2020 &ndash; May 2025 (5 years)</span>
+      <span>GZ CSV, daily, 11 symbols</span>
+    </div>
+    <p style="font-size:12px; color:#8b949e; margin-bottom:8px;">
+      Daily perpetual futures trade data from Bybit. Compressed CSV files per symbol per day.
+      Provides a third venue for cross-exchange comparison alongside Binance and HL.
+    </p>
+    <strong style="font-size:11px; color:#8b949e;">Symbols:</strong>
+    <span style="font-size:11px; color:#c9d1d9;"> BTCUSDT, ETHUSDT, SOLUSDT, XRPUSDT, DOGEUSDT, BNBUSDT, AVAXUSDT, SUIUSDT, AAVEUSDT, WIFUSDT, HYPEUSDT</span>
+    <button class="depth-toggle" onclick="toggle('schema-bybit')" style="margin-top:12px;">&#9660; Schema</button>
+    <div id="schema-bybit" class="depth-content">
+      <div class="schema-block">
+        <code>timestamp, symbol, side, size, price, tickDirection, trdMatchID, grossValue, homeNotional, foreignNotional</code>
+      </div>
+    </div>
+  </div>
+
+  <!-- 8. Coherence Research -->
+  <div class="dataset-card">
+    <div class="dataset-card-header">
+      <h4><span style="color:#bb9af7;">&#9679;</span> Coherence Research</h4>
+      <span class="size">794 MB</span>
+    </div>
+    <div class="dataset-meta">
+      <span>213 files</span>
+      <span>Open source anomaly detection datasets</span>
+      <span>Various formats</span>
+    </div>
+    <p style="font-size:12px; color:#8b949e; margin-bottom:8px;">
+      Benchmark datasets for anomaly detection model development and validation.
+    </p>
+    <strong style="font-size:11px; color:#8b949e;">Contains:</strong>
+    <span style="font-size:11px; color:#c9d1d9;"> credit_card, NAB, NASA turbofan, PhysioNet ECG, SKAB, UCI power</span>
+  </div>
+
+  <!-- 9. Binance Derived -->
+  <div class="dataset-card" style="border-color: #3d2e00;">
+    <div class="dataset-card-header">
+      <h4><span class="warn">&#9679;</span> Binance Derived <span class="badge badge-amber" style="margin-left:8px;">DOWNLOADING</span></h4>
+      <span class="size">TBD</span>
+    </div>
+    <div class="dataset-meta">
+      <span>In progress on Maryland instance</span>
+      <span>BTC + ETH primary</span>
+      <span>Multiple formats</span>
+    </div>
+    <p style="font-size:12px; color:#8b949e; margin-bottom:8px;">
+      Supplementary market data for basis/funding analysis. Currently being downloaded and will be uploaded to B2 on completion.
+    </p>
+    <button class="depth-toggle" onclick="toggle('schema-derived')" style="margin-top:12px;">&#9660; Contents</button>
+    <div id="schema-derived" class="depth-content">
+      <div class="schema-block">
+        <code>1m klines (spot + UM perps): BTC, ETH, ETHBTC</code><br>
+        <code>Mark price klines (UM): BTC, ETH</code><br>
+        <code>Premium index klines (UM): BTC, ETH</code><br>
+        <code>Funding rates (monthly): BTC, ETH</code><br>
+        <code>L2 bookDepth (UM): BTC, ETH (from 2023)</code>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- CROSS-EXCHANGE FIELD MAPPING -->
+<div class="section section-divider">
+  <h2>Cross-Exchange Field Mapping</h2>
+  <div class="section-sub">How fields align across the three exchanges for unified analysis.</div>
+
+  <div class="card" style="overflow-x: auto;">
+    <table>
+      <tr>
+        <th>Concept</th>
+        <th>HL Fills</th>
+        <th>HL Trades</th>
+        <th>Binance Spot</th>
+        <th>Bybit Perps</th>
+      </tr>
+      <tr>
+        <td>Price</td>
+        <td><code>px</code></td>
+        <td><code>px</code></td>
+        <td><code>price</code></td>
+        <td><code>price</code></td>
+      </tr>
+      <tr>
+        <td>Size</td>
+        <td><code>sz</code></td>
+        <td><code>sz</code></td>
+        <td><code>qty</code></td>
+        <td><code>size</code></td>
+      </tr>
+      <tr>
+        <td>Timestamp</td>
+        <td><code>time</code> (ms)</td>
+        <td><code>time</code> (ms)</td>
+        <td><code>time</code> (us)</td>
+        <td><code>timestamp</code> (ms)</td>
+      </tr>
+      <tr>
+        <td>Side / Aggressor</td>
+        <td><code>side</code> (B/A)</td>
+        <td><code>side</code></td>
+        <td><code>is_buyer_maker</code></td>
+        <td><code>side</code> (Buy/Sell)</td>
+      </tr>
+      <tr>
+        <td>Symbol</td>
+        <td><code>coin</code></td>
+        <td><code>coin</code></td>
+        <td>Symbol (e.g. BTCUSDT)</td>
+        <td><code>symbol</code></td>
+      </tr>
+      <tr>
+        <td>Notional</td>
+        <td><code>px * sz</code></td>
+        <td><code>px * sz</code></td>
+        <td><code>quote_qty</code></td>
+        <td><code>foreignNotional</code></td>
+      </tr>
+      <tr>
+        <td>Trade ID</td>
+        <td><code>tid</code></td>
+        <td><code>hash</code></td>
+        <td><code>trade_id</code></td>
+        <td><code>trdMatchID</code></td>
+      </tr>
+      <tr>
+        <td>Wallet / User</td>
+        <td><code>wallet</code></td>
+        <td><code>side_info[].user</code></td>
+        <td>&mdash;</td>
+        <td>&mdash;</td>
+      </tr>
+      <tr>
+        <td>PnL</td>
+        <td><code>closedPnl</code></td>
+        <td>&mdash;</td>
+        <td>&mdash;</td>
+        <td>&mdash;</td>
+      </tr>
+      <tr>
+        <td>Maker/Taker</td>
+        <td><code>crossed</code></td>
+        <td>&mdash;</td>
+        <td><code>is_buyer_maker</code></td>
+        <td><code>tickDirection</code></td>
+      </tr>
+    </table>
+  </div>
+</div>
+
+<!-- COST SECTION -->
+<div class="section section-divider">
+  <h2>Storage Cost</h2>
+  <div class="section-sub">Backblaze B2 pricing for the archive.</div>
+
+  <div class="grid grid-2">
+    <div class="panel">
+      <div class="panel-header">
+        <h4>Monthly Cost Breakdown</h4>
+      </div>
+      <div class="panel-body">
+        <div class="panel-row"><span class="panel-key">Storage (1.59 TB @ $6/TB/mo)</span><span class="panel-val">$9.54</span></div>
+        <div class="panel-row"><span class="panel-key">Class B transactions</span><span class="panel-val">$0.00</span></div>
+        <div class="panel-row"><span class="panel-key">Class C transactions</span><span class="panel-val">$0.00</span></div>
+        <div class="panel-row"><span class="panel-key">Egress (3x storage/day free)</span><span class="panel-val ok">$0.00</span></div>
+        <div class="panel-row" style="border-top: 1px solid #30363d; padding-top: 12px;"><span class="panel-key" style="color:#f0f6fc; font-weight:700;">Total</span><span class="panel-val" style="color:#3fb950; font-size:14px;">$9.54/month</span></div>
+      </div>
+    </div>
+
+    <div class="panel">
+      <div class="panel-header">
+        <h4>Free Egress Budget</h4>
+      </div>
+      <div class="panel-body">
+        <div class="panel-row"><span class="panel-key">Daily free download</span><span class="panel-val">3x stored = 4.77 TB/day</span></div>
+        <div class="panel-row"><span class="panel-key">Full archive download</span><span class="panel-val">~8 hours (at free tier)</span></div>
+        <div class="panel-row"><span class="panel-key">B2 S3-compatible API</span><span class="panel-val ok">Yes</span></div>
+        <div class="panel-row"><span class="panel-key">Region</span><span class="panel-val">US West</span></div>
+        <div class="panel-row"><span class="panel-key">Redundancy</span><span class="panel-val">11 nines durability</span></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- BACK LINK -->
+<div class="section section-divider" style="padding-bottom: 16px;">
+  <a href="index.html" style="font-size: 13px;">&larr; Back to project overview</a>
+</div>
+
+<div class="footer">
+  <a href="https://github.com/jthorvaldur">jthorvaldur</a> &middot;
+  Archive stored on <a href="https://www.backblaze.com/cloud-storage">Backblaze B2</a> &middot;
+  1.59 TB across 263,322 objects &middot;
+  Last updated May 2026
+</div>
+
+<script>
+function toggle(id) {
+  const el = document.getElementById(id);
+  el.classList.toggle('open');
+  const btn = el.previousElementSibling;
+  btn.innerHTML = el.classList.contains('open')
+    ? btn.innerHTML.replace('\u25BC', '\u25B2')
+    : btn.innerHTML.replace('\u25B2', '\u25BC');
+}
+</script>
+
+</body>
+</html>
