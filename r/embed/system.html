@@ -1,0 +1,1426 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>corpus-pipeline &mdash; System Guide</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#0f172a;--surface:#1e293b;--surface2:#162032;--border:#334155;
+  --text:#e2e8f0;--muted:#94a3b8;--dim:#64748b;
+  --green:#4ade80;--yellow:#facc15;--red:#f87171;--blue:#60a5fa;
+  --gray:#6b7280;--purple:#c084fc;--orange:#fb923c;--cyan:#34d399;
+  --mono:'SF Mono','Fira Code','Cascadia Code','Consolas',monospace
+}
+body{background:var(--bg);color:var(--text);font-family:var(--mono);font-size:13px;line-height:1.7;display:flex;min-height:100vh}
+
+/* Sidebar */
+.sidebar{width:230px;flex-shrink:0;background:var(--surface);border-right:1px solid var(--border);
+  position:fixed;top:0;left:0;bottom:0;overflow-y:auto;padding:20px 0;z-index:10}
+.sidebar-header{padding:0 16px 16px;border-bottom:1px solid var(--border);margin-bottom:12px}
+.sidebar-title{color:var(--blue);font-weight:700;font-size:14px;margin-bottom:2px}
+.sidebar-sub{color:var(--muted);font-size:10px}
+.sidebar a{display:block;padding:4px 16px;color:var(--muted);text-decoration:none;font-size:11px;border-left:2px solid transparent}
+.sidebar a:hover,.sidebar a.active{color:var(--text);border-left-color:var(--blue)}
+.sidebar-section{padding:8px 16px 4px;color:var(--dim);font-size:9px;text-transform:uppercase;letter-spacing:.1em;margin-top:4px}
+.sidebar-back{padding:0 16px 12px;border-bottom:1px solid var(--border);margin-bottom:12px}
+.sidebar-back a{color:var(--blue);font-size:11px;text-decoration:none}
+.sidebar-back a:hover{text-decoration:underline}
+
+/* Main content */
+.main{margin-left:230px;flex:1;padding:32px 40px;max-width:1100px}
+h1{font-size:22px;font-weight:700;color:var(--blue);margin-bottom:6px}
+h2{font-size:15px;font-weight:700;color:var(--blue);margin:32px 0 12px;padding-top:8px;border-top:1px solid var(--border)}
+h3{font-size:13px;font-weight:700;color:var(--cyan);margin:20px 0 8px}
+h4{font-size:12px;font-weight:600;color:var(--muted);margin:14px 0 6px;text-transform:uppercase;letter-spacing:.06em}
+a{color:var(--blue);text-decoration:none}
+a:hover{text-decoration:underline}
+p{margin-bottom:10px;color:var(--text)}
+ul,ol{margin:8px 0 10px 20px}
+li{margin-bottom:4px}
+
+/* Code blocks */
+pre{background:var(--surface);border:1px solid var(--border);border-radius:6px;padding:14px 16px;
+  overflow-x:auto;margin:10px 0;font-size:12px;line-height:1.6}
+code{background:rgba(96,165,250,.1);padding:1px 5px;border-radius:3px;font-size:11px;color:var(--blue)}
+pre code{background:none;padding:0;color:var(--text)}
+
+/* Cards and tables */
+.card{background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:16px;margin:12px 0}
+.card-sm{background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:12px}
+table{width:100%;border-collapse:collapse;font-size:12px;margin:10px 0}
+th{text-align:left;padding:6px 10px;color:var(--muted);border-bottom:1px solid var(--border);
+  font-size:10px;text-transform:uppercase;letter-spacing:.06em;font-weight:600}
+td{padding:5px 10px;border-bottom:1px solid rgba(51,65,85,.4);vertical-align:top}
+tr:last-child td{border-bottom:none}
+tr:hover td{background:rgba(255,255,255,.015)}
+
+/* Badges */
+.badge{display:inline-block;padding:1px 7px;border-radius:3px;font-size:10px;font-weight:700}
+.bg{background:rgba(74,222,128,.15);color:var(--green)}
+.br{background:rgba(248,113,113,.15);color:var(--red)}
+.by{background:rgba(250,204,21,.15);color:var(--yellow)}
+.bb{background:rgba(96,165,250,.15);color:var(--blue)}
+.bgr{background:rgba(107,114,128,.15);color:var(--gray)}
+.bpurp{background:rgba(192,132,252,.15);color:var(--purple)}
+
+.pass{color:var(--green)}
+.warn{color:var(--yellow)}
+.fail{color:var(--red)}
+.dim{color:var(--dim)}
+
+/* Note/callout */
+.note{background:rgba(96,165,250,.05);border-left:3px solid var(--blue);padding:8px 12px;
+  margin:10px 0;border-radius:0 4px 4px 0;font-size:12px;color:var(--muted)}
+.warn-note{background:rgba(250,204,21,.05);border-left:3px solid var(--yellow);padding:8px 12px;
+  margin:10px 0;border-radius:0 4px 4px 0;font-size:12px;color:var(--muted)}
+.danger-note{background:rgba(248,113,113,.05);border-left:3px solid var(--red);padding:8px 12px;
+  margin:10px 0;border-radius:0 4px 4px 0;font-size:12px}
+
+/* Grid */
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin:12px 0}
+.grid3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px;margin:12px 0}
+.grid4{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin:12px 0}
+
+/* Stage pill */
+.stage-pill{display:inline-block;padding:3px 10px;border-radius:12px;font-size:11px;font-weight:700;margin:1px}
+.sp1{background:rgba(96,165,250,.15);color:var(--blue)}
+.sp2{background:rgba(74,222,128,.15);color:var(--green)}
+.sp3{background:rgba(250,204,21,.15);color:var(--yellow)}
+.sp4{background:rgba(192,132,252,.15);color:var(--purple)}
+.sp5{background:rgba(251,146,60,.15);color:var(--orange)}
+.sp6{background:rgba(52,211,153,.15);color:var(--cyan)}
+
+/* Row */
+.row{display:flex;justify-content:space-between;align-items:center;
+  padding:4px 0;border-bottom:1px solid rgba(51,65,85,.4)}
+.row:last-child{border-bottom:none}
+.rl{color:var(--muted);font-size:12px}
+.rv{font-weight:600}
+
+/* Progress bar */
+.pb-wrap{width:100%;height:6px;background:var(--border);border-radius:3px;overflow:hidden;margin:4px 0}
+.pb{height:100%;border-radius:3px;background:var(--green)}
+
+/* Footer */
+.footer{margin-top:48px;padding-top:16px;border-top:1px solid var(--border);
+  color:var(--dim);font-size:11px}
+
+/* Section anchor offset for fixed sidebar */
+.section-anchor{display:block;position:relative;top:-20px;visibility:hidden}
+
+@media(max-width:900px){
+  .sidebar{display:none}
+  .main{margin-left:0;padding:16px}
+  .grid2,.grid3,.grid4{grid-template-columns:1fr}
+}
+</style>
+</head>
+<body>
+
+<!-- SIDEBAR -->
+<nav class="sidebar">
+  <div class="sidebar-header">
+    <div class="sidebar-title">corpus-pipeline</div>
+    <div class="sidebar-sub">System Guide</div>
+  </div>
+  <div class="sidebar-back">
+    <a href="dashboard.html">&larr; Dashboard</a>
+  </div>
+
+  <div class="sidebar-section">Overview</div>
+  <a href="#overview">1. System Overview</a>
+  <a href="#architecture">2. Architecture Diagram</a>
+
+  <div class="sidebar-section">Pipeline Stages</div>
+  <a href="#stages">3. Data Flow Detail</a>
+  <a href="#stage-scan">&nbsp;&nbsp;scan</a>
+  <a href="#stage-identify">&nbsp;&nbsp;identify</a>
+  <a href="#stage-dedup">&nbsp;&nbsp;dedup</a>
+  <a href="#stage-convert">&nbsp;&nbsp;convert</a>
+  <a href="#stage-concepts">&nbsp;&nbsp;concepts</a>
+  <a href="#stage-embed">&nbsp;&nbsp;embed</a>
+  <a href="#stage-extract">&nbsp;&nbsp;extract</a>
+  <a href="#stage-verify">&nbsp;&nbsp;verify</a>
+  <a href="#stage-graph">&nbsp;&nbsp;graph</a>
+  <a href="#stage-orchestrate">&nbsp;&nbsp;orchestrate</a>
+
+  <div class="sidebar-section">Data & Knowledge</div>
+  <a href="#handlers">4. Data Type Handlers</a>
+  <a href="#provenance">5. Provenance Chain</a>
+  <a href="#knowledge-graph">6. Process Knowledge Graph</a>
+
+  <div class="sidebar-section">Operations</div>
+  <a href="#infrastructure">7. Infrastructure</a>
+  <a href="#agents">8. Agent Architecture</a>
+  <a href="#howto">9. How to Run</a>
+  <a href="#status">10. Current Status</a>
+</nav>
+
+<!-- MAIN CONTENT -->
+<main class="main">
+
+<!-- HEADER -->
+<div style="margin-bottom:28px;padding-bottom:16px;border-bottom:1px solid var(--border)">
+  <h1>corpus-pipeline &mdash; System Guide</h1>
+  <div style="color:var(--muted);font-size:12px;margin-top:4px">
+    Reproducible document pipeline: raw files &rarr; searchable, fact-extracted databases
+    &bull; <a href="dashboard.html">Command Center &rarr;</a>
+  </div>
+  <div style="margin-top:12px;display:flex;gap:8px;flex-wrap:wrap">
+    <span class="badge bg">238 tests passing</span>
+    <span class="badge bg">11 stages</span>
+    <span class="badge bg">15 types</span>
+    <span class="badge bb">Rust 3.3&times; speedup</span>
+    <span class="badge by">embed/extract: GPU pending</span>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════
+     1. SYSTEM OVERVIEW
+══════════════════════════════════════════════════════════════ -->
+<span class="section-anchor" id="overview"></span>
+<h2>1. System Overview</h2>
+
+<p>
+  <strong>corpus-pipeline</strong> is a reproducible document ingestion pipeline that takes
+  any directory of raw files &mdash; emails, PDFs, Word documents, spreadsheets, images,
+  calendar events, and more &mdash; and transforms them into a fully searchable,
+  fact-extracted knowledge base with complete provenance tracking.
+</p>
+
+<p>
+  The system is purpose-built for processing <strong>legal document corpora</strong>.
+  It handles the messy reality of real-world file collections: duplicates, attachments,
+  garbled encodings, binary formats, and mixed file types. Every transformation is
+  recorded in a manifest, so you can always trace a fact or a vector back to the
+  exact byte in the original file.
+</p>
+
+<div class="grid3">
+  <div class="card-sm">
+    <div style="color:var(--blue);font-weight:700;margin-bottom:6px">What goes in</div>
+    <div style="font-size:12px;color:var(--muted)">Any directory of raw files: .eml, .pdf, .docx, .xlsx, .ics, .vcf, .zip, images, code, and unknown binary formats.</div>
+  </div>
+  <div class="card-sm">
+    <div style="color:var(--green);font-weight:700;margin-bottom:6px">What comes out</div>
+    <div style="font-size:12px;color:var(--muted)">Markdown files with YAML provenance headers, dense+sparse vector embeddings in Qdrant, extracted facts in Postgres, and a knowledge graph of entities and relationships.</div>
+  </div>
+  <div class="card-sm">
+    <div style="color:var(--yellow);font-weight:700;margin-bottom:6px">Core guarantee</div>
+    <div style="font-size:12px;color:var(--muted)">Every output &mdash; every vector, every extracted fact &mdash; links back to its source file via a SHA256 content hash. The manifest is the unbroken chain of custody.</div>
+  </div>
+</div>
+
+<div class="note">
+  <strong>Target corpus:</strong> <code>~/legal_backup_20260228/</code> &mdash; 33,275 files, 4.4 GB.
+  Validated against a 1,967-file subset across 6 real-data runs (5 passing, 1 bug found and fixed).
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════
+     2. ARCHITECTURE DIAGRAM
+══════════════════════════════════════════════════════════════ -->
+<span class="section-anchor" id="architecture"></span>
+<h2>2. Architecture Diagram</h2>
+
+<p>The pipeline is a linear sequence of stages. Each stage reads <code>manifest.jsonl</code>,
+does its work, and writes new fields back. The manifest is the provenance chain.</p>
+
+<!-- PIPELINE FLOWCHART SVG -->
+<svg viewBox="0 0 860 420" width="100%" style="display:block;margin:16px 0;max-width:860px" preserveAspectRatio="xMidYMid meet">
+  <defs>
+    <marker id="arr" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto">
+      <path d="M0,0 L0,6 L8,3 z" fill="#334155"/>
+    </marker>
+    <marker id="arr2" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto">
+      <path d="M0,0 L0,6 L8,3 z" fill="#60a5fa"/>
+    </marker>
+  </defs>
+
+  <!-- Input box -->
+  <rect x="10" y="185" width="90" height="40" rx="6" fill="#162032" stroke="#334155" stroke-width="1.5"/>
+  <text x="55" y="199" text-anchor="middle" fill="#94a3b8" font-size="9" font-family="monospace">Input</text>
+  <text x="55" y="213" text-anchor="middle" fill="#e2e8f0" font-size="10" font-family="monospace" font-weight="bold">raw files</text>
+
+  <!-- Arrow to scan -->
+  <line x1="100" y1="205" x2="118" y2="205" stroke="#334155" stroke-width="1.5" marker-end="url(#arr)"/>
+
+  <!-- Stage boxes — row 1: scan, identify, dedup, convert, concepts -->
+  <!-- scan -->
+  <rect x="120" y="175" width="80" height="60" rx="6" fill="#1e293b" stroke="#60a5fa" stroke-width="1.5"/>
+  <text x="160" y="195" text-anchor="middle" fill="#60a5fa" font-size="9" font-family="monospace" font-weight="bold">SCAN</text>
+  <text x="160" y="209" text-anchor="middle" fill="#94a3b8" font-size="8" font-family="monospace">SHA256 hash</text>
+  <text x="160" y="221" text-anchor="middle" fill="#94a3b8" font-size="8" font-family="monospace">type detect</text>
+  <text x="160" y="233" text-anchor="middle" fill="#64748b" font-size="8" font-family="monospace">scan.py</text>
+
+  <line x1="200" y1="205" x2="218" y2="205" stroke="#334155" stroke-width="1.5" marker-end="url(#arr)"/>
+
+  <!-- identify -->
+  <rect x="220" y="175" width="80" height="60" rx="6" fill="#1e293b" stroke="#60a5fa" stroke-width="1.5"/>
+  <text x="260" y="195" text-anchor="middle" fill="#60a5fa" font-size="9" font-family="monospace" font-weight="bold">IDENTIFY</text>
+  <text x="260" y="209" text-anchor="middle" fill="#94a3b8" font-size="8" font-family="monospace">15 handlers</text>
+  <text x="260" y="221" text-anchor="middle" fill="#94a3b8" font-size="8" font-family="monospace">extract meta</text>
+  <text x="260" y="233" text-anchor="middle" fill="#64748b" font-size="8" font-family="monospace">identify.py</text>
+
+  <line x1="300" y1="205" x2="318" y2="205" stroke="#334155" stroke-width="1.5" marker-end="url(#arr)"/>
+
+  <!-- dedup -->
+  <rect x="320" y="175" width="80" height="60" rx="6" fill="#1e293b" stroke="#60a5fa" stroke-width="1.5"/>
+  <text x="360" y="195" text-anchor="middle" fill="#60a5fa" font-size="9" font-family="monospace" font-weight="bold">DEDUP</text>
+  <text x="360" y="209" text-anchor="middle" fill="#94a3b8" font-size="8" font-family="monospace">hash+semantic</text>
+  <text x="360" y="221" text-anchor="middle" fill="#94a3b8" font-size="8" font-family="monospace">mark canonical</text>
+  <text x="360" y="233" text-anchor="middle" fill="#64748b" font-size="8" font-family="monospace">dedup.py</text>
+
+  <line x1="400" y1="205" x2="418" y2="205" stroke="#334155" stroke-width="1.5" marker-end="url(#arr)"/>
+
+  <!-- convert -->
+  <rect x="420" y="175" width="80" height="60" rx="6" fill="#1e293b" stroke="#4ade80" stroke-width="1.5"/>
+  <text x="460" y="195" text-anchor="middle" fill="#4ade80" font-size="9" font-family="monospace" font-weight="bold">CONVERT</text>
+  <text x="460" y="209" text-anchor="middle" fill="#94a3b8" font-size="8" font-family="monospace">raw &rarr; MD</text>
+  <text x="460" y="221" text-anchor="middle" fill="#94a3b8" font-size="8" font-family="monospace">YAML frontmatter</text>
+  <text x="460" y="233" text-anchor="middle" fill="#64748b" font-size="8" font-family="monospace">convert.py</text>
+
+  <line x1="500" y1="205" x2="518" y2="205" stroke="#334155" stroke-width="1.5" marker-end="url(#arr)"/>
+
+  <!-- concepts -->
+  <rect x="520" y="175" width="80" height="60" rx="6" fill="#1e293b" stroke="#c084fc" stroke-width="1.5"/>
+  <text x="560" y="195" text-anchor="middle" fill="#c084fc" font-size="9" font-family="monospace" font-weight="bold">CONCEPTS</text>
+  <text x="560" y="209" text-anchor="middle" fill="#94a3b8" font-size="8" font-family="monospace">entity extract</text>
+  <text x="560" y="221" text-anchor="middle" fill="#94a3b8" font-size="8" font-family="monospace">Person/Amount</text>
+  <text x="560" y="233" text-anchor="middle" fill="#64748b" font-size="8" font-family="monospace">concepts.py</text>
+
+  <!-- Down arrow from concepts to row 2 -->
+  <line x1="560" y1="235" x2="560" y2="268" stroke="#334155" stroke-width="1.5" marker-end="url(#arr)"/>
+
+  <!-- Row 2 (right to left): embed, extract, verify -->
+  <!-- embed -->
+  <rect x="520" y="270" width="80" height="60" rx="6" fill="#1e293b" stroke="#fb923c" stroke-width="1.5"/>
+  <text x="560" y="290" text-anchor="middle" fill="#fb923c" font-size="9" font-family="monospace" font-weight="bold">EMBED</text>
+  <text x="560" y="304" text-anchor="middle" fill="#94a3b8" font-size="8" font-family="monospace">BGE dense</text>
+  <text x="560" y="316" text-anchor="middle" fill="#94a3b8" font-size="8" font-family="monospace">Qdrant :9333</text>
+  <text x="560" y="328" text-anchor="middle" fill="#64748b" font-size="8" font-family="monospace">embed.py</text>
+
+  <line x1="520" y1="300" x2="502" y2="300" stroke="#334155" stroke-width="1.5" marker-end="url(#arr)"/>
+
+  <!-- extract -->
+  <rect x="420" y="270" width="80" height="60" rx="6" fill="#1e293b" stroke="#fb923c" stroke-width="1.5"/>
+  <text x="460" y="290" text-anchor="middle" fill="#fb923c" font-size="9" font-family="monospace" font-weight="bold">EXTRACT</text>
+  <text x="460" y="304" text-anchor="middle" fill="#94a3b8" font-size="8" font-family="monospace">LLM facts</text>
+  <text x="460" y="316" text-anchor="middle" fill="#94a3b8" font-size="8" font-family="monospace">vLLM/Ollama</text>
+  <text x="460" y="328" text-anchor="middle" fill="#64748b" font-size="8" font-family="monospace">extract.py</text>
+
+  <line x1="420" y1="300" x2="402" y2="300" stroke="#334155" stroke-width="1.5" marker-end="url(#arr)"/>
+
+  <!-- verify -->
+  <rect x="320" y="270" width="80" height="60" rx="6" fill="#1e293b" stroke="#34d399" stroke-width="1.5"/>
+  <text x="360" y="290" text-anchor="middle" fill="#34d399" font-size="9" font-family="monospace" font-weight="bold">VERIFY</text>
+  <text x="360" y="304" text-anchor="middle" fill="#94a3b8" font-size="8" font-family="monospace">provenance</text>
+  <text x="360" y="316" text-anchor="middle" fill="#94a3b8" font-size="8" font-family="monospace">chain checks</text>
+  <text x="360" y="328" text-anchor="middle" fill="#64748b" font-size="8" font-family="monospace">verify.py</text>
+
+  <!-- Manifest flow labels -->
+  <!-- Top row manifest label -->
+  <rect x="195" y="155" width="80" height="16" rx="3" fill="rgba(96,165,250,.08)" stroke="rgba(96,165,250,.15)" stroke-width="1"/>
+  <text x="235" y="167" text-anchor="middle" fill="#60a5fa" font-size="8" font-family="monospace">manifest.jsonl</text>
+  <rect x="295" y="155" width="80" height="16" rx="3" fill="rgba(96,165,250,.08)" stroke="rgba(96,165,250,.15)" stroke-width="1"/>
+  <text x="335" y="167" text-anchor="middle" fill="#60a5fa" font-size="8" font-family="monospace">manifest.jsonl</text>
+  <rect x="395" y="155" width="80" height="16" rx="3" fill="rgba(96,165,250,.08)" stroke="rgba(96,165,250,.15)" stroke-width="1"/>
+  <text x="435" y="167" text-anchor="middle" fill="#60a5fa" font-size="8" font-family="monospace">manifest.jsonl</text>
+  <rect x="495" y="155" width="80" height="16" rx="3" fill="rgba(96,165,250,.08)" stroke="rgba(96,165,250,.15)" stroke-width="1"/>
+  <text x="535" y="167" text-anchor="middle" fill="#60a5fa" font-size="8" font-family="monospace">manifest.jsonl</text>
+
+  <!-- Output labels -->
+  <!-- sdata/md/ output -->
+  <line x1="460" y1="235" x2="460" y2="260" stroke="#4ade80" stroke-width="1" stroke-dasharray="3 2"/>
+  <rect x="415" y="257" width="90" height="14" rx="3" fill="rgba(74,222,128,.08)" stroke="rgba(74,222,128,.2)" stroke-width="1"/>
+  <text x="460" y="268" text-anchor="middle" fill="#4ade80" font-size="8" font-family="monospace">sdata/md/*.md</text>
+
+  <!-- Qdrant output -->
+  <line x1="560" y1="330" x2="560" y2="360" stroke="#fb923c" stroke-width="1" stroke-dasharray="3 2"/>
+  <rect x="520" y="358" width="82" height="14" rx="3" fill="rgba(251,146,60,.08)" stroke="rgba(251,146,60,.2)" stroke-width="1"/>
+  <text x="560" y="369" text-anchor="middle" fill="#fb923c" font-size="8" font-family="monospace">Qdrant :9333</text>
+
+  <!-- facts.jsonl output -->
+  <line x1="460" y1="330" x2="460" y2="360" stroke="#fb923c" stroke-width="1" stroke-dasharray="3 2"/>
+  <rect x="415" y="358" width="90" height="14" rx="3" fill="rgba(251,146,60,.08)" stroke="rgba(251,146,60,.2)" stroke-width="1"/>
+  <text x="460" y="369" text-anchor="middle" fill="#fb923c" font-size="8" font-family="monospace">facts.jsonl</text>
+
+  <!-- concepts.jsonl output -->
+  <line x1="560" y1="175" x2="560" y2="155" stroke="#c084fc" stroke-width="1" stroke-dasharray="3 2"/>
+  <rect x="510" y="142" width="100" height="14" rx="3" fill="rgba(192,132,252,.08)" stroke="rgba(192,132,252,.2)" stroke-width="1"/>
+  <text x="560" y="153" text-anchor="middle" fill="#c084fc" font-size="8" font-family="monospace">concepts.jsonl</text>
+
+  <!-- verify output -->
+  <line x1="320" y1="300" x2="302" y2="300" stroke="#34d399" stroke-width="1" stroke-dasharray="3 2"/>
+  <rect x="215" y="293" width="88" height="14" rx="3" fill="rgba(52,211,153,.08)" stroke="rgba(52,211,153,.2)" stroke-width="1"/>
+  <text x="260" y="304" text-anchor="middle" fill="#34d399" font-size="8" font-family="monospace">verify report</text>
+
+  <!-- LEGEND -->
+  <rect x="10" y="370" width="800" height="36" rx="4" fill="rgba(255,255,255,.02)" stroke="#334155" stroke-width="1"/>
+  <circle cx="26" cy="388" r="5" fill="none" stroke="#60a5fa" stroke-width="1.5"/>
+  <text x="36" y="392" fill="#94a3b8" font-size="9" font-family="monospace">Core (always)</text>
+  <circle cx="136" cy="388" r="5" fill="none" stroke="#4ade80" stroke-width="1.5"/>
+  <text x="146" y="392" fill="#94a3b8" font-size="9" font-family="monospace">Convert to MD</text>
+  <circle cx="256" cy="388" r="5" fill="none" stroke="#c084fc" stroke-width="1.5"/>
+  <text x="266" y="392" fill="#94a3b8" font-size="9" font-family="monospace">Content graph</text>
+  <circle cx="376" cy="388" r="5" fill="none" stroke="#fb923c" stroke-width="1.5"/>
+  <text x="386" y="392" fill="#94a3b8" font-size="9" font-family="monospace">GPU/LLM services</text>
+  <circle cx="506" cy="388" r="5" fill="none" stroke="#34d399" stroke-width="1.5"/>
+  <text x="516" y="392" fill="#94a3b8" font-size="9" font-family="monospace">Verification</text>
+  <rect x="626" y="383" width="30" height="8" fill="rgba(96,165,250,.1)" stroke="rgba(96,165,250,.3)" stroke-width="1" rx="2"/>
+  <text x="662" y="392" fill="#94a3b8" font-size="9" font-family="monospace">manifest.jsonl flow</text>
+</svg>
+
+<div class="note">
+  <strong>Manifest as provenance chain:</strong> every stage reads and annotates the same
+  <code>manifest.jsonl</code> file. Fields accumulate: scan adds the hash, identify adds metadata,
+  dedup adds canonical flags, convert adds the md_path. You can always replay any stage.
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════
+     3. DATA FLOW DETAIL
+══════════════════════════════════════════════════════════════ -->
+<span class="section-anchor" id="stages"></span>
+<h2>3. Data Flow Detail</h2>
+
+<p>Each stage is a standalone Python module runnable with <code>python -m pipeline.&lt;stage&gt;</code>.
+All stages are <strong>idempotent</strong>: safe to re-run without duplicating work.</p>
+
+<!-- STAGE: SCAN -->
+<span class="section-anchor" id="stage-scan"></span>
+<h3>Stage 1 &mdash; scan <span class="badge bb">pipeline/scan.py</span> <span class="badge bg">11 tests</span></h3>
+
+<div class="grid2">
+  <div>
+    <h4>What it does</h4>
+    <p>Walks the input directory tree, skips dotfiles and dotdirs, and fingerprints every file. Optionally uses the Rust acceleration layer (<code>corpus_pipeline_rs</code>) for parallel SHA256 hashing &mdash; 3.3&times; faster on benchmarks, expected 10&ndash;50&times; on multi-core GPU hosts with large corpora.</p>
+    <h4>Input</h4>
+    <p>A directory path (CLI argument or <code>config/default.yaml</code> <code>pipeline.input_dir</code>).</p>
+    <h4>Output</h4>
+    <p>Creates <code>manifest.jsonl</code> with one JSON line per discovered file.</p>
+  </div>
+  <div>
+    <h4>Manifest fields added</h4>
+    <table>
+      <thead><tr><th>Field</th><th>Type</th><th>Description</th></tr></thead>
+      <tbody>
+        <tr><td><code>path</code></td><td>str</td><td>Full path to original file</td></tr>
+        <tr><td><code>filename</code></td><td>str</td><td>Basename only</td></tr>
+        <tr><td><code>extension</code></td><td>str</td><td>.eml, .pdf, etc.</td></tr>
+        <tr><td><code>content_hash</code></td><td>str</td><td>SHA256 (first 16 hex chars) — universal key</td></tr>
+        <tr><td><code>file_size</code></td><td>int</td><td>Bytes</td></tr>
+        <tr><td><code>source_type</code></td><td>str</td><td>Detected file category</td></tr>
+        <tr><td><code>modified_at</code></td><td>ISO ts</td><td>File mtime</td></tr>
+        <tr><td><code>created_at</code></td><td>ISO ts</td><td>File birthtime or null</td></tr>
+        <tr><td><code>duplicate_count</code></td><td>int</td><td>Files sharing this hash</td></tr>
+        <tr><td><code>is_first_seen</code></td><td>bool</td><td>True if first alphabetical copy</td></tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<pre>python -m pipeline.scan ~/legal_backup_20260228/
+# With Rust acceleration (if compiled):
+# Automatically detected via: try: import corpus_pipeline_rs</pre>
+
+<!-- STAGE: IDENTIFY -->
+<span class="section-anchor" id="stage-identify"></span>
+<h3>Stage 2 &mdash; identify <span class="badge bb">pipeline/identify.py</span> <span class="badge bg">31 tests</span></h3>
+
+<div class="grid2">
+  <div>
+    <h4>What it does</h4>
+    <p>Opens each file and extracts type-specific metadata using 15 specialized handlers. Skips entries that already have <code>identified_at</code> (idempotent). Applies a <code>_str()</code> helper to coerce all metadata values to strings before JSON serialization (fixes pypdf <code>IndirectObject</code> crash discovered in real-data run 2).</p>
+    <h4>Input</h4>
+    <p><code>manifest.jsonl</code> from scan stage. Reads actual file bytes.</p>
+    <h4>Output</h4>
+    <p>Updates <code>manifest.jsonl</code> in place with type-specific metadata.</p>
+  </div>
+  <div>
+    <h4>Manifest fields added</h4>
+    <table>
+      <thead><tr><th>Field</th><th>Type</th><th>Description</th></tr></thead>
+      <tbody>
+        <tr><td><code>metadata</code></td><td>dict</td><td>Type-specific extracted data (email_from, pdf_pages, ical_event_count, etc.)</td></tr>
+        <tr><td><code>identified_at</code></td><td>ISO ts</td><td>Timestamp when identify ran</td></tr>
+      </tbody>
+    </table>
+    <div class="note" style="margin-top:8px">
+      <strong>Graceful degradation:</strong> pypdf, python-docx, openpyxl are optional.
+      Missing libs produce informative placeholder metadata instead of crashes.
+    </div>
+  </div>
+</div>
+
+<pre>python -m pipeline.identify</pre>
+
+<!-- STAGE: DEDUP -->
+<span class="section-anchor" id="stage-dedup"></span>
+<h3>Stage 3 &mdash; dedup <span class="badge bb">pipeline/dedup.py</span> <span class="badge bg">18 tests</span></h3>
+
+<div class="grid2">
+  <div>
+    <h4>What it does</h4>
+    <p>Two-pass deduplication: <strong>Pass 1</strong> groups by <code>content_hash</code> &mdash; identical byte-for-byte files. Alphabetically first copy is canonical. <strong>Pass 2 (email only)</strong> groups canonicals by semantic key <code>email:{date[:16]}:{bare_from}:{normalized_subject}</code>, handling Re:/Fwd: threading and timezone variations.</p>
+    <h4>Input</h4>
+    <p><code>manifest.jsonl</code> from identify stage.</p>
+    <h4>Output</h4>
+    <p>Updates <code>manifest.jsonl</code> in place with dedup fields.</p>
+  </div>
+  <div>
+    <h4>Manifest fields added</h4>
+    <table>
+      <thead><tr><th>Field</th><th>Type</th><th>Description</th></tr></thead>
+      <tbody>
+        <tr><td><code>dedup_group</code></td><td>str</td><td>Hash or semantic key</td></tr>
+        <tr><td><code>is_canonical</code></td><td>bool</td><td>True = selected as the keeper</td></tr>
+        <tr><td><code>semantic_duplicate</code></td><td>bool</td><td>True only for email semantic dupes</td></tr>
+        <tr><td><code>deduped_at</code></td><td>ISO ts</td><td>Timestamp when dedup ran</td></tr>
+      </tbody>
+    </table>
+    <div class="warn-note" style="margin-top:8px">
+      Non-canonical entries are <em>never promoted</em> by semantic dedup.
+      Only canonical files from Pass 1 are eligible for semantic comparison.
+    </div>
+  </div>
+</div>
+
+<pre>python -m pipeline.dedup</pre>
+
+<!-- STAGE: CONVERT -->
+<span class="section-anchor" id="stage-convert"></span>
+<h3>Stage 4 &mdash; convert <span class="badge bb">pipeline/convert.py</span> <span class="badge bg">39 tests</span></h3>
+
+<div class="grid2">
+  <div>
+    <h4>What it does</h4>
+    <p>Converts each canonical file to Markdown with a YAML frontmatter header. Only processes <code>is_canonical=True</code> entries. Skips if <code>sdata/md/{content_hash}.md</code> already exists (unless <code>--force</code>). The YAML frontmatter carries complete provenance: source path, hash, type, dedup group, converted timestamp, and type-specific fields.</p>
+    <h4>Input</h4>
+    <p><code>manifest.jsonl</code> from dedup stage. Reads actual file bytes.</p>
+    <h4>Output</h4>
+    <ul>
+      <li>Creates <code>sdata/md/{content_hash}.md</code> for each canonical file</li>
+      <li>Updates manifest with <code>md_path</code> and <code>converted_at</code></li>
+    </ul>
+  </div>
+  <div>
+    <h4>Manifest fields added</h4>
+    <table>
+      <thead><tr><th>Field</th><th>Type</th><th>Description</th></tr></thead>
+      <tbody>
+        <tr><td><code>md_path</code></td><td>str</td><td>Absolute path to generated .md file</td></tr>
+        <tr><td><code>converted_at</code></td><td>ISO ts</td><td>Timestamp when convert ran</td></tr>
+      </tbody>
+    </table>
+    <h4>MD file YAML frontmatter</h4>
+    <pre style="margin-top:6px;font-size:11px">---
+id: a1b2c3d4e5f6g7h8
+source_path: /path/to/original.eml
+source_type: email
+content_hash: a1b2c3d4e5f6g7h8
+file_size: 12345
+modified_at: "2024-05-19T10:30:00+00:00"
+dedup_group: a1b2c3d4e5f6g7h8
+converted_at: "2026-05-19T05:32:00Z"
+email_from: alice@example.com
+email_subject: "Case Status"
+---</pre>
+  </div>
+</div>
+
+<pre>python -m pipeline.convert
+python -m pipeline.convert --force    # re-convert existing files</pre>
+
+<!-- STAGE: CONCEPTS -->
+<span class="section-anchor" id="stage-concepts"></span>
+<h3>Stage 4b &mdash; concepts <span class="badge bpurp">pipeline/concepts.py</span> <span class="badge bg">59 tests</span> <span class="badge bb">NEW</span></h3>
+
+<div class="grid2">
+  <div>
+    <h4>What it does</h4>
+    <p>Extracts entities and relationships from converted Markdown files using Tier 1 regex patterns (zero external dependencies). Produces <code>concepts.jsonl</code> &mdash; a content knowledge graph of nodes and edges. Tier 2 LLM extraction is stubbed and runs as <code>--dry-run</code> placeholder.</p>
+    <h4>Tier 1 extractors (regex, always runs)</h4>
+    <ul>
+      <li><strong>Dollar amounts:</strong> <code>$X,XXX.XX</code> &rarr; Amount nodes</li>
+      <li><strong>Dates:</strong> ISO 8601 + natural-language (May 19, 2024) &rarr; Date nodes</li>
+      <li><strong>Email addresses:</strong> &rarr; EmailAddress nodes</li>
+      <li><strong>Case numbers:</strong> <code>2024 D 6724</code> / <code>2024-D-006724</code> &rarr; CaseNumber nodes</li>
+      <li><strong>Phone numbers:</strong> US format &rarr; Phone nodes</li>
+      <li><strong>People:</strong> from YAML frontmatter (email_from &rarr; Person/sender, pdf_author &rarr; Person/author)</li>
+    </ul>
+  </div>
+  <div>
+    <h4>Output: concepts.jsonl</h4>
+    <pre style="font-size:11px">// Nodes
+{"type":"node","label":"Document",
+ "id":"doc:abc123","source_type":"email"}
+{"type":"node","label":"Person",
+ "id":"person:jane_smith",
+ "name":"Jane Smith","role":"sender"}
+{"type":"node","label":"Amount",
+ "id":"amount:45000.00",
+ "value":45000.0,"currency":"USD"}
+{"type":"node","label":"CaseNumber",
+ "id":"case:2024_D_6724","raw":"2024 D 6724"}
+
+// Edges
+{"type":"edge","from":"person:jane_smith",
+ "to":"doc:abc123","rel":"AUTHORED"}
+{"type":"edge","from":"doc:abc123",
+ "to":"amount:45000.00","rel":"REFERENCES"}</pre>
+    <h4>Edge types</h4>
+    <table>
+      <thead><tr><th>Relation</th><th>From &rarr; To</th></tr></thead>
+      <tbody>
+        <tr><td>AUTHORED</td><td>Person &rarr; Document</td></tr>
+        <tr><td>MENTIONS</td><td>Document &rarr; Person</td></tr>
+        <tr><td>REFERENCES</td><td>Document &rarr; Entity</td></tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<pre>python -m pipeline.concepts
+python -m pipeline.concepts --limit 100      # first 100 docs
+python -m pipeline.concepts --dry-run        # Tier 1 only (Tier 2 = placeholder)</pre>
+
+<!-- STAGE: EMBED -->
+<span class="section-anchor" id="stage-embed"></span>
+<h3>Stage 5 &mdash; embed <span class="badge bb">pipeline/embed.py</span> <span class="badge bg">17 tests</span> <span class="badge by">GPU required</span></h3>
+
+<div class="grid2">
+  <div>
+    <h4>What it does</h4>
+    <p>Chunks converted Markdown files and encodes them into dense and sparse vectors, upserted into a Qdrant collection. Filters to <code>EXTRACTABLE_TYPES</code> with body &ge;200 characters. Uses 512-word chunks with 64-word overlap. Refuses to connect to production Qdrant ports (6333/7333).</p>
+    <h4>Models</h4>
+    <ul>
+      <li><strong>Dense:</strong> BAAI/bge-base-en-v1.5 (768-dim, cosine)</li>
+      <li><strong>Sparse:</strong> prithivida/Splade_PP_en_v1 (indices + values)</li>
+    </ul>
+    <h4>Input</h4>
+    <p><code>manifest.jsonl</code> (md_path) + <code>sdata/md/*.md</code></p>
+    <h4>Output</h4>
+    <p>Qdrant collection <code>test_corpus</code> at <code>localhost:9333</code></p>
+  </div>
+  <div>
+    <h4>Qdrant payload per point</h4>
+    <table>
+      <thead><tr><th>Field</th><th>Description</th></tr></thead>
+      <tbody>
+        <tr><td><code>source_id</code></td><td>content_hash (links back to original file)</td></tr>
+        <tr><td><code>source_path</code></td><td>Original file path</td></tr>
+        <tr><td><code>source_type</code></td><td>email, pdf, etc.</td></tr>
+        <tr><td><code>chunk_index</code></td><td>Which chunk of this document</td></tr>
+        <tr><td><code>text</code></td><td>First 500 chars of chunk</td></tr>
+        <tr><td><code>embedded_at</code></td><td>ISO timestamp</td></tr>
+      </tbody>
+    </table>
+    <div class="danger-note">
+      <strong style="color:var(--red)">Safety guard:</strong> embed raises an error if
+      <code>qdrant_port</code> is 6333 or 7333 (production). Only 9333 allowed.
+    </div>
+  </div>
+</div>
+
+<pre>python -m pipeline.embed
+python -m pipeline.embed --dry-run    # validate without connecting to Qdrant</pre>
+
+<!-- STAGE: EXTRACT -->
+<span class="section-anchor" id="stage-extract"></span>
+<h3>Stage 6 &mdash; extract <span class="badge bb">pipeline/extract.py</span> <span class="badge bg">14 tests</span> <span class="badge by">GPU required</span></h3>
+
+<div class="grid2">
+  <div>
+    <h4>What it does</h4>
+    <p>Calls an LLM to extract concrete, verifiable legal facts from each converted document. Returns a JSON array of <code>{statement, date, confidence, category}</code> objects. Supports vLLM (default, OpenAI-compatible API) and Ollama. Runs up to 30 requests in parallel.</p>
+    <h4>LLM prompt</h4>
+    <pre style="font-size:11px">"Extract concrete, verifiable legal facts.
+Return JSON array:
+[{
+  "statement": "...",
+  "date": "ISO or unknown",
+  "confidence": "high|medium|low",
+  "category":
+    "communication|financial|timeline|
+     testimony|evidence"
+}]"</pre>
+  </div>
+  <div>
+    <h4>Output: facts.jsonl</h4>
+    <pre style="font-size:11px">{"source_id": "a1b2c3d4",
+ "source_path": "/path/to/file.eml",
+ "source_type": "email",
+ "md_path": "sdata/md/a1b2c3d4.md",
+ "fact_count": 2,
+ "facts": [
+   {"statement": "Defendant sent email
+      on 2024-05-19",
+    "date": "2024-05-19",
+    "confidence": "high",
+    "category": "communication"}
+ ],
+ "extracted_at": "2026-05-19T05:35:00Z"}</pre>
+    <h4>Configuration</h4>
+    <table>
+      <thead><tr><th>Setting</th><th>Default</th></tr></thead>
+      <tbody>
+        <tr><td>Model</td><td>Qwen/Qwen2.5-7B-Instruct</td></tr>
+        <tr><td>vLLM URL</td><td>http://localhost:8090</td></tr>
+        <tr><td>Concurrency</td><td>30 parallel requests</td></tr>
+        <tr><td>Max input chars</td><td>3,000 per doc</td></tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<pre>python -m pipeline.extract
+python -m pipeline.extract --ollama    # use Ollama instead of vLLM
+python -m pipeline.extract --dry-run   # validate without calling LLM</pre>
+
+<!-- STAGE: VERIFY -->
+<span class="section-anchor" id="stage-verify"></span>
+<h3>Stage 7 &mdash; verify <span class="badge bb">pipeline/verify.py</span> <span class="badge bg">25 tests</span></h3>
+
+<p>Validates the complete provenance chain without modifying any data. Checks 8 conditions:</p>
+
+<table>
+  <thead><tr><th>#</th><th>Check</th><th>Pass condition</th></tr></thead>
+  <tbody>
+    <tr><td>1</td><td>Manifest exists</td><td>manifest.jsonl is readable</td></tr>
+    <tr><td>2</td><td>Scan complete</td><td>All entries have content_hash</td></tr>
+    <tr><td>3</td><td>Identify complete</td><td>&ge;1 entry has identified_at or metadata</td></tr>
+    <tr><td>4</td><td>Dedup complete</td><td>&ge;1 entry has dedup_group</td></tr>
+    <tr><td>5</td><td>Convert complete</td><td>&ge;1 canonical entry has md_path</td></tr>
+    <tr><td>6</td><td>MD files on disk</td><td>&ge;1 .md file exists in sdata/md/</td></tr>
+    <tr><td>7</td><td>MD provenance</td><td>&ge;90% of sampled MD files have source_path + content_hash in YAML</td></tr>
+    <tr><td>8</td><td>Extract complete</td><td>facts.jsonl exists with &ge;1 line</td></tr>
+  </tbody>
+</table>
+
+<pre>python -m pipeline.verify
+python -m pipeline.verify --strict    # exit code 1 if any check fails (use in CI)</pre>
+
+<!-- STAGE: GRAPH -->
+<span class="section-anchor" id="stage-graph"></span>
+<h3>Stage 8 &mdash; graph <span class="badge bb">pipeline/graph.py</span> <span class="badge bg">16 tests</span></h3>
+
+<p>Meta-stage: generates a Neo4j knowledge graph describing the <em>pipeline itself</em> (which stages produce which fields, which data types flow through which stages). See <a href="#knowledge-graph">Section 6</a> for full detail.</p>
+
+<pre>python -m pipeline.graph                 # Cypher MERGE statements (default)
+python -m pipeline.graph --json          # JSON {nodes, edges}
+python -m pipeline.graph > graph.cypher  # pipe to Neo4j
+</pre>
+
+<!-- STAGE: ORCHESTRATE -->
+<span class="section-anchor" id="stage-orchestrate"></span>
+<h3>Stage 9 &mdash; orchestrate <span class="badge bb">pipeline/orchestrate.py</span></h3>
+
+<p>End-to-end runner that calls stages in sequence with cost tracking, learning store integration, and provider routing. Entry point: <code>python -m pipeline</code>.</p>
+
+<pre>python -m pipeline                          # run all stages
+python -m pipeline --stage convert          # run one stage only
+python -m pipeline --dry-run                # skip embed/extract (no external services)
+python -m pipeline --costs                  # print cost accumulation from costs.jsonl
+python -m pipeline --learnings "pdf crash"  # search past learnings</pre>
+
+<!-- ═══════════════════════════════════════════════════════════
+     4. DATA TYPE HANDLERS
+══════════════════════════════════════════════════════════════ -->
+<span class="section-anchor" id="handlers"></span>
+<h2>4. Data Type Handlers (15 types)</h2>
+
+<p>Every file type has a handler in <strong>identify.py</strong> (metadata extraction)
+and <strong>convert.py</strong> (Markdown conversion). All 15 types have test fixtures.</p>
+
+<table>
+  <thead>
+    <tr>
+      <th>Type</th><th>Extensions</th>
+      <th>Identify: metadata extracted</th>
+      <th>Convert: output format</th>
+      <th>Notes</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><strong>email</strong></td><td>.eml</td>
+      <td>From, To, Cc, Date, Subject, Message-ID (RFC-2047 decoded)</td>
+      <td>MIME walk: text/plain preferred, HTML fallback with tag-strip. Header block + body.</td>
+      <td>Dominant corpus type. Semantic dedup in stage 3.</td>
+    </tr>
+    <tr>
+      <td><strong>pdf</strong></td><td>.pdf</td>
+      <td>title, author, page_count, creator, producer (pypdf)</td>
+      <td>All pages extracted via pypdf. Fallback placeholder if pypdf unavailable.</td>
+      <td>Fix: <code>_str()</code> coerces IndirectObject values to avoid JSON crash.</td>
+    </tr>
+    <tr>
+      <td><strong>document</strong></td><td>.docx/.doc</td>
+      <td>Empty dict (docx metadata not extracted)</td>
+      <td>Paragraph extraction via python-docx. Graceful degrade if unavailable.</td>
+      <td></td>
+    </tr>
+    <tr>
+      <td><strong>txt</strong></td><td>.txt</td>
+      <td>Empty dict</td>
+      <td>Raw text pass-through</td>
+      <td></td>
+    </tr>
+    <tr>
+      <td><strong>md</strong></td><td>.md</td>
+      <td>Empty dict</td>
+      <td>Raw text pass-through</td>
+      <td></td>
+    </tr>
+    <tr>
+      <td><strong>html</strong></td><td>.html/.htm</td>
+      <td>Empty dict</td>
+      <td>HTMLParser tag-strip to plain text (block tags get newlines)</td>
+      <td></td>
+    </tr>
+    <tr>
+      <td><strong>json</strong></td><td>.json</td>
+      <td>Empty dict</td>
+      <td>Pretty-printed in fenced code block</td>
+      <td></td>
+    </tr>
+    <tr>
+      <td><strong>image</strong></td><td>.png/.jpg/.gif/.bmp/.tiff</td>
+      <td>format (from magic bytes), PNG width/height (from IHDR chunk)</td>
+      <td>Placeholder stub with format and byte size</td>
+      <td class="warn">OCR TODO: pytesseract/easyocr for scanned legal docs</td>
+    </tr>
+    <tr>
+      <td><strong>calendar</strong></td><td>.ics</td>
+      <td>event_count, first event SUMMARY/DTSTART/DTEND/ORGANIZER/DESCRIPTION/LOCATION</td>
+      <td>Event listing markdown table with Start/End/Organizer/Location columns</td>
+      <td>182 in real corpus</td>
+    </tr>
+    <tr>
+      <td><strong>spreadsheet</strong></td><td>.csv/.xlsx/.xls</td>
+      <td>row_count, col_count, headers (CSV reader or openpyxl)</td>
+      <td>Markdown table, first 20 data rows, note if truncated</td>
+      <td>116 in real corpus. openpyxl optional (graceful degrade)</td>
+    </tr>
+    <tr>
+      <td><strong>archive</strong></td><td>.zip/.tar/.gz</td>
+      <td>format, member_count, first 20 member names</td>
+      <td>Member listing markdown, first 50 members</td>
+      <td>41 in real corpus</td>
+    </tr>
+    <tr>
+      <td><strong>code</strong></td><td>.py/.js/.sh/.ts/.rb/.go/.rs/.java</td>
+      <td>language, line_count, blank_lines, comment_lines</td>
+      <td>Fenced code block with language tag</td>
+      <td>31 in real corpus</td>
+    </tr>
+    <tr>
+      <td><strong>contact</strong></td><td>.vcf</td>
+      <td>vCard FN, EMAIL, TEL, ORG, TITLE per card</td>
+      <td>Structured field listing per card</td>
+      <td>12 in real corpus</td>
+    </tr>
+    <tr>
+      <td><strong>unknown</strong></td><td><em>anything else</em></td>
+      <td>magic bytes (first 16 hex), is_text flag</td>
+      <td>Placeholder stub with hex magic and type</td>
+      <td>293 in real corpus</td>
+    </tr>
+    <tr style="background:rgba(192,132,252,.04)">
+      <td><strong style="color:var(--purple)">email_attachment</strong></td>
+      <td><em>path-based</em></td>
+      <td>parent_dir, attach_dir, filename</td>
+      <td>Provenance note + text body (null-byte binary guard)</td>
+      <td style="color:var(--purple)">Production type: files in dirs with "attach" in name</td>
+    </tr>
+  </tbody>
+</table>
+
+<div class="note">
+  <strong>15/14 types</strong> &mdash; email_attachment was added after real-data run 1 discovered
+  it as a production-important type not in the original spec.
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════
+     5. PROVENANCE CHAIN
+══════════════════════════════════════════════════════════════ -->
+<span class="section-anchor" id="provenance"></span>
+<h2>5. Provenance Chain — Email Example</h2>
+
+<p>Trace a single <code>.eml</code> file through every pipeline stage:</p>
+
+<div class="card">
+  <h4>Input file</h4>
+  <pre>~/legal_backup_20260228/inbox/email_001.eml
+# Size: 12,345 bytes
+# Content: MIME multipart email with HTML + plain text parts</pre>
+
+  <h4>After scan</h4>
+  <pre>{
+  "path": "/home/user/legal_backup/inbox/email_001.eml",
+  "filename": "email_001.eml",
+  "extension": ".eml",
+  "content_hash": "a1b2c3d4e5f6g7h8",   // SHA256[:16]
+  "file_size": 12345,
+  "source_type": "email",
+  "modified_at": "2024-05-19T10:30:00+00:00",
+  "duplicate_count": 1,
+  "is_first_seen": true
+}</pre>
+
+  <h4>After identify</h4>
+  <pre>{
+  // ... scan fields ...
+  "metadata": {
+    "email_from": "alice@lawfirm.com",
+    "email_to": "bob@court.gov",
+    "email_date": "Mon, 19 May 2024 10:30:00 +0000",
+    "email_subject": "RE: Case 2024-D-006724 Status Update",
+    "email_cc": "",
+    "email_message_id": "&lt;msg123@lawfirm.com&gt;"
+  },
+  "identified_at": "2026-05-19T05:30:10Z"
+}</pre>
+
+  <h4>After dedup</h4>
+  <pre>{
+  // ... above fields ...
+  "dedup_group": "email:2024-05-19T10:30:alice@lawfirm.com:case 2024-d-006724 status update",
+  "is_canonical": true,          // no duplicates found
+  "deduped_at": "2026-05-19T05:30:15Z"
+}</pre>
+
+  <h4>After convert</h4>
+  <pre>{
+  // ... above fields ...
+  "md_path": "/home/user/corpus-pipeline/sdata/md/a1b2c3d4e5f6g7h8.md",
+  "converted_at": "2026-05-19T05:30:20Z"
+}</pre>
+
+  <h4>The generated MD file (sdata/md/a1b2c3d4e5f6g7h8.md)</h4>
+  <pre>---
+id: a1b2c3d4e5f6g7h8
+source_path: /home/user/legal_backup/inbox/email_001.eml
+source_type: email
+content_hash: a1b2c3d4e5f6g7h8
+file_size: 12345
+modified_at: "2024-05-19T10:30:00+00:00"
+dedup_group: "email:2024-05-19T10:30:alice@lawfirm.com:..."
+converted_at: "2026-05-19T05:30:20Z"
+email_from: alice@lawfirm.com
+email_to: bob@court.gov
+email_date: "Mon, 19 May 2024 10:30:00 +0000"
+email_subject: "RE: Case 2024-D-006724 Status Update"
+---
+
+# RE: Case 2024-D-006724 Status Update
+
+**From:** alice@lawfirm.com
+**To:** bob@court.gov
+**Date:** Mon, 19 May 2024 10:30:00 +0000
+**Subject:** RE: Case 2024-D-006724 Status Update
+
+---
+
+The status of case 2024-D-006724 has been updated.
+We have received $50,000 in discovery materials...</pre>
+
+  <h4>After concepts (concepts.jsonl entries for this doc)</h4>
+  <pre>{"type":"node","label":"Document","id":"doc:a1b2c3d4","source_type":"email"}
+{"type":"node","label":"Person","id":"person:alice_lawfirm_com","name":"alice@lawfirm.com","role":"sender"}
+{"type":"node","label":"CaseNumber","id":"case:2024_d_006724","raw":"2024-D-006724"}
+{"type":"node","label":"Amount","id":"amount:50000.00","value":50000.0,"currency":"USD"}
+{"type":"edge","from":"person:alice_lawfirm_com","to":"doc:a1b2c3d4","rel":"AUTHORED"}
+{"type":"edge","from":"doc:a1b2c3d4","to":"case:2024_d_006724","rel":"REFERENCES"}
+{"type":"edge","from":"doc:a1b2c3d4","to":"amount:50000.00","rel":"REFERENCES"}</pre>
+
+  <h4>After embed (Qdrant point)</h4>
+  <pre>// Chunk 0 of doc a1b2c3d4:
+{
+  "id": "a1b2c3d4-0",
+  "vector": { "dense": [0.12, -0.03, ...],   // 768-dim BGE
+              "sparse": {"indices":[...],"values":[...]} },
+  "payload": {
+    "source_id": "a1b2c3d4e5f6g7h8",
+    "source_path": "/home/user/legal_backup/inbox/email_001.eml",
+    "source_type": "email",
+    "chunk_index": 0,
+    "text": "RE: Case 2024-D-006724 Status Update\n\nFrom: alice...",
+    "embedded_at": "2026-05-19T06:00:00Z"
+  }
+}</pre>
+
+  <h4>After extract (facts.jsonl entry)</h4>
+  <pre>{
+  "source_id": "a1b2c3d4e5f6g7h8",
+  "source_path": "/home/user/legal_backup/inbox/email_001.eml",
+  "fact_count": 2,
+  "facts": [
+    {"statement": "Alice sent email about case 2024-D-006724 on 2024-05-19",
+     "date": "2024-05-19", "confidence": "high", "category": "communication"},
+    {"statement": "$50,000 in discovery materials received",
+     "date": "2024-05-19", "confidence": "medium", "category": "financial"}
+  ]
+}</pre>
+
+  <h4>Verify check</h4>
+  <pre>python -m pipeline.verify
+# PASS: manifest exists (1 entry)
+# PASS: scan — content_hash present
+# PASS: identify — identified_at present
+# PASS: dedup — dedup_group present
+# PASS: convert — md_path present
+# PASS: MD files on disk (1 file)
+# PASS: MD provenance — 100% (1/1 have source_path + content_hash)
+# PASS: extract — facts.jsonl present (1 line)</pre>
+</div>
+
+<div class="note">
+  <strong>Chain verification:</strong> every output links back to the original byte via
+  <code>content_hash</code>. Use <code>grep content_hash sdata/md/*.md</code> to spot-check any file.
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════
+     6. PROCESS KNOWLEDGE GRAPH
+══════════════════════════════════════════════════════════════ -->
+<span class="section-anchor" id="knowledge-graph"></span>
+<h2>6. Process Knowledge Graph</h2>
+
+<p><code>pipeline/graph.py</code> generates a Neo4j-compatible knowledge graph that describes
+the <em>pipeline transformation topology</em> &mdash; answering questions like
+"what is the full path from a raw .eml to an extracted fact?"</p>
+
+<div class="grid2">
+  <div>
+    <h4>Node types (process graph)</h4>
+    <table>
+      <thead><tr><th>Label</th><th>Count</th><th>Examples</th></tr></thead>
+      <tbody>
+        <tr><td>DataType</td><td>15</td><td>email, pdf, document, image…</td></tr>
+        <tr><td>Stage</td><td>10</td><td>scan, identify, dedup, convert, concepts…</td></tr>
+        <tr><td>Field</td><td>22</td><td>content_hash, md_path, metadata, dedup_group…</td></tr>
+        <tr><td>Collection</td><td>6</td><td>manifest.jsonl, sdata/md/, Qdrant, Postgres…</td></tr>
+        <tr><td>Metric</td><td>7</td><td>provenance_coverage, dedup_ratio…</td></tr>
+      </tbody>
+    </table>
+    <h4>Node types (content graph, from concepts.py)</h4>
+    <table>
+      <thead><tr><th>Label</th><th>Source</th></tr></thead>
+      <tbody>
+        <tr><td>Document</td><td>Every canonical converted file</td></tr>
+        <tr><td>Person</td><td>email_from, email_to, pdf_author</td></tr>
+        <tr><td>Amount</td><td>Dollar amounts in text</td></tr>
+        <tr><td>Date</td><td>ISO + natural-language dates</td></tr>
+        <tr><td>CaseNumber</td><td>Legal case number patterns</td></tr>
+        <tr><td>EmailAddress</td><td>email@domain.com patterns</td></tr>
+        <tr><td>Phone</td><td>US phone number patterns</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <div>
+    <h4>Edge types (process graph)</h4>
+    <table>
+      <thead><tr><th>Relation</th><th>From &rarr; To</th></tr></thead>
+      <tbody>
+        <tr><td>PROCESSED_BY</td><td>DataType &rarr; Stage</td></tr>
+        <tr><td>PRODUCES</td><td>Stage &rarr; Field</td></tr>
+        <tr><td>OUTPUTS_TO</td><td>Stage &rarr; Collection</td></tr>
+        <tr><td>FEEDS_INTO</td><td>Stage &rarr; Stage</td></tr>
+        <tr><td>TRACKS</td><td>Stage &rarr; Metric</td></tr>
+      </tbody>
+    </table>
+
+    <h4>Sample Cypher queries</h4>
+    <pre style="font-size:11px">// Full path: .eml to fact
+MATCH path=(dt:DataType {name:'email'})
+  -[:PROCESSED_BY*]->(s:Stage)
+  -[:OUTPUTS_TO]->(c:Collection)
+RETURN path
+
+// What fields does convert produce?
+MATCH (s:Stage {name:'convert'})
+  -[:PRODUCES]->(f:Field)
+RETURN f.name
+
+// Which stages track provenance_coverage?
+MATCH (s:Stage)-[:TRACKS]->
+  (m:Metric {name:'provenance_coverage'})
+RETURN s.name
+
+// Import to Neo4j:
+python -m pipeline.graph | cypher-shell \
+  -u neo4j -p password \
+  -a bolt://localhost:8687</pre>
+  </div>
+</div>
+
+<pre># Generate graph files:
+python -m pipeline.graph > graph.cypher           # Cypher MERGE statements
+python -m pipeline.graph --json > graph.json      # JSON {nodes:[], edges:[]}
+
+# Import to Neo4j test instance (port 8687):
+python -m pipeline.graph | cypher-shell -u neo4j -p password -a bolt://localhost:8687</pre>
+
+<div class="warn-note">
+  The graph uses <code>MERGE</code> not <code>CREATE</code> &mdash; safe to re-import without
+  creating duplicate nodes. Total nodes: ~58 (process graph only).
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════
+     7. INFRASTRUCTURE
+══════════════════════════════════════════════════════════════ -->
+<span class="section-anchor" id="infrastructure"></span>
+<h2>7. Infrastructure</h2>
+
+<div class="danger-note">
+  <strong style="color:var(--red)">NEVER connect to production ports from this repo:</strong>
+  Postgres :5433 &bull; Qdrant :6333 &bull; Qdrant :7333 &bull; Neo4j :7474<br>
+  <strong>Test infrastructure only:</strong> Postgres :5435 &bull; Qdrant :9333 &bull; Neo4j :8474/:8687
+</div>
+
+<h3>Docker Compose Services</h3>
+
+<pre style="font-size:11px">services:
+  qdrant:
+    image: qdrant/qdrant:v1.17.1
+    ports:
+      - "9333:6333"    # TEST port 9333, NOT production 6333
+      - "9334:6334"    # gRPC
+    volumes:
+      - qdrant_data:/qdrant/storage
+
+  postgres:
+    image: postgres:17
+    ports:
+      - "5435:5432"    # TEST port 5435, NOT production 5433
+    environment:
+      POSTGRES_USER: pipeline
+      POSTGRES_PASSWORD: pipeline_dev
+      POSTGRES_DB: pipeline
+    volumes:
+      - pg_data:/var/lib/postgresql/data
+      - ./schema/init.sql:/docker-entrypoint-initdb.d/init.sql</pre>
+
+<pre>docker compose up -d      # start Qdrant + Postgres
+docker compose down       # stop (data persists in volumes)
+docker compose down -v    # stop and delete all data</pre>
+
+<h3>GPU Services (external, not in docker-compose)</h3>
+
+<div class="grid2">
+  <div class="card-sm">
+    <div style="font-weight:700;color:var(--orange);margin-bottom:8px">vLLM (fact extraction)</div>
+    <div class="row"><span class="rl">URL</span><span class="rv"><code>http://localhost:8090</code></span></div>
+    <div class="row"><span class="rl">API</span><span class="rv">OpenAI-compatible /v1/chat/completions</span></div>
+    <div class="row"><span class="rl">Model</span><span class="rv">Qwen/Qwen2.5-7B-Instruct</span></div>
+    <div class="row"><span class="rl">Concurrency</span><span class="rv">30 parallel requests</span></div>
+    <div class="note" style="margin-top:8px">Run on persistent GPU host (gpuw). Not started by docker-compose.</div>
+  </div>
+  <div class="card-sm">
+    <div style="font-weight:700;color:var(--orange);margin-bottom:8px">Embedding API</div>
+    <div class="row"><span class="rl">Dense model</span><span class="rv">BAAI/bge-base-en-v1.5</span></div>
+    <div class="row"><span class="rl">Sparse model</span><span class="rv">prithivida/Splade_PP_en_v1</span></div>
+    <div class="row"><span class="rl">Dimensions</span><span class="rv">768-dim cosine</span></div>
+    <div class="row"><span class="rl">Batch size</span><span class="rv">64</span></div>
+    <div class="note" style="margin-top:8px">Models are loaded locally. No external API calls for embedding.</div>
+  </div>
+</div>
+
+<h3>Database Schema (schema/init.sql)</h3>
+
+<pre style="font-size:11px">-- Postgres at localhost:5435
+-- Pipeline facts table
+CREATE TABLE IF NOT EXISTS facts (
+  id SERIAL PRIMARY KEY,
+  source_id VARCHAR(16) NOT NULL,    -- content_hash links to original file
+  source_path TEXT,
+  source_type VARCHAR(32),
+  statement TEXT,
+  fact_date DATE,
+  confidence VARCHAR(16),            -- high / medium / low
+  category VARCHAR(32),              -- communication / financial / timeline / testimony / evidence
+  extracted_at TIMESTAMPTZ
+);
+CREATE INDEX ON facts(source_id);
+CREATE INDEX ON facts(category);</pre>
+
+<!-- ═══════════════════════════════════════════════════════════
+     8. AGENT ARCHITECTURE
+══════════════════════════════════════════════════════════════ -->
+<span class="section-anchor" id="agents"></span>
+<h2>8. Agent Architecture</h2>
+
+<p>Three types of agents collaborate to build and evolve this system, coordinating
+via git commits, METRICS.md, and VALIDATION.md:</p>
+
+<div class="grid3">
+  <div class="card-sm">
+    <div style="color:var(--blue);font-weight:700;font-size:13px;margin-bottom:6px">joel.thorarinson</div>
+    <div style="color:var(--muted);font-size:11px;margin-bottom:10px">Architect / Human</div>
+    <p style="font-size:12px;color:var(--muted)">Defines goals in INTENT.md, writes VALIDATION.md feedback, requests new features. Human judgement for priorities and production decisions. 10 commits (37% of total).</p>
+  </div>
+  <div class="card-sm">
+    <div style="color:var(--green);font-weight:700;font-size:13px;margin-bottom:6px">noreply@anthropic.com</div>
+    <div style="color:var(--muted);font-size:11px;margin-bottom:10px">Builder Agent (Claude)</div>
+    <p style="font-size:12px;color:var(--muted)">Implements pipeline stages, writes tests, generates docs, fixes bugs found by the GPU evolve loop. Reads VALIDATION.md for feedback. 11 commits (41%).</p>
+  </div>
+  <div class="card-sm">
+    <div style="color:var(--orange);font-weight:700;font-size:13px;margin-bottom:6px">evolve@gpu.corpus-pipeline</div>
+    <div style="color:var(--muted);font-size:11px;margin-bottom:10px">GPU Evolution Agent</div>
+    <p style="font-size:12px;color:var(--muted)">Runs on a persistent GPU instance. Polls git for code changes, runs the pipeline against real data (<code>~/legal_backup/</code>), records metrics/errors to VALIDATION.md, pushes results back. 6 commits (22%).</p>
+  </div>
+</div>
+
+<h3>Coordination Flow</h3>
+
+<pre style="font-size:11px">Human: adds feedback to VALIDATION.md, commits
+  ↓
+Builder Agent: reads VALIDATION.md, implements fix, commits + pushes
+  ↓
+GPU Evolution Agent (evolve.py, --interval 300s):
+  1. git pull --rebase  (picks up new code)
+  2. python -m pipeline [scan, identify, dedup, convert]
+  3. Record metrics → learnings.py → VALIDATION.md
+  4. If failure: write error to VALIDATION.md, git push
+  5. Builder Agent sees failure on next run, fixes it</pre>
+
+<h3>Supporting Modules</h3>
+
+<div class="grid2">
+  <div class="card-sm">
+    <div style="font-weight:700;color:var(--cyan);margin-bottom:6px">learnings.py</div>
+    <p style="font-size:12px;color:var(--muted)">File-backed learning store (<code>learnings.jsonl</code>) with optional Qdrant vectorization. Logs fixes, errors, metrics, decisions with category and timestamp. <code>query()</code> does semantic search (Qdrant) or keyword grep. Prevents repeating known mistakes across runs.</p>
+  </div>
+  <div class="card-sm">
+    <div style="font-weight:700;color:var(--cyan);margin-bottom:6px">providers.py</div>
+    <p style="font-size:12px;color:var(--muted)">Cost-aware LLM router. Routes to cheapest capable provider per task tier (free: vLLM/Ollama; cheap: OpenRouter; mid: Claude Haiku; expensive: Claude Sonnet). Logs all usage to <code>costs.jsonl</code> with token counts and estimated cost.</p>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════
+     9. HOW TO RUN
+══════════════════════════════════════════════════════════════ -->
+<span class="section-anchor" id="howto"></span>
+<h2>9. How to Run</h2>
+
+<h3>Prerequisites</h3>
+<pre style="font-size:12px"># Python deps
+uv sync        # or: pip install -e .
+
+# Start isolated test databases (Qdrant :9333, Postgres :5435)
+docker compose up -d
+
+# Optional: Rust acceleration (3.3x faster scan)
+cd rust && maturin develop && cd ..
+
+# Optional GPU services (for embed + extract):
+# vLLM on port 8090, model Qwen/Qwen2.5-7B-Instruct</pre>
+
+<h3>Full pipeline run (step by step)</h3>
+
+<div class="card">
+<pre style="font-size:12px"># 1. Scan: fingerprint all files, build manifest
+python -m pipeline.scan ~/legal_backup_20260228/
+
+# 2. Identify: extract type-specific metadata
+python -m pipeline.identify
+
+# 3. Dedup: mark canonical files
+python -m pipeline.dedup
+
+# 4. Convert: raw files → Markdown with provenance
+python -m pipeline.convert
+
+# 4b. Concepts: extract entities from converted MD
+python -m pipeline.concepts
+
+# 5. Embed: chunk + vectorize into Qdrant (needs GPU models)
+python -m pipeline.embed        # or: --dry-run to validate
+
+# 6. Extract: LLM fact extraction (needs vLLM or Ollama)
+python -m pipeline.extract      # or: --ollama for local
+python -m pipeline.extract --dry-run    # validate without LLM
+
+# 7. Verify: check provenance chain
+python -m pipeline.verify
+python -m pipeline.verify --strict   # fail fast in CI
+
+# Print metrics
+python -m pipeline.metrics
+
+# Optional: generate process graph
+python -m pipeline.graph > graph.cypher</pre>
+</div>
+
+<h3>One-shot (orchestrator)</h3>
+<pre>python -m pipeline --dry-run       # scan→identify→dedup→convert→verify (no GPU needed)
+python -m pipeline                 # full pipeline including embed + extract</pre>
+
+<h3>First-run checklist</h3>
+<ol>
+  <li>Run <code>docker compose up -d</code> and verify Qdrant responds at <code>localhost:9333/collections</code></li>
+  <li>Run scan against <code>~/legal_backup_20260228/</code> &mdash; should take ~6s for 1,967 files</li>
+  <li>Run identify &mdash; should take ~5s, producing metadata for all 15 types</li>
+  <li>Run verify &mdash; should PASS checks 1&ndash;6</li>
+  <li>Run <code>python -m pipeline.metrics</code> &mdash; should show dedup ratio and type breakdown</li>
+  <li>Check <code>sdata/md/</code> for generated Markdown files</li>
+</ol>
+
+<h3>Configuration</h3>
+<pre style="font-size:11px"># config/default.yaml (key settings)
+pipeline:
+  input_dir: ~/legal_backup_20260228/
+  qdrant_host: localhost
+  qdrant_port: 9333        # TEST only — NEVER 6333/7333
+  postgres_url: postgresql://pipeline:pipeline_dev@localhost:5435/pipeline
+
+embedding:
+  dense_model: BAAI/bge-base-en-v1.5
+  sparse_model: prithivida/Splade_PP_en_v1
+  batch_size: 64
+  collection_name: test_corpus
+
+extraction:
+  model: "Qwen/Qwen2.5-7B-Instruct"
+  vllm_url: "http://localhost:8090"
+  parallel: 30
+  max_input_chars: 3000</pre>
+
+<!-- ═══════════════════════════════════════════════════════════
+     10. CURRENT STATUS
+══════════════════════════════════════════════════════════════ -->
+<span class="section-anchor" id="status"></span>
+<h2>10. Current Status</h2>
+
+<p>From <code>METRICS.md</code> &mdash; latest run: <strong>2026-05-19T06:00:00Z</strong></p>
+
+<div class="grid4">
+  <div class="card-sm" style="text-align:center">
+    <div style="font-size:28px;font-weight:700;color:var(--green)">243</div>
+    <div style="font-size:10px;color:var(--muted);text-transform:uppercase;margin-top:4px">Tests Passing</div>
+    <div style="font-size:10px;color:var(--dim);margin-top:4px">0 failing &bull; 0 skipped</div>
+  </div>
+  <div class="card-sm" style="text-align:center">
+    <div style="font-size:28px;font-weight:700;color:var(--green)">11</div>
+    <div style="font-size:10px;color:var(--muted);text-transform:uppercase;margin-top:4px">Pipeline Stages</div>
+    <div style="font-size:10px;color:var(--dim);margin-top:4px">+concepts as Stage 4b</div>
+  </div>
+  <div class="card-sm" style="text-align:center">
+    <div style="font-size:28px;font-weight:700;color:var(--green)">15/15</div>
+    <div style="font-size:10px;color:var(--muted);text-transform:uppercase;margin-top:4px">Types Covered</div>
+    <div style="font-size:10px;color:var(--dim);margin-top:4px">All types including email_attachment</div>
+  </div>
+  <div class="card-sm" style="text-align:center">
+    <div style="font-size:28px;font-weight:700;color:var(--blue)">2.1&times;</div>
+    <div style="font-size:10px;color:var(--muted);text-transform:uppercase;margin-top:4px">Rust Speedup</div>
+    <div style="font-size:10px;color:var(--dim);margin-top:4px">SHA256 hashing (1-core); 10&ndash;50&times; expected GPU</div>
+  </div>
+</div>
+
+<h3>Stage Status</h3>
+<table>
+  <thead>
+    <tr><th>#</th><th>Stage</th><th>File</th><th>Status</th><th>Tests</th><th>Notes</th></tr>
+  </thead>
+  <tbody>
+    <tr><td>1</td><td>scan</td><td>pipeline/scan.py</td><td><span class="badge bg">COMPLETE</span></td><td><span class="pass">&#10003; 11</span></td><td>SHA256 fingerprinting; Rust acceleration active (2.1&times;); 15 types</td></tr>
+    <tr><td>2</td><td>identify</td><td>pipeline/identify.py</td><td><span class="badge bg">COMPLETE</span></td><td><span class="pass">&#10003; 31</span></td><td>15 handlers; pypdf IndirectObject fix applied</td></tr>
+    <tr><td>3</td><td>dedup</td><td>pipeline/dedup.py</td><td><span class="badge bg">COMPLETE</span></td><td><span class="pass">&#10003; 18</span></td><td>Hash + semantic email dedup</td></tr>
+    <tr><td>4</td><td>convert</td><td>pipeline/convert.py</td><td><span class="badge bg">COMPLETE</span></td><td><span class="pass">&#10003; 39</span></td><td>15 type handlers; 1,759 MD files from real-data run</td></tr>
+    <tr><td>4b</td><td>concepts</td><td>pipeline/concepts.py</td><td><span class="badge bg">COMPLETE</span></td><td><span class="pass">&#10003; 59</span></td><td>Tier 1 regex; 7 entity types; Tier 2 LLM stubbed</td></tr>
+    <tr><td>5</td><td>embed</td><td>pipeline/embed.py</td><td><span class="badge bb">READY</span></td><td><span class="pass">&#10003; 17</span></td><td>Dense BGE; port guard; --dry-run. Needs GPU models.</td></tr>
+    <tr><td>6</td><td>extract</td><td>pipeline/extract.py</td><td><span class="badge bb">READY</span></td><td><span class="pass">&#10003; 14</span></td><td>vLLM + Ollama; --dry-run. Needs GPU instance.</td></tr>
+    <tr><td>7</td><td>verify</td><td>pipeline/verify.py</td><td><span class="badge bg">COMPLETE</span></td><td><span class="pass">&#10003; 25</span></td><td>8 provenance chain checks</td></tr>
+    <tr><td>8</td><td>metrics</td><td>pipeline/metrics.py</td><td><span class="badge bg">COMPLETE</span></td><td><span class="pass">&#10003; 5</span></td><td>Manifest summary printer</td></tr>
+    <tr><td>9</td><td>graph</td><td>pipeline/graph.py</td><td><span class="badge bg">COMPLETE</span></td><td><span class="pass">&#10003; 16</span></td><td>Process + content graph; Cypher/JSON export</td></tr>
+    <tr><td>10</td><td>orchestrate</td><td>pipeline/orchestrate.py</td><td><span class="badge bg">COMPLETE</span></td><td><span class="bgr">—</span></td><td>End-to-end runner; <code>python -m pipeline</code> entry point</td></tr>
+  </tbody>
+</table>
+
+<h3>Real-Data Validation (6 runs vs ~/legal_backup_20260228/)</h3>
+<table>
+  <thead>
+    <tr><th>Run</th><th>Timestamp</th><th>scan</th><th>identify</th><th>dedup</th><th>convert</th><th>Result</th></tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>1</td><td>2026-05-19T04:14:06Z</td>
+      <td class="pass">&#10003; 1.1s</td><td class="pass">&#10003; 2.2s</td><td class="pass">&#10003; 0.1s</td><td class="pass">&#10003; 15.0s</td>
+      <td><span class="badge bg">PASS</span></td>
+    </tr>
+    <tr>
+      <td>2</td><td>2026-05-19T04:19:26Z</td>
+      <td class="pass">&#10003; 4.6s</td><td class="fail">&#10007; 9.3s</td><td class="dim">—</td><td class="dim">—</td>
+      <td><span class="badge br">FAIL</span> <span style="font-size:11px;color:var(--red)">pypdf IndirectObject</span></td>
+    </tr>
+    <tr>
+      <td>3</td><td>2026-05-19T04:24:42Z</td>
+      <td class="pass">&#10003; 6.2s</td><td class="pass">&#10003; 5.0s</td><td class="pass">&#10003; 0.5s</td><td class="pass">&#10003; 16.8s</td>
+      <td><span class="badge bg">PASS</span></td>
+    </tr>
+    <tr>
+      <td>4</td><td>2026-05-19T04:30:28Z</td>
+      <td class="pass">&#10003; 6.1s</td><td class="pass">&#10003; 5.0s</td><td class="pass">&#10003; 0.5s</td><td class="pass">&#10003; 1.1s</td>
+      <td><span class="badge bg">PASS</span> <span style="font-size:11px;color:var(--muted)">idempotent</span></td>
+    </tr>
+    <tr>
+      <td>5</td><td>2026-05-19T04:35:43Z</td>
+      <td class="pass">&#10003; 6.3s</td><td class="pass">&#10003; 5.2s</td><td class="pass">&#10003; 0.5s</td><td class="pass">&#10003; 1.1s</td>
+      <td><span class="badge bg">PASS</span></td>
+    </tr>
+    <tr>
+      <td>6</td><td>2026-05-19T04:40:58Z</td>
+      <td class="pass">&#10003; 6.5s</td><td class="pass">&#10003; 5.3s</td><td class="pass">&#10003; 0.5s</td><td class="pass">&#10003; 1.1s</td>
+      <td><span class="badge bg">PASS</span></td>
+    </tr>
+    <tr>
+      <td>7</td><td>2026-05-19T06:00:00Z</td>
+      <td class="pass">&#10003; +Rust</td><td class="pass">&#10003;</td><td class="pass">&#10003;</td><td class="pass">&#10003;</td>
+      <td><span class="badge bg">PASS</span> <span style="font-size:11px;color:var(--muted)">Rust compiled; 243 tests; 0 skipped</span></td>
+    </tr>
+  </tbody>
+</table>
+
+<div class="note" style="margin-top:8px">
+  Run 2 bug: pypdf <code>IndirectObject</code> not JSON-serializable in <code>_extract_pdf_metadata()</code>.
+  Fixed in commit e94844fb: <code>_str()</code> helper coerces all values via <code>str(v)</code>.
+  1,759 MD files produced from real-data subset. Runs 4&ndash;6 convert in ~1.1s (idempotent).<br>
+  Run 7 (2026-05-19T06:00:00Z): Rust extension <code>corpus_pipeline_rs</code> compiled and installed
+  (maturin 1.13.3, PyO3 0.22.6, Rust 1.94.1). PyO3 conflict resolved by installing
+  <code>cryptography 48.0.0</code> (abi3 wheel). All 5 previously-skipped Rust benchmark tests now run:
+  <strong>243 passing, 0 skipped</strong>. Measured speedup: <strong>2.1&times;</strong> on single-core container;
+  <strong>10&ndash;50&times;</strong> expected on multi-core GPU host via rayon.
+</div>
+
+<h3>Known Gaps &amp; Future Work</h3>
+<table>
+  <thead><tr><th>Item</th><th>Status</th><th>Priority</th></tr></thead>
+  <tbody>
+    <tr><td>Image OCR (pytesseract/easyocr for scanned legal PDFs)</td><td><span class="badge by">TODO</span></td><td>High</td></tr>
+    <tr><td>Tier 2 LLM entity extraction in concepts.py</td><td><span class="badge bgr">STUB</span></td><td>Medium</td></tr>
+    <tr><td>Sparse SPLADE embeddings (embed.py currently dense-only at scale)</td><td><span class="badge by">TODO</span></td><td>Medium</td></tr>
+    <tr><td>Provenance ledger in Postgres (append-only event log per content_hash)</td><td><span class="badge by">TODO</span></td><td>Medium</td></tr>
+    <tr><td>Qdrant count check in verify.py (MD files vs vector point count)</td><td><span class="badge by">TODO</span></td><td>Low</td></tr>
+    <tr><td>Tests for orchestrate.py, learnings.py, providers.py</td><td><span class="badge by">TODO</span></td><td>Low</td></tr>
+    <tr><td>Dedup ratio measurement on full 33K-file corpus</td><td><span class="badge by">TODO</span></td><td>Low</td></tr>
+  </tbody>
+</table>
+
+<!-- FOOTER -->
+<div class="footer">
+  <div style="display:flex;justify-content:space-between;align-items:flex-end;flex-wrap:wrap;gap:8px">
+    <div>
+      Generated from repo state at commit <code>913a27e0</code> on <strong>2026-05-19T06:10:11Z</strong><br>
+      Source: METRICS.md &bull; CLAUDE.md &bull; pipeline/*.py &bull; docker-compose.yml
+    </div>
+    <div style="text-align:right">
+      <a href="dashboard.html">&larr; Command Center</a><br>
+      <span style="color:var(--dim)">NEVER: :5433 &bull; :6333 &bull; :7333 &bull; :7474 (production)</span>
+    </div>
+  </div>
+</div>
+
+</main>
+</body>
+</html>
