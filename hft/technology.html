@@ -1,0 +1,1339 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>F1 2026 — HFT Technology: The Latency Stack</title>
+<meta name="description" content="Deep technical dive into high-frequency trading technology: latency evolution from 1000ms to 0.5us, network infrastructure, FPGA hardware, kernel bypass software, and the physics limits of market microstructure.">
+<meta property="og:title" content="F1 2026 — HFT Technology: The Latency Stack">
+<meta property="og:description" content="From 1000ms to 0.5 microseconds — a 2,000,000x improvement in 28 years. The network, hardware, and software innovations that define modern market microstructure.">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://jthorvaldur.github.io/f1_stats/hft-tech.html">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="HFT Technology — The Latency Stack">
+<meta name="twitter:description" content="2,000,000x latency improvement in 28 years. Network, hardware, and software innovations driving modern market microstructure.">
+<meta name="keywords" content="HFT, high frequency trading, latency, FPGA, kernel bypass, microwave, co-location, market microstructure, FIX protocol, order book, CME, matching engine">
+<link rel="canonical" href="https://jthorvaldur.github.io/f1_stats/hft-tech.html">
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: 'SF Mono', 'Fira Code', 'JetBrains Mono', monospace;
+    background: #0d1117;
+    color: #c9d1d9;
+    padding: 0;
+  }
+  a { color: #58a6ff; text-decoration: none; }
+  a:hover { text-decoration: underline; }
+  .hero {
+    padding: 60px 32px 40px;
+    max-width: 1400px;
+    margin: 0 auto;
+    border-bottom: 1px solid #21262d;
+  }
+  .hero h1 { color: #f0f6fc; font-size: 32px; font-weight: 700; margin-bottom: 8px; }
+  .hero .tagline { color: #8b949e; font-size: 14px; line-height: 1.6; max-width: 800px; }
+  .back-link { display: inline-block; margin-bottom: 16px; font-size: 12px; color: #8b949e; }
+  .back-link:hover { color: #58a6ff; }
+
+  .section { max-width: 1400px; margin: 0 auto; padding: 32px; }
+  .section-divider { border-top: 1px solid #21262d; }
+  h2 { color: #f0f6fc; font-size: 18px; margin-bottom: 6px; }
+  h3 { color: #8b949e; font-size: 13px; text-transform: uppercase; letter-spacing: 0.1em; margin: 24px 0 10px; }
+  .section-sub { color: #8b949e; font-size: 12px; margin-bottom: 20px; }
+
+  .card { background: #161b22; border: 1px solid #30363d; border-radius: 8px; padding: 20px; margin-bottom: 16px; }
+  .card-title { color: #58a6ff; font-size: 11px; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 10px; }
+  .grid { display: grid; gap: 16px; }
+  .grid-2 { grid-template-columns: 1fr 1fr; }
+  .grid-3 { grid-template-columns: repeat(3, 1fr); }
+  .grid-4 { grid-template-columns: repeat(4, 1fr); }
+  .stat { font-size: 28px; font-weight: bold; color: #f0f6fc; }
+  .stat-lg { font-size: 48px; font-weight: 800; color: #f0f6fc; letter-spacing: -2px; }
+  .stat-sm { font-size: 20px; font-weight: bold; color: #f0f6fc; }
+  .stat-label { font-size: 11px; color: #8b949e; margin-top: 2px; }
+  .ok { color: #3fb950; }
+  .warn { color: #d29922; }
+  .neg { color: #f85149; }
+
+  .badge { display: inline-flex; align-items: center; gap: 6px; padding: 4px 12px; border-radius: 16px; font-size: 11px; font-weight: 600; }
+  .badge-green { background: #0d2818; color: #3fb950; border: 1px solid #1b3d2a; }
+  .badge-red { background: #2d0f0f; color: #f85149; border: 1px solid #4a1b1b; }
+  .badge-amber { background: #2a1f00; color: #d29922; border: 1px solid #3d2e00; }
+  .badge-blue { background: #0d1830; color: #58a6ff; border: 1px solid #1b2d4a; }
+  .badge-purple { background: #1c1530; color: #bb9af7; border: 1px solid #2d2050; }
+  .badge-cyan { background: #0a1f2e; color: #56d4dd; border: 1px solid #153040; }
+
+  .prose { font-size: 13px; color: #c9d1d9; line-height: 1.8; }
+  .prose p { margin-bottom: 12px; }
+  .prose strong { color: #f0f6fc; }
+
+  .callout {
+    border-left: 3px solid; padding: 12px 16px; margin: 16px 0;
+    font-size: 12px; line-height: 1.7; background: rgba(255,255,255,0.02);
+    border-radius: 0 8px 8px 0;
+  }
+  .callout-blue { border-color: #58a6ff; }
+  .callout-green { border-color: #3fb950; }
+  .callout-amber { border-color: #d29922; }
+  .callout-red { border-color: #f85149; }
+  .callout-purple { border-color: #bb9af7; }
+
+  .formula {
+    background: #0d1117;
+    border: 1px solid #21262d;
+    border-radius: 6px;
+    padding: 12px 16px;
+    margin: 12px 0;
+    font-size: 13px;
+    color: #bb9af7;
+    font-style: italic;
+    overflow-x: auto;
+  }
+  .formula .label { color: #8b949e; font-style: normal; font-size: 10px; text-transform: uppercase; letter-spacing: 0.08em; display: block; margin-bottom: 4px; }
+  .formula .note { color: #484f58; font-style: normal; font-size: 11px; margin-top: 4px; }
+
+  /* Diagram flow */
+  .diagram-flow {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0;
+    padding: 24px 16px;
+    overflow-x: auto;
+    flex-wrap: nowrap;
+  }
+  .diagram-node {
+    background: #161b22;
+    border: 1px solid #30363d;
+    border-radius: 6px;
+    padding: 10px 14px;
+    text-align: center;
+    min-width: 90px;
+    flex-shrink: 0;
+  }
+  .diagram-node .node-label { font-size: 10px; color: #8b949e; text-transform: uppercase; letter-spacing: 0.05em; }
+  .diagram-node .node-value { font-size: 14px; color: #f0f6fc; font-weight: 700; margin-top: 2px; }
+  .diagram-node .node-sub { font-size: 10px; color: #484f58; margin-top: 2px; }
+  .diagram-node.highlight { border-color: #58a6ff; box-shadow: 0 0 8px rgba(88,166,255,0.15); }
+  .diagram-node.highlight-green { border-color: #3fb950; box-shadow: 0 0 8px rgba(63,185,80,0.15); }
+  .diagram-node.highlight-amber { border-color: #d29922; box-shadow: 0 0 8px rgba(210,153,34,0.15); }
+  .diagram-node.highlight-red { border-color: #f85149; box-shadow: 0 0 8px rgba(248,81,73,0.15); }
+  .diagram-node.highlight-purple { border-color: #bb9af7; box-shadow: 0 0 8px rgba(187,154,247,0.15); }
+  .diagram-arrow {
+    color: #30363d;
+    font-size: 18px;
+    padding: 0 6px;
+    flex-shrink: 0;
+  }
+  .diagram-arrow.fast { color: #3fb950; }
+  .diagram-arrow.critical { color: #f85149; }
+
+  /* Dramatic stat card */
+  .hero-stat {
+    background: linear-gradient(135deg, #161b22 0%, #0d1830 100%);
+    border: 1px solid #1b2d4a;
+    border-radius: 12px;
+    padding: 40px;
+    text-align: center;
+    margin: 16px 0;
+  }
+  .hero-stat .stat-lg { font-size: 64px; background: linear-gradient(135deg, #58a6ff, #3fb950); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
+
+  /* Era color coding */
+  .era-pre { color: #8b949e; }
+  .era-electronic { color: #d29922; }
+  .era-colo { color: #58a6ff; }
+  .era-microwave { color: #3fb950; }
+  .era-fpga { color: #bb9af7; }
+  .era-current { color: #f85149; }
+
+  .era-bg-pre { background: rgba(139,148,158,0.08); }
+  .era-bg-electronic { background: rgba(210,153,34,0.08); }
+  .era-bg-colo { background: rgba(88,166,255,0.08); }
+  .era-bg-microwave { background: rgba(63,185,80,0.08); }
+  .era-bg-fpga { background: rgba(187,154,247,0.08); }
+  .era-bg-current { background: rgba(248,81,73,0.08); }
+
+  table { width: 100%; border-collapse: collapse; font-size: 12px; }
+  th { text-align: left; color: #8b949e; font-size: 10px; text-transform: uppercase; letter-spacing: 0.05em; padding: 8px 12px; border-bottom: 1px solid #30363d; }
+  td { padding: 10px 12px; border-bottom: 1px solid #21262d; color: #c9d1d9; }
+  tr:hover td { background: rgba(88,166,255,0.04); }
+
+  .chart-container { position: relative; width: 100%; height: 480px; margin: 16px 0; }
+  .chart-container-tall { height: 560px; }
+  .chart-container-short { height: 360px; }
+  canvas { width: 100%; height: 100%; }
+
+  /* Language comparison bars */
+  .lang-bar-wrap { margin: 8px 0; }
+  .lang-bar-label { font-size: 11px; color: #f0f6fc; font-weight: 600; margin-bottom: 4px; display: flex; justify-content: space-between; }
+  .lang-bar-track { background: #21262d; border-radius: 4px; height: 8px; overflow: hidden; }
+  .lang-bar-fill { height: 100%; border-radius: 4px; transition: width 0.6s ease; }
+
+  footer { max-width: 1400px; margin: 0 auto; padding: 32px; border-top: 1px solid #21262d; text-align: center; font-size: 11px; color: #484f58; }
+  footer a { color: #58a6ff; }
+
+  @media (max-width: 768px) {
+    .grid-2, .grid-3, .grid-4 { grid-template-columns: 1fr; }
+    .hero { padding: 40px 16px 24px; }
+    .section { padding: 24px 16px; }
+    .hero-stat .stat-lg { font-size: 40px; }
+    .diagram-flow { flex-wrap: wrap; justify-content: center; }
+  }
+</style>
+</head>
+<body>
+
+<!-- ================================================================= HERO -->
+<div class="hero">
+  <a href="/hft/" class="back-link">&larr; back to championship</a>
+  <h1>HFT Technology: The Latency Stack</h1>
+  <div class="tagline">From 1000ms to 0.5&micro;s &mdash; a 2,000,000&times; improvement in 28 years. The network, hardware, and software innovations that define modern market microstructure.</div>
+  <div style="margin-top: 16px; display: flex; gap: 8px; flex-wrap: wrap;">
+    <span class="badge badge-green">0.5&micro;s Latency</span>
+    <span class="badge badge-blue">Kernel Bypass</span>
+    <span class="badge badge-purple">FPGA</span>
+    <span class="badge badge-amber">Microwave</span>
+    <span class="badge badge-red">Speed of Light</span>
+    <span class="badge badge-cyan">Co-Location</span>
+  </div>
+</div>
+
+<!-- ============================================== THE NUMBER -->
+<div class="section">
+  <div class="hero-stat">
+    <div class="stat-label" style="font-size: 13px; margin-bottom: 12px; letter-spacing: 0.1em; text-transform: uppercase;">Latency Improvement 1995 &mdash; 2023</div>
+    <div class="stat-lg">2,000,000&times;</div>
+    <div style="margin-top: 16px; font-size: 14px; color: #8b949e;">
+      <span style="color: #f85149; font-weight: 700;">1000ms</span>
+      <span style="color: #30363d; margin: 0 12px;">&rarr;</span>
+      <span style="color: #3fb950; font-weight: 700;">0.0005ms</span>
+    </div>
+    <div style="margin-top: 8px; font-size: 11px; color: #484f58;">Dial-up modem &rarr; FPGA with kernel bypass on co-located hardware</div>
+  </div>
+</div>
+
+<!-- ============================================== LATENCY EVOLUTION CHART -->
+<div class="section section-divider">
+  <h2>Latency Evolution</h2>
+  <p class="section-sub">The defining curve of electronic market structure &mdash; log-scale descent from human-speed to physics-limited</p>
+
+  <div class="card">
+    <div class="card-title">Latency by Year (Log Scale) &mdash; 9 Data Points</div>
+    <div class="chart-container chart-container-tall">
+      <canvas id="latencyChart"></canvas>
+    </div>
+  </div>
+</div>
+
+<!-- ============================================== LATENCY BREAKDOWN TABLE -->
+<div class="section section-divider">
+  <h2>Latency Breakdown</h2>
+  <p class="section-sub">Every data point in the descent &mdash; from dial-up to FPGA, color-coded by technology era</p>
+
+  <div class="card">
+    <div class="card-title">Complete Latency History</div>
+    <table>
+      <thead>
+        <tr>
+          <th>Year</th>
+          <th>Latency</th>
+          <th>Medium / Technology</th>
+          <th>Context</th>
+          <th>Era</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr class="latency-row" data-latency="1000">
+          <td style="color: #f0f6fc; font-weight: 600;">1995</td>
+          <td style="font-weight: 600;">
+              1000ms
+          </td>
+          <td>Dial-up modem</td>
+          <td style="color: #8b949e; font-size: 11px;">Seconds to execute. Phone-based trading.</td>
+          <td><span class="badge" id="era-badge-1">--</span></td>
+        </tr>
+        <tr class="latency-row" data-latency="100">
+          <td style="color: #f0f6fc; font-weight: 600;">2000</td>
+          <td style="font-weight: 600;">
+              100ms
+          </td>
+          <td>T1 lines to exchanges</td>
+          <td style="color: #8b949e; font-size: 11px;">Electronic exchanges. Sub-second execution becomes possible.</td>
+          <td><span class="badge" id="era-badge-2">--</span></td>
+        </tr>
+        <tr class="latency-row" data-latency="10">
+          <td style="color: #f0f6fc; font-weight: 600;">2005</td>
+          <td style="font-weight: 600;">
+              10ms
+          </td>
+          <td>Co-located fiber</td>
+          <td style="color: #8b949e; font-size: 11px;">Servers in exchange data centers. Reg NMS drives speed competition.</td>
+          <td><span class="badge" id="era-badge-3">--</span></td>
+        </tr>
+        <tr class="latency-row" data-latency="1">
+          <td style="color: #f0f6fc; font-weight: 600;">2007</td>
+          <td style="font-weight: 600;">
+              1ms
+          </td>
+          <td>Optimized fiber + co-lo</td>
+          <td style="color: #8b949e; font-size: 11px;">Spread Networks. Sub-millisecond matching engines.</td>
+          <td><span class="badge" id="era-badge-4">--</span></td>
+        </tr>
+        <tr class="latency-row" data-latency="0.1">
+          <td style="color: #f0f6fc; font-weight: 600;">2010</td>
+          <td style="font-weight: 600;">
+              100.0&micro;s
+          </td>
+          <td>FPGA + co-location</td>
+          <td style="color: #8b949e; font-size: 11px;">Hardware acceleration. FPGA processes market data in microseconds.</td>
+          <td><span class="badge" id="era-badge-5">--</span></td>
+        </tr>
+        <tr class="latency-row" data-latency="0.01">
+          <td style="color: #f0f6fc; font-weight: 600;">2012</td>
+          <td style="font-weight: 600;">
+              10.0&micro;s
+          </td>
+          <td>Microwave + FPGA</td>
+          <td style="color: #8b949e; font-size: 11px;">McKay Brothers microwave. Chicago-NJ in 4.1ms one-way (vs 6.5ms fiber).</td>
+          <td><span class="badge" id="era-badge-6">--</span></td>
+        </tr>
+        <tr class="latency-row" data-latency="0.005">
+          <td style="color: #f0f6fc; font-weight: 600;">2015</td>
+          <td style="font-weight: 600;">
+              5.0&micro;s
+          </td>
+          <td>Millimeter wave + custom NIC</td>
+          <td style="color: #8b949e; font-size: 11px;">Kernel bypass networking. Custom network cards process packets in nanoseconds.</td>
+          <td><span class="badge" id="era-badge-7">--</span></td>
+        </tr>
+        <tr class="latency-row" data-latency="0.001">
+          <td style="color: #f0f6fc; font-weight: 600;">2018</td>
+          <td style="font-weight: 600;">
+              1.0&micro;s
+          </td>
+          <td>Laser + FPGA + custom silicon</td>
+          <td style="color: #8b949e; font-size: 11px;">Sub-microsecond tick-to-trade. ASIC-based feed handlers.</td>
+          <td><span class="badge" id="era-badge-8">--</span></td>
+        </tr>
+        <tr class="latency-row" data-latency="0.0005">
+          <td style="color: #f0f6fc; font-weight: 600;">2023</td>
+          <td style="font-weight: 600;">
+              500ns
+          </td>
+          <td>Custom ASIC + integrated optics</td>
+          <td style="color: #8b949e; font-size: 11px;">Nanosecond-scale decisions. Physics limit (speed of light) becomes binding constraint.</td>
+          <td><span class="badge" id="era-badge-9">--</span></td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<!-- ============================================== NETWORK INFRASTRUCTURE -->
+<div class="section section-divider">
+  <h2>Network Infrastructure</h2>
+  <p class="section-sub">Network Infrastructure</p>
+
+  <h3>Transmission Media Comparison</h3>
+  <div class="card">
+    <div class="card-title">Network Layer Technologies</div>
+    <table>
+      <thead>
+        <tr>
+          <th>Medium</th>
+          <th>Speed (fraction of c)</th>
+          <th>Latency/km</th>
+          <th>Bandwidth</th>
+          <th>Weather Sensitivity</th>
+          <th>Cost Tier</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td style="color: #f0f6fc; font-weight: 600;">Fiber Optic</td>
+          <td>--</td>
+          <td>--</td>
+          <td>Terabits/s</td>
+          <td>--</td>
+          <td>--</td>
+        </tr>
+        <tr>
+          <td style="color: #f0f6fc; font-weight: 600;">Microwave</td>
+          <td>--</td>
+          <td>--</td>
+          <td>~1 Gbps</td>
+          <td>--</td>
+          <td>--</td>
+        </tr>
+        <tr>
+          <td style="color: #f0f6fc; font-weight: 600;">Millimeter Wave</td>
+          <td>--</td>
+          <td>--</td>
+          <td>~10 Gbps</td>
+          <td>--</td>
+          <td>--</td>
+        </tr>
+        <tr>
+          <td style="color: #f0f6fc; font-weight: 600;">Free-Space Optical (Laser)</td>
+          <td>--</td>
+          <td>--</td>
+          <td>~100 Gbps</td>
+          <td>--</td>
+          <td>--</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <h3>Speed Comparison &mdash; Fraction of c</h3>
+  <div class="card">
+    <div class="card-title">Propagation Speed by Medium</div>
+    <div class="chart-container chart-container-short">
+      <canvas id="speedChart"></canvas>
+    </div>
+  </div>
+
+  <h3>Key Routes</h3>
+  <div class="grid grid-3">
+    <div class="card">
+      <div class="card-title">Chicago &mdash; New Jersey</div>
+      <div class="stat-sm" style="color: #3fb950;">~1,200 km</div>
+      <div class="stat-label">The canonical HFT route</div>
+      <div class="prose" style="margin-top: 12px;">
+        <p><strong>CME Aurora, IL &harr; NYSE Mahwah, NJ.</strong> The most fought-over data path in finance. Fiber: ~6.0ms one-way. Microwave: ~4.0ms one-way. The ~2ms delta between fiber and microwave at the speed of light is worth hundreds of millions annually. Spread Networks spent $300M laying a fiber route in 2010; it was obsoleted by microwave within two years.</p>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-title">London &mdash; Frankfurt</div>
+      <div class="stat-sm" style="color: #58a6ff;">~640 km</div>
+      <div class="stat-label">LSE &harr; Eurex</div>
+      <div class="prose" style="margin-top: 12px;">
+        <p><strong>LD4 Slough &harr; FR2 Frankfurt.</strong> European backbone. Microwave towers across the North Sea and Low Countries. Shorter distance means tighter absolute latency margins. Sub-4ms one-way via microwave. The Channel crossing complicates microwave line-of-sight &mdash; requires relay towers on high points in Belgium/Netherlands.</p>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-title">Tokyo &mdash; Osaka</div>
+      <div class="stat-sm" style="color: #d29922;">~500 km</div>
+      <div class="stat-label">TSE &harr; OSE</div>
+      <div class="prose" style="margin-top: 12px;">
+        <p><strong>Kanto &harr; Kansai.</strong> JPX arbitrage route. Mountainous terrain limits microwave options &mdash; Japan's topography favors fiber or millimeter-wave solutions with more relay hops. Sub-3ms one-way is the target. Less competitive than US/EU routes but still multi-million dollar infrastructure.</p>
+      </div>
+    </div>
+  </div>
+
+  <h3>Why Light is Faster in Air Than Glass</h3>
+  <div class="card">
+    <div class="prose">
+      <p><strong>The refractive index problem:</strong> Light in a vacuum travels at c = 299,792 km/s. In fiber optic cable, light travels through a glass core (silica, SiO&#x2082;) with a refractive index of n &asymp; 1.47. The effective speed is c/n &asymp; 203,940 km/s &mdash; about 68% of c. In air, n &asymp; 1.0003, so microwave propagation is effectively at c.</p>
+      <p><strong>The physics:</strong> The refractive index arises because photons interact with the electron clouds of silicon and oxygen atoms in the glass lattice. Each interaction introduces a tiny delay as the photon is absorbed and re-emitted. The cumulative effect across billions of interactions per meter reduces the effective group velocity. Air molecules are too sparse to cause significant delay at microwave frequencies.</p>
+    </div>
+    <div class="formula">
+      <span class="label">Propagation Delay</span>
+      v<sub>fiber</sub> = c / n &asymp; 299,792 / 1.47 &asymp; 203,940 km/s<br>
+      v<sub>air</sub> &asymp; c &asymp; 299,792 km/s<br><br>
+      Chicago&ndash;NJ (1,200 km):<br>
+      &nbsp;&nbsp;t<sub>fiber</sub> = 1200 / 203,940 &asymp; 5.88 ms<br>
+      &nbsp;&nbsp;t<sub>air</sub> = 1200 / 299,792 &asymp; 4.00 ms<br>
+      &nbsp;&nbsp;&Delta;t &asymp; 1.88 ms &mdash; an eternity in HFT
+      <div class="note">Real-world fiber paths are longer than straight-line distance (routing around obstacles, rights-of-way). Actual fiber latency Chicago-NJ is ~6.5ms vs ~4.0ms microwave. The microwave advantage is even larger than refractive index alone suggests because the path is closer to geodesic.</div>
+    </div>
+  </div>
+</div>
+
+<!-- ============================================== COMPUTE HARDWARE -->
+<div class="section section-divider">
+  <h2>Compute Hardware</h2>
+  <p class="section-sub">Compute Hardware</p>
+
+  <h3>Hardware Comparison</h3>
+  <div class="card">
+    <div class="card-title">Compute Technologies</div>
+    <table>
+      <thead>
+        <tr>
+          <th>Hardware</th>
+          <th>Typical Latency</th>
+          <th>Flexibility</th>
+          <th>Power</th>
+          <th>Use Case</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td style="color: #f0f6fc; font-weight: 600;">CPU (x86)</td>
+          <td>~1-10μs</td>
+          <td>Highest</td>
+          <td>150-300W</td>
+          <td style="color: #8b949e; font-size: 11px;">--</td>
+        </tr>
+        <tr>
+          <td style="color: #f0f6fc; font-weight: 600;">GPU</td>
+          <td>~10-100μs</td>
+          <td>Medium</td>
+          <td>300-700W</td>
+          <td style="color: #8b949e; font-size: 11px;">--</td>
+        </tr>
+        <tr>
+          <td style="color: #f0f6fc; font-weight: 600;">FPGA</td>
+          <td>~100ns-1μs</td>
+          <td>Medium</td>
+          <td>10-75W</td>
+          <td style="color: #8b949e; font-size: 11px;">--</td>
+        </tr>
+        <tr>
+          <td style="color: #f0f6fc; font-weight: 600;">ASIC</td>
+          <td><100ns</td>
+          <td>None</td>
+          <td>5-50W</td>
+          <td style="color: #8b949e; font-size: 11px;">--</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <h3>Latency by Hardware Type (Log Scale)</h3>
+  <div class="card">
+    <div class="card-title">Processing Latency &mdash; CPU &rarr; GPU &rarr; FPGA &rarr; ASIC</div>
+    <div class="chart-container chart-container-short">
+      <canvas id="hardwareChart"></canvas>
+    </div>
+  </div>
+
+  <h3>FPGA Deep Dive</h3>
+  <div class="card">
+    <div class="prose">
+      <p><strong>What is an FPGA?</strong> A Field-Programmable Gate Array is a chip containing millions of configurable logic blocks (CLBs) connected by a programmable interconnect fabric. Unlike a CPU &mdash; which fetches, decodes, and executes instructions sequentially through a pipeline &mdash; an FPGA implements logic directly in hardware. There is no instruction fetch. There is no branch prediction. There is no cache miss. The logic IS the circuit. When a market data packet arrives at the FPGA's input pins, the processing begins at the speed of electrical signal propagation through the gate fabric &mdash; nanoseconds, not microseconds.</p>
+      <p><strong>How does it achieve nanosecond latency?</strong> Consider parsing a FIX message to extract a price update. On a CPU: the NIC DMAs the packet into memory, the kernel processes the interrupt, copies the packet to userspace (or you bypass the kernel), your application reads the bytes, branches through parsing logic, updates the order book, evaluates the strategy, and builds a response. Dozens of pipeline stages, cache accesses, and branch predictions. On an FPGA: the Ethernet frame enters the FPGA's integrated MAC, the FIX parser is a state machine implemented in combinatorial logic that extracts fields as bits arrive (no store-and-forward), the order book update is a parallel lookup in on-chip BRAM, the strategy evaluation is a combinatorial circuit, and the outbound order is serialized onto the wire &mdash; all in a single pass through the gate fabric. Wire-to-wire in under 1 microsecond.</p>
+      <p><strong>Key platforms:</strong> Xilinx (now AMD) Alveo U250/U55C and Intel (formerly Altera) Stratix 10 are the dominant HFT FPGA platforms. The Alveo U250 offers ~1.3M LUTs, 54MB of on-chip BRAM, and 100GbE integrated MACs. Firms like Optiver, Citadel Securities, and Jump Trading have dedicated FPGA engineering teams of 20-50 people, each maintaining custom RTL codebases of hundreds of thousands of lines of SystemVerilog.</p>
+    </div>
+    <div class="callout callout-purple">
+      <strong>Hardware-defined trading:</strong> The concept is simple but profound &mdash; instead of writing software that runs on general-purpose hardware, you design the hardware itself to implement your trading logic. The FPGA is not running your strategy. The FPGA IS your strategy, expressed as a physical circuit. This is why FPGA latency is measured in nanoseconds: there are no software abstractions to traverse. The penalty is flexibility &mdash; changing the strategy means resynthesizing the bitstream (hours to days), not recompiling code (seconds). The teams that win are those that architect their FPGAs with the right abstraction boundaries: generic feed handlers and order encoders in fixed RTL, with parameterized strategy logic that can be reconfigured quickly.
+    </div>
+  </div>
+
+  <h3>The CPU&ndash;FPGA Split</h3>
+  <div class="grid grid-2">
+    <div class="card">
+      <div class="card-title">On the FPGA (Critical Path)</div>
+      <div class="prose">
+        <p><strong>Feed handler:</strong> Ethernet MAC &rarr; IP/UDP parsing &rarr; exchange protocol decode (ITCH, OUCH, ARCA, CME MDP3) &rarr; order book reconstruction. All in streaming logic, no store-and-forward.</p>
+        <p><strong>Pre-trade risk:</strong> Position limits, order rate limits, price band checks, fat-finger guards. These are simple comparators and counters that must never be bypassed &mdash; and on an FPGA they add &lt;10ns.</p>
+        <p><strong>Order encoder:</strong> Strategy decision &rarr; FIX/native protocol encoding &rarr; TCP/IP framing &rarr; wire. The inverse of the feed handler, equally latency-critical.</p>
+        <p><strong>Simple strategies:</strong> Market making with deterministic spread logic, statistical arbitrage triggers, cross-venue price comparisons. Anything that can be expressed as combinatorial logic or simple state machines.</p>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-title">On the CPU (Non-Critical Path)</div>
+      <div class="prose">
+        <p><strong>Complex strategy logic:</strong> Portfolio optimization, multi-leg options pricing, machine learning inference, regime detection. These require floating-point arithmetic, large memory, and algorithmic flexibility that FPGAs handle poorly.</p>
+        <p><strong>Risk management:</strong> End-of-day P&L, portfolio Greeks, VaR calculations, margin monitoring. Important but not latency-sensitive &mdash; milliseconds are fine.</p>
+        <p><strong>Configuration &amp; control:</strong> Parameter updates to the FPGA (spread widths, position limits, symbol universe), monitoring dashboards, logging, compliance recording.</p>
+        <p><strong>Recovery &amp; resilience:</strong> Gap detection, sequence number recovery, reconnection logic, failover coordination. The CPU manages the system's lifecycle; the FPGA handles the hot path.</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ============================================== SOFTWARE STACK -->
+<div class="section section-divider">
+  <h2>Software Stack</h2>
+  <p class="section-sub">Software Stack</p>
+
+  <h3>Stack Layers</h3>
+  <div class="grid grid-2">
+    <div class="card">
+      <div class="card-title">Kernel Bypass (DPDK/ef_vi)</div>
+      <div class="prose">
+        <p></p>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-title">Lock-Free Data Structures</div>
+      <div class="prose">
+        <p></p>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-title">Custom Memory Allocators</div>
+      <div class="prose">
+        <p></p>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-title">C++ / Rust (Critical Path)</div>
+      <div class="prose">
+        <p></p>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-title">FPGA HDL (Verilog/VHDL)</div>
+      <div class="prose">
+        <p></p>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-title">Python (Research/Backtesting)</div>
+      <div class="prose">
+        <p></p>
+      </div>
+    </div>
+  </div>
+
+  <h3>The Latency Stack &mdash; Where Every Microsecond Goes</h3>
+  <div class="card">
+    <div class="card-title">Savings by Software Optimization</div>
+    <div class="chart-container chart-container-short">
+      <canvas id="stackChart"></canvas>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="prose">
+      <p><strong>Kernel bypass</strong> eliminates the entire Linux networking stack from the critical path. Standard path: NIC &rarr; DMA to ring buffer &rarr; interrupt &rarr; kernel softirq &rarr; sk_buff allocation &rarr; protocol processing &rarr; socket buffer &rarr; copy to userspace &rarr; application. With kernel bypass (DPDK, Solarflare OpenOnload, ef_vi, or Exanic): NIC &rarr; DMA directly to userspace-mapped memory &rarr; application polls the buffer. No interrupts, no context switches, no copies. Saves ~10&micro;s per packet. This is table stakes &mdash; every serious HFT firm uses kernel bypass.</p>
+      <p><strong>Lock-free data structures</strong> replace mutexes and condition variables with atomic compare-and-swap (CAS) operations and memory ordering guarantees. A lock acquisition on a contended mutex can cost 5-15&micro;s (futex syscall, context switch, scheduler). A CAS operation costs ~20ns. Lock-free SPSC (single-producer, single-consumer) ring buffers for inter-thread communication are the standard pattern. The Disruptor pattern (LMAX) demonstrated this at scale in 2011.</p>
+      <p><strong>Custom memory allocators</strong> replace malloc/free (which use mmap/brk syscalls and maintain free lists) with pre-allocated pools of fixed-size objects. No syscalls, no fragmentation, deterministic allocation time. Object pools are initialized at startup and never freed. This eliminates ~1&micro;s of jitter per allocation and, critically, eliminates the tail latency spikes from garbage collection or heap compaction.</p>
+      <p><strong>FPGA on the critical path</strong> removes software entirely for feed handling and order encoding. The software stack applies only to the strategy layer and non-latency-sensitive operations. The critical path &mdash; market data in, order out &mdash; never touches a CPU.</p>
+    </div>
+  </div>
+
+  <h3>Language Landscape</h3>
+  <div class="card">
+    <div class="card-title">HFT Language Usage by Domain</div>
+    <div style="max-width: 600px;">
+      <div class="lang-bar-wrap">
+        <div class="lang-bar-label"><span>C++ (dominant)</span><span style="color: #3fb950;">90%</span></div>
+        <div class="lang-bar-track"><div class="lang-bar-fill" style="width: 90%; background: #3fb950;"></div></div>
+        <div style="font-size: 10px; color: #484f58; margin-top: 2px;">Core trading systems, strategy engines, feed handlers. C++17/20/23. Templates for zero-cost abstractions. constexpr everything. No exceptions on hot path. -O3 -march=native.</div>
+      </div>
+      <div class="lang-bar-wrap" style="margin-top: 16px;">
+        <div class="lang-bar-label"><span>Rust (emerging)</span><span style="color: #d29922;">15%</span></div>
+        <div class="lang-bar-track"><div class="lang-bar-fill" style="width: 15%; background: #d29922;"></div></div>
+        <div style="font-size: 10px; color: #484f58; margin-top: 2px;">New systems at some firms. Memory safety without GC. Zero-cost abstractions. Competitive latency with C++. Adoption limited by ecosystem maturity and hiring pool.</div>
+      </div>
+      <div class="lang-bar-wrap" style="margin-top: 16px;">
+        <div class="lang-bar-label"><span>Java (legacy)</span><span style="color: #58a6ff;">25%</span></div>
+        <div class="lang-bar-track"><div class="lang-bar-fill" style="width: 25%; background: #58a6ff;"></div></div>
+        <div style="font-size: 10px; color: #484f58; margin-top: 2px;">LMAX, some banks. GC-tuned (Azul Zing C4, ZGC). Viable for mid-frequency. 99th percentile latency is the problem &mdash; GC pauses create tail risk. Mechanical sympathy (cache-line alignment, off-heap allocation) mitigates but doesn't eliminate.</div>
+      </div>
+      <div class="lang-bar-wrap" style="margin-top: 16px;">
+        <div class="lang-bar-label"><span>Python (research only)</span><span style="color: #8b949e;">40%</span></div>
+        <div class="lang-bar-track"><div class="lang-bar-fill" style="width: 40%; background: #8b949e;"></div></div>
+        <div style="font-size: 10px; color: #484f58; margin-top: 2px;">Research, backtesting, data analysis, model training. Never on the hot path. NumPy/Pandas for offline analysis. Jupyter for exploration. ML model training (PyTorch/JAX). The model runs in Python; the inference runs in C++ or on an FPGA.</div>
+      </div>
+      <div class="lang-bar-wrap" style="margin-top: 16px;">
+        <div class="lang-bar-label"><span>SystemVerilog / VHDL</span><span style="color: #bb9af7;">FPGA</span></div>
+        <div class="lang-bar-track"><div class="lang-bar-fill" style="width: 100%; background: #bb9af7;"></div></div>
+        <div style="font-size: 10px; color: #484f58; margin-top: 2px;">Hardware description languages for FPGA design. Not "programming" in the traditional sense &mdash; you're describing circuits. Synthesized to bitstreams that configure the FPGA gate fabric. 100K+ lines of RTL for a production feed handler + order gateway.</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ============================================== THE PHYSICS LIMIT -->
+<div class="section section-divider">
+  <h2>The Physics Limit</h2>
+  <p class="section-sub">When you've eliminated every software microsecond, what's left is the speed of light</p>
+
+  <div class="grid grid-3">
+    <div class="card" style="text-align: center;">
+      <div class="card-title">Speed of Light (vacuum)</div>
+      <div class="stat" style="color: #d29922;">299,792</div>
+      <div class="stat-label">km/s</div>
+    </div>
+    <div class="card" style="text-align: center;">
+      <div class="card-title">Speed in Fiber</div>
+      <div class="stat" style="color: #58a6ff;">~203,940</div>
+      <div class="stat-label">km/s (c/1.47)</div>
+    </div>
+    <div class="card" style="text-align: center;">
+      <div class="card-title">Speed in Air (microwave)</div>
+      <div class="stat" style="color: #3fb950;">~299,700</div>
+      <div class="stat-label">km/s (&asymp; c)</div>
+    </div>
+  </div>
+
+  <div class="card" style="margin-top: 16px;">
+    <div class="card-title">Minimum Theoretical Latency by Route</div>
+    <table>
+      <thead>
+        <tr><th>Route</th><th>Distance</th><th>Fiber (c/1.47)</th><th>Microwave (&asymp;c)</th><th>Physics Limit</th></tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td style="color: #f0f6fc; font-weight: 600;">Chicago &harr; New Jersey</td>
+          <td>~1,200 km</td>
+          <td>~5.88ms</td>
+          <td>~4.00ms</td>
+          <td style="color: #3fb950;">4.00ms one-way</td>
+        </tr>
+        <tr>
+          <td style="color: #f0f6fc; font-weight: 600;">London &harr; Frankfurt</td>
+          <td>~640 km</td>
+          <td>~3.14ms</td>
+          <td>~2.13ms</td>
+          <td style="color: #3fb950;">2.13ms one-way</td>
+        </tr>
+        <tr>
+          <td style="color: #f0f6fc; font-weight: 600;">Tokyo &harr; Osaka</td>
+          <td>~500 km</td>
+          <td>~2.45ms</td>
+          <td>~1.67ms</td>
+          <td style="color: #3fb950;">1.67ms one-way</td>
+        </tr>
+        <tr>
+          <td style="color: #f0f6fc; font-weight: 600;">Within data center</td>
+          <td>~100m</td>
+          <td>~0.49&micro;s</td>
+          <td>N/A</td>
+          <td style="color: #3fb950;">0.33&micro;s</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="card" style="margin-top: 16px;">
+    <div class="prose">
+      <p><strong>What's left to optimize when you're at the speed of light?</strong></p>
+      <p><strong>1. Path shortening.</strong> Real fiber routes are 20-40% longer than the geodesic because they follow railroad rights-of-way, avoid mountains, and navigate urban infrastructure. Microwave paths are closer to geodesic but require line-of-sight relay towers every 50-80 km. Millimeter-wave and free-space laser links can achieve near-geodesic paths with fewer relay points but are more susceptible to atmospheric attenuation.</p>
+      <p><strong>2. Processing latency.</strong> Even at 500ns wire-to-wire on an FPGA, there are gates to optimize. Pipelining can reduce clock-to-clock latency. Combinatorial shortcuts (look-ahead adders, parallel prefix structures) save individual clock cycles. When your competitor is at 500ns and you're at 480ns, those 20ns matter &mdash; it's the difference between being first or second in the matching engine queue.</p>
+      <p><strong>3. Serialization delay.</strong> A 64-byte Ethernet frame at 10GbE takes 51.2ns to serialize. At 100GbE it takes 5.12ns. Moving to 100GbE (or 400GbE) reduces serialization delay by an order of magnitude. This is a real and measurable improvement for minimum-size order packets.</p>
+      <p><strong>4. Switch hop elimination.</strong> Every network switch adds 200-400ns of latency. Direct NIC-to-NIC connections (cross-connects within a data center) eliminate switch hops. Some firms negotiate with exchanges for dedicated cross-connects to the matching engine.</p>
+      <p><strong>5. Shorter wavelengths.</strong> Hollow-core fiber is an emerging technology where light travels through an air core (n &asymp; 1.0) instead of glass. This would give fiber the speed advantage of microwave with the reliability advantage of a physical cable. Currently expensive and limited in availability, but it represents the next frontier.</p>
+    </div>
+    <div class="callout callout-amber">
+      <strong>The diminishing returns curve:</strong> The first 10 years of HFT optimization (1995-2005) delivered a 10,000&times; improvement. The next 10 years (2005-2015) delivered 100&times;. The last 8 years (2015-2023) delivered 20&times;. Each subsequent microsecond costs exponentially more to eliminate. The industry is approaching an asymptote defined by physics &mdash; and the competitive advantage has shifted from raw latency to consistency (low jitter), intelligence (better signals), and risk management (surviving adverse selection).
+    </div>
+  </div>
+</div>
+
+<!-- ============================================== CO-LOCATION GEOGRAPHY -->
+<div class="section section-divider">
+  <h2>Co-Location Geography</h2>
+  <p class="section-sub">Where the matching engines live &mdash; and why even rack placement matters</p>
+
+  <div class="grid grid-2">
+    <div class="card">
+      <div class="card-title">Primary US Data Centers</div>
+      <table>
+        <thead>
+          <tr><th>Exchange</th><th>Location</th><th>Facility</th></tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td style="color: #f0f6fc; font-weight: 600;">CME Group</td>
+            <td>Aurora, IL</td>
+            <td>CME co-lo facility. Futures, options on futures. E-mini S&P, crude oil, treasury futures. The Globex matching engine runs here.</td>
+          </tr>
+          <tr>
+            <td style="color: #f0f6fc; font-weight: 600;">NYSE</td>
+            <td>Mahwah, NJ</td>
+            <td>400,000 sq ft facility. Equities matching engine. The physical successor to the trading floor at 11 Wall Street.</td>
+          </tr>
+          <tr>
+            <td style="color: #f0f6fc; font-weight: 600;">NASDAQ</td>
+            <td>Carteret, NJ</td>
+            <td>Equinix NY5. NASDAQ matching engine. Also hosts dark pools and ATS operators seeking proximity.</td>
+          </tr>
+          <tr>
+            <td style="color: #f0f6fc; font-weight: 600;">CBOE</td>
+            <td>Secaucus, NJ</td>
+            <td>Options matching engine. SPX options, VIX futures. Equinix NY4/NY5 complex.</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="card">
+      <div class="card-title">Why New Jersey?</div>
+      <div class="prose">
+        <p><strong>Historical gravity:</strong> Wall Street was in Manhattan. Early electronic trading infrastructure was built nearby. As trading went electronic and matching engines needed space, power, and cooling that Manhattan couldn't provide, data centers moved across the Hudson to northern New Jersey &mdash; close enough to maintain low-latency connections to Wall Street firms, but with the space, power grid capacity, and cost structure needed for warehouse-scale computing.</p>
+        <p><strong>The NJ data center corridor:</strong> Mahwah, Secaucus, Carteret, and Weehawken form a dense corridor of financial data centers. Equinix alone operates six major facilities in the area (NY1-NY9). CyrusOne, QTS, and Digital Realty have additional campuses. The density creates a network effect: once the exchanges are there, the firms must be there, which attracts more exchanges, dark pools, and service providers.</p>
+        <p><strong>Power:</strong> Northern NJ has robust grid infrastructure. A single co-location facility can draw 20-40 MW. The area benefits from multiple utility feeds and proximity to natural gas generation.</p>
+      </div>
+    </div>
+  </div>
+
+  <h3>Fair Co-Location</h3>
+  <div class="card">
+    <div class="prose">
+      <p><strong>The cable length problem:</strong> Even within a data center, cable length varies. A rack 10 meters from the matching engine switch has ~33ns less latency than a rack 20 meters away. Over a year of trading, 33ns of consistent advantage translates to thousands of queue-priority wins. Regulators and exchanges recognized this asymmetry.</p>
+      <p><strong>Equalized cable lengths:</strong> Most major exchanges now mandate equal cable lengths to all co-located participants. Every participant's cross-connect to the matching engine is the same length &mdash; excess cable is coiled on the rack. CME's Aurora facility and NYSE's Mahwah facility both implement equalized cables. This doesn't eliminate the co-location advantage over remote participants, but it ensures fairness among co-located firms.</p>
+      <p><strong>What you're actually buying:</strong> Co-location isn't just about cable length. It's about being on the same switch fabric as the matching engine, eliminating WAN hops, and having deterministic latency. A co-located firm has ~1&micro;s round-trip to the matching engine. A firm in Manhattan has ~200&micro;s. A firm in Chicago has ~8ms. The co-location advantage is 200&times; over Manhattan and 8,000&times; over Chicago.</p>
+    </div>
+    <div class="callout callout-blue">
+      <strong>The cost of proximity:</strong> A single rack in a Tier 1 exchange co-location facility costs $10,000-$20,000/month. A dedicated cross-connect is additional. Power is metered separately. A typical HFT firm occupies 4-8 racks per venue across 5-10 venues. Annual co-location costs alone can exceed $2-5M before any hardware is installed. This is the rent &mdash; the barrier to entry that separates HFT firms from retail traders more effectively than any technological advantage.
+    </div>
+  </div>
+</div>
+
+<!-- ============================================== THE FULL STACK -->
+<div class="section section-divider">
+  <h2>The Full Stack</h2>
+  <p class="section-sub">The complete path from market event to order acknowledgment &mdash; annotated with approximate latency at each hop</p>
+
+  <div class="card">
+    <div class="card-title">End-to-End Latency Path</div>
+    <div class="diagram-flow">
+      <div class="diagram-node highlight-red">
+        <div class="node-label">Market Event</div>
+        <div class="node-value">T=0</div>
+        <div class="node-sub">price change</div>
+      </div>
+      <div class="diagram-arrow critical">&rarr;</div>
+      <div class="diagram-node">
+        <div class="node-label">Matching Engine</div>
+        <div class="node-value">~1&micro;s</div>
+        <div class="node-sub">exchange match</div>
+      </div>
+      <div class="diagram-arrow">&rarr;</div>
+      <div class="diagram-node highlight">
+        <div class="node-label">Co-lo Switch</div>
+        <div class="node-value">+300ns</div>
+        <div class="node-sub">network hop</div>
+      </div>
+      <div class="diagram-arrow fast">&rarr;</div>
+      <div class="diagram-node highlight-green">
+        <div class="node-label">NIC</div>
+        <div class="node-value">+100ns</div>
+        <div class="node-sub">DMA to FPGA</div>
+      </div>
+      <div class="diagram-arrow fast">&rarr;</div>
+      <div class="diagram-node highlight-purple">
+        <div class="node-label">FPGA Feed</div>
+        <div class="node-value">+200ns</div>
+        <div class="node-sub">parse + book</div>
+      </div>
+      <div class="diagram-arrow">&rarr;</div>
+      <div class="diagram-node highlight-amber">
+        <div class="node-label">Strategy</div>
+        <div class="node-value">+100ns</div>
+        <div class="node-sub">decision logic</div>
+      </div>
+      <div class="diagram-arrow fast">&rarr;</div>
+      <div class="diagram-node highlight-purple">
+        <div class="node-label">FPGA Order</div>
+        <div class="node-value">+150ns</div>
+        <div class="node-sub">encode + risk</div>
+      </div>
+      <div class="diagram-arrow fast">&rarr;</div>
+      <div class="diagram-node highlight-green">
+        <div class="node-label">NIC</div>
+        <div class="node-value">+50ns</div>
+        <div class="node-sub">serialize</div>
+      </div>
+      <div class="diagram-arrow">&rarr;</div>
+      <div class="diagram-node highlight">
+        <div class="node-label">Switch</div>
+        <div class="node-value">+300ns</div>
+        <div class="node-sub">network hop</div>
+      </div>
+      <div class="diagram-arrow critical">&rarr;</div>
+      <div class="diagram-node highlight-red">
+        <div class="node-label">Exchange</div>
+        <div class="node-value">~1&micro;s</div>
+        <div class="node-sub">order accepted</div>
+      </div>
+    </div>
+    <div style="text-align: center; margin-top: 16px;">
+      <span class="badge badge-green" style="font-size: 13px; padding: 8px 20px;">Total Internal Latency: ~900ns &mdash; under 1 microsecond</span>
+    </div>
+    <div class="callout callout-green" style="margin-top: 16px;">
+      <strong>The critical path budget:</strong> From the moment the co-lo switch delivers a market data packet to the moment the outbound order packet leaves the NIC, the entire processing takes ~900ns. The exchange adds ~1&micro;s on each side (feed dissemination + order matching). The network switch adds ~300ns per hop. Total round-trip from market event to order in the matching engine queue: approximately 3-4&micro;s when co-located. This is the state of the art in 2023-2024. Further improvement requires eliminating switch hops (direct cross-connects), faster FPGA fabric, and smaller packet sizes.
+    </div>
+  </div>
+
+  <h3>Total Round-Trip Budget</h3>
+  <div class="card">
+    <div class="card-title">Latency Budget Breakdown</div>
+    <div class="chart-container chart-container-short">
+      <canvas id="budgetChart"></canvas>
+    </div>
+  </div>
+</div>
+
+<!-- ============================================================ FOOTER -->
+<footer>
+  Data: HFT latency evolution and technology stack analysis &middot; Generated 2026-05-24 &middot; <a href="https://github.com/jthorvaldur/f1_stats">Source</a>
+</footer>
+
+<script>
+(function() {
+  'use strict';
+
+  const latencyData = [{"year": 1995, "latency_ms": 1000, "medium": "Dial-up modem", "context": "Seconds to execute. Phone-based trading."}, {"year": 2000, "latency_ms": 100, "medium": "T1 lines to exchanges", "context": "Electronic exchanges. Sub-second execution becomes possible."}, {"year": 2005, "latency_ms": 10, "medium": "Co-located fiber", "context": "Servers in exchange data centers. Reg NMS drives speed competition."}, {"year": 2007, "latency_ms": 1, "medium": "Optimized fiber + co-lo", "context": "Spread Networks. Sub-millisecond matching engines."}, {"year": 2010, "latency_ms": 0.1, "medium": "FPGA + co-location", "context": "Hardware acceleration. FPGA processes market data in microseconds."}, {"year": 2012, "latency_ms": 0.01, "medium": "Microwave + FPGA", "context": "McKay Brothers microwave. Chicago-NJ in 4.1ms one-way (vs 6.5ms fiber)."}, {"year": 2015, "latency_ms": 0.005, "medium": "Millimeter wave + custom NIC", "context": "Kernel bypass networking. Custom network cards process packets in nanoseconds."}, {"year": 2018, "latency_ms": 0.001, "medium": "Laser + FPGA + custom silicon", "context": "Sub-microsecond tick-to-trade. ASIC-based feed handlers."}, {"year": 2023, "latency_ms": 0.0005, "medium": "Custom ASIC + integrated optics", "context": "Nanosecond-scale decisions. Physics limit (speed of light) becomes binding constraint."}];
+  const techStack = {"network": {"title": "Network Infrastructure", "layers": [{"name": "Fiber Optic", "latency": "~5\u03bcs/km", "cost": "$$", "weather": "Immune", "bandwidth": "Terabits/s", "desc": "Glass fiber. Speed of light in glass \u2248 200,000 km/s (0.67c). Reliable, high bandwidth, but slower than air."}, {"name": "Microwave", "latency": "~3.3\u03bcs/km", "cost": "$$$", "weather": "Rain sensitive", "bandwidth": "~1 Gbps", "desc": "Line-of-sight radio. Speed of light in air \u2248 300,000 km/s. ~35% faster than fiber. Tower network requires clear path."}, {"name": "Millimeter Wave", "latency": "~3.3\u03bcs/km", "cost": "$$$$", "weather": "Very sensitive", "bandwidth": "~10 Gbps", "desc": "60-90 GHz band. Higher bandwidth than microwave. Shorter range per hop. Used for critical last-mile links."}, {"name": "Free-Space Optical (Laser)", "latency": "~3.3\u03bcs/km", "cost": "$$$$$", "weather": "Fog sensitive", "bandwidth": "~100 Gbps", "desc": "Laser links between rooftops/towers. Speed of light in air. Highest bandwidth of wireless options. Weather dependent."}]}, "hardware": {"title": "Compute Hardware", "layers": [{"name": "CPU (x86)", "latency": "~1-10\u03bcs", "flexibility": "Highest", "power": "150-300W", "desc": "General-purpose. Good for strategy logic, risk management. Too slow for critical path in modern HFT. Intel Xeon / AMD EPYC."}, {"name": "GPU", "latency": "~10-100\u03bcs", "flexibility": "Medium", "power": "300-700W", "desc": "Parallel processing. Used for backtesting, ML training, Monte Carlo simulations. Not used in live trading critical path due to latency."}, {"name": "FPGA", "latency": "~100ns-1\u03bcs", "flexibility": "Medium", "power": "10-75W", "desc": "Reprogrammable logic gates. Market data parsing, order generation in nanoseconds. Xilinx/AMD Alveo, Intel Stratix. The workhorse of modern HFT."}, {"name": "ASIC", "latency": "<100ns", "flexibility": "None", "power": "5-50W", "desc": "Application-Specific IC. Fastest possible but cannot be reprogrammed. Used for feed handlers and checksum computation. Extremely expensive to develop."}]}, "software": {"title": "Software Stack", "layers": [{"name": "Kernel Bypass (DPDK/ef_vi)", "desc": "Network packets go directly to userspace, bypassing the OS kernel. Saves ~10\u03bcs per packet. Solarflare/Xilinx OpenOnload. Essential for sub-microsecond systems."}, {"name": "Lock-Free Data Structures", "desc": "No mutexes or locks. Atomic operations only. Disruptor pattern (LMAX). Pre-allocated memory pools. No garbage collection pauses."}, {"name": "Custom Memory Allocators", "desc": "Arena/bump allocators. No malloc/free in hot path. Memory mapped I/O for shared state. Huge pages (2MB/1GB) to reduce TLB misses."}, {"name": "C++ / Rust (Critical Path)", "desc": "Zero-cost abstractions. No garbage collection. Compile-time optimization. Template metaprogramming for static dispatch. Rust entering for safety-critical components."}, {"name": "FPGA HDL (Verilog/VHDL)", "desc": "Hardware description language. Market data parser, order encoder, risk checks \u2014 all in hardware. Tick-to-trade in nanoseconds."}, {"name": "Python (Research/Backtesting)", "desc": "Numpy, Pandas, scikit-learn. Alpha research, signal generation, backtesting. Never in the critical trading path."}]}};
+
+  // ── Utility ────────────────────────────────────────────────
+  function setupCanvas(canvasId) {
+    const canvas = document.getElementById(canvasId);
+    if (!canvas) return null;
+    const ctx = canvas.getContext('2d');
+    const dpr = window.devicePixelRatio || 1;
+    const rect = canvas.parentElement.getBoundingClientRect();
+    canvas.width = rect.width * dpr;
+    canvas.height = rect.height * dpr;
+    canvas.style.width = rect.width + 'px';
+    canvas.style.height = rect.height + 'px';
+    ctx.scale(dpr, dpr);
+    return { ctx, w: rect.width, h: rect.height };
+  }
+
+  // Era classification
+  function getEra(year, latency_ms) {
+    if (year <= 1999) return { name: 'Pre-Electronic', color: '#8b949e', bg: 'rgba(139,148,158,0.12)', css: 'era-pre' };
+    if (year <= 2004) return { name: 'Electronic', color: '#d29922', bg: 'rgba(210,153,34,0.12)', css: 'era-electronic' };
+    if (year <= 2009) return { name: 'Co-Location', color: '#58a6ff', bg: 'rgba(88,166,255,0.12)', css: 'era-colo' };
+    if (year <= 2014) return { name: 'Microwave', color: '#3fb950', bg: 'rgba(63,185,80,0.12)', css: 'era-microwave' };
+    if (year <= 2019) return { name: 'FPGA', color: '#bb9af7', bg: 'rgba(187,154,247,0.12)', css: 'era-fpga' };
+    return { name: 'Current', color: '#f85149', bg: 'rgba(248,81,73,0.12)', css: 'era-current' };
+  }
+
+  // Color era badges in the table
+  latencyData.forEach(function(entry, i) {
+    const badge = document.getElementById('era-badge-' + (i + 1));
+    if (badge) {
+      const era = getEra(entry.year, entry.latency_ms);
+      badge.textContent = era.name;
+      badge.style.background = era.bg;
+      badge.style.color = era.color;
+      badge.style.border = '1px solid ' + era.color + '33';
+    }
+  });
+
+  // ── 1. LATENCY EVOLUTION CHART (Log Scale) ────────────────
+  function drawLatencyChart() {
+    const setup = setupCanvas('latencyChart');
+    if (!setup) return;
+    const { ctx, w, h } = setup;
+    const pad = { top: 40, right: 60, bottom: 60, left: 80 };
+    const chartW = w - pad.left - pad.right;
+    const chartH = h - pad.top - pad.bottom;
+
+    const sorted = [...latencyData].sort(function(a, b) { return a.year - b.year; });
+    const minYear = sorted[0].year;
+    const maxYear = sorted[sorted.length - 1].year + 2;
+    const minLog = Math.floor(Math.log10(Math.min(...sorted.map(function(d) { return d.latency_ms; })))) - 0.5;
+    const maxLog = Math.ceil(Math.log10(Math.max(...sorted.map(function(d) { return d.latency_ms; })))) + 0.5;
+
+    function xPos(year) { return pad.left + ((year - minYear) / (maxYear - minYear)) * chartW; }
+    function yPos(latency) {
+      var logVal = Math.log10(latency);
+      return pad.top + ((maxLog - logVal) / (maxLog - minLog)) * chartH;
+    }
+
+    ctx.clearRect(0, 0, w, h);
+
+    // Grid lines — horizontal (log scale)
+    ctx.strokeStyle = '#21262d';
+    ctx.lineWidth = 1;
+    ctx.font = '10px monospace';
+    ctx.textAlign = 'right';
+    for (var exp = Math.ceil(minLog); exp <= Math.floor(maxLog); exp++) {
+      var yy = yPos(Math.pow(10, exp));
+      ctx.beginPath();
+      ctx.moveTo(pad.left, yy);
+      ctx.lineTo(pad.left + chartW, yy);
+      ctx.stroke();
+
+      ctx.fillStyle = '#8b949e';
+      var label;
+      if (exp >= 0) label = Math.pow(10, exp) + 'ms';
+      else if (exp >= -3) label = Math.pow(10, exp + 3).toFixed(0) + 'µs';
+      else label = Math.pow(10, exp + 6).toFixed(0) + 'ns';
+      ctx.fillText(label, pad.left - 8, yy + 4);
+    }
+
+    // Grid lines — vertical (years)
+    ctx.textAlign = 'center';
+    for (var yr = Math.ceil(minYear / 5) * 5; yr <= maxYear; yr += 5) {
+      var xx = xPos(yr);
+      ctx.strokeStyle = '#21262d';
+      ctx.beginPath();
+      ctx.moveTo(xx, pad.top);
+      ctx.lineTo(xx, pad.top + chartH);
+      ctx.stroke();
+      ctx.fillStyle = '#8b949e';
+      ctx.fillText(yr.toString(), xx, pad.top + chartH + 20);
+    }
+
+    // Area fill under curve
+    ctx.beginPath();
+    ctx.moveTo(xPos(sorted[0].year), yPos(sorted[0].latency_ms));
+    sorted.forEach(function(d) {
+      ctx.lineTo(xPos(d.year), yPos(d.latency_ms));
+    });
+    ctx.lineTo(xPos(sorted[sorted.length - 1].year), pad.top + chartH);
+    ctx.lineTo(xPos(sorted[0].year), pad.top + chartH);
+    ctx.closePath();
+    var gradient = ctx.createLinearGradient(0, pad.top, 0, pad.top + chartH);
+    gradient.addColorStop(0, 'rgba(248,81,73,0.15)');
+    gradient.addColorStop(0.4, 'rgba(88,166,255,0.10)');
+    gradient.addColorStop(1, 'rgba(63,185,80,0.05)');
+    ctx.fillStyle = gradient;
+    ctx.fill();
+
+    // Line
+    ctx.beginPath();
+    ctx.moveTo(xPos(sorted[0].year), yPos(sorted[0].latency_ms));
+    sorted.forEach(function(d) {
+      ctx.lineTo(xPos(d.year), yPos(d.latency_ms));
+    });
+    ctx.strokeStyle = '#58a6ff';
+    ctx.lineWidth = 2.5;
+    ctx.stroke();
+
+    // Data points with era colors and labels
+    sorted.forEach(function(d, i) {
+      var era = getEra(d.year, d.latency_ms);
+      var px = xPos(d.year);
+      var py = yPos(d.latency_ms);
+
+      // Point glow
+      ctx.beginPath();
+      ctx.arc(px, py, 8, 0, Math.PI * 2);
+      ctx.fillStyle = era.color + '22';
+      ctx.fill();
+
+      // Point
+      ctx.beginPath();
+      ctx.arc(px, py, 4, 0, Math.PI * 2);
+      ctx.fillStyle = era.color;
+      ctx.fill();
+      ctx.strokeStyle = '#0d1117';
+      ctx.lineWidth = 1.5;
+      ctx.stroke();
+
+      // Label (medium) — alternate above/below to reduce overlap
+      ctx.fillStyle = era.color;
+      ctx.font = '9px monospace';
+      ctx.textAlign = 'center';
+      var labelY = (i % 2 === 0) ? py - 14 : py + 18;
+      // Avoid overlap at edges
+      if (py - pad.top < 30) labelY = py + 18;
+      if (pad.top + chartH - py < 30) labelY = py - 14;
+      ctx.fillText(d.medium, px, labelY);
+    });
+
+    // Axis labels
+    ctx.fillStyle = '#8b949e';
+    ctx.font = '11px monospace';
+    ctx.textAlign = 'center';
+    ctx.fillText('Year', pad.left + chartW / 2, h - 10);
+
+    ctx.save();
+    ctx.translate(14, pad.top + chartH / 2);
+    ctx.rotate(-Math.PI / 2);
+    ctx.fillText('Latency (log scale)', 0, 0);
+    ctx.restore();
+
+    // Title annotation
+    ctx.fillStyle = '#f0f6fc';
+    ctx.font = 'bold 12px monospace';
+    ctx.textAlign = 'left';
+    ctx.fillText('Log-Scale Latency Descent', pad.left, pad.top - 14);
+    ctx.fillStyle = '#484f58';
+    ctx.font = '10px monospace';
+    ctx.fillText('Each gridline = 10× improvement', pad.left + 230, pad.top - 14);
+  }
+
+  // ── 2. SPEED COMPARISON CHART ─────────────────────────────
+  function drawSpeedChart() {
+    var setup = setupCanvas('speedChart');
+    if (!setup) return;
+    var ctx = setup.ctx, w = setup.w, h = setup.h;
+    var pad = { top: 30, right: 40, bottom: 40, left: 140 };
+    var chartW = w - pad.left - pad.right;
+    var chartH = h - pad.top - pad.bottom;
+
+    var media = [
+      { name: 'Vacuum (c)', speed: 1.000, color: '#f0f6fc' },
+      { name: 'Microwave (air)', speed: 0.999, color: '#3fb950' },
+      { name: 'Free-space laser', speed: 0.999, color: '#d29922' },
+      { name: 'Hollow-core fiber', speed: 0.97, color: '#bb9af7' },
+      { name: 'Standard fiber', speed: 0.68, color: '#58a6ff' },
+      { name: 'Copper (CAT6)', speed: 0.64, color: '#8b949e' }
+    ];
+
+    ctx.clearRect(0, 0, w, h);
+
+    var barH = Math.min(32, (chartH / media.length) - 8);
+    var gap = (chartH - barH * media.length) / (media.length + 1);
+
+    media.forEach(function(m, i) {
+      var y = pad.top + gap + i * (barH + gap);
+      var barW = m.speed * chartW;
+
+      // Bar
+      ctx.fillStyle = m.color;
+      ctx.globalAlpha = 0.7;
+      ctx.beginPath();
+      ctx.roundRect(pad.left, y, barW, barH, 3);
+      ctx.fill();
+      ctx.globalAlpha = 1;
+
+      // Label
+      ctx.fillStyle = '#c9d1d9';
+      ctx.font = '11px monospace';
+      ctx.textAlign = 'right';
+      ctx.fillText(m.name, pad.left - 8, y + barH / 2 + 4);
+
+      // Value
+      ctx.fillStyle = m.color;
+      ctx.font = 'bold 10px monospace';
+      ctx.textAlign = 'left';
+      ctx.fillText((m.speed * 100).toFixed(1) + '% of c', pad.left + barW + 8, y + barH / 2 + 4);
+    });
+
+    // Axis
+    ctx.strokeStyle = '#30363d';
+    ctx.lineWidth = 1;
+    for (var pct = 0; pct <= 100; pct += 25) {
+      var x = pad.left + (pct / 100) * chartW;
+      ctx.beginPath();
+      ctx.moveTo(x, pad.top);
+      ctx.lineTo(x, pad.top + chartH);
+      ctx.stroke();
+      ctx.fillStyle = '#484f58';
+      ctx.font = '9px monospace';
+      ctx.textAlign = 'center';
+      ctx.fillText(pct + '%', x, h - 12);
+    }
+  }
+
+  // ── 3. HARDWARE LATENCY CHART (Log Scale) ─────────────────
+  function drawHardwareChart() {
+    var setup = setupCanvas('hardwareChart');
+    if (!setup) return;
+    var ctx = setup.ctx, w = setup.w, h = setup.h;
+    var pad = { top: 30, right: 60, bottom: 40, left: 120 };
+    var chartW = w - pad.left - pad.right;
+    var chartH = h - pad.top - pad.bottom;
+
+    var hardware = [
+      { name: 'General CPU', latency_ns: 5000, color: '#8b949e' },
+      { name: 'Tuned CPU', latency_ns: 2000, color: '#d29922' },
+      { name: 'GPU', latency_ns: 10000, color: '#3fb950' },
+      { name: 'FPGA', latency_ns: 200, color: '#bb9af7' },
+      { name: 'ASIC', latency_ns: 50, color: '#f85149' }
+    ];
+
+    ctx.clearRect(0, 0, w, h);
+
+    var maxLog = Math.ceil(Math.log10(Math.max.apply(null, hardware.map(function(h) { return h.latency_ns; })))) + 0.3;
+    var minLog = Math.floor(Math.log10(Math.min.apply(null, hardware.map(function(h) { return h.latency_ns; })))) - 0.3;
+
+    var barH = Math.min(36, (chartH / hardware.length) - 8);
+    var gap = (chartH - barH * hardware.length) / (hardware.length + 1);
+
+    // Grid
+    for (var exp = Math.ceil(minLog); exp <= Math.floor(maxLog); exp++) {
+      var x = pad.left + ((Math.log10(Math.pow(10, exp)) - minLog) / (maxLog - minLog)) * chartW;
+      ctx.strokeStyle = '#21262d';
+      ctx.lineWidth = 1;
+      ctx.beginPath();
+      ctx.moveTo(x, pad.top);
+      ctx.lineTo(x, pad.top + chartH);
+      ctx.stroke();
+
+      ctx.fillStyle = '#8b949e';
+      ctx.font = '9px monospace';
+      ctx.textAlign = 'center';
+      var lbl;
+      if (exp >= 3) lbl = Math.pow(10, exp - 3) + 'µs';
+      else lbl = Math.pow(10, exp) + 'ns';
+      ctx.fillText(lbl, x, h - 12);
+    }
+
+    hardware.forEach(function(hw, i) {
+      var y = pad.top + gap + i * (barH + gap);
+      var logVal = Math.log10(hw.latency_ns);
+      var barW = ((logVal - minLog) / (maxLog - minLog)) * chartW;
+
+      ctx.fillStyle = hw.color;
+      ctx.globalAlpha = 0.7;
+      ctx.beginPath();
+      ctx.roundRect(pad.left, y, barW, barH, 3);
+      ctx.fill();
+      ctx.globalAlpha = 1;
+
+      // Label
+      ctx.fillStyle = '#c9d1d9';
+      ctx.font = '11px monospace';
+      ctx.textAlign = 'right';
+      ctx.fillText(hw.name, pad.left - 8, y + barH / 2 + 4);
+
+      // Value
+      ctx.fillStyle = hw.color;
+      ctx.font = 'bold 10px monospace';
+      ctx.textAlign = 'left';
+      var valLabel = hw.latency_ns >= 1000 ? (hw.latency_ns / 1000).toFixed(1) + 'µs' : hw.latency_ns + 'ns';
+      ctx.fillText(valLabel, pad.left + barW + 8, y + barH / 2 + 4);
+    });
+  }
+
+  // ── 4. SOFTWARE STACK SAVINGS CHART ───────────────────────
+  function drawStackChart() {
+    var setup = setupCanvas('stackChart');
+    if (!setup) return;
+    var ctx = setup.ctx, w = setup.w, h = setup.h;
+    var pad = { top: 30, right: 60, bottom: 40, left: 180 };
+    var chartW = w - pad.left - pad.right;
+    var chartH = h - pad.top - pad.bottom;
+
+    var optimizations = [
+      { name: 'Kernel bypass (DPDK/ef_vi)', saved_us: 10, color: '#3fb950' },
+      { name: 'Lock-free structures', saved_us: 3, color: '#58a6ff' },
+      { name: 'Custom allocator', saved_us: 1, color: '#d29922' },
+      { name: 'Huge pages (TLB)', saved_us: 0.5, color: '#bb9af7' },
+      { name: 'CPU pinning + isolation', saved_us: 2, color: '#56d4dd' },
+      { name: 'FPGA (remove software)', saved_us: 15, color: '#f85149' }
+    ];
+
+    ctx.clearRect(0, 0, w, h);
+
+    var maxVal = Math.max.apply(null, optimizations.map(function(o) { return o.saved_us; }));
+    var barH = Math.min(32, (chartH / optimizations.length) - 8);
+    var gap = (chartH - barH * optimizations.length) / (optimizations.length + 1);
+
+    // Grid
+    ctx.strokeStyle = '#21262d';
+    ctx.lineWidth = 1;
+    var steps = [0, 2, 5, 10, 15];
+    steps.forEach(function(v) {
+      var x = pad.left + (v / maxVal) * chartW;
+      ctx.beginPath();
+      ctx.moveTo(x, pad.top);
+      ctx.lineTo(x, pad.top + chartH);
+      ctx.stroke();
+      ctx.fillStyle = '#484f58';
+      ctx.font = '9px monospace';
+      ctx.textAlign = 'center';
+      ctx.fillText(v + 'µs', x, h - 12);
+    });
+
+    optimizations.forEach(function(opt, i) {
+      var y = pad.top + gap + i * (barH + gap);
+      var barW = (opt.saved_us / maxVal) * chartW;
+
+      ctx.fillStyle = opt.color;
+      ctx.globalAlpha = 0.7;
+      ctx.beginPath();
+      ctx.roundRect(pad.left, y, barW, barH, 3);
+      ctx.fill();
+      ctx.globalAlpha = 1;
+
+      // Label
+      ctx.fillStyle = '#c9d1d9';
+      ctx.font = '10px monospace';
+      ctx.textAlign = 'right';
+      ctx.fillText(opt.name, pad.left - 8, y + barH / 2 + 4);
+
+      // Value
+      ctx.fillStyle = opt.color;
+      ctx.font = 'bold 10px monospace';
+      ctx.textAlign = 'left';
+      ctx.fillText('saves ~' + opt.saved_us + 'µs', pad.left + barW + 8, y + barH / 2 + 4);
+    });
+  }
+
+  // ── 5. LATENCY BUDGET PIE/BAR CHART ───────────────────────
+  function drawBudgetChart() {
+    var setup = setupCanvas('budgetChart');
+    if (!setup) return;
+    var ctx = setup.ctx, w = setup.w, h = setup.h;
+    var pad = { top: 30, right: 40, bottom: 40, left: 200 };
+    var chartW = w - pad.left - pad.right;
+    var chartH = h - pad.top - pad.bottom;
+
+    var hops = [
+      { name: 'Exchange feed dissemination', ns: 1000, color: '#f85149' },
+      { name: 'Co-lo switch (inbound)', ns: 300, color: '#d29922' },
+      { name: 'NIC DMA (inbound)', ns: 100, color: '#58a6ff' },
+      { name: 'FPGA feed parse + book', ns: 200, color: '#bb9af7' },
+      { name: 'Strategy decision', ns: 100, color: '#3fb950' },
+      { name: 'FPGA order encode + risk', ns: 150, color: '#bb9af7' },
+      { name: 'NIC serialize (outbound)', ns: 50, color: '#58a6ff' },
+      { name: 'Co-lo switch (outbound)', ns: 300, color: '#d29922' },
+      { name: 'Exchange order matching', ns: 1000, color: '#f85149' }
+    ];
+
+    var totalNs = hops.reduce(function(a, h) { return a + h.ns; }, 0);
+
+    ctx.clearRect(0, 0, w, h);
+
+    var barH = Math.min(28, (chartH / hops.length) - 6);
+    var gap = (chartH - barH * hops.length) / (hops.length + 1);
+
+    // Grid
+    ctx.strokeStyle = '#21262d';
+    ctx.lineWidth = 1;
+    var maxNs = Math.max.apply(null, hops.map(function(h) { return h.ns; }));
+    [0, 250, 500, 750, 1000].forEach(function(v) {
+      var x = pad.left + (v / maxNs) * chartW;
+      ctx.beginPath();
+      ctx.moveTo(x, pad.top);
+      ctx.lineTo(x, pad.top + chartH);
+      ctx.stroke();
+      ctx.fillStyle = '#484f58';
+      ctx.font = '9px monospace';
+      ctx.textAlign = 'center';
+      ctx.fillText(v + 'ns', x, h - 12);
+    });
+
+    hops.forEach(function(hop, i) {
+      var y = pad.top + gap + i * (barH + gap);
+      var barW = (hop.ns / maxNs) * chartW;
+
+      ctx.fillStyle = hop.color;
+      ctx.globalAlpha = 0.7;
+      ctx.beginPath();
+      ctx.roundRect(pad.left, y, barW, barH, 3);
+      ctx.fill();
+      ctx.globalAlpha = 1;
+
+      // Label
+      ctx.fillStyle = '#c9d1d9';
+      ctx.font = '10px monospace';
+      ctx.textAlign = 'right';
+      ctx.fillText(hop.name, pad.left - 8, y + barH / 2 + 4);
+
+      // Value + percentage
+      ctx.fillStyle = hop.color;
+      ctx.font = 'bold 10px monospace';
+      ctx.textAlign = 'left';
+      var pct = ((hop.ns / totalNs) * 100).toFixed(0);
+      ctx.fillText(hop.ns + 'ns (' + pct + '%)', pad.left + barW + 8, y + barH / 2 + 4);
+    });
+
+    // Total annotation
+    ctx.fillStyle = '#f0f6fc';
+    ctx.font = 'bold 11px monospace';
+    ctx.textAlign = 'left';
+    ctx.fillText('Total: ' + (totalNs / 1000).toFixed(1) + 'µs round-trip (co-located)', pad.left, pad.top - 10);
+  }
+
+  // ── Draw all charts ───────────────────────────────────────
+  drawLatencyChart();
+  drawSpeedChart();
+  drawHardwareChart();
+  drawStackChart();
+  drawBudgetChart();
+
+  // Redraw on resize
+  var resizeTimer;
+  window.addEventListener('resize', function() {
+    clearTimeout(resizeTimer);
+    resizeTimer = setTimeout(function() {
+      drawLatencyChart();
+      drawSpeedChart();
+      drawHardwareChart();
+      drawStackChart();
+      drawBudgetChart();
+    }, 150);
+  });
+
+})();
+</script>
+
+</body>
+</html>
