@@ -1,0 +1,376 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Space-Based Data Processing — Edge Compute on Orbit</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@200;300;400;500;600;700&family=JetBrains+Mono:wght@300;400;500;600&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --bg: #07070f;
+      --surface: rgba(255,255,255,0.035);
+      --surface-hover: rgba(122,162,247,0.07);
+      --border: rgba(255,255,255,0.07);
+      --border-hover: rgba(122,162,247,0.30);
+      --text: #e8e8f4;
+      --muted: rgba(232,232,244,0.45);
+      --accent: #7aa2f7;
+      --accent2: #bb9af7;
+      --green: #9ece6a;
+      --amber: #e0af68;
+      --red: #f7768e;
+      --teal: #73daca;
+    }
+    body {
+      background: var(--bg); color: var(--text);
+      font-family: 'Outfit', sans-serif;
+      -webkit-font-smoothing: antialiased;
+      line-height: 1.7;
+    }
+    .container { max-width: 900px; margin: 0 auto; padding: 0 2rem; }
+
+    /* Breadcrumb */
+    .breadcrumb {
+      padding: 1.2rem 0 0;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.65rem; color: var(--muted);
+    }
+    .breadcrumb a { color: var(--muted); text-decoration: none; }
+    .breadcrumb a:hover { color: var(--accent); }
+    .breadcrumb span { margin: 0 0.4rem; }
+
+    /* Hero */
+    .hero {
+      padding: 3rem 0 3rem;
+      text-align: center;
+      border-bottom: 1px solid var(--border);
+    }
+    .hero-eyebrow {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.6rem; letter-spacing: 0.3em;
+      text-transform: uppercase; color: var(--accent);
+      margin-bottom: 1.5rem;
+    }
+    .hero h1 {
+      font-size: clamp(2rem, 5vw, 3.2rem);
+      font-weight: 200; letter-spacing: -0.01em;
+      line-height: 1.15; max-width: 720px; margin: 0 auto;
+    }
+    .hero h1 strong {
+      font-weight: 500;
+      background: linear-gradient(140deg, #fff 20%, var(--amber) 60%, var(--red));
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+    }
+    .hero-sub {
+      margin-top: 1.2rem; font-size: 0.95rem;
+      color: var(--muted); max-width: 560px; margin-left: auto; margin-right: auto;
+    }
+
+    main { padding: 3rem 0 5rem; }
+
+    h2 {
+      font-size: 1.3rem; font-weight: 600;
+      margin: 3rem 0 1rem;
+      padding-bottom: 0.5rem;
+      border-bottom: 1px solid var(--border);
+      color: var(--text);
+    }
+    h3 {
+      font-size: 1.05rem; font-weight: 500;
+      margin: 2rem 0 0.75rem; color: var(--accent);
+    }
+    p { margin-bottom: 1rem; color: rgba(232,232,244,0.75); }
+    strong { color: var(--text); }
+    em { color: var(--accent2); font-style: italic; }
+    a { color: var(--accent); }
+
+    /* Tables */
+    table {
+      width: 100%; border-collapse: collapse;
+      margin: 1.5rem 0; font-size: 0.85rem;
+    }
+    thead { background: rgba(122,162,247,0.12); }
+    thead th {
+      padding: 0.6rem 0.8rem; text-align: left;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.7rem; text-transform: uppercase;
+      letter-spacing: 0.06em; color: var(--accent);
+      border-bottom: 1px solid var(--border);
+    }
+    tbody td {
+      padding: 0.55rem 0.8rem;
+      border-bottom: 1px solid rgba(255,255,255,0.03);
+      vertical-align: top; color: rgba(232,232,244,0.65);
+    }
+    tbody tr:hover td { background: rgba(122,162,247,0.04); }
+    tr.danger td { color: var(--red); font-weight: 500; }
+    tr.safe td { color: var(--green); }
+
+    /* Callouts */
+    .callout {
+      margin: 2rem 0; padding: 1.2rem 1.5rem;
+      background: rgba(122,162,247,0.06);
+      border-left: 3px solid var(--accent);
+      border-radius: 0 8px 8px 0;
+      font-size: 0.92rem;
+    }
+    .callout.red { border-color: var(--red); background: rgba(247,118,142,0.06); }
+    .callout.green { border-color: var(--green); background: rgba(158,206,106,0.06); }
+    .callout.amber { border-color: var(--amber); background: rgba(224,175,104,0.06); }
+    .callout.teal { border-color: var(--teal); background: rgba(115,218,202,0.06); }
+    .callout strong { display: block; margin-bottom: 0.3rem; }
+
+    /* Code */
+    code {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.8em; background: rgba(255,255,255,0.06);
+      padding: 0.15em 0.4em; border-radius: 4px;
+    }
+
+    /* Cards */
+    .card-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+      gap: 1rem; margin: 2rem 0;
+    }
+    .card {
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: 10px; padding: 1.3rem 1.5rem;
+      text-decoration: none; color: inherit; display: block;
+      transition: border-color 0.2s, transform 0.2s;
+    }
+    .card:hover { border-color: var(--border-hover); transform: translateY(-2px); }
+    .card-title { font-weight: 600; font-size: 0.95rem; margin-bottom: 0.4rem; }
+    .card-desc { font-size: 0.8rem; color: var(--muted); line-height: 1.5; }
+    .card-tag {
+      display: inline-block; margin-top: 0.6rem;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.55rem; padding: 2px 8px;
+      border-radius: 4px; background: rgba(255,255,255,0.04);
+      border: 1px solid rgba(255,255,255,0.06);
+    }
+
+    /* Lists */
+    ul, ol { margin: 1rem 0; padding-left: 1.3rem; }
+    li { margin-bottom: 0.4rem; color: rgba(232,232,244,0.65); }
+
+    /* Footer */
+    footer {
+      text-align: center; padding: 2rem;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.6rem; color: var(--muted);
+      border-top: 1px solid var(--border);
+    }
+    footer a { color: var(--muted); text-decoration: none; }
+    footer a:hover { color: var(--accent); }
+
+    @media (max-width: 640px) {
+      main { padding: 2rem 0 3rem; }
+      .hero { padding: 3rem 0 2rem; }
+      table { font-size: 0.78rem; }
+    }
+  </style>
+</head>
+<body>
+
+<div class="container">
+  <nav class="breadcrumb">
+    <a href="https://jthorvaldur.github.io/">Home</a>
+    <span>/</span>
+    <a href="https://jthorvaldur.github.io/earth-obs/">Earth Observation</a>
+    <span>/</span>
+    Space-Based Data Processing
+  </nav>
+</div>
+
+<header class="hero">
+  <div class="container">
+    <p class="hero-eyebrow">Earth Observation Research</p>
+    <h1><strong>Space-Based Data</strong> Processing</h1>
+    <p class="hero-sub">
+      Edge compute on orbit, and why dimensionality matters.
+    </p>
+  </div>
+</header>
+
+<main class="container">
+
+  <h2>The Bandwidth Problem</h2>
+
+  <p>A single Earth observation satellite generates <strong>1&ndash;5 TB of raw imagery per day</strong>. A constellation of 100 satellites produces 100&ndash;500 TB/day. The downlink bandwidth available during a ground station pass is typically 1&ndash;2 Gbps for 8&ndash;12 minutes, yielding roughly 60&ndash;180 GB per pass. The math does not work: satellites generate far more data than they can transmit.</p>
+
+  <table>
+    <thead>
+      <tr><th>Constellation</th><th>Satellites</th><th>Daily Data</th><th>Downlink Capacity</th><th>Gap</th></tr>
+    </thead>
+    <tbody>
+      <tr><td>Planet (SuperDove)</td><td>~200</td><td>~30 TB</td><td>~5 TB</td><td>6x</td></tr>
+      <tr><td>Maxar WorldView</td><td>4</td><td>~2 TB</td><td>~0.8 TB</td><td>2.5x</td></tr>
+      <tr class="danger"><td>Pixxel Fireflies</td><td>6 (growing to 24)</td><td>~8 TB</td><td>~1 TB</td><td>8x</td></tr>
+      <tr class="danger"><td>Future mega-constellations</td><td>500+</td><td>~500 TB</td><td>~20 TB</td><td>25x</td></tr>
+    </tbody>
+  </table>
+
+  <p>The traditional solution is selective tasking: only image what a customer has requested. But this throws away the global monitoring capability that constellations are designed for. The alternative is <strong>processing on-orbit</strong> -- running ML inference on the satellite itself and transmitting only the results.</p>
+
+  <h2>Current State of On-Orbit Processing</h2>
+
+  <p>Several companies are deploying or testing ML inference hardware on satellites:</p>
+
+  <table>
+    <thead>
+      <tr><th>Company</th><th>Approach</th><th>Hardware</th><th>Status</th></tr>
+    </thead>
+    <tbody>
+      <tr><td>OrbitsEdge</td><td>Hardened edge compute module (SatFrame)</td><td>HPE Spaceborne Computer-2 heritage</td><td>ISS-tested; commercial deployment</td></tr>
+      <tr><td>Pixxel</td><td>On-board ML for hyperspectral classification</td><td>Custom FPGA + ARM pipeline</td><td>Firefly constellation operational</td></tr>
+      <tr><td>Satellogic</td><td>On-board cloud detection, change detection</td><td>Xilinx FPGA accelerators</td><td>Operational on 30+ satellites</td></tr>
+      <tr><td>Ubotica (now Dott)</td><td>CogniSAT AI processor for ESA missions</td><td>Myriad X VPU, radiation-hardened</td><td>Flown on PhiSat-1 (ESA)</td></tr>
+      <tr><td>Xplore</td><td>Edge ML for autonomous tasking</td><td>NVIDIA Jetson (rad-tolerant packaging)</td><td>Development</td></tr>
+    </tbody>
+  </table>
+
+  <p>The ground segment is also evolving. <strong>AWS Ground Station</strong> provides ground station-as-a-service, and <strong>Azure Orbital</strong> offers similar capabilities. These services reduce the latency from downlink to processing but do not solve the bandwidth bottleneck -- they just move the processing from the customer's data center to the cloud provider's.</p>
+
+  <h2>The Embedding Connection</h2>
+
+  <div class="callout red">
+    <strong>This is the key insight.</strong>
+    If you are doing ML inference on a satellite with limited compute, limited memory, and limited downlink bandwidth, you need compressed embeddings. But our <a href="/embedding-dim/" style="color:var(--red);">dimensionality research</a> shows that naive PCA compression to 16 dimensions destroys domain-specific features. The question for space-based processing is: <em>what is the minimum dimensionality that preserves the distinctions that matter for your specific mission?</em>
+  </div>
+
+  <p>Consider two satellite missions:</p>
+
+  <ul>
+    <li><strong>Crop monitoring:</strong> needs to distinguish wheat from corn from soybeans, detect drought stress vs. nitrogen deficiency vs. disease, and track phenological stage. The relevant spectral features are subtle differences in red-edge reflectance, chlorophyll fluorescence, and SWIR absorption. These features occupy specific embedding dimensions that PCA would discard.</li>
+    <li><strong>Maritime surveillance:</strong> needs to detect ships, classify vessel types, and identify dark vessels (AIS transponder off). The relevant features are shape, wake patterns, and SAR backscatter intensity. Entirely different embedding dimensions from crop monitoring.</li>
+  </ul>
+
+  <p>A single global PCA basis optimized for "variance explained" would keep the dimensions that separate land from water from cloud (the top principal components) and discard the dimensions that separate wheat stress from corn stress, or tanker from container ship. Both missions would fail at their specific tasks while "performing well" on a generic benchmark.</p>
+
+  <h2>Task-Specific Compression</h2>
+
+  <p>The solution is not to find the "right" global dimensionality. It is to train <strong>task-specific projections</strong> that preserve the features relevant to each mission.</p>
+
+  <table>
+    <thead>
+      <tr><th>Mission</th><th>Critical Features</th><th>Min. Dims (Estimated)</th><th>PCA Would Destroy</th></tr>
+    </thead>
+    <tbody>
+      <tr><td>Crop species classification</td><td>Red-edge slope, chlorophyll indices, phenology</td><td>64&ndash;128</td><td>Inter-species spectral differences</td></tr>
+      <tr><td>Crop stress detection</td><td>NDVI anomaly, water stress indices, fluorescence</td><td>128&ndash;256</td><td>Stress-type discrimination</td></tr>
+      <tr class="danger"><td>Mineral mapping</td><td>SWIR absorption features (narrow, diagnostic)</td><td>256+</td><td>Mineral-specific absorption bands</td></tr>
+      <tr><td>Ship detection (SAR)</td><td>Backscatter intensity, shape, wake</td><td>32&ndash;64</td><td>Fine vessel type distinctions</td></tr>
+      <tr><td>Change detection</td><td>Temporal difference features</td><td>32&ndash;64</td><td>Gradual vs. sudden change</td></tr>
+      <tr class="safe"><td>Cloud masking</td><td>Brightness, texture, thermal contrast</td><td>8&ndash;16</td><td>Nothing -- this is the easy task</td></tr>
+    </tbody>
+  </table>
+
+  <p>Cloud masking works at 16 dimensions because it is an inter-domain task (cloud vs. not-cloud) -- exactly the kind of task that PCA compression handles well. Mineral mapping requires 256+ dimensions because it is an intra-domain task (distinguishing kaolinite from montmorillonite from illite within the broader category of "clay minerals"). This is the same pattern documented in our <a href="/embedding-dim/">dimensionality research</a> for legal terms.</p>
+
+  <h2>The Matryoshka Approach for Space</h2>
+
+  <p>Matryoshka Representation Learning (MRL) trains a model to produce useful embeddings at multiple dimensionalities simultaneously. The first 32 dimensions are optimized to be useful on their own. The first 64 include those 32 plus 32 more. And so on up to the full 768 or 1024 dimensions.</p>
+
+  <p>For space-based processing, MRL offers an elegant solution:</p>
+
+  <ol>
+    <li><strong>Train on ground:</strong> train the Matryoshka model with domain-specific data for the satellite's mission (crop monitoring, maritime, etc.)</li>
+    <li><strong>Deploy on orbit:</strong> run inference using the full model, producing full-dimensional embeddings</li>
+    <li><strong>Truncate for transmission:</strong> transmit only the first <em>k</em> dimensions, where <em>k</em> is chosen based on the mission's precision requirement and available bandwidth</li>
+    <li><strong>Reconstruct on ground:</strong> use the truncated embedding for immediate queries; request full embedding for high-precision analysis during the next downlink window</li>
+  </ol>
+
+  <div class="callout green">
+    <strong>Bandwidth Reduction</strong>
+    Transmitting 128-dimensional float16 embeddings instead of 768-dimensional float32 embeddings achieves a <strong>12x bandwidth reduction</strong>. Even at 128 dims, task-specific Matryoshka embeddings preserve the intra-domain distinctions that matter for the mission. The satellite transmits embeddings (vectors of numbers) rather than raw imagery (pixels), and the ground system queries those embeddings to decide which raw imagery to request on the next pass.
+  </div>
+
+  <h3>The Bandwidth Math</h3>
+
+  <table>
+    <thead>
+      <tr><th>What's Transmitted</th><th>Size per Image Tile</th><th>Tiles per Pass</th><th>Total per Pass</th></tr>
+    </thead>
+    <tbody>
+      <tr class="danger"><td>Raw imagery (10 bands, 16-bit)</td><td>~200 MB</td><td>~300</td><td>~60 GB</td></tr>
+      <tr><td>Compressed imagery (JPEG2000)</td><td>~40 MB</td><td>~300</td><td>~12 GB</td></tr>
+      <tr><td>Embeddings at 768d (float32)</td><td>~3 KB</td><td>~300</td><td>~900 KB</td></tr>
+      <tr class="safe"><td>Embeddings at 128d (float16)</td><td>~256 B</td><td>~300</td><td>~75 KB</td></tr>
+      <tr class="safe"><td>Embeddings + metadata + alerts</td><td>~1 KB</td><td>~300</td><td>~300 KB</td></tr>
+    </tbody>
+  </table>
+
+  <p>The difference is five orders of magnitude. Embedding transmission fits in the margins of telemetry bandwidth that every satellite already has. The question is not whether to transmit embeddings -- the question is whether the embeddings preserve enough information to be useful.</p>
+
+  <h2>Federated Learning Across Constellations</h2>
+
+  <p>As satellite constellations grow, a new paradigm emerges: <strong>federated learning across orbiting nodes</strong>. Each satellite trains (or fine-tunes) a local model on its observations. Inter-satellite links (ISLs) allow gradient sharing between constellation members without transmitting raw data to ground.</p>
+
+  <p>The challenges are substantial:</p>
+
+  <ul>
+    <li><strong>Non-IID data:</strong> each satellite sees different parts of Earth at different times. The data distribution is inherently non-identical across nodes.</li>
+    <li><strong>ISL bandwidth:</strong> inter-satellite links (laser or RF) have limited bandwidth -- sharing model updates is feasible, sharing raw imagery is not.</li>
+    <li><strong>Compute heterogeneity:</strong> satellites in a constellation may have different hardware generations and capabilities.</li>
+    <li><strong>Orbital mechanics:</strong> communication windows between satellites depend on relative position, which changes continuously.</li>
+  </ul>
+
+  <h3>Cross-Satellite Vector Search</h3>
+
+  <p>A tantalizing application: maintain a distributed vector index across the constellation. Each satellite holds embeddings for its recent observations. A query from ground ("find all images of this port from the last 48 hours") is broadcast to the constellation, each satellite searches its local index, and the top results are transmitted as metadata (embedding + coordinates + timestamp). Only the relevant raw imagery for the top matches is downlinked.</p>
+
+  <p>This transforms the satellite constellation from a data collection system into a <strong>queryable sensor network</strong> -- a spatial search engine with global coverage and sub-daily revisit.</p>
+
+  <div class="callout amber">
+    <strong>The Dimensionality Decision Is a System Design Parameter</strong>
+    For ground-based systems, embedding dimensionality is a tuning parameter -- you can always go back and re-embed at higher dimensionality. For space-based systems, it is a <em>design parameter</em> locked in at launch. The model and its output dimensionality are burned into the satellite's software (or at best, updatable via slow uplink). Getting it wrong means years of degraded performance. Our <a href="/embedding-dim/" style="color:var(--amber);">dimensionality research</a> provides the framework for making this decision: characterize the intra-domain discrimination requirements of the mission, measure DCRP at candidate dimensionalities, and choose the minimum that meets the precision threshold.
+  </div>
+
+  <h2>The Future: Compute in Orbit</h2>
+
+  <p>Three trends are converging:</p>
+
+  <ol>
+    <li><strong>Radiation-tolerant AI accelerators:</strong> purpose-built chips (not adapted consumer GPUs) designed for inference in the radiation environment of LEO. Ubotica's CogniSAT, Syntiant's NDP, and custom FPGA designs are leading this.</li>
+    <li><strong>Software-defined payloads:</strong> satellites whose processing pipelines can be updated after launch. ESA's PhiSat program and DARPA's Blackjack demonstrate the concept. The model deployed at launch is not the model running three years later.</li>
+    <li><strong>Optical inter-satellite links:</strong> SpaceX Starlink has demonstrated laser ISLs at multi-Gbps. When constellation members can communicate at high bandwidth, distributed processing becomes practical -- the constellation becomes a mesh computer, not a collection of independent sensors.</li>
+  </ol>
+
+  <p>The constraint that does not change is <strong>physics</strong>: downlink bandwidth to ground stations remains the bottleneck, and power budgets on satellites are finite. Both constraints favor compact representations -- embeddings rather than raw data, lower dimensionality rather than higher. The research question is how to compress without destroying the distinctions that define the mission.</p>
+
+  <h2>Related Research</h2>
+
+  <div class="card-grid">
+    <a class="card" href="/embedding-dim/">
+      <div class="card-title">The Dimensionality Illusion</div>
+      <div class="card-desc">Why PCA compression to 16 dimensions destroys domain-specific features. The foundational argument for why space-based embedding systems cannot use naive compression.</div>
+      <span class="card-tag" style="color:var(--red);">Embedding Research</span>
+    </a>
+    <a class="card" href="index.html">
+      <div class="card-title">Earth Observation for Trading</div>
+      <div class="card-desc">The downstream use case: satellite data driving commodity price signals. The pipeline from orbit to alpha.</div>
+      <span class="card-tag" style="color:var(--teal);">Earth Observation</span>
+    </a>
+    <a class="card" href="gps-pnt.html">
+      <div class="card-title">GPS/PNT Authentication</div>
+      <div class="card-desc">Authenticated positioning and timing. PNT is the clock and coordinate system that makes distributed satellite processing coherent.</div>
+      <span class="card-tag" style="color:var(--accent);">Earth Observation</span>
+    </a>
+  </div>
+
+</main>
+
+<footer>
+  <div>
+    <a href="https://jthorvaldur.github.io/">Home</a> &middot;
+    <a href="https://arxiv.org/a/thorarinson_j_1.html">arXiv</a> &middot;
+    <a href="https://github.com/jthorvaldur/publications">Source</a>
+  </div>
+  <p style="margin-top:0.5rem;">&copy; 2026 Thorarinson</p>
+</footer>
+
+</body>
+</html>
