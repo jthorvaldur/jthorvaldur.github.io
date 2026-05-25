@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Dictionary Collapse — The Dimensionality Illusion</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@200;300;400;500;600;700&family=JetBrains+Mono:wght@300;400;500;600&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --bg: #07070f; --surface: rgba(255,255,255,0.035);
+      --border: rgba(255,255,255,0.07); --text: #e8e8f4;
+      --muted: rgba(232,232,244,0.45); --accent: #7aa2f7;
+      --accent2: #bb9af7; --green: #9ece6a; --amber: #e0af68; --red: #f7768e; --teal: #73daca;
+    }
+    body { background: var(--bg); color: var(--text); font-family: 'Outfit', sans-serif; -webkit-font-smoothing: antialiased; line-height: 1.7; }
+    .container { max-width: 960px; margin: 0 auto; padding: 0 2rem; }
+    .hero { padding: 4rem 0 2.5rem; text-align: center; border-bottom: 1px solid var(--border); }
+    .hero-eyebrow { font-family: 'JetBrains Mono', monospace; font-size: 0.6rem; letter-spacing: 0.3em; text-transform: uppercase; color: var(--accent); margin-bottom: 1rem; }
+    .hero h1 { font-size: clamp(1.8rem, 4vw, 2.8rem); font-weight: 200; }
+    .hero h1 strong { font-weight: 500; background: linear-gradient(140deg, #fff 20%, var(--red) 60%, var(--amber)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+    .hero-sub { margin-top: 1rem; font-size: 0.9rem; color: var(--muted); max-width: 560px; margin-left: auto; margin-right: auto; }
+    .breadcrumb { padding: 1rem 0; font-size: 0.8rem; color: var(--muted); border-bottom: 1px solid rgba(255,255,255,0.03); }
+    .breadcrumb a { color: var(--accent); text-decoration: none; }
+    main { padding: 2.5rem 0 4rem; }
+    h2 { font-size: 1.2rem; font-weight: 600; margin: 2.5rem 0 1rem; padding-bottom: 0.4rem; border-bottom: 1px solid var(--border); }
+    h3 { font-size: 1rem; font-weight: 500; margin: 1.5rem 0 0.6rem; color: var(--accent); }
+    p { margin-bottom: 1rem; color: rgba(232,232,244,0.75); }
+    strong { color: var(--text); }
+    em { color: var(--accent2); }
+    table { width: 100%; border-collapse: collapse; margin: 1.5rem 0; font-size: 0.82rem; }
+    thead { background: rgba(122,162,247,0.12); }
+    thead th { padding: 0.55rem 0.7rem; text-align: left; font-family: 'JetBrains Mono', monospace; font-size: 0.65rem; text-transform: uppercase; letter-spacing: 0.06em; color: var(--accent); border-bottom: 1px solid var(--border); }
+    tbody td { padding: 0.5rem 0.7rem; border-bottom: 1px solid rgba(255,255,255,0.03); vertical-align: top; color: rgba(232,232,244,0.65); }
+    tbody tr:hover td { background: rgba(122,162,247,0.04); }
+    tr.collapse td { color: var(--red); font-weight: 500; }
+    tr.safe td { color: var(--green); }
+    .callout { margin: 1.5rem 0; padding: 1rem 1.3rem; background: rgba(122,162,247,0.06); border-left: 3px solid var(--accent); border-radius: 0 8px 8px 0; font-size: 0.88rem; }
+    .callout.red { border-color: var(--red); background: rgba(247,118,142,0.06); }
+    .callout.green { border-color: var(--green); background: rgba(158,206,106,0.06); }
+    .callout.amber { border-color: var(--amber); background: rgba(224,175,104,0.06); }
+    .sim-bar { display: inline-block; height: 8px; border-radius: 4px; vertical-align: middle; margin-right: 6px; }
+    .nav-back { display: inline-block; margin-top: 2rem; font-size: 0.85rem; color: var(--accent); text-decoration: none; }
+    .nav-back:hover { text-decoration: underline; }
+    code { font-family: 'JetBrains Mono', monospace; font-size: 0.8em; background: rgba(255,255,255,0.06); padding: 0.15em 0.4em; border-radius: 4px; }
+    footer { text-align: center; padding: 2rem; font-family: 'JetBrains Mono', monospace; font-size: 0.6rem; color: var(--muted); border-top: 1px solid var(--border); }
+    footer a { color: var(--muted); text-decoration: none; }
+    @media (max-width: 640px) { table { font-size: 0.75rem; } .container { padding: 0 1.2rem; } }
+  </style>
+</head>
+<body>
+
+<header class="hero">
+  <div class="container">
+    <p class="hero-eyebrow">Embedding Research</p>
+    <h1>The <strong>Dictionary Collapse</strong></h1>
+    <p class="hero-sub">65+ legal terms from Black's Law Dictionary embedded at 768 dimensions, then PCA-compressed to 16. Which distinctions survive?</p>
+  </div>
+</header>
+
+<div class="breadcrumb container">
+  <a href="index.html">The Dimensionality Illusion</a> / Dictionary Collapse
+</div>
+
+<main class="container">
+
+  <h2>The Experiment</h2>
+
+  <p>We took terms from Black's Law Dictionary and cross-jurisdictional legal terminology — terms that carry <strong>different legal consequences</strong> despite surface similarity — and embedded them using <code>nomic-embed-text</code> (768 dimensions). Then we applied PCA at multiple compression levels and measured pairwise cosine similarity.</p>
+
+  <p>The question: <strong>at what dimensionality do legally distinct terms become indistinguishable to the embedding?</strong></p>
+
+  <h2>Term Groups</h2>
+
+  <h3>1. Custody &amp; Parental Rights</h3>
+  <p>These terms produce <em>radically different legal outcomes</em> but describe overlapping concepts. "Custody" implies a right held. "Allocation" implies a right distributed. "Guardianship" implies protective authority. In Illinois, the shift from "custody" to "allocation" in 2016 inverted the burden of proof.</p>
+
+  <table>
+    <thead><tr><th>Term A</th><th>Term B</th><th>768d</th><th>16d</th><th>Delta</th><th>Legal Consequence</th></tr></thead>
+    <tbody>
+      <tr class="collapse"><td>custody</td><td>allocation</td><td colspan="3"><em>Awaiting experimental results</em></td><td>Different burden of proof, different parental agency</td></tr>
+      <tr class="collapse"><td>guardianship</td><td>custody</td><td colspan="3"><em>Awaiting results</em></td><td>Guardian protects; custodian possesses</td></tr>
+      <tr class="collapse"><td>visitation</td><td>parenting time</td><td colspan="3"><em>Awaiting results</em></td><td>"Visitor" vs. "parent" — framing changes court perception</td></tr>
+      <tr class="collapse"><td>joint custody</td><td>sole custody</td><td colspan="3"><em>Awaiting results</em></td><td>Opposite outcomes — one preserves, one eliminates</td></tr>
+    </tbody>
+  </table>
+
+  <h3>2. Forced Heirship — The Missing Words</h3>
+  <p>These terms exist in other languages but have no English-language equivalent. At full dimensionality, the embedding should distinguish them. At 16 dimensions, do German <em>Pflichtteil</em> and Swedish <em>laglott</em> collapse into the same point as "elective share" — even though Pflichtteil protects <strong>children</strong> while elective share protects only the <strong>spouse</strong>?</p>
+
+  <table>
+    <thead><tr><th>Term A</th><th>Term B</th><th>768d</th><th>16d</th><th>Delta</th><th>Legal Consequence</th></tr></thead>
+    <tbody>
+      <tr class="collapse"><td><em>Pflichtteil</em></td><td>elective share</td><td colspan="3"><em>Awaiting results</em></td><td>Pflichtteil: children. Elective share: spouse only.</td></tr>
+      <tr class="collapse"><td><em>Pflichtteil</em></td><td><em>r&eacute;serve h&eacute;r&eacute;ditaire</em></td><td colspan="3"><em>Awaiting results</em></td><td>Both protect children, but different mechanisms (monetary claim vs. real rights)</td></tr>
+      <tr class="collapse"><td><em>laglott</em></td><td><em>iryubun</em></td><td colspan="3"><em>Awaiting results</em></td><td>Swedish vs. Japanese — same concept, different legal traditions</td></tr>
+      <tr class="collapse"><td><em>faraid</em></td><td>intestate succession</td><td colspan="3"><em>Awaiting results</em></td><td>Divine mandate vs. legislative default</td></tr>
+      <tr class="collapse"><td>testamentary freedom</td><td>forced heirship</td><td colspan="3"><em>Awaiting results</em></td><td><strong>Opposite concepts</strong> — one allows disinheritance, one prevents it</td></tr>
+    </tbody>
+  </table>
+
+  <h3>3. Contempt &amp; Enforcement</h3>
+  <p>Civil contempt (coercive, no jury, indefinite) vs. criminal contempt (punitive, jury right, definite sentence). At 16 dimensions, does a system that confuses these two concepts know whether someone gets a trial?</p>
+
+  <table>
+    <thead><tr><th>Term A</th><th>Term B</th><th>768d</th><th>16d</th><th>Delta</th><th>Legal Consequence</th></tr></thead>
+    <tbody>
+      <tr class="collapse"><td>civil contempt</td><td>criminal contempt</td><td colspan="3"><em>Awaiting results</em></td><td>Different constitutional protections. Civil = no jury.</td></tr>
+      <tr class="collapse"><td>default</td><td>contumacy</td><td colspan="3"><em>Awaiting results</em></td><td>Neutral omission vs. willful defiance</td></tr>
+      <tr class="collapse"><td>ability to pay</td><td>willful refusal</td><td colspan="3"><em>Awaiting results</em></td><td>Turner v. Rogers hinges on this distinction</td></tr>
+    </tbody>
+  </table>
+
+  <h3>4. Death &amp; Status</h3>
+  <p>The three levels of Roman <em>capitis deminutio</em> — maxima (total), media (citizenship), minima (family only) — are distinct legal categories. Modern family law performs <em>capitis deminutio minima</em> without naming it. Does PCA see the difference?</p>
+
+  <table>
+    <thead><tr><th>Term A</th><th>Term B</th><th>768d</th><th>16d</th><th>Delta</th><th>Legal Consequence</th></tr></thead>
+    <tbody>
+      <tr class="collapse"><td><em>capitis deminutio minima</em></td><td><em>capitis deminutio maxima</em></td><td colspan="3"><em>Awaiting results</em></td><td>Loss of family status only vs. total legal death</td></tr>
+      <tr class="collapse"><td>civil death</td><td>death</td><td colspan="3"><em>Awaiting results</em></td><td>Legal fiction vs. biological fact</td></tr>
+    </tbody>
+  </table>
+
+  <h3>5. Financial Death</h3>
+  <table>
+    <thead><tr><th>Term A</th><th>Term B</th><th>768d</th><th>16d</th><th>Delta</th><th>Legal Consequence</th></tr></thead>
+    <tbody>
+      <tr class="collapse"><td>discharge</td><td>nondischargeable</td><td colspan="3"><em>Awaiting results</em></td><td><strong>Opposite outcomes</strong> — one erases debt, one makes it permanent</td></tr>
+      <tr class="collapse"><td>domestic support obligation</td><td>discharge</td><td colspan="3"><em>Awaiting results</em></td><td>DSOs are the ONLY category of debt with no exit mechanism</td></tr>
+    </tbody>
+  </table>
+
+  <h3>6. Cross-Jurisdictional Parenting Terms</h3>
+  <table>
+    <thead><tr><th>Term A</th><th>Term B</th><th>768d</th><th>16d</th><th>Delta</th><th>Legal Consequence</th></tr></thead>
+    <tbody>
+      <tr class="collapse"><td><em>Sorgerecht</em></td><td><em>gemensam v&aring;rdnad</em></td><td colspan="3"><em>Awaiting results</em></td><td>German vs. Swedish — both mean "shared care" but different statutory frameworks</td></tr>
+      <tr class="collapse"><td><em>hadanah</em></td><td><em>wilayah</em></td><td colspan="3"><em>Awaiting results</em></td><td>Islamic: physical custody (temporary) vs. legal authority (permanent). English merges both into "custody."</td></tr>
+      <tr class="collapse"><td><em>umg&auml;ngessabotage</em></td><td>parental alienation</td><td colspan="3"><em>Awaiting results</em></td><td>Swedish: statutory offense. English: contested clinical concept.</td></tr>
+    </tbody>
+  </table>
+
+  <h3>7. Control Group — Inter-Domain Terms</h3>
+  <p>These should remain well-separated at <em>any</em> dimensionality. If they don't, the embedding is broken at a fundamental level.</p>
+
+  <table>
+    <thead><tr><th>Term A</th><th>Term B</th><th>768d</th><th>16d</th><th>Delta</th><th>Expected</th></tr></thead>
+    <tbody>
+      <tr class="safe"><td>medical malpractice</td><td>custody</td><td colspan="3"><em>Awaiting results</em></td><td>Different domains — should stay separated</td></tr>
+      <tr class="safe"><td>patent infringement</td><td>forced heirship</td><td colspan="3"><em>Awaiting results</em></td><td>Different domains — should stay separated</td></tr>
+    </tbody>
+  </table>
+
+  <div class="callout amber">
+    <strong>Status: Experiment ready to run.</strong>
+    The script embeds all 65+ terms via <code>nomic-embed-text</code>, computes pairwise similarities at 768d, then applies PCA at 16/32/64/128/256/384/512 dimensions and measures collapse. Results will populate the tables above.
+    <br><br>
+    Run: <code>cd ~/GitHub/publications/embedding-dimensionality && uv run python experiments/dictionary_collapse.py</code>
+  </div>
+
+  <h2>What We Expect</h2>
+
+  <p>Based on the theoretical framework:</p>
+
+  <ul>
+    <li><strong>Intra-domain pairs</strong> (custody/allocation, Pflichtteil/elective share, civil/criminal contempt) will see similarity increase by 0.15-0.30 at 16 dims — terms that are distinct collapse together.</li>
+    <li><strong>Inter-domain pairs</strong> (custody/patent infringement) will see minimal change — they're already far apart in the principal components.</li>
+    <li><strong>Cross-jurisdictional terms</strong> (Pflichtteil/laglott/iryubun) — terms from different legal traditions describing the same concept — will collapse into a single point, losing the tradition-specific distinctions.</li>
+    <li><strong>Opposite pairs</strong> (discharge/nondischargeable, testamentary freedom/forced heirship) — terms with opposite legal meanings — may become <em>more similar</em> under PCA because they share the same domain vocabulary.</li>
+  </ul>
+
+  <div class="callout red">
+    <strong>The punchline:</strong> At 16 dimensions, your retrieval system can tell law from medicine. But it can't tell "you go free" from "you go to jail." That's not compression. That's destruction.
+  </div>
+
+  <a href="index.html" class="nav-back">&larr; Back to The Dimensionality Illusion</a>
+
+</main>
+
+<footer>
+  <a href="https://jthorvaldur.github.io/">Home</a> &middot;
+  <a href="https://github.com/jthorvaldur/publications">Source</a>
+  <p style="margin-top:0.5rem;">&copy; 2026 Thorarinson</p>
+</footer>
+
+</body>
+</html>
