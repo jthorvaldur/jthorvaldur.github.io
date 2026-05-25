@@ -1,0 +1,371 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>GPS/PNT Authentication for Fraud Prevention — Location as Evidence</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@200;300;400;500;600;700&family=JetBrains+Mono:wght@300;400;500;600&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --bg: #07070f;
+      --surface: rgba(255,255,255,0.035);
+      --surface-hover: rgba(122,162,247,0.07);
+      --border: rgba(255,255,255,0.07);
+      --border-hover: rgba(122,162,247,0.30);
+      --text: #e8e8f4;
+      --muted: rgba(232,232,244,0.45);
+      --accent: #7aa2f7;
+      --accent2: #bb9af7;
+      --green: #9ece6a;
+      --amber: #e0af68;
+      --red: #f7768e;
+      --teal: #73daca;
+    }
+    body {
+      background: var(--bg); color: var(--text);
+      font-family: 'Outfit', sans-serif;
+      -webkit-font-smoothing: antialiased;
+      line-height: 1.7;
+    }
+    .container { max-width: 900px; margin: 0 auto; padding: 0 2rem; }
+
+    /* Breadcrumb */
+    .breadcrumb {
+      padding: 1.2rem 0 0;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.65rem; color: var(--muted);
+    }
+    .breadcrumb a { color: var(--muted); text-decoration: none; }
+    .breadcrumb a:hover { color: var(--accent); }
+    .breadcrumb span { margin: 0 0.4rem; }
+
+    /* Hero */
+    .hero {
+      padding: 3rem 0 3rem;
+      text-align: center;
+      border-bottom: 1px solid var(--border);
+    }
+    .hero-eyebrow {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.6rem; letter-spacing: 0.3em;
+      text-transform: uppercase; color: var(--accent);
+      margin-bottom: 1.5rem;
+    }
+    .hero h1 {
+      font-size: clamp(2rem, 5vw, 3.2rem);
+      font-weight: 200; letter-spacing: -0.01em;
+      line-height: 1.15; max-width: 720px; margin: 0 auto;
+    }
+    .hero h1 strong {
+      font-weight: 500;
+      background: linear-gradient(140deg, #fff 20%, var(--accent) 60%, var(--accent2));
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+    }
+    .hero-sub {
+      margin-top: 1.2rem; font-size: 0.95rem;
+      color: var(--muted); max-width: 560px; margin-left: auto; margin-right: auto;
+    }
+
+    main { padding: 3rem 0 5rem; }
+
+    h2 {
+      font-size: 1.3rem; font-weight: 600;
+      margin: 3rem 0 1rem;
+      padding-bottom: 0.5rem;
+      border-bottom: 1px solid var(--border);
+      color: var(--text);
+    }
+    h3 {
+      font-size: 1.05rem; font-weight: 500;
+      margin: 2rem 0 0.75rem; color: var(--accent);
+    }
+    p { margin-bottom: 1rem; color: rgba(232,232,244,0.75); }
+    strong { color: var(--text); }
+    em { color: var(--accent2); font-style: italic; }
+    a { color: var(--accent); }
+
+    /* Tables */
+    table {
+      width: 100%; border-collapse: collapse;
+      margin: 1.5rem 0; font-size: 0.85rem;
+    }
+    thead { background: rgba(122,162,247,0.12); }
+    thead th {
+      padding: 0.6rem 0.8rem; text-align: left;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.7rem; text-transform: uppercase;
+      letter-spacing: 0.06em; color: var(--accent);
+      border-bottom: 1px solid var(--border);
+    }
+    tbody td {
+      padding: 0.55rem 0.8rem;
+      border-bottom: 1px solid rgba(255,255,255,0.03);
+      vertical-align: top; color: rgba(232,232,244,0.65);
+    }
+    tbody tr:hover td { background: rgba(122,162,247,0.04); }
+    tr.danger td { color: var(--red); font-weight: 500; }
+    tr.safe td { color: var(--green); }
+
+    /* Callouts */
+    .callout {
+      margin: 2rem 0; padding: 1.2rem 1.5rem;
+      background: rgba(122,162,247,0.06);
+      border-left: 3px solid var(--accent);
+      border-radius: 0 8px 8px 0;
+      font-size: 0.92rem;
+    }
+    .callout.red { border-color: var(--red); background: rgba(247,118,142,0.06); }
+    .callout.green { border-color: var(--green); background: rgba(158,206,106,0.06); }
+    .callout.amber { border-color: var(--amber); background: rgba(224,175,104,0.06); }
+    .callout.teal { border-color: var(--teal); background: rgba(115,218,202,0.06); }
+    .callout strong { display: block; margin-bottom: 0.3rem; }
+
+    /* Code */
+    code {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.8em; background: rgba(255,255,255,0.06);
+      padding: 0.15em 0.4em; border-radius: 4px;
+    }
+
+    /* Cards */
+    .card-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+      gap: 1rem; margin: 2rem 0;
+    }
+    .card {
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: 10px; padding: 1.3rem 1.5rem;
+      text-decoration: none; color: inherit; display: block;
+      transition: border-color 0.2s, transform 0.2s;
+    }
+    .card:hover { border-color: var(--border-hover); transform: translateY(-2px); }
+    .card-title { font-weight: 600; font-size: 0.95rem; margin-bottom: 0.4rem; }
+    .card-desc { font-size: 0.8rem; color: var(--muted); line-height: 1.5; }
+    .card-tag {
+      display: inline-block; margin-top: 0.6rem;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.55rem; padding: 2px 8px;
+      border-radius: 4px; background: rgba(255,255,255,0.04);
+      border: 1px solid rgba(255,255,255,0.06);
+    }
+
+    /* Lists */
+    ul, ol { margin: 1rem 0; padding-left: 1.3rem; }
+    li { margin-bottom: 0.4rem; color: rgba(232,232,244,0.65); }
+
+    /* Footer */
+    footer {
+      text-align: center; padding: 2rem;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.6rem; color: var(--muted);
+      border-top: 1px solid var(--border);
+    }
+    footer a { color: var(--muted); text-decoration: none; }
+    footer a:hover { color: var(--accent); }
+
+    @media (max-width: 640px) {
+      main { padding: 2rem 0 3rem; }
+      .hero { padding: 3rem 0 2rem; }
+      table { font-size: 0.78rem; }
+    }
+  </style>
+</head>
+<body>
+
+<div class="container">
+  <nav class="breadcrumb">
+    <a href="https://jthorvaldur.github.io/">Home</a>
+    <span>/</span>
+    <a href="https://jthorvaldur.github.io/earth-obs/">Earth Observation</a>
+    <span>/</span>
+    GPS/PNT Authentication
+  </nav>
+</div>
+
+<header class="hero">
+  <div class="container">
+    <p class="hero-eyebrow">Earth Observation Research</p>
+    <h1><strong>GPS/PNT Authentication</strong> for Fraud Prevention</h1>
+    <p class="hero-sub">
+      Location as evidence, timing as proof.
+    </p>
+  </div>
+</header>
+
+<main class="container">
+
+  <h2>What GPS/PNT Is</h2>
+
+  <p>GPS (Global Positioning System) is a subset of PNT (Positioning, Navigation, and Timing) -- the broader framework encompassing all global navigation satellite systems. Each provides three things: <strong>where you are</strong>, <strong>where you're going</strong>, and <strong>what time it is</strong>. The timing component is often underappreciated: GPS satellites carry atomic clocks accurate to nanoseconds, and this timing signal underpins everything from financial transaction sequencing to power grid synchronization.</p>
+
+  <table>
+    <thead>
+      <tr><th>System</th><th>Operator</th><th>Satellites</th><th>Key Feature</th></tr>
+    </thead>
+    <tbody>
+      <tr><td>GPS</td><td>United States (Space Force)</td><td>31 operational</td><td>Oldest, most widely used; L1/L2/L5 frequencies</td></tr>
+      <tr><td>Galileo</td><td>European Union (ESA/EUSPA)</td><td>28 operational</td><td>OSNMA authentication; highest civilian accuracy</td></tr>
+      <tr><td>GLONASS</td><td>Russia (Roscosmos)</td><td>24 operational</td><td>FDMA signals; better polar coverage</td></tr>
+      <tr><td>BeiDou</td><td>China (CNSA)</td><td>45 operational</td><td>Short message service; regional augmentation</td></tr>
+      <tr><td>QZSS</td><td>Japan (Cabinet Office)</td><td>4 operational</td><td>Japan-focused augmentation; centimeter accuracy</td></tr>
+      <tr><td>NavIC</td><td>India (ISRO)</td><td>7 operational</td><td>India regional coverage; dual-frequency</td></tr>
+    </tbody>
+  </table>
+
+  <h2>Authentication Use Cases</h2>
+
+  <h3>Document Signing with GPS Timestamp + Location</h3>
+
+  <p>When a document is digitally signed, the signing event can be bound to a GPS-derived timestamp and geolocation. This creates a cryptographically verifiable record of <strong>when and where</strong> the signature occurred. Unlike system clocks (which can be set to any time), GPS time comes from atomic clocks in orbit and cannot be altered by the signer.</p>
+
+  <p>The evidentiary value is substantial: a contract signed with GPS-authenticated metadata proves that the signer's device was at a specific location at a specific time. Disputes about "I never signed that" or "that date is wrong" become resolvable with hardware-level evidence.</p>
+
+  <h3>Financial Transaction Verification</h3>
+
+  <p>GPS/PNT enables detection of <em>impossible travel patterns</em> -- the classic fraud signal. A credit card used in New York at 14:00 and in London at 15:00 is physically impossible. But this analysis requires accurate timestamps on both transactions and knowledge of the cardholder's location. PNT authentication provides both.</p>
+
+  <p>Beyond impossible travel, PNT data reveals:</p>
+  <ul>
+    <li><strong>Velocity analysis:</strong> transactions occurring faster than possible travel time between locations</li>
+    <li><strong>Pattern deviation:</strong> a card used in a jurisdiction where the holder has never been, at a time inconsistent with their location history</li>
+    <li><strong>Simultaneous presence:</strong> the same identity (card, device, credential) appearing in two places at once</li>
+  </ul>
+
+  <h3>Supply Chain Provenance</h3>
+
+  <p>GPS-tracked shipments create an unbroken chain of custody from origin to delivery. For high-value goods (pharmaceuticals, luxury goods, conflict minerals), this chain proves provenance. The GPS data answers: did this shipment actually originate where the paperwork claims? Did it pass through the route declared to customs? Was it stored at the temperature required for the entire journey?</p>
+
+  <p>Combined with blockchain or tamper-evident logging, GPS provenance data becomes legally admissible evidence of chain of custody.</p>
+
+  <h3>Legal Evidence and Court Filings</h3>
+
+  <p>In legal proceedings, the authenticity of documents is frequently contested. GPS-authenticated timestamps address several evidentiary challenges:</p>
+
+  <ul>
+    <li><strong>Document provenance:</strong> when was a court filing actually drafted, signed, and transmitted?</li>
+    <li><strong>Location verification:</strong> was the notarization actually performed in the jurisdiction claimed?</li>
+    <li><strong>Timeline establishment:</strong> GPS timestamps create an independent, hardware-verified timeline that cannot be altered after the fact</li>
+    <li><strong>Custody and access:</strong> GPS data on devices can establish who had physical access to documents and when</li>
+  </ul>
+
+  <div class="callout amber">
+    <strong>The Allocation Judgment Problem</strong>
+    In family law, the question "when was this document actually signed?" can be outcome-determinative. If a judgment is signed outside the time window claimed, it may be voidable. GPS-authenticated signing would eliminate this class of dispute entirely. The technology exists today -- it is the adoption that lags.
+  </div>
+
+  <h2>GPS Spoofing and Countermeasures</h2>
+
+  <p>Commercial GPS signals are unencrypted and can be spoofed with equipment costing under $300. An attacker broadcasts stronger signals that override the legitimate GPS signals, causing the receiver to report a false position or time. This is not theoretical -- GPS spoofing has been documented in:</p>
+
+  <table>
+    <thead>
+      <tr><th>Incident</th><th>Year</th><th>Impact</th></tr>
+    </thead>
+    <tbody>
+      <tr class="danger"><td>Black Sea ship spoofing</td><td>2017</td><td>20+ vessels reported positions inland; attributed to Russian military</td></tr>
+      <tr class="danger"><td>Shanghai port spoofing</td><td>2019</td><td>Circular spoofing patterns affecting hundreds of ships</td></tr>
+      <tr class="danger"><td>Eastern Mediterranean</td><td>2023&ndash;present</td><td>Widespread GNSS interference affecting commercial aviation</td></tr>
+      <tr><td>Iran RQ-170 capture</td><td>2011</td><td>U.S. drone allegedly spoofed into landing in Iran</td></tr>
+    </tbody>
+  </table>
+
+  <h3>Countermeasures</h3>
+
+  <p>Authenticated PNT addresses spoofing through multiple layers:</p>
+
+  <ul>
+    <li><strong>Galileo OSNMA:</strong> Open Service Navigation Message Authentication -- cryptographically signs the navigation message so receivers can verify it came from a legitimate satellite. Operational since 2023.</li>
+    <li><strong>GPS III CHIMERA:</strong> Chips-Message Robust Authentication for military and authorized users. Provides authentication on L1C/L5 signals.</li>
+    <li><strong>Ground-based verification:</strong> cross-reference GPS position with cell tower triangulation, Wi-Fi positioning, or inertial navigation to detect inconsistencies.</li>
+    <li><strong>Multi-constellation:</strong> simultaneously use GPS + Galileo + GLONASS. Spoofing all three systems simultaneously is orders of magnitude harder than spoofing one.</li>
+    <li><strong>Receiver-autonomous integrity monitoring (RAIM):</strong> statistical consistency checks across multiple satellite signals to detect anomalies.</li>
+  </ul>
+
+  <div class="callout red">
+    <strong>The Spoofing Asymmetry</strong>
+    Spoofing civilian GPS is cheap. Detecting spoofing is moderately expensive. Spoofing authenticated PNT (OSNMA, CHIMERA) requires resources available only to state actors. For fraud prevention, the question is whether the authentication level matches the value at risk.
+  </div>
+
+  <h2>Connection to Fraud Detection</h2>
+
+  <p>Pattern analysis of GPS/PNT data reveals anomalies across multiple fraud domains:</p>
+
+  <table>
+    <thead>
+      <tr><th>Fraud Type</th><th>GPS/PNT Signal</th><th>Detection Method</th></tr>
+    </thead>
+    <tbody>
+      <tr><td>Financial fraud</td><td>Impossible travel, location spoofing</td><td>Velocity analysis, multi-source position verification</td></tr>
+      <tr><td>Insurance fraud</td><td>Staged accident locations, inconsistent timelines</td><td>Cross-reference claimed location with device GPS history</td></tr>
+      <tr><td>Customs fraud</td><td>Shipment routing discrepancies</td><td>Compare declared route with actual GPS track</td></tr>
+      <tr><td>Custody violations</td><td>Location outside permitted area, timing violations</td><td>Geofence monitoring with authenticated timestamps</td></tr>
+      <tr><td>Document fraud</td><td>Backdated signing, false notarization location</td><td>GPS-authenticated digital signatures</td></tr>
+      <tr><td>Benefits fraud</td><td>Residency claims contradicted by location data</td><td>Long-term location pattern analysis</td></tr>
+    </tbody>
+  </table>
+
+  <h2>Standards and Governance</h2>
+
+  <ul>
+    <li><strong>NIST SP 800-PNT:</strong> Guidelines for PNT profile conformance; defines requirements for PNT-dependent critical infrastructure</li>
+    <li><strong>Executive Order 13905 (2020):</strong> Requires responsible use of PNT services; directs critical infrastructure sectors to assess PNT dependencies</li>
+    <li><strong>EU Galileo OSNMA:</strong> Open Service Navigation Message Authentication -- freely available authentication for civilian receivers, operational since January 2023</li>
+    <li><strong>ICAO GNSS Standards:</strong> Aviation-specific requirements for GNSS integrity, including spoofing detection</li>
+    <li><strong>IMO e-Navigation:</strong> Maritime PNT resilience requirements for SOLAS vessels</li>
+  </ul>
+
+  <h2>Vector Search on Location-Tagged Documents</h2>
+
+  <p>Combining GPS/PNT metadata with document embeddings in a vector database enables a powerful query paradigm: <strong>"find all documents signed within 5km of this location in this time window."</strong></p>
+
+  <p>The implementation stores GPS coordinates and authenticated timestamps as payload fields alongside the document embedding vector in Qdrant. A query then combines semantic similarity (vector search) with spatial and temporal filters (payload filtering):</p>
+
+  <ul>
+    <li>Semantic: "find documents about settlement discussions" (vector similarity)</li>
+    <li>Spatial: "signed within 5km of 41.8781, -87.6298" (geospatial filter on lat/lng payload)</li>
+    <li>Temporal: "between 2024-01-15 and 2024-01-20" (range filter on GPS timestamp payload)</li>
+  </ul>
+
+  <p>This three-dimensional query -- <em>what</em> (semantics) + <em>where</em> (location) + <em>when</em> (time) -- is not possible with traditional full-text search. It requires the embedding approach precisely because the semantic dimension is not reducible to keywords.</p>
+
+  <div class="callout teal">
+    <strong>Connection to Dimensionality Research</strong>
+    GPS/PNT metadata adds structured dimensions to the embedding space -- latitude, longitude, altitude, timestamp, authentication level. These are not learned features but measured physical quantities. They interact with the semantic embedding dimensions to enable queries that neither pure vector search nor pure spatial search can answer alone. The question from our <a href="/embedding-dim/" style="color:var(--teal);">dimensionality research</a> applies here too: how many embedding dimensions are needed to preserve the semantic distinctions that matter, once the spatial/temporal filtering has narrowed the candidate set?
+  </div>
+
+  <h2>Related Research</h2>
+
+  <div class="card-grid">
+    <a class="card" href="/embedding-dim/">
+      <div class="card-title">The Dimensionality Illusion</div>
+      <div class="card-desc">Why PCA compression to 16 dimensions destroys domain-specific features. Relevant to embedding GPS-tagged document corpora.</div>
+      <span class="card-tag" style="color:var(--red);">Embedding Research</span>
+    </a>
+    <a class="card" href="index.html">
+      <div class="card-title">Earth Observation for Trading</div>
+      <div class="card-desc">Satellite imagery, commodity prices, and the information advantage. GPS/PNT provides the positioning backbone for all EO data.</div>
+      <span class="card-tag" style="color:var(--teal);">Earth Observation</span>
+    </a>
+    <a class="card" href="space-data.html">
+      <div class="card-title">Space-Based Data Processing</div>
+      <div class="card-desc">Edge compute on orbit and the bandwidth-dimensionality tradeoff. PNT timing synchronizes distributed satellite processing.</div>
+      <span class="card-tag" style="color:var(--green);">Earth Observation</span>
+    </a>
+  </div>
+
+</main>
+
+<footer>
+  <div>
+    <a href="https://jthorvaldur.github.io/">Home</a> &middot;
+    <a href="https://arxiv.org/a/thorarinson_j_1.html">arXiv</a> &middot;
+    <a href="https://github.com/jthorvaldur/publications">Source</a>
+  </div>
+  <p style="margin-top:0.5rem;">&copy; 2026 Thorarinson</p>
+</footer>
+
+</body>
+</html>
