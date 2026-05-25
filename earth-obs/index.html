@@ -1,0 +1,341 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Earth Observation for Trading — Satellite Data and the Information Advantage</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@200;300;400;500;600;700&family=JetBrains+Mono:wght@300;400;500;600&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --bg: #07070f;
+      --surface: rgba(255,255,255,0.035);
+      --surface-hover: rgba(122,162,247,0.07);
+      --border: rgba(255,255,255,0.07);
+      --border-hover: rgba(122,162,247,0.30);
+      --text: #e8e8f4;
+      --muted: rgba(232,232,244,0.45);
+      --accent: #7aa2f7;
+      --accent2: #bb9af7;
+      --green: #9ece6a;
+      --amber: #e0af68;
+      --red: #f7768e;
+      --teal: #73daca;
+    }
+    body {
+      background: var(--bg); color: var(--text);
+      font-family: 'Outfit', sans-serif;
+      -webkit-font-smoothing: antialiased;
+      line-height: 1.7;
+    }
+    .container { max-width: 900px; margin: 0 auto; padding: 0 2rem; }
+
+    /* Breadcrumb */
+    .breadcrumb {
+      padding: 1.2rem 0 0;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.65rem; color: var(--muted);
+    }
+    .breadcrumb a { color: var(--muted); text-decoration: none; }
+    .breadcrumb a:hover { color: var(--accent); }
+    .breadcrumb span { margin: 0 0.4rem; }
+
+    /* Hero */
+    .hero {
+      padding: 3rem 0 3rem;
+      text-align: center;
+      border-bottom: 1px solid var(--border);
+    }
+    .hero-eyebrow {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.6rem; letter-spacing: 0.3em;
+      text-transform: uppercase; color: var(--accent);
+      margin-bottom: 1.5rem;
+    }
+    .hero h1 {
+      font-size: clamp(2rem, 5vw, 3.2rem);
+      font-weight: 200; letter-spacing: -0.01em;
+      line-height: 1.15; max-width: 720px; margin: 0 auto;
+    }
+    .hero h1 strong {
+      font-weight: 500;
+      background: linear-gradient(140deg, #fff 20%, var(--teal) 60%, var(--green));
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+    }
+    .hero-sub {
+      margin-top: 1.2rem; font-size: 0.95rem;
+      color: var(--muted); max-width: 560px; margin-left: auto; margin-right: auto;
+    }
+
+    main { padding: 3rem 0 5rem; }
+
+    h2 {
+      font-size: 1.3rem; font-weight: 600;
+      margin: 3rem 0 1rem;
+      padding-bottom: 0.5rem;
+      border-bottom: 1px solid var(--border);
+      color: var(--text);
+    }
+    h3 {
+      font-size: 1.05rem; font-weight: 500;
+      margin: 2rem 0 0.75rem; color: var(--accent);
+    }
+    p { margin-bottom: 1rem; color: rgba(232,232,244,0.75); }
+    strong { color: var(--text); }
+    em { color: var(--accent2); font-style: italic; }
+    a { color: var(--accent); }
+
+    /* Tables */
+    table {
+      width: 100%; border-collapse: collapse;
+      margin: 1.5rem 0; font-size: 0.85rem;
+    }
+    thead { background: rgba(122,162,247,0.12); }
+    thead th {
+      padding: 0.6rem 0.8rem; text-align: left;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.7rem; text-transform: uppercase;
+      letter-spacing: 0.06em; color: var(--accent);
+      border-bottom: 1px solid var(--border);
+    }
+    tbody td {
+      padding: 0.55rem 0.8rem;
+      border-bottom: 1px solid rgba(255,255,255,0.03);
+      vertical-align: top; color: rgba(232,232,244,0.65);
+    }
+    tbody tr:hover td { background: rgba(122,162,247,0.04); }
+    tr.danger td { color: var(--red); font-weight: 500; }
+    tr.safe td { color: var(--green); }
+
+    /* Callouts */
+    .callout {
+      margin: 2rem 0; padding: 1.2rem 1.5rem;
+      background: rgba(122,162,247,0.06);
+      border-left: 3px solid var(--accent);
+      border-radius: 0 8px 8px 0;
+      font-size: 0.92rem;
+    }
+    .callout.red { border-color: var(--red); background: rgba(247,118,142,0.06); }
+    .callout.green { border-color: var(--green); background: rgba(158,206,106,0.06); }
+    .callout.amber { border-color: var(--amber); background: rgba(224,175,104,0.06); }
+    .callout.teal { border-color: var(--teal); background: rgba(115,218,202,0.06); }
+    .callout strong { display: block; margin-bottom: 0.3rem; }
+
+    /* Code */
+    code {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.8em; background: rgba(255,255,255,0.06);
+      padding: 0.15em 0.4em; border-radius: 4px;
+    }
+
+    /* Cards */
+    .card-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+      gap: 1rem; margin: 2rem 0;
+    }
+    .card {
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: 10px; padding: 1.3rem 1.5rem;
+      text-decoration: none; color: inherit; display: block;
+      transition: border-color 0.2s, transform 0.2s;
+    }
+    .card:hover { border-color: var(--border-hover); transform: translateY(-2px); }
+    .card-title { font-weight: 600; font-size: 0.95rem; margin-bottom: 0.4rem; }
+    .card-desc { font-size: 0.8rem; color: var(--muted); line-height: 1.5; }
+    .card-tag {
+      display: inline-block; margin-top: 0.6rem;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.55rem; padding: 2px 8px;
+      border-radius: 4px; background: rgba(255,255,255,0.04);
+      border: 1px solid rgba(255,255,255,0.06);
+    }
+
+    /* Lists */
+    ul, ol { margin: 1rem 0; padding-left: 1.3rem; }
+    li { margin-bottom: 0.4rem; color: rgba(232,232,244,0.65); }
+
+    /* Footer */
+    footer {
+      text-align: center; padding: 2rem;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.6rem; color: var(--muted);
+      border-top: 1px solid var(--border);
+    }
+    footer a { color: var(--muted); text-decoration: none; }
+    footer a:hover { color: var(--accent); }
+
+    @media (max-width: 640px) {
+      main { padding: 2rem 0 3rem; }
+      .hero { padding: 3rem 0 2rem; }
+      table { font-size: 0.78rem; }
+    }
+  </style>
+</head>
+<body>
+
+<div class="container">
+  <nav class="breadcrumb">
+    <a href="https://jthorvaldur.github.io/">Home</a>
+    <span>/</span>
+    <a href="https://jthorvaldur.github.io/earth-obs/">Earth Observation</a>
+    <span>/</span>
+    Overview
+  </nav>
+</div>
+
+<header class="hero">
+  <div class="container">
+    <p class="hero-eyebrow">Earth Observation Research</p>
+    <h1><strong>Earth Observation</strong> for Trading</h1>
+    <p class="hero-sub">
+      Satellite data, commodity prices, and the information advantage.
+    </p>
+  </div>
+</header>
+
+<main class="container">
+
+  <h2>What Earth Observation Data Is</h2>
+
+  <p>Earth observation (EO) encompasses all data acquired by sensors on orbiting platforms. The modalities differ in what they measure, when they can measure it, and what they reveal.</p>
+
+  <table>
+    <thead>
+      <tr><th>Modality</th><th>Sensors / Missions</th><th>Resolution</th><th>Key Property</th></tr>
+    </thead>
+    <tbody>
+      <tr><td>Optical (multispectral)</td><td>Sentinel-2, Landsat 8/9, Planet SuperDove</td><td>3&ndash;30 m</td><td>Reflectance in visible + NIR bands; cloud-dependent</td></tr>
+      <tr><td>Synthetic Aperture Radar (SAR)</td><td>Sentinel-1, ICEYE, Capella Space</td><td>1&ndash;20 m</td><td>Microwave backscatter; day/night, cloud-penetrating</td></tr>
+      <tr><td>Thermal infrared</td><td>Landsat TIRS, ECOSTRESS, VIIRS</td><td>60&ndash;375 m</td><td>Surface temperature; detects industrial activity, fires</td></tr>
+      <tr><td>Hyperspectral</td><td>PRISMA, EnMAP, Pixxel Fireflies</td><td>5&ndash;30 m</td><td>100+ narrow bands; mineral/crop species identification</td></tr>
+      <tr><td>AIS (ship tracking)</td><td>Spire, exactEarth, Orbcomm</td><td>Ship-level</td><td>Maritime vessel identity, course, speed, draft</td></tr>
+    </tbody>
+  </table>
+
+  <h2>How Satellite Data Informs Commodity Prices</h2>
+
+  <p>The connection between orbital imagery and price discovery is direct. Every physical commodity has a spatial footprint that satellites can measure before the market knows.</p>
+
+  <h3>Crop Yield Estimation</h3>
+
+  <p>NDVI (Normalized Difference Vegetation Index) time series from Sentinel-2 track photosynthetic activity across growing seasons. A fund monitoring NDVI for the U.S. corn belt at 10m resolution sees drought stress 4&ndash;6 weeks before USDA crop reports. The signal is in the <strong>deviation from the historical NDVI curve</strong> for a given county and growth stage.</p>
+
+  <h3>Oil Storage Monitoring</h3>
+
+  <p>Floating-roof crude oil tanks cast shadows proportional to the volume stored. SAR imagery measures these shadows regardless of cloud cover. Orbital Insight and Kayrros process imagery of Cushing, Oklahoma and the SPR to estimate U.S. crude inventories before EIA reports. The edge: <strong>weekly global coverage vs. monthly national reports</strong>.</p>
+
+  <h3>Shipping and Maritime Intelligence</h3>
+
+  <p>AIS data from satellite constellations (Spire operates 100+ nanosats) tracks every commercial vessel globally. Combine with SAR for dark-vessel detection (ships that disable AIS transponders). Applications: crude oil tanker tracking for supply flow estimation, iron ore fleet monitoring, grain shipment routing from Black Sea ports.</p>
+
+  <h3>Mining Output and Industrial Activity</h3>
+
+  <p>Change detection on mine sites reveals expansion/contraction of operations. Thermal imagery detects smelter activity. Nighttime light intensity (VIIRS) correlates with industrial output. Chinese factory activity was tracked via NO2 emissions (Sentinel-5P) during COVID lockdowns before official PMI data.</p>
+
+  <h3>Deforestation and Carbon Credits</h3>
+
+  <p>Forest cover change is the basis for REDD+ carbon credits. Monitoring deforestation with SAR (cloud-penetrating, critical in tropics) allows verification of carbon credit validity and detection of fraudulent offsets. The voluntary carbon market trades ~$2B/year, and satellite verification is becoming mandatory.</p>
+
+  <h2>Hedge Fund and Private Equity Usage</h2>
+
+  <table>
+    <thead>
+      <tr><th>Firm</th><th>Approach</th><th>Edge</th></tr>
+    </thead>
+    <tbody>
+      <tr><td>Two Sigma</td><td>In-house satellite data team; automated ingestion pipelines</td><td>Processing speed, cross-signal integration</td></tr>
+      <tr><td>Citadel</td><td>Satellite + alternative data division</td><td>Scale of data fusion across modalities</td></tr>
+      <tr><td>Point72</td><td>Cubist Systematic (quant arm) uses EO data</td><td>Systematic signal extraction, backtesting infrastructure</td></tr>
+      <tr><td>Man Group</td><td>AHL quant fund integrates satellite-derived features</td><td>Time-series modeling of physical signals</td></tr>
+    </tbody>
+  </table>
+
+  <p>The alpha is not in access. Sentinel data is free. Planet offers daily global coverage at commercial rates. <strong>The alpha is in processing speed and domain-specific interpretation.</strong> A fund that can go from raw imagery to a tradeable signal in hours has an edge over one that takes days. A team that understands the agronomic meaning of a NDVI anomaly has an edge over one that treats it as a generic feature.</p>
+
+  <h3>Private Equity Due Diligence</h3>
+
+  <p>Satellite data verifies claims that management cannot obscure:</p>
+  <ul>
+    <li>Factory output: truck traffic, parking lot occupancy, loading dock activity</li>
+    <li>Retail foot traffic: car counts at store locations over time (RS Metrics)</li>
+    <li>Construction progress: compare site imagery against project timeline claims</li>
+    <li>Environmental compliance: detect unreported emissions, waste, or land use changes</li>
+  </ul>
+
+  <div class="callout teal">
+    <strong>Connection to Embedding Research</strong>
+    Satellite imagery features are high-dimensional and domain-specific. The spectral signature of wheat stress (low NDVI in band 8, elevated reflectance in band 4) occupies different embedding dimensions than corn stress (different chlorophyll absorption profile). PCA compression to 16 dimensions would collapse these into a single "crop stress" cluster, destroying the distinction that determines whether you trade wheat futures or corn futures. This is the same phenomenon documented in our <a href="/embedding-dim/" style="color:var(--teal);">dimensionality research</a>: the fine-grained features that matter live in the long tail of variance.
+  </div>
+
+  <h2>Technical Pipeline</h2>
+
+  <p>The end-to-end flow from satellite to trading signal follows a consistent architecture:</p>
+
+  <table>
+    <thead>
+      <tr><th>Stage</th><th>Process</th><th>Tools</th></tr>
+    </thead>
+    <tbody>
+      <tr><td>1. Ingest</td><td>Download imagery from provider APIs; manage tile catalogues</td><td>STAC API, Planet SDK, Copernicus Data Space</td></tr>
+      <tr><td>2. Preprocess</td><td>Atmospheric correction, orthorectification, cloud masking</td><td>Sen2Cor, ACOLITE, s2cloudless</td></tr>
+      <tr><td>3. Feature extraction</td><td>Compute indices (NDVI, NDWI, BSI), segment objects, detect changes</td><td>rasterio, scikit-image, custom CNN/ViT</td></tr>
+      <tr><td>4. Embed</td><td>Generate vector representations of image patches or time series</td><td>SatMAE, Prithvi, domain-specific encoders</td></tr>
+      <tr><td>5. Vector search</td><td>Find similar historical patterns; anomaly detection against baseline</td><td>Qdrant, FAISS, pgvector</td></tr>
+      <tr><td>6. Signal generation</td><td>Convert anomalies to directional signals with confidence scores</td><td>Custom models, ensemble methods</td></tr>
+      <tr><td>7. Backtest</td><td>Validate signal against historical price data; measure Sharpe, drawdown</td><td>zipline, vectorbt, custom frameworks</td></tr>
+    </tbody>
+  </table>
+
+  <h2>Key Providers</h2>
+
+  <table>
+    <thead>
+      <tr><th>Provider</th><th>Coverage</th><th>Specialty</th></tr>
+    </thead>
+    <tbody>
+      <tr><td>Planet Labs</td><td>Daily global at 3m</td><td>Highest temporal cadence; SuperDove constellation</td></tr>
+      <tr><td>Maxar</td><td>30cm resolution</td><td>Highest spatial resolution commercial optical</td></tr>
+      <tr><td>Spire Global</td><td>Global AIS + weather</td><td>Maritime tracking, GNSS radio occultation</td></tr>
+      <tr><td>Orbital Insight</td><td>Analytics platform</td><td>Oil storage, economic activity indices</td></tr>
+      <tr><td>Descartes Labs</td><td>Analytics platform</td><td>Crop forecasting, supply chain monitoring</td></tr>
+      <tr><td>RS Metrics</td><td>Analytics platform</td><td>Retail foot traffic, metal inventory monitoring</td></tr>
+      <tr><td>Kayrros</td><td>Analytics platform</td><td>Energy market intelligence, methane monitoring</td></tr>
+      <tr><td>ICEYE</td><td>SAR constellation</td><td>Sub-daily SAR revisit; flood, infrastructure monitoring</td></tr>
+    </tbody>
+  </table>
+
+  <h2>Related Research</h2>
+
+  <div class="card-grid">
+    <a class="card" href="/embedding-dim/">
+      <div class="card-title">The Dimensionality Illusion</div>
+      <div class="card-desc">Why PCA compression to 16 dimensions destroys domain-specific features. The same principle applies to satellite imagery embeddings.</div>
+      <span class="card-tag" style="color:var(--red);">Embedding Research</span>
+    </a>
+    <a class="card" href="gps-pnt.html">
+      <div class="card-title">GPS/PNT Authentication</div>
+      <div class="card-desc">Location as evidence, timing as proof. How authenticated positioning prevents fraud in financial transactions and legal proceedings.</div>
+      <span class="card-tag" style="color:var(--accent);">Earth Observation</span>
+    </a>
+    <a class="card" href="space-data.html">
+      <div class="card-title">Space-Based Data Processing</div>
+      <div class="card-desc">Edge compute on orbit, bandwidth constraints, and why embedding dimensionality is a design parameter for satellite ML systems.</div>
+      <span class="card-tag" style="color:var(--teal);">Earth Observation</span>
+    </a>
+  </div>
+
+</main>
+
+<footer>
+  <div>
+    <a href="https://jthorvaldur.github.io/">Home</a> &middot;
+    <a href="https://arxiv.org/a/thorarinson_j_1.html">arXiv</a> &middot;
+    <a href="https://github.com/jthorvaldur/publications">Source</a>
+  </div>
+  <p style="margin-top:0.5rem;">&copy; 2026 Thorarinson</p>
+</footer>
+
+</body>
+</html>
