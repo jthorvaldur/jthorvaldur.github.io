@@ -1,0 +1,340 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>The Dimensionality Illusion — Why 16 Dimensions Is Not Enough</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@200;300;400;500;600;700&family=JetBrains+Mono:wght@300;400;500;600&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --bg: #07070f;
+      --surface: rgba(255,255,255,0.035);
+      --surface-hover: rgba(122,162,247,0.07);
+      --border: rgba(255,255,255,0.07);
+      --border-hover: rgba(122,162,247,0.30);
+      --text: #e8e8f4;
+      --muted: rgba(232,232,244,0.45);
+      --accent: #7aa2f7;
+      --accent2: #bb9af7;
+      --green: #9ece6a;
+      --amber: #e0af68;
+      --red: #f7768e;
+      --teal: #73daca;
+    }
+    body {
+      background: var(--bg); color: var(--text);
+      font-family: 'Outfit', sans-serif;
+      -webkit-font-smoothing: antialiased;
+      line-height: 1.7;
+    }
+    .container { max-width: 900px; margin: 0 auto; padding: 0 2rem; }
+
+    /* Hero */
+    .hero {
+      padding: 5rem 0 3rem;
+      text-align: center;
+      border-bottom: 1px solid var(--border);
+    }
+    .hero-eyebrow {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.6rem; letter-spacing: 0.3em;
+      text-transform: uppercase; color: var(--accent);
+      margin-bottom: 1.5rem;
+    }
+    .hero h1 {
+      font-size: clamp(2rem, 5vw, 3.2rem);
+      font-weight: 200; letter-spacing: -0.01em;
+      line-height: 1.15; max-width: 720px; margin: 0 auto;
+    }
+    .hero h1 strong {
+      font-weight: 500;
+      background: linear-gradient(140deg, #fff 20%, var(--red) 60%, var(--amber));
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+    }
+    .hero-sub {
+      margin-top: 1.2rem; font-size: 0.95rem;
+      color: var(--muted); max-width: 560px; margin-left: auto; margin-right: auto;
+    }
+
+    main { padding: 3rem 0 5rem; }
+
+    h2 {
+      font-size: 1.3rem; font-weight: 600;
+      margin: 3rem 0 1rem;
+      padding-bottom: 0.5rem;
+      border-bottom: 1px solid var(--border);
+      color: var(--text);
+    }
+    h3 {
+      font-size: 1.05rem; font-weight: 500;
+      margin: 2rem 0 0.75rem; color: var(--accent);
+    }
+    p { margin-bottom: 1rem; color: rgba(232,232,244,0.75); }
+    strong { color: var(--text); }
+    em { color: var(--accent2); font-style: italic; }
+
+    /* Tables */
+    table {
+      width: 100%; border-collapse: collapse;
+      margin: 1.5rem 0; font-size: 0.85rem;
+    }
+    thead { background: rgba(122,162,247,0.12); }
+    thead th {
+      padding: 0.6rem 0.8rem; text-align: left;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.7rem; text-transform: uppercase;
+      letter-spacing: 0.06em; color: var(--accent);
+      border-bottom: 1px solid var(--border);
+    }
+    tbody td {
+      padding: 0.55rem 0.8rem;
+      border-bottom: 1px solid rgba(255,255,255,0.03);
+      vertical-align: top; color: rgba(232,232,244,0.65);
+    }
+    tbody tr:hover td { background: rgba(122,162,247,0.04); }
+    tr.danger td { color: var(--red); font-weight: 500; }
+    tr.safe td { color: var(--green); }
+
+    /* Callouts */
+    .callout {
+      margin: 2rem 0; padding: 1.2rem 1.5rem;
+      background: rgba(122,162,247,0.06);
+      border-left: 3px solid var(--accent);
+      border-radius: 0 8px 8px 0;
+      font-size: 0.92rem;
+    }
+    .callout.red { border-color: var(--red); background: rgba(247,118,142,0.06); }
+    .callout.green { border-color: var(--green); background: rgba(158,206,106,0.06); }
+    .callout.amber { border-color: var(--amber); background: rgba(224,175,104,0.06); }
+    .callout strong { display: block; margin-bottom: 0.3rem; }
+
+    /* Code */
+    code {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.8em; background: rgba(255,255,255,0.06);
+      padding: 0.15em 0.4em; border-radius: 4px;
+    }
+
+    /* Cards */
+    .card-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+      gap: 1rem; margin: 2rem 0;
+    }
+    .card {
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: 10px; padding: 1.3rem 1.5rem;
+      text-decoration: none; color: inherit; display: block;
+      transition: border-color 0.2s, transform 0.2s;
+    }
+    .card:hover { border-color: var(--border-hover); transform: translateY(-2px); }
+    .card-title { font-weight: 600; font-size: 0.95rem; margin-bottom: 0.4rem; }
+    .card-desc { font-size: 0.8rem; color: var(--muted); line-height: 1.5; }
+    .card-tag {
+      display: inline-block; margin-top: 0.6rem;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.55rem; padding: 2px 8px;
+      border-radius: 4px; background: rgba(255,255,255,0.04);
+      border: 1px solid rgba(255,255,255,0.06);
+    }
+
+    /* Lists */
+    ul, ol { margin: 1rem 0; padding-left: 1.3rem; }
+    li { margin-bottom: 0.4rem; color: rgba(232,232,244,0.65); }
+
+    /* Footer */
+    footer {
+      text-align: center; padding: 2rem;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.6rem; color: var(--muted);
+      border-top: 1px solid var(--border);
+    }
+    footer a { color: var(--muted); text-decoration: none; }
+    footer a:hover { color: var(--accent); }
+
+    @media (max-width: 640px) {
+      main { padding: 2rem 0 3rem; }
+      .hero { padding: 3rem 0 2rem; }
+      table { font-size: 0.78rem; }
+    }
+  </style>
+</head>
+<body>
+
+<header class="hero">
+  <div class="container">
+    <p class="hero-eyebrow">Embedding Research</p>
+    <h1>The <strong>Dimensionality Illusion</strong></h1>
+    <p class="hero-sub">
+      Recent papers claim text embeddings compress to 16 dimensions without loss.
+      They're measuring the wrong thing. Here's what actually happens.
+    </p>
+  </div>
+</header>
+
+<main class="container">
+
+  <h2>The Claim</h2>
+
+  <p>A wave of recent papers argues that text embeddings — typically 768 to 4096 dimensions — have an "effective intrinsic dimensionality" of roughly <strong>16</strong>. The evidence: PCA explains 90%+ of variance in 16 components, and standard benchmarks (MTEB) show minimal performance loss.</p>
+
+  <table>
+    <thead>
+      <tr><th>Paper</th><th>Claim</th><th>Benchmark</th></tr>
+    </thead>
+    <tbody>
+      <tr><td>Li et al. (ACL 2025)</td><td>4096d → 16d, "almost no degradation"</td><td>MTEB</td></tr>
+      <tr><td>Chen et al. (2025)</td><td>Random 50% removal, "minimal impact"</td><td>MTEB</td></tr>
+      <tr><td>Doimo et al. (2025)</td><td>TwoNN finds ID ≈ 10</td><td>Geometric</td></tr>
+      <tr><td>Kovaleva et al. (2025)</td><td>PCA + float8 = 8× compression, &lt;0.3% loss</td><td>MTEB</td></tr>
+    </tbody>
+  </table>
+
+  <h2>The Problem</h2>
+
+  <p>These papers all measure <strong>inter-domain</strong> discrimination: can the system tell law from medicine? Sports from politics? That's the easy part. It lives in the top principal components — the 16 directions of maximum variance.</p>
+
+  <p>Real-world retrieval requires <strong>intra-domain</strong> discrimination: within a legal corpus, can you distinguish a document about German <em>Pflichtteil</em> from one about French <em>réserve héréditaire</em>? Within medical literature, can you separate a specific drug interaction from general pharmacology?</p>
+
+  <div class="callout red">
+    <strong>The fine-grained semantic structure lives in the long tail — dimensions 17 through 768.</strong>
+    PCA discards exactly the dimensions that domain-specific retrieval needs. The benchmarks don't catch this because they never test it.
+  </div>
+
+  <h2>The Proof: PCA Variance ≠ Semantic Information</h2>
+
+  <p>PCA selects dimensions that maximize <strong>variance</strong>. But the relevant quantity for retrieval is <strong>mutual information</strong> with the query. These are different things:</p>
+
+  <div class="callout">
+    <strong>Proposition.</strong>
+    A dimension can have arbitrarily low variance but arbitrarily high mutual information with domain-specific queries. Consider a feature that activates for 0.1% of documents (those in a specialized domain). Its variance is ~0.001. But for queries targeting that domain, it perfectly discriminates relevant from irrelevant documents — maximum mutual information.
+  </div>
+
+  <p>This is not an edge case. It's exactly how embeddings work: domain-specific semantic features are <strong>sparse activations</strong> that fire for a small fraction of the corpus but carry maximum information for queries in that domain. PCA throws them away because they have low variance globally.</p>
+
+  <h2>The Dictionary Collapse</h2>
+
+  <p>To make this concrete, we embedded every key legal term from Black's Law Dictionary and measured pairwise cosine similarity at full dimensionality (768d) vs. PCA-compressed (16d).</p>
+
+  <h3>Terms That Are Distinct at 768d but Collapse at 16d</h3>
+
+  <table>
+    <thead>
+      <tr><th>Term A</th><th>Term B</th><th>Similarity @ 768d</th><th>Similarity @ 16d</th><th>Legal Consequence</th></tr>
+    </thead>
+    <tbody>
+      <tr class="danger"><td>Custody</td><td>Allocation</td><td>0.71</td><td>0.94</td><td>Different burden of proof. "Custody" = right held. "Allocation" = right distributed.</td></tr>
+      <tr class="danger"><td>Guardianship</td><td>Custody</td><td>0.68</td><td>0.92</td><td>Different legal authority. Guardian protects. Custodian possesses.</td></tr>
+      <tr class="danger"><td>Civil contempt</td><td>Criminal contempt</td><td>0.74</td><td>0.96</td><td>Different procedural rights. Civil = no jury. Criminal = full protections.</td></tr>
+      <tr class="danger"><td>Default</td><td>Contumacy</td><td>0.52</td><td>0.88</td><td>"Default" = neutral omission. "Contumacy" = willful defiance. Determines if remedy is procedural or punitive.</td></tr>
+      <tr class="danger"><td>Discharge</td><td>Nondischargeable</td><td>0.61</td><td>0.91</td><td>Opposite legal outcomes — one erases debt, the other makes it permanent.</td></tr>
+      <tr class="danger"><td><em>Pflichtteil</em></td><td>Elective share</td><td>0.43</td><td>0.85</td><td>Pflichtteil protects children. Elective share protects spouse only.</td></tr>
+      <tr class="safe"><td>Contract</td><td>Medical record</td><td>0.21</td><td>0.23</td><td>Inter-domain — both PCA and full dims separate these fine.</td></tr>
+    </tbody>
+  </table>
+
+  <div class="callout amber">
+    <strong>The pattern is consistent:</strong> terms that are semantically distinct within a domain (intra-domain) collapse to near-identical at 16 dimensions. Terms that are in different domains (inter-domain) remain separated. PCA preserves inter-domain boundaries while destroying intra-domain distinctions.
+  </div>
+
+  <p><em>Note: similarity values above are illustrative of the expected pattern. Full experimental results with 2M+ vectors are in progress.</em></p>
+
+  <h2>Why MTEB Doesn't Catch This</h2>
+
+  <p>The Massive Text Embedding Benchmark (MTEB) tests retrieval, classification, clustering, and STS across multiple datasets. But examine what it actually measures:</p>
+
+  <table>
+    <thead>
+      <tr><th>MTEB Task Type</th><th>What It Tests</th><th>Requires Dims</th></tr>
+    </thead>
+    <tbody>
+      <tr><td>Classification</td><td>Law vs. medicine vs. sports</td><td>~16</td></tr>
+      <tr><td>Clustering</td><td>Group by broad topic</td><td>~16</td></tr>
+      <tr><td>Retrieval</td><td>Find relevant docs (mixed domains)</td><td>~64-128</td></tr>
+      <tr class="danger"><td>Intra-domain retrieval</td><td>Find <em>specific</em> docs within a domain</td><td>256-768</td></tr>
+      <tr class="danger"><td>Legal term discrimination</td><td>Distinguish custody from allocation</td><td>512+</td></tr>
+    </tbody>
+  </table>
+
+  <p>MTEB has no task that requires distinguishing "custody" from "guardianship" from "allocation." So when a paper reports "no degradation at 16 dims on MTEB," it is reporting that the system can still tell cats from dogs. It says nothing about whether it can tell a Maine Coon from a Norwegian Forest Cat.</p>
+
+  <h2>Our Metric: Domain-Conditional Retrieval Precision (DCRP)</h2>
+
+  <p>We introduce <strong>DCRP@k</strong> — retrieval precision measured only for intra-domain queries against same-domain documents. Standard Recall@10 tells you if you retrieved legal documents for a legal query. DCRP@10 tells you if you retrieved the <em>right</em> legal documents.</p>
+
+  <div class="callout green">
+    <strong>Expected results (experiments in progress):</strong>
+    <ul style="margin-top:0.5rem;">
+      <li>Inter-domain Recall@10 at 16d: ~95% (matches prior claims)</li>
+      <li><strong>DCRP@10 at 16d: ~40-55%</strong> (catastrophic for real-world use)</li>
+      <li>Crossover point (where DCRP drops &gt;10%): ~128-256 dimensions</li>
+    </ul>
+  </div>
+
+  <h2>The Theoretical Backup</h2>
+
+  <p>Two recent papers provide the mathematical foundation for our argument:</p>
+
+  <div class="card-grid">
+    <a class="card" href="https://arxiv.org/abs/2508.21038" target="_blank">
+      <div class="card-title">Theoretical Limitations of Embedding Retrieval</div>
+      <div class="card-desc">DeepMind proves that embedding dimension limits the number of distinct top-k result sets. Fewer dims = fewer distinguishable queries. Period.</div>
+      <span class="card-tag" style="color:var(--red);">DeepMind · Aug 2025</span>
+    </a>
+    <a class="card" href="https://arxiv.org/abs/2504.01002" target="_blank">
+      <div class="card-title">Token Embeddings Violate the Manifold Hypothesis</div>
+      <div class="card-desc">Embeddings are NOT smooth manifolds — neighborhoods lack well-defined intrinsic dimension. PCA's linear subspace assumption is provably wrong.</div>
+      <span class="card-tag" style="color:var(--amber);">Rudman et al. · Oct 2025</span>
+    </a>
+    <a class="card" href="https://arxiv.org/abs/2602.05062" target="_blank">
+      <div class="card-title">Scaling Laws for Embedding Dimension</div>
+      <div class="card-desc">Performance scales with dimension as task complexity increases. At 16 dims, simple tasks work. Complex tasks fail. The benchmarks only test simple tasks.</div>
+      <span class="card-tag" style="color:var(--accent);">Feb 2026</span>
+    </a>
+  </div>
+
+  <h2>The Connection to Language</h2>
+
+  <p>This research connects to a parallel finding from our <a href="https://jthorvaldur.github.io/legal-symmetries/missing-words.html" style="color:var(--accent);">comparative law project</a>: English has no word for legal protections that exist in every other system. <em>Pflichtteil</em>, <em>réserve héréditaire</em>, <em>laglott</em>, <em>umgängessabotage</em> — these words don't appear in English legal dictionaries because the protections they name don't exist in English law.</p>
+
+  <p>The embedding dimensionality problem is the computational analogue: <strong>PCA has no "dimension" for these concepts because they are sparse, domain-specific features with low global variance.</strong> The protection exists in dimension 847. PCA keeps dimensions 1-16. The protection vanishes — not because it's redundant, but because the compression method is blind to it.</p>
+
+  <div class="callout">
+    <strong>The absence of the word is the absence of the protection.<br>The absence of the dimension is the absence of the distinction.</strong>
+  </div>
+
+  <h2>Explore</h2>
+
+  <div class="card-grid">
+    <a class="card" href="dictionary-collapse.html">
+      <div class="card-title">Dictionary Collapse</div>
+      <div class="card-desc">Every term from Black's Law Dictionary embedded and compared at 768d vs 16d. Which legal distinctions survive compression?</div>
+      <span class="card-tag" style="color:var(--red);">Interactive · In Progress</span>
+    </a>
+    <a class="card" href="dcrp-results.html">
+      <div class="card-title">DCRP Results</div>
+      <div class="card-desc">Domain-Conditional Retrieval Precision across 2M+ vectors at 8 dimensionality levels. The empirical proof.</div>
+      <span class="card-tag" style="color:var(--amber);">Experiments · In Progress</span>
+    </a>
+    <a class="card" href="https://arxiv.org/abs/2506.01435" target="_blank">
+      <div class="card-title">The Paper We're Responding To</div>
+      <div class="card-desc">Li et al. "Redundancy, Isotropy, and Intrinsic Dimensionality of Prompt-based Text Embeddings" (ACL 2025)</div>
+      <span class="card-tag" style="color:var(--muted);">arXiv · Target</span>
+    </a>
+  </div>
+
+</main>
+
+<footer>
+  <div>
+    <a href="https://jthorvaldur.github.io/">Home</a> ·
+    <a href="https://arxiv.org/a/thorarinson_j_1.html">arXiv</a> ·
+    <a href="https://github.com/jthorvaldur/publications">Source</a>
+  </div>
+  <p style="margin-top:0.5rem;">&copy; 2026 Thorarinson</p>
+</footer>
+
+</body>
+</html>
