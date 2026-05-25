@@ -1,0 +1,1014 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Metals &mdash; Discovery, Body, and the Elements That Built Civilization</title>
+<style>
+:root {
+    --bg: #0d1117; --fg: #c9d1d9; --accent: #58a6ff;
+    --border: #30363d; --surface: #161b22; --surface2: #21262d;
+    --green: #3fb950; --yellow: #d29922; --red: #f85149;
+    --gold: #ffd700; --copper: #b87333; --silver: #c0c0c0;
+    --iron: #a19d94; --platinum: #e5e4e2;
+}
+* { margin:0; padding:0; box-sizing:border-box; }
+body { font-family: 'SF Mono','Fira Code','JetBrains Mono',monospace; background:var(--bg); color:var(--fg); line-height:1.6; padding:2rem; max-width:1400px; margin:0 auto; }
+h1 { color:var(--accent); font-size:1.8rem; margin-bottom:0.5rem; }
+h2 { color:var(--accent); font-size:1.3rem; margin:2.5rem 0 1rem; border-bottom:1px solid var(--border); padding-bottom:0.5rem; }
+h3 { color:var(--fg); font-size:1.1rem; margin:1.5rem 0 0.5rem; }
+h4 { color:var(--accent); font-size:0.95rem; margin:1.2rem 0 0.4rem; opacity:0.9; }
+.subtitle { color:#8b949e; margin-bottom:2rem; }
+a { color:var(--accent); text-decoration:none; }
+a:hover { text-decoration:underline; }
+.defn-link { color:var(--accent); border-bottom:1px dotted var(--accent); }
+.defn-link:hover { color:#79c0ff; border-bottom-style:solid; }
+.stats { display:grid; grid-template-columns:repeat(auto-fit, minmax(180px, 1fr)); gap:1rem; margin:1rem 0; }
+.stat { background:var(--surface); border:1px solid var(--border); border-radius:6px; padding:1rem; text-align:center; }
+.stat .value { font-size:2rem; color:var(--accent); font-weight:bold; }
+.stat .label { font-size:0.8rem; color:#8b949e; }
+table { width:100%; border-collapse:collapse; margin:1rem 0; font-size:0.85rem; }
+th, td { padding:6px 10px; border:1px solid var(--border); text-align:left; }
+th { background:var(--surface2); color:var(--accent); position:sticky; top:0; }
+tr:hover { background:var(--surface); }
+.data-table { display:block; max-height:500px; overflow-y:auto; }
+.desc { font-size:0.78rem; color:#8b949e; max-width:400px; }
+.formula { background:var(--surface); border-left:3px solid var(--accent); padding:1rem; margin:1rem 0; font-size:0.85rem; overflow-x:auto; }
+.uncertainty { background:#1c1407; border-left:3px solid var(--yellow); padding:1rem; margin:1rem 0; }
+nav { background:var(--surface); border:1px solid var(--border); border-radius:6px; padding:1rem; margin:1rem 0; display:flex; flex-wrap:wrap; gap:0.5rem 1.5rem; }
+nav a { color:var(--accent); text-decoration:none; font-size:0.85rem; }
+nav a.current { color:var(--fg); border-bottom:2px solid var(--accent); }
+.plot-container { background:var(--surface); border:1px solid var(--border); border-radius:6px; padding:1rem; margin:1rem 0; overflow-x:auto; }
+.plot-title { font-size:0.9rem; color:var(--accent); margin-bottom:0.5rem; }
+canvas { border-radius:6px; display:block; }
+footer { color:#8b949e; margin-top:3rem; font-size:0.8rem; text-align:center; padding:1rem 0; border-top:1px solid var(--border); }
+footer a { color:#8b949e; }
+
+.element-card { display:inline-block; background:var(--surface2); border:1px solid var(--border); border-radius:4px; padding:4px 10px; margin:3px; font-size:0.8rem; }
+.element-card .symbol { font-weight:bold; color:var(--accent); font-size:1rem; }
+.element-card .name { color:#8b949e; font-size:0.7rem; }
+
+.era-badge { display:inline-block; padding:2px 8px; border-radius:3px; font-size:0.75rem; font-weight:600; margin:2px; }
+
+.metal-section { margin:1.5rem 0; }
+.metal-section p { margin:0.5rem 0; font-size:0.88rem; }
+
+.canvas-wrapper { position:relative; width:100%; }
+.canvas-wrapper canvas { width:100%; height:auto; }
+
+.tooltip { position:absolute; background:var(--surface2); border:1px solid var(--accent); border-radius:4px; padding:8px 12px; font-size:0.8rem; pointer-events:none; opacity:0; transition:opacity 0.2s; z-index:100; max-width:300px; }
+.tooltip .tt-symbol { font-size:1.2rem; font-weight:bold; color:var(--accent); }
+.tooltip .tt-name { color:var(--fg); }
+.tooltip .tt-detail { color:#8b949e; font-size:0.75rem; margin-top:4px; }
+
+.narrow-ratio { color:var(--red); font-weight:bold; }
+.wide-ratio { color:var(--green); }
+</style>
+</head>
+<body>
+
+<h1>Metals</h1>
+<p class="subtitle">Every metal humanity has ever found, when we found it, and how 60 of the 118 elements exist inside you right now.</p>
+
+<nav>
+    <a href="index.html">Overview</a>
+    <a href="definitions.html">Definitions</a>
+    <a href="group-theory.html">Group Theory</a>
+    <a href="network.html">Network Graph</a>
+    <a href="longevity.html">Longevity</a>
+    <a href="elements.html">Alchemical Elements</a>
+    <a href="retention.html">Retention</a>
+    <a href="metals.html" class="current">Metals</a>
+</nav>
+
+<div class="stats">
+    <div class="stat"><div class="value">118</div><div class="label">Known Elements</div></div>
+    <div class="stat"><div class="value">~60</div><div class="label">In the Human Body</div></div>
+    <div class="stat"><div class="value">8000 yrs</div><div class="label">Discovery Span</div></div>
+    <div class="stat"><div class="value">Fe-56</div><div class="label">Most Stable Nucleus</div></div>
+    <div class="stat"><div class="value">96.2%</div><div class="label">Body = O, C, H, N</div></div>
+    <div class="stat"><div class="value">7.3x</div><div class="label">Narrowest Therapeutic Ratio (Se)</div></div>
+</div>
+
+
+<h2 id="timeline">Section 1: Discovery Timeline</h2>
+
+<div class="formula">
+    X-axis: time on logarithmic scale (8000 BCE &rarr; 2026 CE). Y-axis: atomic number Z.<br>
+    Each point is an element, colored by category. The shape of the discovery curve encodes the history of chemistry itself:<br>
+    flat for millennia (only native metals), then exponential after Brandt isolates cobalt in 1735.
+</div>
+
+<div class="plot-container">
+    <div class="plot-title">Element Discovery Timeline &mdash; log(time) vs. Atomic Number</div>
+    <div class="canvas-wrapper">
+        <canvas id="timelineCanvas" width="1360" height="600"></canvas>
+        <div class="tooltip" id="timelineTooltip"></div>
+    </div>
+</div>
+
+<div class="formula">
+    <strong>Era annotations:</strong><br>
+    <span class="era-badge" style="background:#ffd70022;color:#ffd700;">Prehistoric Metals</span> Au, Cu, Ag, Pb, Sn &mdash; found as native metal or simple smelting (6000&ndash;3000 BCE)<br>
+    <span class="era-badge" style="background:#a19d9422;color:#a19d94;">Iron Age</span> Fe smelting spreads from Hittites (~1200 BCE) &mdash; ended the Bronze Age<br>
+    <span class="era-badge" style="background:#bb9af722;color:#bb9af7;">Alchemical Period</span> As, Sb, Bi, P &mdash; isolated by alchemists (800&ndash;1669 CE)<br>
+    <span class="era-badge" style="background:#58a6ff22;color:#58a6ff;">Age of Chemistry</span> 1735&ndash;1900: 50+ elements discovered. Brandt, Scheele, Davy, Berzelius, Mendeleev<br>
+    <span class="era-badge" style="background:#3fb95022;color:#3fb950;">Nuclear Age</span> 1937&ndash;present: artificial elements, particle accelerators, neutron bombardment
+</div>
+
+
+<h2 id="body-composition">Section 2: The Human Body Composition</h2>
+
+<h3>2a. The Big Four (96.2% of body mass)</h3>
+
+<div class="stats">
+    <div class="stat"><div class="value" style="color:#79c0ff">65%</div><div class="label">Oxygen (O) &mdash; water, organics</div></div>
+    <div class="stat"><div class="value" style="color:#8b949e">18.5%</div><div class="label">Carbon (C) &mdash; backbone of life</div></div>
+    <div class="stat"><div class="value" style="color:#f0f0f0">9.5%</div><div class="label">Hydrogen (H) &mdash; water, bonds</div></div>
+    <div class="stat"><div class="value" style="color:#7aa2f7">3.2%</div><div class="label">Nitrogen (N) &mdash; amino acids, DNA</div></div>
+</div>
+
+<div class="formula">
+    You are mostly oxygen by mass. Not because you breathe it (you do), but because every water molecule is 88.9% oxygen by mass, and you are ~60% water.<br>
+    The carbon backbone: every organic molecule &mdash; proteins, lipids, carbohydrates, nucleic acids &mdash; is built on carbon&rsquo;s ability to form 4 covalent bonds in tetrahedral geometry.
+</div>
+
+<h3>2b. The Next Tier (3.7%)</h3>
+
+<table>
+    <thead><tr><th>Element</th><th>Symbol</th><th>% Mass</th><th>Amount (70kg)</th><th>Primary Role</th></tr></thead>
+    <tbody>
+        <tr><td>Calcium</td><td style="color:var(--accent)">Ca</td><td>1.5%</td><td>~1050g</td><td>Bones, teeth, muscle contraction signaling</td></tr>
+        <tr><td>Phosphorus</td><td style="color:var(--accent)">P</td><td>1.0%</td><td>~700g</td><td>Bones, ATP energy currency, DNA backbone</td></tr>
+        <tr><td>Potassium</td><td style="color:var(--accent)">K</td><td>0.4%</td><td>~280g</td><td>Nerve impulses, muscle contraction (Na/K pump)</td></tr>
+        <tr><td>Sulfur</td><td style="color:var(--accent)">S</td><td>0.3%</td><td>~210g</td><td>Disulfide bonds (protein folding), cysteine, methionine</td></tr>
+        <tr><td>Sodium</td><td style="color:var(--accent)">Na</td><td>0.2%</td><td>~140g</td><td>Nerve impulses, osmotic balance, Na/K-ATPase</td></tr>
+        <tr><td>Chlorine</td><td style="color:var(--accent)">Cl</td><td>0.2%</td><td>~140g</td><td>Stomach acid (HCl), Cl&minus; channels, fluid balance</td></tr>
+        <tr><td>Magnesium</td><td style="color:var(--accent)">Mg</td><td>0.1%</td><td>~70g</td><td>300+ enzyme reactions, ATP must bind Mg&sup2;+ to be active</td></tr>
+    </tbody>
+</table>
+
+<h3>2c. Trace Elements (0.1% &mdash; but lethal without them)</h3>
+
+<table>
+    <thead><tr><th>Element</th><th>Symbol</th><th>Total in Body</th><th>Critical Function</th><th>Deficiency Effect</th></tr></thead>
+    <tbody>
+        <tr><td>Iron</td><td style="color:var(--red)">Fe</td><td>4g</td><td>Hemoglobin O&sub2; transport, cytochrome c</td><td>Anemia, fatigue, death in weeks</td></tr>
+        <tr><td>Zinc</td><td style="color:var(--accent)">Zn</td><td>2&ndash;3g</td><td>Immune function, testosterone synthesis, wound healing</td><td>Immune collapse, hypogonadism, dermatitis</td></tr>
+        <tr><td>Fluorine</td><td style="color:var(--green)">F</td><td>2.6g</td><td>Teeth/bone strength (fluorapatite)</td><td>Dental caries; excess = fluorosis</td></tr>
+        <tr><td>Copper</td><td style="color:var(--copper)">Cu</td><td>75mg</td><td>Electron transport chain, ceruloplasmin, melanin</td><td>Anemia (iron immobilization), neurodegeneration</td></tr>
+        <tr><td>Iodine</td><td style="color:var(--yellow)">I</td><td>20mg</td><td>Thyroid hormones T3, T4 (metabolic rate)</td><td>Goiter, cretinism, IQ loss</td></tr>
+        <tr><td>Selenium</td><td style="color:#ff9e64">Se</td><td>15mg</td><td>Glutathione peroxidase (antioxidant defense)</td><td>Keshan disease, cardiomyopathy</td></tr>
+        <tr><td>Manganese</td><td style="color:#bb9af7">Mn</td><td>12mg</td><td>SOD2 (mitochondrial antioxidant), bone formation</td><td>Skeletal abnormalities, impaired growth</td></tr>
+        <tr><td>Molybdenum</td><td style="color:#73daca">Mo</td><td>5mg</td><td>Xanthine oxidase, sulfite oxidase (cofactor)</td><td>Sulfite toxicity, neurological damage</td></tr>
+        <tr><td>Chromium</td><td style="color:#8b949e">Cr</td><td>2mg</td><td>Insulin sensitivity (disputed &mdash; see uncertainty)</td><td>Possibly impaired glucose tolerance</td></tr>
+        <tr><td>Cobalt</td><td style="color:#9ece6a">Co</td><td>1mg</td><td>Vitamin B12 (cobalamin) central atom</td><td>Pernicious anemia, neuropathy</td></tr>
+        <tr><td>Vanadium</td><td style="color:#8b949e">V</td><td>&lt;1mg</td><td>Possibly insulin-mimetic (disputed)</td><td>Unknown in humans</td></tr>
+    </tbody>
+</table>
+
+<h3>2d. Body Composition Treemap</h3>
+
+<div class="plot-container">
+    <div class="plot-title">Human Body Elemental Composition &mdash; Interactive Treemap (click to zoom)</div>
+    <div class="canvas-wrapper">
+        <canvas id="treemapCanvas" width="1360" height="700"></canvas>
+        <div class="tooltip" id="treemapTooltip"></div>
+    </div>
+</div>
+
+<h3>2e. You Are a Star</h3>
+
+<div class="formula">
+    Every element heavier than lithium was forged inside a star. The nucleosynthesis pathway:<br><br>
+    <strong>Big Bang</strong> (t &lt; 20 min): H, He, trace Li &mdash; the universe starts with only 3 elements<br>
+    <strong>Stellar fusion</strong> (pp-chain, CNO cycle, triple-&alpha;): H &rarr; He &rarr; C &rarr; N &rarr; O &rarr; Ne &rarr; Mg &rarr; Si &rarr; ... &rarr; Fe<br>
+    <strong>Iron is the endpoint.</strong> Fe-56 has the highest <a href="https://en.wikipedia.org/wiki/Nuclear_binding_energy" class="defn-link">binding energy per nucleon</a> (~8.79 MeV). Fusion beyond iron is endothermic &mdash; the star cannot sustain it.<br>
+    <strong>Beyond iron</strong>: s-process (slow neutron capture in AGB stars), r-process (rapid neutron capture in supernovae &amp; neutron star mergers)<br><br>
+    The calcium in your bones was forged in a Type II supernova. The iron in your blood was the last element a massive star could make before it died. The gold in any ring you wear required the collision of two neutron stars.
+</div>
+
+<div class="plot-container">
+    <div class="plot-title">Binding Energy per Nucleon vs. Mass Number A &mdash; The curve that explains stellar death</div>
+    <div class="canvas-wrapper">
+        <canvas id="bindingEnergyCanvas" width="1360" height="500"></canvas>
+        <div class="tooltip" id="bindingTooltip"></div>
+    </div>
+</div>
+
+<div class="formula">
+    <strong>Reading the curve:</strong> Moving RIGHT from H toward Fe-56 releases energy (fusion powers stars). Moving LEFT from U toward Fe-56 also releases energy (fission powers reactors). Iron sits at the summit &mdash; the thermodynamic graveyard of nuclear physics. A star that builds an iron core has no further energy source. Within milliseconds: core collapse, bounce, supernova.
+</div>
+
+
+<h2 id="metals-and-states">Section 3: Metals and Human States</h2>
+
+<h3>3a. The Iron-Mood Connection</h3>
+<div class="metal-section">
+<p>Iron deficiency (anemia) produces: fatigue, cognitive fog, depression, pallor, restless legs, exercise intolerance. The mechanism is direct &mdash; hemoglobin carries O&sub2; to the brain, and the brain consumes 20% of total oxygen at 2% of body mass.</p>
+<p>Iron overload (hemochromatosis, HFE gene mutation) produces: organ damage, bronze skin pigmentation, liver cirrhosis, cardiomyopathy. Prevalence: ~1/200 in Northern Europeans (C282Y homozygotes).</p>
+<p>Menstrual blood loss: ~30&ndash;40mL/cycle &times; 0.5mg Fe/mL = 15&ndash;20mg Fe lost per cycle. This is why the RDA for premenopausal women (18mg) is 2.25x the male RDA (8mg).</p>
+<p>Historical observation: blacksmiths were noted as healthier than average &mdash; possibly from inhaling iron-rich particulates. The &ldquo;iron constitution&rdquo; was literal before it was metaphorical.</p>
+</div>
+
+<h3>3b. Lithium and Consciousness</h3>
+<div class="metal-section">
+<p>Lithium (Li, Z=3): the lightest metal, element #3, affects the heaviest human experience &mdash; consciousness and mood. Used to treat bipolar disorder since John Cade&rsquo;s 1949 discovery.</p>
+<p>Natural lithium in drinking water correlates with lower suicide rates across multiple ecological studies (Ohgami 2009, Kapusta 2011, Liaugaudaite 2017). Effect size: communities with higher natural Li show 10&ndash;30% lower suicide rates.</p>
+<p>Mechanism: inhibits GSK-3&beta; (glycogen synthase kinase-3 beta), depletes inositol (inositol monophosphatase inhibition), modulates BDNF expression, neuroprotective against excitotoxicity.</p>
+<p>The alchemists never knew lithium &mdash; it was discovered in 1817 by Johan August Arfwedson in petalite ore. Named from Greek <em>lithos</em> (stone). The element that treats the mind was hiding in rocks.</p>
+</div>
+
+<h3>3c. The Zinc-Testosterone-Drive Axis</h3>
+<div class="metal-section">
+<p>Zinc is required for testosterone synthesis: it inhibits aromatase (preventing T &rarr; estradiol conversion) and is a cofactor for 5&alpha;-reductase (T &rarr; DHT). Zinc-deficient men show 75% reduction in serum testosterone after 20 weeks (Prasad 1996).</p>
+<p>Depletion pathway: each ejaculation contains ~5mg zinc (30% of daily RDA). Seminal fluid has 100x higher zinc concentration than blood plasma. Frequent ejaculation without dietary replacement creates a zinc deficit &rarr; lower T &rarr; reduced drive, motivation, aggression.</p>
+<p>This is the biological substrate underlying retention game theory: the payoff matrix from the <a href="retention.html" class="defn-link">previous page</a> has a physical mechanism. Zinc is the mediating variable.</p>
+<p>Oysters as aphrodisiac: 74mg Zn per 100g (~500% RDA). The folk wisdom preceded the biochemistry by centuries. Casanova reportedly ate 50 oysters every morning.</p>
+</div>
+
+<h3>3d. The Copper-Iron Balance</h3>
+<div class="metal-section">
+<p>Ceruloplasmin (a copper-containing protein with 6 Cu atoms) oxidizes Fe&sup2;+ to Fe&sup3;+, which is required for iron to bind transferrin and be transported in blood. Without copper, iron is trapped in storage (ferritin) and cannot reach the bone marrow for hemoglobin synthesis.</p>
+<p>Copper deficiency mimics iron deficiency (microcytic anemia) even when iron stores are full. Supplementing iron without copper is futile &mdash; a lesson many physicians still miss.</p>
+<p>Wilson&rsquo;s disease (ATP7B mutation): copper accumulates in liver and brain. Psychiatric symptoms often precede hepatic: personality change, depression, psychosis. Kayser-Fleischer rings in the cornea are pathognomonic.</p>
+<p>Menkes disease (ATP7A mutation, X-linked): copper cannot be absorbed from the gut. Progressive neurodegeneration, kinky hair, death in childhood without treatment.</p>
+</div>
+
+<h3>3e. Iodine and Intelligence</h3>
+<div class="metal-section">
+<p>Iodine deficiency is the #1 preventable cause of intellectual disability worldwide (WHO). Thyroid hormones T3/T4 are iodinated tyrosine derivatives essential for CNS myelination during fetal development.</p>
+<p>Salt iodization (David Marine, 1924 onward) raised average IQ by an estimated 3.5 points in previously deficient populations (Feyrer et al. 2017). In severely deficient regions, the effect may be 10&ndash;15 points.</p>
+<p>&ldquo;Goiter belts&rdquo;: inland mountainous regions far from the sea (Alps, Himalayas, Great Lakes region) had endemic cretinism before iodization. The Swiss were called &ldquo;cretins&rdquo; &mdash; the word literally comes from the Alpine condition.</p>
+<p>The bias question: iodized salt costs fractions of a cent more per ton. Universal iodization was resisted for decades by salt producers. Who benefits from a population with suboptimal thyroid function?</p>
+</div>
+
+
+<h2 id="daily-needs">Section 4: What You Actually Need Daily</h2>
+
+<div class="formula">
+    The therapeutic ratio = (toxic threshold) / (RDA). A narrow ratio means the margin between &ldquo;enough&rdquo; and &ldquo;too much&rdquo; is razor-thin.<br>
+    <strong>Paracelsus (1493&ndash;1541):</strong> &ldquo;All things are poison, and nothing is without poison; the dosage alone makes it so a thing is not a poison.&rdquo; &mdash; <em>dosis sola facit venenum</em>.<br>
+    Sorted by therapeutic ratio (most dangerous = narrowest window first):
+</div>
+
+<table>
+    <thead><tr><th>Element</th><th>RDA</th><th>Toxic Threshold (UL)</th><th>Ratio (UL/RDA)</th><th>Best Food Source</th><th>Deficiency Symptom</th></tr></thead>
+    <tbody>
+        <tr><td style="color:var(--red)">Iron (Fe)</td><td>8&ndash;18mg</td><td>45mg</td><td class="narrow-ratio">2.5&ndash;5.6x</td><td>Red meat, liver, spinach</td><td>Anemia, fatigue, cognitive impairment</td></tr>
+        <tr><td style="color:var(--accent)">Zinc (Zn)</td><td>8&ndash;11mg</td><td>40mg</td><td class="narrow-ratio">3.6&ndash;5x</td><td>Oysters (74mg/100g), beef, pumpkin seeds</td><td>Immune dysfunction, low testosterone</td></tr>
+        <tr><td style="color:var(--accent)">Manganese (Mn)</td><td>1.8&ndash;2.3mg</td><td>11mg</td><td class="narrow-ratio">4.8&ndash;6.1x</td><td>Mussels, hazelnuts, brown rice</td><td>Skeletal abnormalities</td></tr>
+        <tr><td style="color:#ff9e64">Selenium (Se)</td><td>55&mu;g</td><td>400&mu;g</td><td class="narrow-ratio">7.3x</td><td>Brazil nuts (1 nut = 70&ndash;90&mu;g)</td><td>Keshan disease, cardiomyopathy</td></tr>
+        <tr><td style="color:var(--yellow)">Iodine (I)</td><td>150&mu;g</td><td>1100&mu;g</td><td style="color:var(--yellow)">7.3x</td><td>Seaweed, iodized salt, fish</td><td>Goiter, cretinism, IQ loss</td></tr>
+        <tr><td style="color:var(--copper)">Copper (Cu)</td><td>0.9mg</td><td>10mg</td><td class="wide-ratio">11.1x</td><td>Liver, shellfish, dark chocolate</td><td>Anemia, neutropenia, osteoporosis</td></tr>
+        <tr><td style="color:var(--green)">Fluorine (F)</td><td>3&ndash;4mg</td><td>10mg</td><td style="color:var(--yellow)">2.5&ndash;3.3x</td><td>Tea, fluoridated water, seafood</td><td>Dental caries; excess = fluorosis</td></tr>
+        <tr><td style="color:#bb9af7">Molybdenum (Mo)</td><td>45&mu;g</td><td>2000&mu;g</td><td class="wide-ratio">44.4x</td><td>Legumes, grains, nuts</td><td>Sulfite sensitivity, tachycardia</td></tr>
+        <tr><td style="color:#8b949e">Chromium (Cr)</td><td>25&ndash;35&mu;g</td><td>Not established</td><td style="color:#8b949e">N/A</td><td>Broccoli, grape juice, brewer&rsquo;s yeast</td><td>Disputed &mdash; possibly glucose intolerance</td></tr>
+    </tbody>
+</table>
+
+<div class="formula">
+    <strong>The narrow-window insight:</strong> Iron (ratio 2.5x for menstruating women) is the most dangerous essential mineral. You need 18mg, but 45mg causes toxicity. Iron poisoning is the #1 cause of pediatric poisoning death from supplements. This is why iron supplements are packaged with child-resistant caps &mdash; a toddler can die from a single adult dose bottle.<br><br>
+    Mercury context: tuna contains ~0.4ppm methylmercury. At 170g/week, that&rsquo;s ~68&mu;g Hg intake. The reference dose is 0.1&mu;g/kg/day (7&mu;g/day for 70kg adult). The question is always dose and form &mdash; methylmercury bioaccumulates; elemental mercury vapor is more acutely toxic; mercuric salts are somewhere between.
+</div>
+
+
+<h2 id="uncertainty">Section 5: Uncertainties and Limitations</h2>
+
+<div class="uncertainty">
+    <strong>Uncertainty: Body composition data</strong><br>
+    Elemental composition figures are averages across cadaver studies (primarily Caucasian males, 1950s&ndash;1970s). Individual variation is substantial: athletes have different Fe/Ca distributions than sedentary populations. The &ldquo;Reference Man&rdquo; (70kg, 170cm, 20&ndash;25yo) is an idealization.
+    <br><br>
+    <strong>Assumption:</strong> Trace element RDAs are adequate for optimal function.<br>
+    <strong>Implication:</strong> RDAs are set to prevent deficiency disease, not to optimize performance. The &ldquo;optimal&rdquo; intake for zinc, selenium, and magnesium may be significantly higher than RDA. This is an active area of research with significant commercial bias from supplement manufacturers.
+</div>
+
+<div class="uncertainty">
+    <strong>Uncertainty: Chromium essentiality</strong><br>
+    Chromium&rsquo;s status as an essential trace element is contested. The original 1959 &ldquo;glucose tolerance factor&rdquo; finding (Schwarz &amp; Mertz) has not been reliably replicated. The 2014 European Food Safety Authority concluded there is insufficient evidence that chromium is essential for humans. The US still lists an &ldquo;Adequate Intake&rdquo; but no RDA.
+    <br><br>
+    <strong>Uncertainty: Vanadium function</strong><br>
+    Vanadium shows insulin-mimetic effects in vitro and in animal studies at pharmacological doses, but no deficiency syndrome has been documented in humans. It may be a pharmacological agent rather than an essential nutrient.
+</div>
+
+<div class="uncertainty">
+    <strong>Uncertainty: Ecological correlations (lithium, iodine)</strong><br>
+    Studies linking lithium in water to suicide rates are ecological (population-level). They cannot establish individual causation. Confounders include: water source correlating with urbanization, socioeconomic status, access to mental health care. The dose in water (~10&ndash;100&mu;g/L) is 100&ndash;1000x below therapeutic doses (600&ndash;1800mg/day as lithium carbonate).<br><br>
+    <strong>Assumption:</strong> Sub-therapeutic doses have measurable population effects.<br>
+    <strong>Implication:</strong> If the ecological correlation is spurious, public health interventions based on it (lithium supplementation of water) would be unjustified.
+</div>
+
+
+<footer>
+    <a href="index.html">Positions Index</a> &middot;
+    <a href="elements.html">Alchemical Elements</a> &middot;
+    <a href="retention.html">Retention Game Theory</a> &middot;
+    <a href="longevity.html">Longevity</a><br>
+    Sources: IUPAC, WHO micronutrient reports, USDA dietary reference intakes, Nuclear Physics A (binding energy data), Emsley &ldquo;Nature&rsquo;s Building Blocks&rdquo;
+</footer>
+
+<script>
+// ========================================
+// SECTION 1: Discovery Timeline (Canvas)
+// ========================================
+(function() {
+    const canvas = document.getElementById('timelineCanvas');
+    const ctx = canvas.getContext('2d');
+    const tooltip = document.getElementById('timelineTooltip');
+    const W = canvas.width, H = canvas.height;
+    const pad = { top: 60, right: 40, bottom: 80, left: 70 };
+
+    // Element data: [symbol, name, year, atomicNumber, discoverer, method, category]
+    // Categories: alkali, alkaline, transition, post-transition, metalloid, nonmetal, noble, lanthanide, actinide
+    const elements = [
+        ['Au', 'Gold', -6000, 79, 'Multiple civilizations', 'Native metal in rivers', 'transition'],
+        ['Cu', 'Copper', -5000, 29, 'Mesopotamia/Anatolia', 'Smelting malachite', 'transition'],
+        ['Ag', 'Silver', -4000, 47, 'Anatolia', 'Cupellation', 'transition'],
+        ['C', 'Carbon', -3750, 6, 'Egypt/Sumer', 'Charcoal production', 'nonmetal'],
+        ['Pb', 'Lead', -3500, 82, 'Anatolia', 'Smelting galena', 'post-transition'],
+        ['Sn', 'Tin', -3000, 50, 'Various', 'Smelting cassiterite (Bronze Age)', 'post-transition'],
+        ['S', 'Sulfur', -2000, 16, 'Multiple', 'Volcanic deposits', 'nonmetal'],
+        ['Sb', 'Antimony', -1600, 51, 'Egypt (as stibnite)', 'Isolated ~1540', 'metalloid'],
+        ['Hg', 'Mercury', -1500, 80, 'Egypt/China/India', 'Heating cinnabar', 'transition'],
+        ['Fe', 'Iron', -1200, 26, 'Hittites', 'Meteorites first, then ore', 'transition'],
+        ['Zn', 'Zinc', -1000, 30, 'India', 'Smelting (isolated 1746)', 'transition'],
+        ['As', 'Arsenic', 800, 33, 'Jabir ibn Hayyan', 'Heating arsenic sulfide', 'metalloid'],
+        ['Bi', 'Bismuth', 1400, 83, 'Germany', 'Mining byproduct', 'post-transition'],
+        ['P', 'Phosphorus', 1669, 15, 'Hennig Brand', 'Distilling urine', 'nonmetal'],
+        ['Co', 'Cobalt', 1735, 27, 'Georg Brandt', 'First "new" metal in history', 'transition'],
+        ['Pt', 'Platinum', 1735, 78, 'Antonio de Ulloa', 'South American rivers', 'transition'],
+        ['Ni', 'Nickel', 1751, 29, 'Axel Cronstedt', 'Kupfernickel ore', 'transition'],
+        ['Mn', 'Manganese', 1774, 25, 'Johan Gahn', 'Reduction of MnO2', 'transition'],
+        ['Mo', 'Molybdenum', 1781, 42, 'Carl Wilhelm Scheele', 'From molybdenite', 'transition'],
+        ['W', 'Tungsten', 1783, 74, 'Elhuyar brothers', 'From wolframite', 'transition'],
+        ['U', 'Uranium', 1789, 92, 'Martin Klaproth', 'From pitchblende', 'actinide'],
+        ['Ti', 'Titanium', 1791, 22, 'William Gregor', 'From ilmenite', 'transition'],
+        ['Cr', 'Chromium', 1797, 24, 'Louis Vauquelin', 'From crocoite', 'transition'],
+        ['V', 'Vanadium', 1801, 23, 'Andres Manuel del Rio', 'From vanadinite', 'transition'],
+        ['Pd', 'Palladium', 1803, 46, 'William Wollaston', 'From platinum ore', 'transition'],
+        ['Ir', 'Iridium', 1803, 77, 'Smithson Tennant', 'From platinum residues', 'transition'],
+        ['Si', 'Silicon', 1824, 14, 'Jons Jacob Berzelius', 'Reduction of SiF4', 'metalloid'],
+        ['Al', 'Aluminum', 1825, 13, 'Hans Christian Orsted', 'More precious than gold until 1886', 'post-transition'],
+        ['Ga', 'Gallium', 1875, 31, 'Paul Emile Lecoq', 'Predicted by Mendeleev!', 'post-transition'],
+        ['Ra', 'Radium', 1898, 88, 'Marie & Pierre Curie', 'From pitchblende residue', 'alkaline'],
+        ['Tc', 'Technetium', 1937, 43, 'Perrier & Segre', 'First artificial element', 'transition'],
+        ['Pu', 'Plutonium', 1940, 94, 'Glenn Seaborg', 'Deuteron bombardment of U-238', 'actinide'],
+        ['Og', 'Oganesson', 2002, 118, 'JINR Dubna', 'Ca-48 + Cf-249 fusion', 'noble']
+    ];
+
+    // Category colors
+    const catColors = {
+        'alkali': '#ff6b6b',
+        'alkaline': '#ffa94d',
+        'transition': '#58a6ff',
+        'post-transition': '#69db7c',
+        'metalloid': '#da77f2',
+        'nonmetal': '#ffd43b',
+        'noble': '#e599f7',
+        'lanthanide': '#74c0fc',
+        'actinide': '#f783ac'
+    };
+
+    // Time mapping: log scale from -8000 to 2026
+    // Transform: shift all years to positive, then log
+    function yearToX(year) {
+        // Map -8000..2026 to canvas x
+        // Use a modified log scale that handles negative years
+        const minYear = -8000, maxYear = 2026;
+        // Shift to all-positive: add 8001
+        const shifted = year + 8001;
+        const minShifted = minYear + 8001; // = 1
+        const maxShifted = maxYear + 8001; // = 10027
+        const logMin = Math.log10(minShifted);
+        const logMax = Math.log10(maxShifted);
+        const logVal = Math.log10(shifted);
+        const frac = (logVal - logMin) / (logMax - logMin);
+        return pad.left + frac * (W - pad.left - pad.right);
+    }
+
+    function zToY(z) {
+        // atomic number 1..118 mapped to canvas y (inverted)
+        const frac = (z - 1) / (118 - 1);
+        return pad.top + (1 - frac) * (H - pad.top - pad.bottom);
+    }
+
+    // Era boundaries
+    const eras = [
+        { name: 'Prehistoric Metals', start: -8000, end: -2500, color: '#ffd70033' },
+        { name: 'Iron Age', start: -1200, end: -500, color: '#a19d9422' },
+        { name: 'Alchemical Period', start: 700, end: 1670, color: '#bb9af722' },
+        { name: 'Age of Chemistry', start: 1735, end: 1900, color: '#58a6ff22' },
+        { name: 'Nuclear Age', start: 1937, end: 2026, color: '#3fb95022' }
+    ];
+
+    function draw() {
+        ctx.fillStyle = '#0d1117';
+        ctx.fillRect(0, 0, W, H);
+
+        // Draw era backgrounds
+        eras.forEach(era => {
+            const x1 = yearToX(era.start);
+            const x2 = yearToX(era.end);
+            ctx.fillStyle = era.color;
+            ctx.fillRect(x1, pad.top, x2 - x1, H - pad.top - pad.bottom);
+            // Era label at top
+            ctx.fillStyle = era.color.replace('22', 'aa').replace('33', 'aa');
+            ctx.font = '10px "SF Mono","Fira Code",monospace';
+            ctx.textAlign = 'center';
+            ctx.fillText(era.name, (x1 + x2) / 2, pad.top - 8);
+        });
+
+        // Grid lines for y-axis (atomic number)
+        ctx.strokeStyle = '#30363d';
+        ctx.lineWidth = 0.5;
+        ctx.setLineDash([4, 4]);
+        for (let z = 10; z <= 110; z += 10) {
+            const y = zToY(z);
+            ctx.beginPath();
+            ctx.moveTo(pad.left, y);
+            ctx.lineTo(W - pad.right, y);
+            ctx.stroke();
+            ctx.fillStyle = '#8b949e';
+            ctx.font = '10px monospace';
+            ctx.textAlign = 'right';
+            ctx.fillText('Z=' + z, pad.left - 8, y + 3);
+        }
+        ctx.setLineDash([]);
+
+        // X-axis labels (years)
+        const yearMarks = [-6000, -3000, -1000, 0, 500, 1000, 1500, 1700, 1800, 1900, 2000];
+        ctx.fillStyle = '#8b949e';
+        ctx.font = '10px monospace';
+        ctx.textAlign = 'center';
+        yearMarks.forEach(y => {
+            const x = yearToX(y);
+            ctx.fillText(y < 0 ? Math.abs(y) + ' BCE' : y + ' CE', x, H - pad.bottom + 20);
+            ctx.strokeStyle = '#30363d';
+            ctx.lineWidth = 0.5;
+            ctx.setLineDash([2, 4]);
+            ctx.beginPath();
+            ctx.moveTo(x, pad.top);
+            ctx.lineTo(x, H - pad.bottom);
+            ctx.stroke();
+            ctx.setLineDash([]);
+        });
+
+        // Axis labels
+        ctx.fillStyle = '#8b949e';
+        ctx.font = '11px monospace';
+        ctx.textAlign = 'center';
+        ctx.fillText('Year of Discovery (log scale)', W / 2, H - 15);
+        ctx.save();
+        ctx.translate(15, H / 2);
+        ctx.rotate(-Math.PI / 2);
+        ctx.fillText('Atomic Number (Z)', 0, 0);
+        ctx.restore();
+
+        // Draw elements
+        elements.forEach(el => {
+            const [sym, name, year, z, disc, method, cat] = el;
+            const x = yearToX(year);
+            const y = zToY(z);
+            const color = catColors[cat] || '#58a6ff';
+            const r = 7;
+
+            // Glow
+            ctx.beginPath();
+            ctx.arc(x, y, r + 3, 0, Math.PI * 2);
+            ctx.fillStyle = color.replace(')', ',0.15)').replace('rgb', 'rgba').replace('#', '');
+            // Use hex to rgba conversion
+            const glowColor = color + '22';
+            ctx.fillStyle = glowColor;
+            ctx.fill();
+
+            // Main dot
+            ctx.beginPath();
+            ctx.arc(x, y, r, 0, Math.PI * 2);
+            ctx.fillStyle = color;
+            ctx.fill();
+            ctx.strokeStyle = '#0d1117';
+            ctx.lineWidth = 1.5;
+            ctx.stroke();
+
+            // Label
+            ctx.fillStyle = '#c9d1d9';
+            ctx.font = 'bold 9px monospace';
+            ctx.textAlign = 'center';
+            ctx.fillText(sym, x, y + 3);
+        });
+
+        // Legend
+        const legendX = W - 200, legendY = pad.top + 10;
+        ctx.fillStyle = '#161b22';
+        ctx.fillRect(legendX - 10, legendY - 10, 190, 180);
+        ctx.strokeStyle = '#30363d';
+        ctx.strokeRect(legendX - 10, legendY - 10, 190, 180);
+        let ly = legendY;
+        ctx.font = '10px monospace';
+        ctx.textAlign = 'left';
+        Object.entries(catColors).forEach(([cat, color]) => {
+            ctx.beginPath();
+            ctx.arc(legendX + 6, ly + 4, 5, 0, Math.PI * 2);
+            ctx.fillStyle = color;
+            ctx.fill();
+            ctx.fillStyle = '#c9d1d9';
+            ctx.fillText(cat, legendX + 18, ly + 8);
+            ly += 18;
+        });
+    }
+
+    draw();
+
+    // Tooltip interaction
+    canvas.addEventListener('mousemove', function(e) {
+        const rect = canvas.getBoundingClientRect();
+        const scaleX = canvas.width / rect.width;
+        const scaleY = canvas.height / rect.height;
+        const mx = (e.clientX - rect.left) * scaleX;
+        const my = (e.clientY - rect.top) * scaleY;
+
+        let found = null;
+        for (let el of elements) {
+            const [sym, name, year, z] = el;
+            const x = yearToX(year);
+            const y = zToY(z);
+            const dx = mx - x, dy = my - y;
+            if (dx * dx + dy * dy < 144) { // radius 12
+                found = el;
+                break;
+            }
+        }
+
+        if (found) {
+            const [sym, name, year, z, disc, method, cat] = found;
+            const yearStr = year < 0 ? Math.abs(year) + ' BCE' : year + ' CE';
+            tooltip.innerHTML = `<div class="tt-symbol">${sym}</div><div class="tt-name">${name} (Z=${z})</div><div class="tt-detail">${yearStr} &mdash; ${disc}<br>${method}<br>Category: ${cat}</div>`;
+            tooltip.style.opacity = '1';
+            tooltip.style.left = (e.clientX - rect.left + 15) + 'px';
+            tooltip.style.top = (e.clientY - rect.top - 10) + 'px';
+        } else {
+            tooltip.style.opacity = '0';
+        }
+    });
+
+    canvas.addEventListener('mouseleave', () => { tooltip.style.opacity = '0'; });
+})();
+
+
+// ========================================
+// SECTION 2d: Body Composition Treemap
+// ========================================
+(function() {
+    const canvas = document.getElementById('treemapCanvas');
+    const ctx = canvas.getContext('2d');
+    const tooltip = document.getElementById('treemapTooltip');
+    const W = canvas.width, H = canvas.height;
+
+    // Data: [symbol, name, percentage, color, function]
+    const bodyData = [
+        ['O', 'Oxygen', 65.0, '#79c0ff', 'Water, organic compounds. You are mostly oxygen by mass.'],
+        ['C', 'Carbon', 18.5, '#8b949e', 'Backbone of every organic molecule. 4 bonds, tetrahedral.'],
+        ['H', 'Hydrogen', 9.5, '#f0f0f0', 'Water, organic hydrogen bonds. Lightest element.'],
+        ['N', 'Nitrogen', 3.2, '#7aa2f7', 'Amino acids, DNA bases, neurotransmitters.'],
+        ['Ca', 'Calcium', 1.5, '#ffd700', 'Bones, teeth, signaling. 1kg in your skeleton.'],
+        ['P', 'Phosphorus', 1.0, '#ff9e64', 'Bones, ATP energy, DNA backbone (PO4).'],
+        ['K', 'Potassium', 0.4, '#bb9af7', 'Nerve impulses. Na/K pump uses 30% of resting ATP.'],
+        ['S', 'Sulfur', 0.3, '#ffd43b', 'Disulfide bonds fold proteins. Cysteine, methionine.'],
+        ['Na', 'Sodium', 0.2, '#69db7c', 'Action potentials. Na/K-ATPase in every cell.'],
+        ['Cl', 'Chlorine', 0.2, '#73daca', 'Stomach acid (HCl, pH 1.5). Cl channels.'],
+        ['Mg', 'Magnesium', 0.1, '#9ece6a', '300+ enzymes. ATP is really Mg-ATP.'],
+        ['Fe', 'Iron', 0.006, '#f85149', 'Hemoglobin. 4g total, but you die without it.'],
+        ['Zn', 'Zinc', 0.004, '#58a6ff', 'Testosterone, immune, 300+ enzymes.'],
+        ['F', 'Fluorine', 0.0037, '#3fb950', 'Fluorapatite in teeth. Hardness.'],
+        ['Cu', 'Copper', 0.0001, '#b87333', 'Electron transport, iron mobilization.'],
+        ['I', 'Iodine', 0.00003, '#d29922', 'Thyroid T3/T4. Intelligence depends on it.'],
+        ['Se', 'Selenium', 0.00002, '#ff6b6b', 'Glutathione peroxidase. Antioxidant.'],
+        ['Mn', 'Manganese', 0.00002, '#da77f2', 'SOD2 in mitochondria.'],
+        ['Mo', 'Molybdenum', 0.000007, '#74c0fc', 'Xanthine oxidase cofactor.'],
+        ['Co', 'Cobalt', 0.000001, '#e599f7', 'B12 central atom. Pernicious anemia without it.']
+    ];
+
+    // Squarified treemap algorithm
+    function squarify(data, x, y, w, h) {
+        const rects = [];
+        const total = data.reduce((s, d) => s + d[2], 0);
+        let remaining = [...data];
+        let cx = x, cy = y, cw = w, ch = h;
+
+        while (remaining.length > 0) {
+            const isWide = cw >= ch;
+            const side = isWide ? ch : cw;
+            const totalRemaining = remaining.reduce((s, d) => s + d[2], 0);
+
+            // Find optimal row
+            let row = [];
+            let rowArea = 0;
+            let bestRatio = Infinity;
+
+            for (let i = 0; i < remaining.length; i++) {
+                row.push(remaining[i]);
+                rowArea += remaining[i][2];
+                const rowFrac = rowArea / totalRemaining;
+                const rowSide = isWide ? cw * rowFrac : ch * rowFrac;
+
+                // Worst aspect ratio in this row
+                let worst = 0;
+                let runArea = 0;
+                for (let j = 0; j < row.length; j++) {
+                    runArea += row[j][2];
+                    const itemFrac = row[j][2] / rowArea;
+                    const itemSide = side * itemFrac;
+                    const ratio = Math.max(rowSide / itemSide, itemSide / rowSide);
+                    worst = Math.max(worst, ratio);
+                }
+
+                if (worst <= bestRatio) {
+                    bestRatio = worst;
+                } else {
+                    // Previous row was better, remove last item
+                    row.pop();
+                    rowArea -= remaining[i][2];
+                    break;
+                }
+            }
+
+            // Layout the row
+            const rowTotal = row.reduce((s, d) => s + d[2], 0);
+            const rowFrac = rowTotal / totalRemaining;
+            const rowWidth = isWide ? cw * rowFrac : cw;
+            const rowHeight = isWide ? ch : ch * rowFrac;
+
+            let rx = cx, ry = cy;
+            for (let item of row) {
+                const itemFrac = item[2] / rowTotal;
+                const iw = isWide ? rowWidth : rowWidth * itemFrac;
+                const ih = isWide ? rowHeight * itemFrac : rowHeight;
+                rects.push({ data: item, x: rx, y: ry, w: iw, h: ih });
+                if (isWide) ry += ih; else rx += iw;
+            }
+
+            // Reduce remaining area
+            remaining = remaining.slice(row.length);
+            if (isWide) { cx += rowWidth; cw -= rowWidth; }
+            else { cy += rowHeight; ch -= rowHeight; }
+        }
+
+        return rects;
+    }
+
+    const rects = squarify(bodyData, 10, 10, W - 20, H - 20);
+
+    function draw() {
+        ctx.fillStyle = '#0d1117';
+        ctx.fillRect(0, 0, W, H);
+
+        rects.forEach(r => {
+            const [sym, name, pct, color, fn] = r.data;
+
+            // Fill
+            ctx.fillStyle = color + '44';
+            ctx.fillRect(r.x + 1, r.y + 1, r.w - 2, r.h - 2);
+
+            // Border
+            ctx.strokeStyle = color;
+            ctx.lineWidth = 1.5;
+            ctx.strokeRect(r.x + 1, r.y + 1, r.w - 2, r.h - 2);
+
+            // Labels (only if rect is large enough)
+            if (r.w > 40 && r.h > 30) {
+                ctx.fillStyle = color;
+                ctx.font = `bold ${Math.min(Math.max(r.w / 4, 12), 60)}px monospace`;
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'middle';
+                ctx.fillText(sym, r.x + r.w / 2, r.y + r.h / 2 - (r.h > 50 ? 10 : 0));
+
+                if (r.h > 50 && r.w > 60) {
+                    ctx.fillStyle = '#8b949e';
+                    ctx.font = `${Math.min(Math.max(r.w / 10, 9), 16)}px monospace`;
+                    ctx.fillText(pct >= 0.01 ? pct + '%' : (pct * 1000).toFixed(1) + ' ppm', r.x + r.w / 2, r.y + r.h / 2 + 15);
+                }
+                if (r.h > 80 && r.w > 100) {
+                    ctx.fillStyle = '#6e7681';
+                    ctx.font = `${Math.min(Math.max(r.w / 14, 8), 13)}px monospace`;
+                    ctx.fillText(name, r.x + r.w / 2, r.y + r.h / 2 + 32);
+                }
+            } else if (r.w > 20 && r.h > 15) {
+                ctx.fillStyle = color;
+                ctx.font = 'bold 10px monospace';
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'middle';
+                ctx.fillText(sym, r.x + r.w / 2, r.y + r.h / 2);
+            }
+        });
+    }
+
+    draw();
+
+    // Tooltip
+    canvas.addEventListener('mousemove', function(e) {
+        const rect = canvas.getBoundingClientRect();
+        const scaleX = canvas.width / rect.width;
+        const scaleY = canvas.height / rect.height;
+        const mx = (e.clientX - rect.left) * scaleX;
+        const my = (e.clientY - rect.top) * scaleY;
+
+        let found = null;
+        for (let r of rects) {
+            if (mx >= r.x && mx <= r.x + r.w && my >= r.y && my <= r.y + r.h) {
+                found = r;
+                break;
+            }
+        }
+
+        if (found) {
+            const [sym, name, pct, color, fn] = found.data;
+            const pctStr = pct >= 0.001 ? pct + '% by mass' : (pct * 10000).toFixed(1) + ' ppm';
+            tooltip.innerHTML = `<div class="tt-symbol" style="color:${color}">${sym}</div><div class="tt-name">${name} &mdash; ${pctStr}</div><div class="tt-detail">${fn}</div>`;
+            tooltip.style.opacity = '1';
+            tooltip.style.left = (e.clientX - rect.left + 15) + 'px';
+            tooltip.style.top = (e.clientY - rect.top - 10) + 'px';
+        } else {
+            tooltip.style.opacity = '0';
+        }
+    });
+
+    canvas.addEventListener('mouseleave', () => { tooltip.style.opacity = '0'; });
+})();
+
+
+// ========================================
+// SECTION 2e: Binding Energy per Nucleon
+// ========================================
+(function() {
+    const canvas = document.getElementById('bindingEnergyCanvas');
+    const ctx = canvas.getContext('2d');
+    const tooltip = document.getElementById('bindingTooltip');
+    const W = canvas.width, H = canvas.height;
+    const pad = { top: 40, right: 60, bottom: 70, left: 70 };
+
+    // Binding energy per nucleon data: [A (mass number), B/A (MeV), symbol, name]
+    // Selected isotopes along the curve
+    const beData = [
+        [1, 0, 'H-1', 'Hydrogen'],
+        [2, 1.112, 'H-2', 'Deuterium'],
+        [3, 2.827, 'He-3', 'Helium-3'],
+        [4, 7.074, 'He-4', 'Helium-4 (alpha)'],
+        [6, 5.333, 'Li-6', 'Lithium-6'],
+        [7, 5.606, 'Li-7', 'Lithium-7'],
+        [9, 6.463, 'Be-9', 'Beryllium-9'],
+        [10, 6.498, 'B-10', 'Boron-10'],
+        [11, 6.928, 'B-11', 'Boron-11'],
+        [12, 7.680, 'C-12', 'Carbon-12'],
+        [14, 7.476, 'N-14', 'Nitrogen-14'],
+        [16, 7.976, 'O-16', 'Oxygen-16'],
+        [20, 8.032, 'Ne-20', 'Neon-20'],
+        [23, 7.902, 'Na-23', 'Sodium-23'],
+        [24, 8.261, 'Mg-24', 'Magnesium-24'],
+        [27, 8.332, 'Al-27', 'Aluminum-27'],
+        [28, 8.448, 'Si-28', 'Silicon-28'],
+        [31, 8.381, 'P-31', 'Phosphorus-31'],
+        [32, 8.493, 'S-32', 'Sulfur-32'],
+        [35, 8.520, 'Cl-35', 'Chlorine-35'],
+        [40, 8.551, 'Ca-40', 'Calcium-40'],
+        [48, 8.723, 'Ti-48', 'Titanium-48'],
+        [52, 8.609, 'Cr-52', 'Chromium-52'],
+        [55, 8.766, 'Mn-55', 'Manganese-55'],
+        [56, 8.790, 'Fe-56', 'Iron-56 (PEAK)'],
+        [58, 8.782, 'Ni-58', 'Nickel-58'],
+        [59, 8.768, 'Co-59', 'Cobalt-59'],
+        [62, 8.794, 'Ni-62', 'Nickel-62'],
+        [63, 8.752, 'Cu-63', 'Copper-63'],
+        [65, 8.757, 'Zn-65', 'Zinc-65'],
+        [75, 8.701, 'As-75', 'Arsenic-75'],
+        [80, 8.654, 'Se-80', 'Selenium-80'],
+        [85, 8.697, 'Rb-85', 'Rubidium-85'],
+        [90, 8.693, 'Zr-90', 'Zirconium-90'],
+        [98, 8.615, 'Mo-98', 'Molybdenum-98'],
+        [107, 8.554, 'Ag-107', 'Silver-107'],
+        [112, 8.522, 'Cd-112', 'Cadmium-112'],
+        [120, 8.505, 'Sn-120', 'Tin-120'],
+        [127, 8.445, 'I-127', 'Iodine-127'],
+        [133, 8.410, 'Cs-133', 'Cesium-133'],
+        [138, 8.376, 'Ba-138', 'Barium-138'],
+        [140, 8.355, 'Ce-140', 'Cerium-140'],
+        [150, 8.304, 'Nd-150', 'Neodymium-150'],
+        [165, 8.221, 'Ho-165', 'Holmium-165'],
+        [175, 8.152, 'Lu-175', 'Lutetium-175'],
+        [184, 8.080, 'W-184', 'Tungsten-184'],
+        [197, 7.916, 'Au-197', 'Gold-197'],
+        [208, 7.867, 'Pb-208', 'Lead-208'],
+        [209, 7.848, 'Bi-209', 'Bismuth-209'],
+        [232, 7.615, 'Th-232', 'Thorium-232'],
+        [235, 7.591, 'U-235', 'Uranium-235 (fissile)'],
+        [238, 7.570, 'U-238', 'Uranium-238'],
+        [244, 7.520, 'Pu-244', 'Plutonium-244']
+    ];
+
+    const maxA = 260, maxBE = 9.5;
+
+    function aToX(a) {
+        return pad.left + (a / maxA) * (W - pad.left - pad.right);
+    }
+    function beToY(be) {
+        return pad.top + (1 - be / maxBE) * (H - pad.top - pad.bottom);
+    }
+
+    function draw() {
+        ctx.fillStyle = '#0d1117';
+        ctx.fillRect(0, 0, W, H);
+
+        // Grid
+        ctx.strokeStyle = '#30363d';
+        ctx.lineWidth = 0.5;
+        ctx.setLineDash([4, 4]);
+        for (let be = 1; be <= 9; be++) {
+            const y = beToY(be);
+            ctx.beginPath();
+            ctx.moveTo(pad.left, y);
+            ctx.lineTo(W - pad.right, y);
+            ctx.stroke();
+            ctx.fillStyle = '#8b949e';
+            ctx.font = '10px monospace';
+            ctx.textAlign = 'right';
+            ctx.fillText(be + ' MeV', pad.left - 8, y + 3);
+        }
+        for (let a = 50; a <= 250; a += 50) {
+            const x = aToX(a);
+            ctx.beginPath();
+            ctx.moveTo(x, pad.top);
+            ctx.lineTo(x, H - pad.bottom);
+            ctx.stroke();
+            ctx.fillStyle = '#8b949e';
+            ctx.font = '10px monospace';
+            ctx.textAlign = 'center';
+            ctx.fillText('A=' + a, x, H - pad.bottom + 18);
+        }
+        ctx.setLineDash([]);
+
+        // Axis labels
+        ctx.fillStyle = '#8b949e';
+        ctx.font = '12px monospace';
+        ctx.textAlign = 'center';
+        ctx.fillText('Mass Number A (nucleons)', W / 2, H - 15);
+        ctx.save();
+        ctx.translate(15, H / 2);
+        ctx.rotate(-Math.PI / 2);
+        ctx.fillText('Binding Energy per Nucleon (MeV)', 0, 0);
+        ctx.restore();
+
+        // Draw the curve (smooth)
+        ctx.beginPath();
+        ctx.moveTo(aToX(beData[0][0]), beToY(beData[0][1]));
+        for (let i = 1; i < beData.length; i++) {
+            const x = aToX(beData[i][0]);
+            const y = beToY(beData[i][1]);
+            ctx.lineTo(x, y);
+        }
+        ctx.strokeStyle = '#58a6ff';
+        ctx.lineWidth = 2;
+        ctx.stroke();
+
+        // Fill below curve
+        ctx.lineTo(aToX(beData[beData.length - 1][0]), H - pad.bottom);
+        ctx.lineTo(aToX(beData[0][0]), H - pad.bottom);
+        ctx.closePath();
+        ctx.fillStyle = '#58a6ff11';
+        ctx.fill();
+
+        // Highlight Fe-56 peak
+        const feIdx = beData.findIndex(d => d[2] === 'Fe-56');
+        if (feIdx >= 0) {
+            const fx = aToX(beData[feIdx][0]);
+            const fy = beToY(beData[feIdx][1]);
+            ctx.beginPath();
+            ctx.arc(fx, fy, 10, 0, Math.PI * 2);
+            ctx.fillStyle = '#f8514933';
+            ctx.fill();
+            ctx.strokeStyle = '#f85149';
+            ctx.lineWidth = 2;
+            ctx.stroke();
+            // Annotation
+            ctx.fillStyle = '#f85149';
+            ctx.font = 'bold 12px monospace';
+            ctx.textAlign = 'left';
+            ctx.fillText('Fe-56: PEAK (8.79 MeV)', fx + 14, fy - 5);
+            ctx.fillStyle = '#8b949e';
+            ctx.font = '10px monospace';
+            ctx.fillText('Stars die here', fx + 14, fy + 10);
+        }
+
+        // Fusion arrow (left side)
+        ctx.fillStyle = '#3fb950';
+        ctx.font = '11px monospace';
+        ctx.textAlign = 'center';
+        const fusionX = aToX(25);
+        ctx.fillText('FUSION', fusionX, pad.top + 20);
+        ctx.fillText('(energy released)', fusionX, pad.top + 34);
+        // Arrow pointing right-up
+        ctx.beginPath();
+        ctx.moveTo(fusionX - 30, pad.top + 50);
+        ctx.lineTo(fusionX + 30, pad.top + 42);
+        ctx.strokeStyle = '#3fb950';
+        ctx.lineWidth = 1.5;
+        ctx.stroke();
+        ctx.beginPath();
+        ctx.moveTo(fusionX + 30, pad.top + 42);
+        ctx.lineTo(fusionX + 22, pad.top + 38);
+        ctx.lineTo(fusionX + 24, pad.top + 48);
+        ctx.fillStyle = '#3fb950';
+        ctx.fill();
+
+        // Fission arrow (right side)
+        ctx.fillStyle = '#bb9af7';
+        ctx.font = '11px monospace';
+        ctx.textAlign = 'center';
+        const fissionX = aToX(210);
+        ctx.fillText('FISSION', fissionX, pad.top + 20);
+        ctx.fillText('(energy released)', fissionX, pad.top + 34);
+        // Arrow pointing left-up
+        ctx.beginPath();
+        ctx.moveTo(fissionX + 30, pad.top + 50);
+        ctx.lineTo(fissionX - 30, pad.top + 42);
+        ctx.strokeStyle = '#bb9af7';
+        ctx.lineWidth = 1.5;
+        ctx.stroke();
+        ctx.beginPath();
+        ctx.moveTo(fissionX - 30, pad.top + 42);
+        ctx.lineTo(fissionX - 22, pad.top + 38);
+        ctx.lineTo(fissionX - 24, pad.top + 48);
+        ctx.fillStyle = '#bb9af7';
+        ctx.fill();
+
+        // Draw data points
+        beData.forEach((d, i) => {
+            const [a, be, sym, name] = d;
+            const x = aToX(a);
+            const y = beToY(be);
+            const isSpecial = ['He-4', 'C-12', 'O-16', 'Fe-56', 'U-235', 'U-238'].includes(sym);
+            const r = isSpecial ? 5 : 3;
+            ctx.beginPath();
+            ctx.arc(x, y, r, 0, Math.PI * 2);
+            ctx.fillStyle = isSpecial ? '#ffd700' : '#58a6ff';
+            ctx.fill();
+
+            // Label special points
+            if (isSpecial && sym !== 'Fe-56') {
+                ctx.fillStyle = '#ffd700';
+                ctx.font = '9px monospace';
+                ctx.textAlign = sym === 'U-235' || sym === 'U-238' ? 'right' : 'left';
+                const offset = sym === 'U-235' || sym === 'U-238' ? -8 : 8;
+                ctx.fillText(sym, x + offset, y - 8);
+            }
+        });
+
+        // He-4 spike annotation
+        const heIdx = beData.findIndex(d => d[2] === 'He-4');
+        if (heIdx >= 0) {
+            const hx = aToX(beData[heIdx][0]);
+            const hy = beToY(beData[heIdx][1]);
+            ctx.fillStyle = '#ffd700';
+            ctx.font = '9px monospace';
+            ctx.textAlign = 'left';
+            ctx.fillText('He-4 (alpha particle)', hx + 8, hy + 4);
+            ctx.fillText('anomalously stable', hx + 8, hy + 16);
+        }
+    }
+
+    draw();
+
+    // Tooltip
+    canvas.addEventListener('mousemove', function(e) {
+        const rect = canvas.getBoundingClientRect();
+        const scaleX = canvas.width / rect.width;
+        const scaleY = canvas.height / rect.height;
+        const mx = (e.clientX - rect.left) * scaleX;
+        const my = (e.clientY - rect.top) * scaleY;
+
+        let found = null;
+        for (let d of beData) {
+            const x = aToX(d[0]);
+            const y = beToY(d[1]);
+            const dx = mx - x, dy = my - y;
+            if (dx * dx + dy * dy < 200) {
+                found = d;
+                break;
+            }
+        }
+
+        if (found) {
+            const [a, be, sym, name] = found;
+            tooltip.innerHTML = `<div class="tt-symbol">${sym}</div><div class="tt-name">${name}</div><div class="tt-detail">A = ${a}, B/A = ${be.toFixed(3)} MeV<br>${be > 8.5 ? 'Near the iron peak — maximum stability' : be < 3 ? 'Light nucleus — fusion fuel' : be > 7 && a > 200 ? 'Heavy nucleus — fission candidate' : 'Intermediate stability'}</div>`;
+            tooltip.style.opacity = '1';
+            tooltip.style.left = (e.clientX - rect.left + 15) + 'px';
+            tooltip.style.top = (e.clientY - rect.top - 10) + 'px';
+        } else {
+            tooltip.style.opacity = '0';
+        }
+    });
+
+    canvas.addEventListener('mouseleave', () => { tooltip.style.opacity = '0'; });
+})();
+</script>
+
+</body>
+</html>
