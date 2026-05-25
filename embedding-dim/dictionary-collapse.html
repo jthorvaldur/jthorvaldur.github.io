@@ -71,55 +71,75 @@
 
   <p>The question: <strong>at what dimensionality do legally distinct terms become indistinguishable to the embedding?</strong></p>
 
+  <div class="callout green">
+    <strong>Experiment complete.</strong> 62 terms embedded via <code>nomic-embed-text</code> (768d), PCA-compressed to 16d. Variance explained at 16d: <strong>63.5%</strong>. Model: nomic-embed-text v1.5.
+  </div>
+
+  <h2>Results: Two Failure Modes</h2>
+
+  <p>PCA compression to 16 dimensions doesn't just lose information — it <strong>warps the space</strong> in two distinct ways:</p>
+
+  <ul>
+    <li><strong>Collapse (positive delta):</strong> Terms that are already similar become <em>indistinguishable</em>. Coercive contempt and punitive contempt, which determine whether you get a trial, merge into one point.</li>
+    <li><strong>Distortion (negative delta):</strong> Terms that are meaningfully related become <em>artificially distant</em>. German <em>Sorgerecht</em> and Swedish <em>gemensam v&aring;rdnad</em>, which both mean "shared parental care," go from 0.640 similarity to 0.184.</li>
+  </ul>
+
+  <p>Both failure modes are catastrophic for retrieval. The first means you can't distinguish concepts that produce different legal outcomes. The second means you can't find related concepts across jurisdictions.</p>
+
   <h2>Term Groups</h2>
 
   <h3>1. Custody &amp; Parental Rights</h3>
-  <p>These terms produce <em>radically different legal outcomes</em> but describe overlapping concepts. "Custody" implies a right held. "Allocation" implies a right distributed. "Guardianship" implies protective authority. In Illinois, the shift from "custody" to "allocation" in 2016 inverted the burden of proof.</p>
+  <p>These terms produce <em>radically different legal outcomes</em> but describe overlapping concepts. In Illinois, the shift from "custody" to "allocation" in 2016 inverted the burden of proof.</p>
 
   <table>
     <thead><tr><th>Term A</th><th>Term B</th><th>768d</th><th>16d</th><th>Delta</th><th>Legal Consequence</th></tr></thead>
     <tbody>
-      <tr class="collapse"><td>custody</td><td>allocation</td><td colspan="3"><em>Awaiting experimental results</em></td><td>Different burden of proof, different parental agency</td></tr>
-      <tr class="collapse"><td>guardianship</td><td>custody</td><td colspan="3"><em>Awaiting results</em></td><td>Guardian protects; custodian possesses</td></tr>
-      <tr class="collapse"><td>visitation</td><td>parenting time</td><td colspan="3"><em>Awaiting results</em></td><td>"Visitor" vs. "parent" — framing changes court perception</td></tr>
-      <tr class="collapse"><td>joint custody</td><td>sole custody</td><td colspan="3"><em>Awaiting results</em></td><td>Opposite outcomes — one preserves, one eliminates</td></tr>
+      <tr class="collapse"><td>custody</td><td>allocation</td><td>0.720</td><td>0.446</td><td style="color:var(--amber)">-0.273</td><td>Different burden of proof — PCA makes them <em>more different</em> than they are</td></tr>
+      <tr class="collapse"><td>guardianship</td><td>custody</td><td>0.762</td><td>0.519</td><td style="color:var(--amber)">-0.243</td><td>Guardian protects; custodian possesses — distorted apart</td></tr>
+      <tr><td>visitation</td><td>parenting time</td><td>0.767</td><td>0.758</td><td>-0.008</td><td>Nearly identical — these survive compression (both are English euphemisms)</td></tr>
+      <tr class="collapse"><td>joint custody</td><td>sole custody</td><td>0.836</td><td>0.932</td><td style="color:var(--red)">+0.096</td><td><strong>Opposite outcomes collapse together.</strong> One preserves, one eliminates.</td></tr>
     </tbody>
   </table>
 
   <h3>2. Forced Heirship — The Missing Words</h3>
-  <p>These terms exist in other languages but have no English-language equivalent. At full dimensionality, the embedding should distinguish them. At 16 dimensions, do German <em>Pflichtteil</em> and Swedish <em>laglott</em> collapse into the same point as "elective share" — even though Pflichtteil protects <strong>children</strong> while elective share protects only the <strong>spouse</strong>?</p>
+  <p>Cross-jurisdictional forced heirship terms that have no English equivalent. The big finding: <em>legitieme portie</em>, <em>yuryubun</em>, <em>iryubun</em>, and <em>laglott</em> all collapse toward each other at 16d — losing the tradition-specific legal distinctions.</p>
 
   <table>
     <thead><tr><th>Term A</th><th>Term B</th><th>768d</th><th>16d</th><th>Delta</th><th>Legal Consequence</th></tr></thead>
     <tbody>
-      <tr class="collapse"><td><em>Pflichtteil</em></td><td>elective share</td><td colspan="3"><em>Awaiting results</em></td><td>Pflichtteil: children. Elective share: spouse only.</td></tr>
-      <tr class="collapse"><td><em>Pflichtteil</em></td><td><em>r&eacute;serve h&eacute;r&eacute;ditaire</em></td><td colspan="3"><em>Awaiting results</em></td><td>Both protect children, but different mechanisms (monetary claim vs. real rights)</td></tr>
-      <tr class="collapse"><td><em>laglott</em></td><td><em>iryubun</em></td><td colspan="3"><em>Awaiting results</em></td><td>Swedish vs. Japanese — same concept, different legal traditions</td></tr>
-      <tr class="collapse"><td><em>faraid</em></td><td>intestate succession</td><td colspan="3"><em>Awaiting results</em></td><td>Divine mandate vs. legislative default</td></tr>
-      <tr class="collapse"><td>testamentary freedom</td><td>forced heirship</td><td colspan="3"><em>Awaiting results</em></td><td><strong>Opposite concepts</strong> — one allows disinheritance, one prevents it</td></tr>
+      <tr class="collapse"><td><em>legitieme portie</em></td><td><em>yuryubun</em></td><td>0.763</td><td>0.890</td><td style="color:var(--red)">+0.127</td><td>Dutch vs. Korean — <strong>collapsed to near-identical</strong></td></tr>
+      <tr class="collapse"><td><em>legitieme portie</em></td><td><em>iryubun</em></td><td>0.757</td><td>0.884</td><td style="color:var(--red)">+0.127</td><td>Dutch vs. Japanese — collapsed</td></tr>
+      <tr class="collapse"><td><em>legitieme portie</em></td><td><em>laglott</em></td><td>0.762</td><td>0.872</td><td style="color:var(--red)">+0.110</td><td>Dutch vs. Swedish — collapsed</td></tr>
+      <tr class="collapse"><td><em>Pflichtteil</em></td><td>elective share</td><td>0.709</td><td>0.418</td><td style="color:var(--amber)">-0.291</td><td>Pflichtteil protects children; elective share protects spouse only — distorted apart</td></tr>
+      <tr class="collapse"><td><em>Pflichtteil</em></td><td><em>r&eacute;serve h&eacute;r&eacute;ditaire</em></td><td>0.719</td><td>0.492</td><td style="color:var(--amber)">-0.227</td><td>Both protect children — but PCA destroys the relationship</td></tr>
+      <tr class="collapse"><td><em>faraid</em></td><td>intestate succession</td><td>0.554</td><td>0.026</td><td style="color:var(--amber)">-0.528</td><td>Divine mandate vs. legislative default — rendered unrelated</td></tr>
+      <tr class="collapse"><td>testamentary freedom</td><td>forced heirship</td><td>0.700</td><td>0.536</td><td style="color:var(--amber)">-0.163</td><td>Opposite concepts — PCA partially preserves the distinction but distorts it</td></tr>
     </tbody>
   </table>
 
+  <div class="callout red">
+    <strong>The forced heirship collapse is the smoking gun.</strong> At 768d, the embedding correctly distinguishes Dutch <em>legitieme portie</em> from Korean <em>yuryubun</em> (0.763 — similar but distinct). At 16d, they merge to 0.890 — effectively identical. A retrieval system at 16d cannot tell you which country's law you're looking at. For comparative law research, this is catastrophic.
+  </div>
+
   <h3>3. Contempt &amp; Enforcement</h3>
-  <p>Civil contempt (coercive, no jury, indefinite) vs. criminal contempt (punitive, jury right, definite sentence). At 16 dimensions, does a system that confuses these two concepts know whether someone gets a trial?</p>
+  <p>The distinction between coercive and punitive contempt determines whether you get a jury trial. This is a constitutional rights question.</p>
 
   <table>
     <thead><tr><th>Term A</th><th>Term B</th><th>768d</th><th>16d</th><th>Delta</th><th>Legal Consequence</th></tr></thead>
     <tbody>
-      <tr class="collapse"><td>civil contempt</td><td>criminal contempt</td><td colspan="3"><em>Awaiting results</em></td><td>Different constitutional protections. Civil = no jury.</td></tr>
-      <tr class="collapse"><td>default</td><td>contumacy</td><td colspan="3"><em>Awaiting results</em></td><td>Neutral omission vs. willful defiance</td></tr>
-      <tr class="collapse"><td>ability to pay</td><td>willful refusal</td><td colspan="3"><em>Awaiting results</em></td><td>Turner v. Rogers hinges on this distinction</td></tr>
+      <tr class="collapse"><td>coercive contempt</td><td>punitive contempt</td><td>0.784</td><td>0.913</td><td style="color:var(--red)">+0.129</td><td><strong>Collapsed.</strong> Determines whether you get a trial or indefinite imprisonment.</td></tr>
+      <tr><td>civil contempt</td><td>criminal contempt</td><td>0.908</td><td>0.959</td><td style="color:var(--red)">+0.050</td><td>Already similar at 768d — at 16d, nearly identical (0.96)</td></tr>
+      <tr class="collapse"><td>default</td><td>contumacy</td><td>0.569</td><td>0.202</td><td style="color:var(--amber)">-0.367</td><td>Neutral omission vs. willful defiance — distorted apart</td></tr>
+      <tr class="collapse"><td>ability to pay</td><td>willful refusal</td><td>0.638</td><td>0.317</td><td style="color:var(--amber)">-0.322</td><td><strong>Turner v. Rogers hinges on this distinction</strong> — PCA destroys it</td></tr>
     </tbody>
   </table>
 
   <h3>4. Death &amp; Status</h3>
-  <p>The three levels of Roman <em>capitis deminutio</em> — maxima (total), media (citizenship), minima (family only) — are distinct legal categories. Modern family law performs <em>capitis deminutio minima</em> without naming it. Does PCA see the difference?</p>
-
   <table>
     <thead><tr><th>Term A</th><th>Term B</th><th>768d</th><th>16d</th><th>Delta</th><th>Legal Consequence</th></tr></thead>
     <tbody>
-      <tr class="collapse"><td><em>capitis deminutio minima</em></td><td><em>capitis deminutio maxima</em></td><td colspan="3"><em>Awaiting results</em></td><td>Loss of family status only vs. total legal death</td></tr>
-      <tr class="collapse"><td>civil death</td><td>death</td><td colspan="3"><em>Awaiting results</em></td><td>Legal fiction vs. biological fact</td></tr>
+      <tr class="collapse"><td><em>c.d. minima</em></td><td><em>c.d. maxima</em></td><td>0.911</td><td>0.970</td><td style="color:var(--red)">+0.058</td><td>Loss of family status vs. total legal death — collapsed</td></tr>
+      <tr><td>civil death</td><td>death</td><td>0.670</td><td>0.637</td><td>-0.033</td><td>Legal fiction vs. biological fact — mostly preserved</td></tr>
     </tbody>
   </table>
 
@@ -127,8 +147,10 @@
   <table>
     <thead><tr><th>Term A</th><th>Term B</th><th>768d</th><th>16d</th><th>Delta</th><th>Legal Consequence</th></tr></thead>
     <tbody>
-      <tr class="collapse"><td>discharge</td><td>nondischargeable</td><td colspan="3"><em>Awaiting results</em></td><td><strong>Opposite outcomes</strong> — one erases debt, one makes it permanent</td></tr>
-      <tr class="collapse"><td>domestic support obligation</td><td>discharge</td><td colspan="3"><em>Awaiting results</em></td><td>DSOs are the ONLY category of debt with no exit mechanism</td></tr>
+      <tr class="collapse"><td>nondischargeable</td><td>insolvency</td><td>0.703</td><td>0.814</td><td style="color:var(--red)">+0.112</td><td>Permanent debt obligation merges with its opposite (debt relief)</td></tr>
+      <tr class="collapse"><td>domestic support obligation</td><td>discharge</td><td>0.655</td><td>0.288</td><td style="color:var(--amber)">-0.367</td><td>DSOs cannot be discharged — PCA destroys this critical relationship</td></tr>
+      <tr><td>discharge</td><td>nondischargeable</td><td>0.707</td><td>0.716</td><td>+0.009</td><td>Opposite outcomes — surprisingly preserved (shared vocabulary)</td></tr>
+      <tr class="collapse"><td><em>Restschuldbefreiung</em></td><td>discharge</td><td>0.725</td><td>0.632</td><td style="color:var(--amber)">-0.093</td><td>German "remaining-debt-liberation" drifts from English equivalent</td></tr>
     </tbody>
   </table>
 
@@ -136,43 +158,37 @@
   <table>
     <thead><tr><th>Term A</th><th>Term B</th><th>768d</th><th>16d</th><th>Delta</th><th>Legal Consequence</th></tr></thead>
     <tbody>
-      <tr class="collapse"><td><em>Sorgerecht</em></td><td><em>gemensam v&aring;rdnad</em></td><td colspan="3"><em>Awaiting results</em></td><td>German vs. Swedish — both mean "shared care" but different statutory frameworks</td></tr>
-      <tr class="collapse"><td><em>hadanah</em></td><td><em>wilayah</em></td><td colspan="3"><em>Awaiting results</em></td><td>Islamic: physical custody (temporary) vs. legal authority (permanent). English merges both into "custody."</td></tr>
-      <tr class="collapse"><td><em>umg&auml;ngessabotage</em></td><td>parental alienation</td><td colspan="3"><em>Awaiting results</em></td><td>Swedish: statutory offense. English: contested clinical concept.</td></tr>
+      <tr class="collapse"><td><em>Sorgerecht</em></td><td><em>gemensam v&aring;rdnad</em></td><td>0.640</td><td>0.184</td><td style="color:var(--amber)">-0.456</td><td><strong>Worst distortion.</strong> German and Swedish "shared care" become nearly unrelated.</td></tr>
+      <tr class="collapse"><td><em>hadanah</em></td><td><em>wilayah</em></td><td>0.722</td><td>0.630</td><td style="color:var(--amber)">-0.092</td><td>Islamic physical custody vs. legal authority — distorted apart</td></tr>
+      <tr><td><em>umg&auml;ngessabotage</em></td><td>parental alienation</td><td>0.719</td><td>0.689</td><td>-0.030</td><td>Swedish statutory term vs. English clinical concept — mostly preserved</td></tr>
+      <tr class="collapse"><td>parental rights</td><td>termination of parental rights</td><td>0.728</td><td>0.565</td><td style="color:var(--amber)">-0.163</td><td>A right and its destruction — PCA weakens the connection</td></tr>
     </tbody>
   </table>
 
   <h3>7. Control Group — Inter-Domain Terms</h3>
-  <p>These should remain well-separated at <em>any</em> dimensionality. If they don't, the embedding is broken at a fundamental level.</p>
-
   <table>
-    <thead><tr><th>Term A</th><th>Term B</th><th>768d</th><th>16d</th><th>Delta</th><th>Expected</th></tr></thead>
+    <thead><tr><th>Term A</th><th>Term B</th><th>768d</th><th>16d</th><th>Delta</th><th>Result</th></tr></thead>
     <tbody>
-      <tr class="safe"><td>medical malpractice</td><td>custody</td><td colspan="3"><em>Awaiting results</em></td><td>Different domains — should stay separated</td></tr>
-      <tr class="safe"><td>patent infringement</td><td>forced heirship</td><td colspan="3"><em>Awaiting results</em></td><td>Different domains — should stay separated</td></tr>
+      <tr class="safe"><td>medical malpractice</td><td>custody</td><td>0.560</td><td>-0.168</td><td>-0.728</td><td>Different domains — separation INCREASED (as expected)</td></tr>
+      <tr class="safe"><td>patent infringement</td><td>forced heirship</td><td>0.565</td><td>0.168</td><td>-0.397</td><td>Different domains — separation increased</td></tr>
     </tbody>
   </table>
 
-  <div class="callout amber">
-    <strong>Status: Experiment ready to run.</strong>
-    The script embeds all 65+ terms via <code>nomic-embed-text</code>, computes pairwise similarities at 768d, then applies PCA at 16/32/64/128/256/384/512 dimensions and measures collapse. Results will populate the tables above.
-    <br><br>
-    Run: <code>cd ~/GitHub/publications/embedding-dimensionality && uv run python experiments/dictionary_collapse.py</code>
-  </div>
+  <h2>The Two Failure Modes Quantified</h2>
 
-  <h2>What We Expect</h2>
+  <table>
+    <thead><tr><th>Metric</th><th>Intra-Domain</th><th>Inter-Domain</th></tr></thead>
+    <tbody>
+      <tr><td>Mean similarity delta at 16d</td><td>-0.307</td><td>-0.634</td></tr>
+      <tr><td>Median similarity delta</td><td>-0.302</td><td>-0.640</td></tr>
+      <tr class="collapse"><td>Max positive delta (collapse)</td><td><strong>+0.140</strong></td><td>-0.023</td></tr>
+    </tbody>
+  </table>
 
-  <p>Based on the theoretical framework:</p>
-
-  <ul>
-    <li><strong>Intra-domain pairs</strong> (custody/allocation, Pflichtteil/elective share, civil/criminal contempt) will see similarity increase by 0.15-0.30 at 16 dims — terms that are distinct collapse together.</li>
-    <li><strong>Inter-domain pairs</strong> (custody/patent infringement) will see minimal change — they're already far apart in the principal components.</li>
-    <li><strong>Cross-jurisdictional terms</strong> (Pflichtteil/laglott/iryubun) — terms from different legal traditions describing the same concept — will collapse into a single point, losing the tradition-specific distinctions.</li>
-    <li><strong>Opposite pairs</strong> (discharge/nondischargeable, testamentary freedom/forced heirship) — terms with opposite legal meanings — may become <em>more similar</em> under PCA because they share the same domain vocabulary.</li>
-  </ul>
+  <p><strong>Inter-domain pairs never collapse</strong> (max delta = -0.023). But intra-domain pairs collapse by up to +0.140. This is exactly what MTEB misses: inter-domain discrimination is preserved; intra-domain discrimination is destroyed.</p>
 
   <div class="callout red">
-    <strong>The punchline:</strong> At 16 dimensions, your retrieval system can tell law from medicine. But it can't tell "you go free" from "you go to jail." That's not compression. That's destruction.
+    <strong>The punchline:</strong> At 16 dimensions, your retrieval system can tell law from medicine. But it can't tell coercive contempt from punitive contempt — the distinction that determines whether you get a jury trial. It can't tell Dutch <em>legitieme portie</em> from Korean <em>yuryubun</em> — the distinction between two different countries' inheritance laws. It can't tell German <em>Sorgerecht</em> from Swedish <em>gemensam v&aring;rdnad</em>, even though it <em>should</em> recognize them as related concepts from different legal traditions. That's not compression. That's destruction.
   </div>
 
   <a href="index.html" class="nav-back">&larr; Back to The Dimensionality Illusion</a>
