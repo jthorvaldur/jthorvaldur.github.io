@@ -1,0 +1,855 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>The Elements &mdash; Why Mercury, Gold, and Sulfur Ruled Alchemy</title>
+<style>
+:root {
+    --bg: #0d1117; --fg: #c9d1d9; --accent: #58a6ff;
+    --border: #30363d; --surface: #161b22; --surface2: #21262d;
+    --green: #3fb950; --yellow: #d29922; --red: #f85149;
+    --jp: #f7768e; --ks: #e0af68; --cn: #9ece6a; --pg: #7aa2f7; --gr: #bb9af7;
+}
+* { margin:0; padding:0; box-sizing:border-box; }
+body { font-family: 'SF Mono','Fira Code','JetBrains Mono',monospace; background:var(--bg); color:var(--fg); line-height:1.6; padding:2rem; max-width:1400px; margin:0 auto; }
+h1 { color:var(--accent); font-size:1.8rem; margin-bottom:0.5rem; }
+h2 { color:var(--accent); font-size:1.3rem; margin:2.5rem 0 1rem; border-bottom:1px solid var(--border); padding-bottom:0.5rem; }
+h3 { color:var(--fg); font-size:1.1rem; margin:1.5rem 0 0.5rem; }
+h4 { color:var(--accent); font-size:0.95rem; margin:1rem 0 0.3rem; opacity:0.85; }
+.subtitle { color:#8b949e; margin-bottom:2rem; }
+a { color:var(--accent); text-decoration:none; }
+a:hover { text-decoration:underline; }
+.defn-link { color:var(--accent); border-bottom:1px dotted var(--accent); }
+.defn-link:hover { color:#79c0ff; border-bottom-style:solid; }
+.stats { display:grid; grid-template-columns:repeat(auto-fit, minmax(180px, 1fr)); gap:1rem; margin:1rem 0; }
+.stat { background:var(--surface); border:1px solid var(--border); border-radius:6px; padding:1rem; text-align:center; }
+.stat .value { font-size:2rem; color:var(--accent); font-weight:bold; }
+.stat .label { font-size:0.8rem; color:#8b949e; }
+table { width:100%; border-collapse:collapse; margin:1rem 0; font-size:0.85rem; }
+th, td { padding:6px 10px; border:1px solid var(--border); text-align:left; }
+th { background:var(--surface2); color:var(--accent); position:sticky; top:0; }
+tr:hover { background:var(--surface); }
+.data-table { display:block; max-height:500px; overflow-y:auto; }
+.desc { font-size:0.78rem; color:#8b949e; max-width:400px; }
+.bar { background:var(--accent); color:var(--bg); padding:2px 6px; border-radius:3px; font-size:0.75rem; font-weight:bold; display:inline-block; min-width:40px; text-align:center; }
+.member { display:inline-block; background:var(--surface2); border:1px solid var(--border); border-radius:3px; padding:1px 6px; margin:2px; font-size:0.75rem; }
+.formula { background:var(--surface); border-left:3px solid var(--accent); padding:1rem; margin:1rem 0; font-size:0.85rem; overflow-x:auto; }
+.uncertainty { background:#1c1407; border-left:3px solid var(--yellow); padding:1rem; margin:1rem 0; }
+nav { background:var(--surface); border:1px solid var(--border); border-radius:6px; padding:1rem; margin:1rem 0; display:flex; flex-wrap:wrap; gap:0.5rem 1.5rem; }
+nav a { color:var(--accent); text-decoration:none; font-size:0.85rem; }
+nav a.current { color:var(--fg); border-bottom:2px solid var(--accent); }
+.plot-container { background:var(--surface); border:1px solid var(--border); border-radius:6px; padding:1rem; margin:1rem 0; overflow-x:auto; }
+.plot-title { font-size:0.9rem; color:var(--accent); margin-bottom:0.5rem; }
+footer { color:#8b949e; margin-top:3rem; font-size:0.8rem; text-align:center; padding:1rem 0; border-top:1px solid var(--border); }
+footer a { color:#8b949e; }
+
+canvas { border-radius:6px; }
+
+.element-section { background:var(--surface); border:1px solid var(--border); border-radius:6px; padding:1.5rem; margin:1.5rem 0; }
+.element-header { display:flex; align-items:baseline; gap:1rem; margin-bottom:0.5rem; }
+.element-symbol { font-size:2.5rem; color:var(--accent); font-weight:bold; line-height:1; }
+.element-names { font-size:0.85rem; color:#8b949e; }
+.prop-grid { display:grid; grid-template-columns:repeat(auto-fit, minmax(200px, 1fr)); gap:0.8rem; margin:0.8rem 0; }
+.prop-card { background:var(--surface2); border:1px solid var(--border); border-radius:4px; padding:0.6rem 0.8rem; }
+.prop-card .prop-label { font-size:0.7rem; color:#8b949e; text-transform:uppercase; letter-spacing:0.5px; }
+.prop-card .prop-value { font-size:0.9rem; color:var(--fg); margin-top:2px; }
+.cycle-diagram { background:var(--bg); border:1px solid var(--border); border-radius:6px; padding:1.5rem; margin:1rem 0; text-align:center; font-size:0.85rem; }
+.cycle-step { display:inline-block; padding:0.4rem 0.8rem; border-radius:4px; margin:0.3rem; }
+.cycle-arrow { color:var(--accent); font-size:1.2rem; vertical-align:middle; margin:0 0.3rem; }
+.trad-badge { display:inline-block; padding:2px 8px; border-radius:3px; font-size:0.75rem; font-weight:600; }
+</style>
+</head>
+<body>
+
+<h1>The Elements</h1>
+<p class="subtitle">Why Mercury, Gold, and Sulfur Ruled Alchemy &mdash; sources, transformations, and the chemical properties that made ancient practitioners believe matter could be perfected</p>
+
+<nav>
+    <a href="index.html">Overview</a>
+    <a href="definitions.html">Definitions</a>
+    <a href="group-theory.html">Group Theory</a>
+    <a href="network.html">Network Graph</a>
+    <a href="longevity.html">Longevity</a>
+    <a href="elements.html" class="current">Elements</a>
+    <a href="retention.html">Retention</a>
+</nav>
+
+<div class="stats">
+    <div class="stat"><div class="value">7</div><div class="label">Alchemical Elements</div></div>
+    <div class="stat"><div class="value">3</div><div class="label">Traditions (CN/IN/AR)</div></div>
+    <div class="stat"><div class="value">~2500</div><div class="label">Years of Practice</div></div>
+    <div class="stat"><div class="value">6/7</div><div class="label">Are Toxic</div></div>
+    <div class="stat"><div class="value">1</div><div class="label">Liquid at Room Temp</div></div>
+    <div class="stat"><div class="value">80</div><div class="label">Atomic Number (Hg)</div></div>
+</div>
+
+
+<!-- ═══════════════════════════════════════════════════════════════════════════ -->
+<h2 id="mercury">1. Mercury (Hg) &mdash; 水銀 / 朱砂 / पारद</h2>
+<!-- ═══════════════════════════════════════════════════════════════════════════ -->
+
+<div class="element-section">
+<div class="element-header">
+    <span class="element-symbol">Hg</span>
+    <span class="element-names">Hydrargyrum &middot; Quicksilver &middot; 水銀 (shuǐy&iacute;n) &middot; पारद (p&#257;rada) &middot; زئبق (za&#702;baq)</span>
+</div>
+
+<p>The most important substance in alchemy across every tradition. A metal that is liquid, that dissolves gold, that can be destroyed and reborn &mdash; mercury is the reason alchemy existed as a coherent discipline for two millennia.</p>
+
+<h3>Source: Cinnabar (HgS)</h3>
+<div class="prop-grid">
+    <div class="prop-card">
+        <div class="prop-label">Mineral</div>
+        <div class="prop-value">Cinnabar (HgS) &mdash; bright vermilion red</div>
+    </div>
+    <div class="prop-card">
+        <div class="prop-label">Extraction</div>
+        <div class="prop-value">Heat to 580&deg;C &rarr; Hg vapor &rarr; condense</div>
+    </div>
+    <div class="prop-card">
+        <div class="prop-label">Major Deposits</div>
+        <div class="prop-value">Almad&eacute;n (Spain, since 800 BCE), Guizhou (China), Monte Amiata (Italy), Nikitovka (Ukraine)</div>
+    </div>
+    <div class="prop-card">
+        <div class="prop-label">Crystal System</div>
+        <div class="prop-value">Trigonal, hexagonal prisms</div>
+    </div>
+</div>
+
+<h3>The Death-Rebirth Cycle</h3>
+<div class="cycle-diagram">
+    <span class="cycle-step" style="background:#8b0000;color:#fff;">Cinnabar (HgS)</span>
+    <span class="cycle-arrow">&xrarr;</span>
+    <span class="cycle-step" style="background:var(--surface2);color:var(--fg);">Heat (580&deg;C)</span>
+    <span class="cycle-arrow">&xrarr;</span>
+    <span class="cycle-step" style="background:#a0a0a0;color:#000;">Mercury (Hg&deg;)</span>
+    <span class="cycle-arrow">&xrarr;</span>
+    <span class="cycle-step" style="background:var(--surface2);color:var(--fg);">+ Sulfur (S)</span>
+    <span class="cycle-arrow">&xrarr;</span>
+    <span class="cycle-step" style="background:#8b0000;color:#fff;">Cinnabar (HgS)</span>
+    <br><br>
+    <span style="color:#8b949e;font-size:0.8rem;">This reversible transformation IS the Philosopher's Stone concept.<br>
+    A substance that "dies" (loses solid form) and is "reborn" (regains it) &mdash; proof that matter could be perfected.</span>
+</div>
+
+<div class="formula">
+    HgS &xrarr;<sup>&Delta;(580&deg;C)</sup> Hg(l) + S(g)<br>
+    Hg(l) + S(s) &xrarr; HgS(s)<br><br>
+    The cycle is fully reversible. No other common material exhibited this behavior to pre-modern observers.
+</div>
+
+<h3>Physical Properties That Seemed Magical</h3>
+<div class="prop-grid">
+    <div class="prop-card">
+        <div class="prop-label">State</div>
+        <div class="prop-value">Only metal liquid at room temperature. Range: -39&deg;C to 357&deg;C</div>
+    </div>
+    <div class="prop-card">
+        <div class="prop-label">Density</div>
+        <div class="prop-value">13.5 g/cm&sup3; &mdash; iron floats on mercury</div>
+    </div>
+    <div class="prop-card">
+        <div class="prop-label">Surface Tension</div>
+        <div class="prop-value">485 mN/m &mdash; highest of any liquid. Perfect spherical droplets</div>
+    </div>
+    <div class="prop-card">
+        <div class="prop-label">Amalgamation</div>
+        <div class="prop-value">Dissolves Au and Ag on contact &mdash; appeared to "eat" noble metals</div>
+    </div>
+    <div class="prop-card">
+        <div class="prop-label">Reflectivity</div>
+        <div class="prop-value">Mirror-like surface. Used for silvering glass since antiquity</div>
+    </div>
+    <div class="prop-card">
+        <div class="prop-label">Vapor</div>
+        <div class="prop-value">Invisible but potent &mdash; seemed like a "spirit" leaving the body</div>
+    </div>
+</div>
+
+<h3>Chinese Alchemy (煉丹術)</h3>
+<div class="formula">
+    <strong>朱砂</strong> (zh&#363;sh&#257;, cinnabar) &mdash; central to all Chinese alchemical practice.<br><br>
+    &bull; Emperor Qin Sh&iacute; Hu&aacute;ng's tomb (210 BCE): allegedly contains rivers of mercury, simulating the geography of China. Modern probes confirm anomalous Hg concentrations in surrounding soil.<br>
+    &bull; Daoist elixirs: 丹 (d&#257;n) &mdash; the word for "elixir" literally contains the radical for cinnabar (丹 = cinnabar in a furnace).<br>
+    &bull; Gě H&oacute;ng (葛洪, 283&ndash;343 CE), <em>Baop&#468;z&#464;</em>: "Gold and cinnabar, because they endure fire without being consumed, can make men immortal."<br>
+    &bull; S&#363;n S&#299;mi&#462;o (孫思邈, 581&ndash;682 CE): documented mercury poisoning symptoms while still recommending cinnabar elixirs.
+</div>
+
+<h3>Indian Alchemy (Rasa Sh&#257;stra)</h3>
+<div class="formula">
+    <strong>पारद</strong> (p&#257;rada) = mercury = "the semen of Shiva"<br><br>
+    &bull; Purification: 18 stages of <em>shodhana</em> (purification processes involving herbs, acids, and heat).<br>
+    &bull; When "killed" (m&#257;rita &mdash; combined with sulfur to form HgS): becomes medicine.<br>
+    &bull; When "alive" (liquid): it is poison.<br>
+    &bull; The P&#257;rada-Sa&#7747;hit&#257; describes mercury as the seed from which all metals grow.<br>
+    &bull; Rasa-Siddhi (mercury mastery) = prerequisite for Dh&#257;tu-V&#257;da (transmutation) = prerequisite for Deha-V&#257;da (bodily immortality).
+</div>
+
+<h3>Islamic Alchemy (al-K&#299;miy&#257;&#702;)</h3>
+<div class="formula">
+    <strong>J&#257;bir ibn Hayy&#257;n</strong> (c. 721&ndash;815 CE): The Mercury-Sulfur Theory<br><br>
+    All metals are composed of two principles:<br>
+    &bull; <strong>Mercury</strong> (al-zi&#702;baq) = the metallic, fusible, volatile principle<br>
+    &bull; <strong>Sulfur</strong> (al-kibr&#299;t) = the combustible, coloring principle<br><br>
+    Gold = mercury + sulfur in perfect purity and balance.<br>
+    Lead = mercury + sulfur in impure, excess-sulfur state.<br>
+    Transmutation = purifying and rebalancing the proportions.<br><br>
+    This framework dominated European alchemy for 700 years (via Latin translations of J&#257;bir as "Geber").
+</div>
+
+<h3>Toxicology</h3>
+<div class="uncertainty">
+    <strong>The supreme irony:</strong> the "elixir of immortality" is a cumulative neurotoxin.<br><br>
+    &bull; Bioaccumulates in brain, kidneys, liver<br>
+    &bull; Crosses the blood-brain barrier<br>
+    &bull; Organic mercury (methylmercury, CH&#8323;Hg&plus;) is ~100x more toxic than elemental Hg&deg;<br>
+    &bull; Symptoms: tremors, madness ("mad as a hatter"), erethism, kidney failure, death<br>
+    &bull; At least 6 Chinese emperors died from mercury/cinnabar elixirs<br>
+    &bull; LD50 (methylmercury, oral): ~20&ndash;60 mg/kg
+</div>
+</div>
+
+
+<!-- ═══════════════════════════════════════════════════════════════════════════ -->
+<h2 id="gold">2. Gold (Au) &mdash; 金 / सुवर्ण</h2>
+<!-- ═══════════════════════════════════════════════════════════════════════════ -->
+
+<div class="element-section">
+<div class="element-header">
+    <span class="element-symbol">Au</span>
+    <span class="element-names">Aurum &middot; 金 (j&#299;n) &middot; सुवर्ण (suvar&#7751;a) &middot; ذهب (dhahab)</span>
+</div>
+
+<p>Gold is not the goal of alchemy because it is pretty. It is the goal because it does not decay. In a world where everything oxidizes, corrodes, rots, and returns to dust &mdash; gold remains. This is why it symbolized immortality. The alchemical project: transmute base metals to gold = transmute the mortal body to the immortal.</p>
+
+<div class="prop-grid">
+    <div class="prop-card">
+        <div class="prop-label">Why "Perfect"</div>
+        <div class="prop-value">Doesn't oxidize. Doesn't tarnish. Doesn't corrode. Resists all single acids.</div>
+    </div>
+    <div class="prop-card">
+        <div class="prop-label">Dissolved Only By</div>
+        <div class="prop-value">Aqua regia (HCl + HNO&#8323;), mercury, cyanide solutions, chlorine gas</div>
+    </div>
+    <div class="prop-card">
+        <div class="prop-label">Malleability</div>
+        <div class="prop-value">1 oz &rarr; 300 ft&sup2; gold leaf (0.1 &mu;m thick &mdash; translucent, transmits green light)</div>
+    </div>
+    <div class="prop-card">
+        <div class="prop-label">Ductility</div>
+        <div class="prop-value">1 oz &rarr; 50 miles of wire (5 &mu;m diameter)</div>
+    </div>
+    <div class="prop-card">
+        <div class="prop-label">Density</div>
+        <div class="prop-value">19.3 g/cm&sup3;</div>
+    </div>
+    <div class="prop-card">
+        <div class="prop-label">Electron Config</div>
+        <div class="prop-value">[Xe] 4f&sup1;&sup4; 5d&sup1;&deg; 6s&sup1; &mdash; relativistic contraction of 6s orbital causes color</div>
+    </div>
+</div>
+
+<h3>Aurum Potabile (Drinkable Gold)</h3>
+<div class="formula">
+    Colloidal gold suspended in solution &mdash; consumed as medicine since antiquity.<br><br>
+    &bull; Actually not very toxic: gold is biologically inert (Au&deg; passes through the body).<br>
+    &bull; Paracelsus (1493&ndash;1541): prescribed aurum potabile for "falling sickness" and syphilis.<br>
+    &bull; Modern medicine: gold nanoparticles used in cancer therapy (photothermal ablation), rheumatoid arthritis treatment (auranofin), and diagnostic imaging.<br>
+    &bull; Gold compounds (Au&sup1;&plus;, Au&sup3;&plus;) can be toxic &mdash; but elemental gold is safe to eat.
+</div>
+
+<h3>The Alchemical Logic</h3>
+<div class="formula">
+    Base metal (corrodes, imperfect) &xrarr; <em>Opus Magnum</em> &xrarr; Gold (eternal, perfect)<br>
+    Mortal body (decays, sickens) &xrarr; <em>Elixir</em> &xrarr; Immortal body (undying)<br><br>
+    These are not metaphors. Alchemists genuinely believed the same process that perfects lead into gold could perfect flesh into something deathless.
+</div>
+</div>
+
+
+<!-- ═══════════════════════════════════════════════════════════════════════════ -->
+<h2 id="sulfur">3. Sulfur (S) &mdash; 硫黄 / गन्धक</h2>
+<!-- ═══════════════════════════════════════════════════════════════════════════ -->
+
+<div class="element-section">
+<div class="element-header">
+    <span class="element-symbol">S</span>
+    <span class="element-names">Sulphur &middot; Brimstone &middot; 硫黄 (li&uacute;hu&aacute;ng) &middot; गन्धक (gandhaka) &middot; الكبريت (al-kibr&#299;t)</span>
+</div>
+
+<p>The "masculine" principle in Islamic and European alchemy (reversed in Chinese tradition, where sulfur is yin to mercury's yang). Burns with an eerie blue flame. The smell of brimstone = the smell of transformation itself.</p>
+
+<div class="prop-grid">
+    <div class="prop-card">
+        <div class="prop-label">Role in Jabir's Theory</div>
+        <div class="prop-value">The combustible principle. Sulfur + Mercury in varying ratios = all metals</div>
+    </div>
+    <div class="prop-card">
+        <div class="prop-label">Key Reaction</div>
+        <div class="prop-value">Hg + S &rarr; HgS (completes the death-rebirth cycle)</div>
+    </div>
+    <div class="prop-card">
+        <div class="prop-label">Combustion</div>
+        <div class="prop-value">Burns blue: S + O&#8322; &rarr; SO&#8322; (brimstone smell)</div>
+    </div>
+    <div class="prop-card">
+        <div class="prop-label">Allotropes</div>
+        <div class="prop-value">S&#8328; (orthorhombic), S&#8322; (gas), plastic sulfur (amorphous chains)</div>
+    </div>
+    <div class="prop-card">
+        <div class="prop-label">Melting Point</div>
+        <div class="prop-value">115&deg;C &mdash; low enough to melt over a wood fire</div>
+    </div>
+    <div class="prop-card">
+        <div class="prop-label">Symbolism</div>
+        <div class="prop-value">Fire, hell, purification, the active/transforming agent</div>
+    </div>
+</div>
+
+<div class="formula">
+    <strong>J&#257;bir's framework:</strong><br>
+    Gold = Hg(pure) + S(pure, minimal)<br>
+    Silver = Hg(pure) + S(impure, minimal)<br>
+    Copper = Hg(impure) + S(impure, moderate)<br>
+    Lead = Hg(impure) + S(impure, excess)<br>
+    Iron = Hg(impure) + S(impure, fixed)<br><br>
+    Transmutation goal: remove excess/impure sulfur, purify the mercury component.
+</div>
+</div>
+
+
+<!-- ═══════════════════════════════════════════════════════════════════════════ -->
+<h2 id="lead">4. Lead (Pb) &mdash; 鉛 / सीस</h2>
+<!-- ═══════════════════════════════════════════════════════════════════════════ -->
+
+<div class="element-section">
+<div class="element-header">
+    <span class="element-symbol">Pb</span>
+    <span class="element-names">Plumbum &middot; Saturn &middot; 鉛 (qi&#257;n) &middot; सीस (s&#299;sa)</span>
+</div>
+
+<p>The "base" metal &mdash; the starting point of transmutation. Heavy, dull, corrodible: everything gold is not. Lead symbolized the unredeemed state of matter (and of the human soul). The alchemist's task was to perfect lead into gold, as the spiritual practitioner perfects the self.</p>
+
+<div class="prop-grid">
+    <div class="prop-card">
+        <div class="prop-label">Density</div>
+        <div class="prop-value">11.3 g/cm&sup3; &mdash; heavy enough to feel "wrong" in the hand</div>
+    </div>
+    <div class="prop-card">
+        <div class="prop-label">Melting Point</div>
+        <div class="prop-value">327&deg;C &mdash; low, easily worked over charcoal fire</div>
+    </div>
+    <div class="prop-card">
+        <div class="prop-label">Alchemical Symbol</div>
+        <div class="prop-value">&#x2644; Saturn &mdash; heaviness, time, death, the prima materia</div>
+    </div>
+    <div class="prop-card">
+        <div class="prop-label">Atomic Proximity to Gold</div>
+        <div class="prop-value">Pb: Z=82, Au: Z=79. Only 3 protons apart &mdash; tantalizingly close</div>
+    </div>
+</div>
+
+<h3>Roman Use and Toxicology</h3>
+<div class="formula">
+    &bull; <strong>Ceruse</strong> (2PbCO&#8323;&middot;Pb(OH)&#8322;): white lead face powder. Used from Egypt through 18th-century Europe.<br>
+    &bull; <strong>Sugar of Lead</strong> (Pb(CH&#8323;COO)&#8322;): lead acetate. Sweet taste. Romans used as wine sweetener (defrutum/sapa in lead vessels).<br>
+    &bull; <strong>Plumbum &rarr; plumbing</strong>: Roman aqueducts and pipes. Elite water supply was lead-contaminated.<br>
+    &bull; <strong>Hypothesis</strong>: chronic lead poisoning may have contributed to cognitive decline among Roman elite &mdash; infertility, gout, irritability, "saturnine" temperament.<br>
+    &bull; <strong>Modern LD50</strong>: chronic exposure at &gt;5 &mu;g/dL blood level causes developmental damage in children.
+</div>
+</div>
+
+
+<!-- ═══════════════════════════════════════════════════════════════════════════ -->
+<h2 id="arsenic">5. Arsenic (As) &mdash; 砒霜 / सोमल</h2>
+<!-- ═══════════════════════════════════════════════════════════════════════════ -->
+
+<div class="element-section">
+<div class="element-header">
+    <span class="element-symbol">As</span>
+    <span class="element-names">Arsenikon &middot; 砒霜 (p&#299;shu&#257;ng) &middot; सोमल (somala)</span>
+</div>
+
+<p>White arsenic (As&#8322;O&#8323;) &mdash; the "inheritance powder." Odorless, tasteless, water-soluble. Perfect for undetectable poisoning. But in tiny doses: medicine. The boundary between remedy and poison is concentration.</p>
+
+<div class="prop-grid">
+    <div class="prop-card">
+        <div class="prop-label">White Arsenic</div>
+        <div class="prop-value">As&#8322;O&#8323; &mdash; "inheritance powder." LD50: ~15 mg/kg</div>
+    </div>
+    <div class="prop-card">
+        <div class="prop-label">Realgar</div>
+        <div class="prop-value">As&#8324;S&#8324; (雄黄, xi&oacute;nghu&aacute;ng) &mdash; red-orange. Used in Dragon Boat Festival wine</div>
+    </div>
+    <div class="prop-card">
+        <div class="prop-label">Orpiment</div>
+        <div class="prop-value">As&#8322;S&#8323; (雌黄, c&iacute;hu&aacute;ng) &mdash; bright yellow. Used as gold-colored pigment</div>
+    </div>
+    <div class="prop-card">
+        <div class="prop-label">Chinese Medicine</div>
+        <div class="prop-value">Pi Shuang in micro-doses. The dose makes the poison (Paracelsus principle)</div>
+    </div>
+    <div class="prop-card">
+        <div class="prop-label">Modern Use</div>
+        <div class="prop-value">As&#8322;O&#8323; treats acute promyelocytic leukemia (APL) &mdash; FDA approved</div>
+    </div>
+    <div class="prop-card">
+        <div class="prop-label">Detection</div>
+        <div class="prop-value">Marsh test (1836) finally made arsenic poisoning detectable</div>
+    </div>
+</div>
+
+<div class="formula">
+    <strong>Realgar in Chinese culture:</strong><br>
+    &bull; Dragon Boat Festival (端午節): realgar wine (雄黄酒) consumed and sprinkled to repel insects and "evil spirits"<br>
+    &bull; In <em>Legend of the White Snake</em> (白蛇傳): realgar wine forces the snake demon to reveal her true form<br>
+    &bull; Used as insecticide and in fireworks (burns with blue-white flame)
+</div>
+</div>
+
+
+<!-- ═══════════════════════════════════════════════════════════════════════════ -->
+<h2 id="antimony">6. Antimony (Sb) &mdash; 銻 / अञ्जन</h2>
+<!-- ═══════════════════════════════════════════════════════════════════════════ -->
+
+<div class="element-section">
+<div class="element-header">
+    <span class="element-symbol">Sb</span>
+    <span class="element-names">Stibium &middot; 銻 (t&#299;) &middot; अञ्जन (a&ntilde;jana)</span>
+</div>
+
+<p>Known since antiquity as stibnite (Sb&#8322;S&#8323;) &mdash; the mineral used for Egyptian kohl eye cosmetic. The "Star of Antimony" (regulus) crystallizes with a star-shaped pattern on its surface, seemingly proving that metals possessed inner geometric perfection.</p>
+
+<div class="prop-grid">
+    <div class="prop-card">
+        <div class="prop-label">Stibnite</div>
+        <div class="prop-value">Sb&#8322;S&#8323; &mdash; metallic grey needles. Egyptian kohl, cosmetic since 3100 BCE</div>
+    </div>
+    <div class="prop-card">
+        <div class="prop-label">Star of Antimony</div>
+        <div class="prop-value">Regulus: metallic Sb with star-shaped crystallization on cooling</div>
+    </div>
+    <div class="prop-card">
+        <div class="prop-label">Alchemical Name</div>
+        <div class="prop-value">"The Gray Wolf" &mdash; devours (dissolves) other metals</div>
+    </div>
+    <div class="prop-card">
+        <div class="prop-label">Key Property</div>
+        <div class="prop-value">Expands on freezing (like water). Seemed to defy normal material behavior</div>
+    </div>
+    <div class="prop-card">
+        <div class="prop-label">Toxicology</div>
+        <div class="prop-value">Emetic. "Perpetual pills" (Sb metal) induced vomiting, recovered and reused</div>
+    </div>
+    <div class="prop-card">
+        <div class="prop-label">Nicolas Flamel</div>
+        <div class="prop-value">Described antimony as the "gray wolf that devours the King" (purifies gold)</div>
+    </div>
+</div>
+
+<div class="formula">
+    <strong>The Star of Antimony (Regulus Antimonii Stellatus):</strong><br><br>
+    Stibnite (Sb&#8322;S&#8323;) + Iron (Fe) &xrarr; Sb&deg; (regulus) + FeS<br><br>
+    When the metallic antimony cools slowly, crystalline structures form radiating star patterns on the surface.
+    Isaac Newton devoted significant effort to producing the "star regulus" &mdash; he believed the geometric pattern proved antimony was a
+    "philosophical" substance capable of attracting celestial influences.
+</div>
+</div>
+
+
+<!-- ═══════════════════════════════════════════════════════════════════════════ -->
+<h2 id="phosphorus">7. Phosphorus (P) &mdash; 燐 / The Light-Bearer</h2>
+<!-- ═══════════════════════════════════════════════════════════════════════════ -->
+
+<div class="element-section">
+<div class="element-header">
+    <span class="element-symbol">P</span>
+    <span class="element-names">Phosphorus &middot; φωσφόρος (ph&#333;sph&oacute;ros, "light-bearer") &middot; 燐 (l&iacute;n)</span>
+</div>
+
+<p>The last great alchemical discovery before chemistry fully diverged. Discovered 1669 by Hennig Brand in Hamburg &mdash; by boiling and distilling human urine. It glows in the dark. It seemed to prove that the human body contained trapped light, fire, spirit.</p>
+
+<div class="prop-grid">
+    <div class="prop-card">
+        <div class="prop-label">Discovery</div>
+        <div class="prop-value">1669, Hennig Brand. ~12,000 liters of urine &rarr; a few ounces of P&#8324;</div>
+    </div>
+    <div class="prop-card">
+        <div class="prop-label">Glow</div>
+        <div class="prop-value">Chemiluminescence: P&#8324; + O&#8322; &rarr; P&#8324;O&#8321;&#8320; (slow oxidation emits green light)</div>
+    </div>
+    <div class="prop-card">
+        <div class="prop-label">Etymology</div>
+        <div class="prop-value">Greek φωσφόρος = "light-bearer" (also name for Venus as morning star)</div>
+    </div>
+    <div class="prop-card">
+        <div class="prop-label">White Phosphorus</div>
+        <div class="prop-value">P&#8324; tetrahedra. Spontaneously ignites in air. Waxy, translucent solid</div>
+    </div>
+    <div class="prop-card">
+        <div class="prop-label">Significance</div>
+        <div class="prop-value">Light extracted from the body &mdash; seemed to vindicate the "inner fire" concept</div>
+    </div>
+    <div class="prop-card">
+        <div class="prop-label">Toxicity</div>
+        <div class="prop-value">White P: LD50 ~1 mg/kg. "Phossy jaw" in matchstick workers (19th c.)</div>
+    </div>
+</div>
+
+<div class="formula">
+    <strong>Brand's process (1669):</strong><br><br>
+    Human urine (aged) &xrarr; evaporate to syrup &xrarr; heat strongly in retort &xrarr; white vapor condenses to waxy solid &xrarr; glows green in dark<br><br>
+    The actual chemistry: organic phosphates (from food) concentrate in urine as Na&#8322;HPO&#8324;, NaH&#8322;PO&#8324;. Pyrolysis reduces phosphate to elemental phosphorus.<br><br>
+    Brand kept it secret. Sold the recipe to Daniel Kraft, who demonstrated it across Europe. Leibniz saw it. Boyle independently rediscovered the process. The "cold fire" from human waste became a sensation &mdash; the last time alchemy produced genuine wonder before Lavoisier ended the era.
+</div>
+</div>
+
+
+<!-- ═══════════════════════════════════════════════════════════════════════════ -->
+<h2 id="table">8. Comparative Table</h2>
+<!-- ═══════════════════════════════════════════════════════════════════════════ -->
+
+<div class="data-table">
+<table>
+    <thead>
+        <tr>
+            <th>Element</th>
+            <th>Symbol</th>
+            <th>Alchemical Name</th>
+            <th>Source Material</th>
+            <th>Key Property</th>
+            <th>Chinese</th>
+            <th>Sanskrit</th>
+            <th>Toxicity</th>
+            <th>Modern Use</th>
+        </tr>
+    </thead>
+    <tbody>
+        <tr>
+            <td><strong>Mercury</strong></td>
+            <td>Hg</td>
+            <td>Quicksilver, Azoth</td>
+            <td>Cinnabar (HgS)</td>
+            <td>Liquid metal, amalgamation</td>
+            <td>水銀 / 朱砂</td>
+            <td>पारद</td>
+            <td style="color:var(--red);">Extreme (neurotoxin)</td>
+            <td>Thermometers (legacy), dental amalgam</td>
+        </tr>
+        <tr>
+            <td><strong>Gold</strong></td>
+            <td>Au</td>
+            <td>Sol, The King</td>
+            <td>Native gold (Au&deg;)</td>
+            <td>Inert, eternal, non-corroding</td>
+            <td>金</td>
+            <td>सुवर्ण</td>
+            <td style="color:var(--green);">Very low (bioinert)</td>
+            <td>Electronics, nanoparticle therapy</td>
+        </tr>
+        <tr>
+            <td><strong>Sulfur</strong></td>
+            <td>S</td>
+            <td>Brimstone</td>
+            <td>Native sulfur, volcanic</td>
+            <td>Burns blue, combines with Hg</td>
+            <td>硫黄</td>
+            <td>गन्धक</td>
+            <td style="color:var(--yellow);">Moderate (SO&#8322; toxic)</td>
+            <td>Sulfuric acid, vulcanization, fungicide</td>
+        </tr>
+        <tr>
+            <td><strong>Lead</strong></td>
+            <td>Pb</td>
+            <td>Saturn</td>
+            <td>Galena (PbS)</td>
+            <td>Heavy, soft, low melting</td>
+            <td>鉛</td>
+            <td>सीस</td>
+            <td style="color:var(--red);">High (cumulative neurotoxin)</td>
+            <td>Batteries, radiation shielding</td>
+        </tr>
+        <tr>
+            <td><strong>Arsenic</strong></td>
+            <td>As</td>
+            <td>Inheritance Powder</td>
+            <td>Realgar (As&#8324;S&#8324;), Orpiment (As&#8322;S&#8323;)</td>
+            <td>Odorless poison, color minerals</td>
+            <td>砒霜</td>
+            <td>सोमल</td>
+            <td style="color:var(--red);">Extreme (LD50 ~15 mg/kg)</td>
+            <td>Leukemia treatment (As&#8322;O&#8323;)</td>
+        </tr>
+        <tr>
+            <td><strong>Antimony</strong></td>
+            <td>Sb</td>
+            <td>The Gray Wolf</td>
+            <td>Stibnite (Sb&#8322;S&#8323;)</td>
+            <td>Star crystallization, emetic</td>
+            <td>銻</td>
+            <td>अञ्जन</td>
+            <td style="color:var(--yellow);">Moderate (emetic)</td>
+            <td>Flame retardants, alloys</td>
+        </tr>
+        <tr>
+            <td><strong>Phosphorus</strong></td>
+            <td>P</td>
+            <td>Light-Bearer</td>
+            <td>Urine (Na phosphates)</td>
+            <td>Glows in dark, spontaneous ignition</td>
+            <td>燐</td>
+            <td>&mdash;</td>
+            <td style="color:var(--red);">High (white P: LD50 ~1 mg/kg)</td>
+            <td>Fertilizer (phosphate), matches</td>
+        </tr>
+    </tbody>
+</table>
+</div>
+
+
+<!-- ═══════════════════════════════════════════════════════════════════════════ -->
+<h2 id="pattern">9. The Pattern</h2>
+<!-- ═══════════════════════════════════════════════════════════════════════════ -->
+
+<div class="formula">
+    <strong>Why these elements?</strong><br><br>
+    Elements chosen for alchemy share a common trait: they exhibit phase changes, color changes, or unusual physical properties that APPEAR to violate ordinary material behavior.<br><br>
+    &bull; <strong>Mercury</strong>: liquid metal &mdash; violates "solid = metal"<br>
+    &bull; <strong>Gold</strong>: doesn't corrode &mdash; violates entropy / universal decay<br>
+    &bull; <strong>Sulfur</strong>: burns and transforms color &mdash; violates permanence<br>
+    &bull; <strong>Lead</strong>: absurdly heavy and soft &mdash; violates expectations of "base" vs. "noble"<br>
+    &bull; <strong>Arsenic</strong>: invisible poison &mdash; violates "what you see is what you get"<br>
+    &bull; <strong>Antimony</strong>: expands on freezing, star crystals &mdash; violates normal thermal behavior<br>
+    &bull; <strong>Phosphorus</strong>: cold light from body &mdash; violates "fire requires fuel/heat"<br><br>
+    <strong>Conclusion:</strong> Alchemists were cataloguing anomalous material behavior. They were pre-chemists who lacked the atomic model to explain what they observed. Their "magical" substances are precisely those elements whose macroscopic behavior is non-obvious from first principles. The periodic table was implicit in their work &mdash; they simply didn't have the framework to formalize it.
+</div>
+
+<div class="uncertainty">
+    <strong>Uncertainty:</strong> The degree to which alchemical practice was "proto-scientific" vs. purely spiritual/symbolic varies enormously by tradition, period, and individual practitioner. Jabir's systematic experimentation looks very different from a Daoist immortality seeker's ritual consumption of cinnabar.<br>
+    <strong>Assumption:</strong> That alchemists were primarily motivated by observed material anomalies rather than purely inherited symbolism.<br>
+    <strong>Implication:</strong> If the assumption is wrong, then alchemy is better understood as religion/philosophy rather than proto-chemistry, and the "pattern" above is retrospective rationalization.
+</div>
+
+
+<!-- ═══════════════════════════════════════════════════════════════════════════ -->
+<h2 id="periodic">Alchemical Elements &mdash; Periodic Table Visualization</h2>
+<!-- ═══════════════════════════════════════════════════════════════════════════ -->
+
+<div class="plot-container">
+    <div class="plot-title">Periodic table subset: the seven alchemical elements with key properties</div>
+    <canvas id="periodicCanvas" width="900" height="520"></canvas>
+</div>
+
+<script>
+(function() {
+    const canvas = document.getElementById('periodicCanvas');
+    const ctx = canvas.getContext('2d');
+    const dpr = window.devicePixelRatio || 1;
+    canvas.width = 900 * dpr;
+    canvas.height = 520 * dpr;
+    canvas.style.width = '900px';
+    canvas.style.height = '520px';
+    ctx.scale(dpr, dpr);
+
+    const bg = '#0d1117';
+    const fg = '#c9d1d9';
+    const accent = '#58a6ff';
+    const border = '#30363d';
+    const surface = '#161b22';
+    const surface2 = '#21262d';
+    const green = '#3fb950';
+    const yellow = '#d29922';
+    const red = '#f85149';
+
+    // Element data
+    const elements = [
+        { sym: 'Hg', name: 'Mercury', z: 80, group: 12, period: 6, mass: 200.59,
+          color: '#a0c4ff', alch: 'Quicksilver / Azoth', prop: 'Liquid metal, 13.5 g/cm³',
+          chinese: '水银', toxicity: 'extreme' },
+        { sym: 'Au', name: 'Gold', z: 79, group: 11, period: 6, mass: 196.97,
+          color: '#ffd700', alch: 'Sol / The King', prop: 'Inert, eternal, 19.3 g/cm³',
+          chinese: '金', toxicity: 'low' },
+        { sym: 'S', name: 'Sulfur', z: 16, group: 16, period: 3, mass: 32.06,
+          color: '#e0af68', alch: 'Brimstone', prop: 'Burns blue, combines w/ Hg',
+          chinese: '硫黄', toxicity: 'moderate' },
+        { sym: 'Pb', name: 'Lead', z: 82, group: 14, period: 6, mass: 207.2,
+          color: '#8b949e', alch: 'Saturn', prop: 'Heavy, soft, base metal',
+          chinese: '鉛', toxicity: 'high' },
+        { sym: 'As', name: 'Arsenic', z: 33, group: 15, period: 4, mass: 74.92,
+          color: '#bb9af7', alch: 'Inheritance Powder', prop: 'Odorless poison',
+          chinese: '砒霜', toxicity: 'extreme' },
+        { sym: 'Sb', name: 'Antimony', z: 51, group: 15, period: 5, mass: 121.76,
+          color: '#73daca', alch: 'The Gray Wolf', prop: 'Star crystallization',
+          chinese: '銻', toxicity: 'moderate' },
+        { sym: 'P', name: 'Phosphorus', z: 15, group: 15, period: 3, mass: 30.97,
+          color: '#9ece6a', alch: 'Light-Bearer', prop: 'Glows in dark',
+          chinese: '燐', toxicity: 'high' }
+    ];
+
+    // Draw background
+    ctx.fillStyle = bg;
+    ctx.fillRect(0, 0, 900, 520);
+
+    // Title
+    ctx.fillStyle = accent;
+    ctx.font = 'bold 14px "SF Mono", "Fira Code", monospace';
+    ctx.fillText('ALCHEMICAL ELEMENTS IN THE PERIODIC TABLE', 20, 30);
+
+    // Draw a simplified periodic table grid (outlines only for context)
+    const cellW = 44;
+    const cellH = 52;
+    const offsetX = 20;
+    const offsetY = 50;
+
+    // Draw faint grid for periods 1-6, groups 1-18
+    ctx.strokeStyle = border;
+    ctx.lineWidth = 0.5;
+    for (let p = 1; p <= 6; p++) {
+        for (let g = 1; g <= 18; g++) {
+            // Skip gaps in periodic table
+            if (p === 1 && g > 2 && g < 18) continue;
+            if (p === 2 && g > 2 && g < 13) continue;
+            if (p === 3 && g > 2 && g < 13) continue;
+            const x = offsetX + (g - 1) * cellW;
+            const y = offsetY + (p - 1) * cellH;
+            ctx.strokeRect(x, y, cellW, cellH);
+        }
+    }
+
+    // Period/group labels
+    ctx.fillStyle = '#484f58';
+    ctx.font = '10px "SF Mono", monospace';
+    for (let p = 1; p <= 6; p++) {
+        ctx.fillText(p.toString(), 6, offsetY + (p - 1) * cellH + 30);
+    }
+    for (let g = 1; g <= 18; g++) {
+        ctx.fillText(g.toString(), offsetX + (g - 1) * cellW + 16, offsetY - 5);
+    }
+
+    // Draw alchemical elements highlighted
+    elements.forEach(el => {
+        const x = offsetX + (el.group - 1) * cellW;
+        const y = offsetY + (el.period - 1) * cellH;
+
+        // Glow effect
+        ctx.shadowColor = el.color;
+        ctx.shadowBlur = 12;
+        ctx.fillStyle = el.color + '33';
+        ctx.fillRect(x, y, cellW, cellH);
+        ctx.shadowBlur = 0;
+
+        // Border
+        ctx.strokeStyle = el.color;
+        ctx.lineWidth = 2;
+        ctx.strokeRect(x, y, cellW, cellH);
+
+        // Atomic number
+        ctx.fillStyle = '#8b949e';
+        ctx.font = '9px "SF Mono", monospace';
+        ctx.fillText(el.z.toString(), x + 3, y + 11);
+
+        // Symbol
+        ctx.fillStyle = el.color;
+        ctx.font = 'bold 18px "SF Mono", monospace';
+        ctx.fillText(el.sym, x + 8, y + 32);
+
+        // Mass
+        ctx.fillStyle = '#6e7681';
+        ctx.font = '8px "SF Mono", monospace';
+        ctx.fillText(el.mass.toFixed(1), x + 4, y + 46);
+    });
+
+    // Legend / detail cards on the right side
+    const legendX = 500;
+    const legendY = 60;
+    const cardH = 60;
+    const cardW = 380;
+
+    ctx.fillStyle = accent;
+    ctx.font = 'bold 11px "SF Mono", monospace';
+    ctx.fillText('ELEMENT DETAILS', legendX, legendY - 10);
+
+    elements.forEach((el, i) => {
+        const y = legendY + i * (cardH + 6);
+        // Card background
+        ctx.fillStyle = surface;
+        ctx.fillRect(legendX, y, cardW, cardH);
+        ctx.strokeStyle = el.color + '88';
+        ctx.lineWidth = 1;
+        ctx.strokeRect(legendX, y, cardW, cardH);
+
+        // Left color bar
+        ctx.fillStyle = el.color;
+        ctx.fillRect(legendX, y, 4, cardH);
+
+        // Symbol
+        ctx.fillStyle = el.color;
+        ctx.font = 'bold 16px "SF Mono", monospace';
+        ctx.fillText(el.sym, legendX + 12, y + 20);
+
+        // Name + Z
+        ctx.fillStyle = fg;
+        ctx.font = '11px "SF Mono", monospace';
+        ctx.fillText(el.name + ' (Z=' + el.z + ')', legendX + 50, y + 16);
+
+        // Alchemical name
+        ctx.fillStyle = '#8b949e';
+        ctx.font = '10px "SF Mono", monospace';
+        ctx.fillText(el.alch, legendX + 50, y + 30);
+
+        // Property
+        ctx.fillStyle = '#6e7681';
+        ctx.font = '9px "SF Mono", monospace';
+        ctx.fillText(el.prop, legendX + 50, y + 43);
+
+        // Chinese name
+        ctx.fillStyle = el.color;
+        ctx.font = '12px "SF Mono", monospace';
+        ctx.fillText(el.chinese, legendX + 330, y + 20);
+
+        // Toxicity indicator
+        let toxColor = green;
+        if (el.toxicity === 'moderate') toxColor = yellow;
+        if (el.toxicity === 'high') toxColor = '#ff9e64';
+        if (el.toxicity === 'extreme') toxColor = red;
+        ctx.fillStyle = toxColor;
+        ctx.font = '8px "SF Mono", monospace';
+        ctx.fillText('● ' + el.toxicity, legendX + 320, y + 52);
+    });
+
+    // Draw connecting lines from periodic table positions to legend cards
+    ctx.setLineDash([3, 3]);
+    ctx.lineWidth = 0.7;
+    elements.forEach((el, i) => {
+        const fromX = offsetX + (el.group - 1) * cellW + cellW;
+        const fromY = offsetY + (el.period - 1) * cellH + cellH / 2;
+        const toX = legendX;
+        const toY = legendY + i * (cardH + 6) + cardH / 2;
+
+        ctx.strokeStyle = el.color + '44';
+        ctx.beginPath();
+        ctx.moveTo(fromX, fromY);
+        ctx.bezierCurveTo(fromX + 60, fromY, toX - 60, toY, toX, toY);
+        ctx.stroke();
+    });
+    ctx.setLineDash([]);
+
+    // Bottom annotation
+    ctx.fillStyle = '#8b949e';
+    ctx.font = '10px "SF Mono", monospace';
+    ctx.fillText('Elements selected for alchemy: anomalous macroscopic behavior that appeared to violate ordinary material rules.', 20, 500);
+
+})();
+</script>
+
+
+<footer>
+    Generated 2026-05-25 &middot; Elements of Alchemy &middot; 7 substances across 3 traditions (Chinese, Indian, Islamic/European)<br>
+    <a href="index.html">Overview</a> &middot; <a href="longevity.html">Longevity</a> &middot;
+    <a href="definitions.html">Definitions</a> &middot;
+    <a href="https://github.com/jthorvaldur/positions">Source Code</a>
+</footer>
+
+</body>
+</html>
