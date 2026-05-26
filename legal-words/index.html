@@ -1,0 +1,280 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Legal Leverage Words — Dominance Scoring Across Jurisdictions</title>
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body { background: #0a0e1a; color: #c8d0e0; font-family: 'SF Mono', 'Fira Code', monospace; font-size: 13px; }
+h1 { font-family: 'Inter', system-ui, sans-serif; font-size: 22px; color: #e8eaf0; margin: 30px 30px 5px; font-weight: 600; }
+.subtitle { color: #6b7394; margin: 0 30px 20px; font-size: 13px; }
+.formula { background: #12162a; border: 1px solid #1e2540; border-radius: 8px; padding: 16px 20px; margin: 0 30px 20px; font-size: 12px; color: #8b93b0; }
+.formula code { color: #7eb8ff; }
+.formula .weight { color: #f0a040; }
+
+.controls { display: flex; gap: 12px; margin: 0 30px 20px; flex-wrap: wrap; }
+.controls button { background: #1a1f35; border: 1px solid #2a3050; color: #8b93b0; padding: 6px 14px; border-radius: 5px; cursor: pointer; font-size: 12px; font-family: inherit; transition: all 0.2s; }
+.controls button:hover, .controls button.active { background: #252b48; color: #e8eaf0; border-color: #4a5580; }
+.controls button.active { border-color: #7eb8ff; color: #7eb8ff; }
+
+.viz { margin: 0 30px; }
+
+.word-row { display: grid; grid-template-columns: 30px 180px 70px 1fr 80px 120px; align-items: center; padding: 8px 12px; border-bottom: 1px solid #141830; transition: background 0.15s; cursor: pointer; }
+.word-row:hover { background: #141830; }
+.word-row .rank { color: #4a5580; font-size: 11px; }
+.word-row .word { font-weight: 600; }
+.word-row .score { font-weight: 600; text-align: right; }
+.word-row .bar-container { padding: 0 12px; }
+.word-row .bar { height: 18px; border-radius: 3px; position: relative; transition: width 0.5s ease; }
+.word-row .bar-inner { height: 100%; border-radius: 3px; display: flex; }
+.word-row .bar-segment { height: 100%; opacity: 0.85; }
+.word-row .jur { font-size: 11px; color: #6b7394; text-align: center; }
+.word-row .tier { font-size: 10px; padding: 2px 8px; border-radius: 3px; text-align: center; font-weight: 600; }
+.tier-nuclear { background: #3d1515; color: #ff6b6b; }
+.tier-high { background: #2d2a15; color: #ffd43b; }
+.tier-medium { background: #152d1a; color: #69db7c; }
+.tier-low { background: #15202d; color: #74c0fc; }
+
+.detail { display: none; grid-column: 1 / -1; background: #0f1325; padding: 16px 20px; border-radius: 6px; margin: 4px 0 8px; }
+.detail.open { display: block; }
+.detail .stat-grid { display: grid; grid-template-columns: repeat(6, 1fr); gap: 10px; margin-bottom: 12px; }
+.detail .stat { text-align: center; }
+.detail .stat-label { font-size: 10px; color: #4a5580; text-transform: uppercase; letter-spacing: 0.05em; }
+.detail .stat-value { font-size: 16px; font-weight: 600; margin-top: 2px; }
+.detail .stat-bar { height: 3px; background: #1a1f35; border-radius: 2px; margin-top: 4px; }
+.detail .stat-bar-fill { height: 100%; border-radius: 2px; }
+.detail .notes { color: #8b93b0; font-size: 12px; margin-top: 8px; line-height: 1.5; }
+.detail .statutes { color: #6b7394; font-size: 11px; margin-top: 6px; }
+.detail .statutes span { color: #7eb8ff; }
+
+.legend { display: flex; gap: 16px; margin: 20px 30px; flex-wrap: wrap; }
+.legend-item { display: flex; align-items: center; gap: 6px; font-size: 11px; color: #6b7394; }
+.legend-swatch { width: 12px; height: 12px; border-radius: 2px; }
+
+.stats-bar { display: flex; gap: 30px; margin: 20px 30px; padding: 16px 20px; background: #12162a; border-radius: 8px; border: 1px solid #1e2540; }
+.stats-bar .stat { text-align: center; }
+.stats-bar .stat-num { font-size: 24px; font-weight: 700; color: #e8eaf0; }
+.stats-bar .stat-label { font-size: 11px; color: #6b7394; margin-top: 2px; }
+
+.compute { margin: 30px; padding: 20px; background: #12162a; border: 1px solid #1e2540; border-radius: 8px; }
+.compute h3 { color: #e8eaf0; font-size: 14px; margin-bottom: 10px; font-family: 'Inter', system-ui, sans-serif; }
+.compute table { width: 100%; border-collapse: collapse; font-size: 12px; }
+.compute td, .compute th { padding: 6px 10px; border-bottom: 1px solid #1a1f35; text-align: left; }
+.compute th { color: #6b7394; font-weight: 500; }
+
+footer { margin: 30px; padding-top: 20px; border-top: 1px solid #1a1f35; color: #4a5580; font-size: 11px; }
+</style>
+</head>
+<body>
+
+<h1>Legal Leverage Words</h1>
+<p class="subtitle">Dominance scoring across jurisdictions — 48 words, 4 jurisdictions, 6 scoring axes</p>
+
+<div class="stats-bar">
+<div class="stat"><div class="stat-num" id="total-words">48</div><div class="stat-label">Words Scored</div></div>
+<div class="stat"><div class="stat-num" id="total-jur">4</div><div class="stat-label">Jurisdictions</div></div>
+<div class="stat"><div class="stat-num">12</div><div class="stat-label">Nuclear Tier</div></div>
+<div class="stat"><div class="stat-num">26</div><div class="stat-label">High Tier</div></div>
+<div class="stat"><div class="stat-num">4</div><div class="stat-label">Foreign (Gap)</div></div>
+</div>
+
+<div class="formula">
+<code>leverage</code> = (<code>trigger_breadth</code> x <span class="weight">0.20</span>) + (<code>effect_magnitude</code> x <span class="weight">0.25</span>) + (<code>statutory_depth</code> x <span class="weight">0.20</span>) + (<code>cross_jurisdiction</code> x <span class="weight">0.10</span>) + (<code>cognitive_friction</code> x <span class="weight">0.15</span>) + (<code>asymmetry</code> x <span class="weight">0.10</span>)
+</div>
+
+<div class="legend">
+<div class="legend-item"><div class="legend-swatch" style="background:#4dabf7"></div> Trigger Breadth</div>
+<div class="legend-item"><div class="legend-swatch" style="background:#ff6b6b"></div> Effect Magnitude</div>
+<div class="legend-item"><div class="legend-swatch" style="background:#ffd43b"></div> Statutory Depth</div>
+<div class="legend-item"><div class="legend-swatch" style="background:#69db7c"></div> Cross-Jurisdiction</div>
+<div class="legend-item"><div class="legend-swatch" style="background:#cc5de8"></div> Cognitive Friction</div>
+<div class="legend-item"><div class="legend-swatch" style="background:#ff922b"></div> Asymmetry</div>
+</div>
+
+<div class="controls">
+<button class="active" onclick="filterTier('all', this)">All (48)</button>
+<button onclick="filterTier('nuclear', this)">Nuclear (12)</button>
+<button onclick="filterTier('high', this)">High (26)</button>
+<button onclick="filterTier('medium', this)">Medium (4)</button>
+<button onclick="filterTier('foreign', this)">Foreign (6)</button>
+<button onclick="sortBy('score', this)">By Score</button>
+<button onclick="sortBy('friction', this)">By Friction</button>
+<button onclick="sortBy('effect', this)">By Effect</button>
+</div>
+
+<div class="viz" id="viz"></div>
+
+<div class="compute">
+<h3>Compute Estimate — Scaling to All 50 States + 20 Countries</h3>
+<table>
+<tr><th>Task</th><th>Items</th><th>Tokens/Item</th><th>Total Tokens</th><th>Cost (Claude)</th><th>Time</th></tr>
+<tr><td>50 US states — statutory words</td><td>50 states x ~30 words</td><td>~2K</td><td>~3M</td><td>~$10</td><td>~2 hours</td></tr>
+<tr><td>50 US states — concept mapping</td><td>50 states x ~15 concepts</td><td>~1K</td><td>~750K</td><td>~$3</td><td>~1 hour</td></tr>
+<tr><td>20 countries — statutory words</td><td>20 x ~40 words</td><td>~3K</td><td>~2.4M</td><td>~$8</td><td>~3 hours</td></tr>
+<tr><td>20 countries — missing word analysis</td><td>20 x ~10 gaps</td><td>~2K</td><td>~400K</td><td>~$1.50</td><td>~30 min</td></tr>
+<tr><td>Leverage scoring (all words)</td><td>~2,500 words</td><td>~500</td><td>~1.25M</td><td>~$4</td><td>~1 hour</td></tr>
+<tr><td>Embedding all entries</td><td>~3,000 chunks</td><td>~300</td><td>~900K</td><td>~$0 (local BGE)</td><td>~5 min</td></tr>
+<tr><td style="font-weight:600">Total</td><td></td><td></td><td style="font-weight:600">~8.7M tokens</td><td style="font-weight:600">~$27</td><td style="font-weight:600">~8 hours</td></tr>
+</table>
+<p style="color:#6b7394; margin-top:12px; font-size:11px;">
+Using Claude Sonnet for extraction + local BGE-768 for embeddings. Could run on a single Vast.ai A10 (~$0.30/hr) for the embedding pass. The statutory extraction is the bottleneck — each state requires reading the family code, supreme court rules, and local rules. 20 countries adds translation complexity but the IMDMA-equivalent statutes are well-documented in English for major jurisdictions (UK, Canada, Australia, Germany, France, Netherlands, Sweden, Japan).
+</p>
+</div>
+
+<footer>
+CaseLedger Research — Legal Leverage Word Index<br>
+Data: 48 words scored across IL, TX, FL, US-Federal + 6 foreign-language gap markers<br>
+Scoring: trigger_breadth(0.20) + effect_magnitude(0.25) + statutory_depth(0.20) + cross_jurisdiction(0.10) + cognitive_friction(0.15) + asymmetry(0.10)
+</footer>
+
+<script>
+const data = [
+{"word":"sanctions","score":0.915,"tb":0.9,"em":1.0,"sd":1.0,"cj":0.95,"cf":0.6,"as":1.0,"jur":"ALL","statutes":"IL Rule 137; TX TRCP 13; CA CCP §128.5; NY 22 NYCRR §130; Fed FRCP 11","notes":"THE word that makes the attorney pay. Universal across all jurisdictions. Changes incentive structure.","status":"deployed"},
+{"word":"perjury","score":0.893,"tb":0.6,"em":1.0,"sd":1.0,"cj":1.0,"cf":0.85,"as":0.95,"jur":"ALL","statutes":"IL 735 ILCS 5/1-109; TX Penal Code §37.02; Fed 18 USC §1621","notes":"Nuclear — makes false sworn statement a felony. Universal."},
+{"word":"fraud","score":0.873,"tb":0.8,"em":0.95,"sd":0.9,"cj":1.0,"cf":0.7,"as":0.9,"jur":"ALL","statutes":"Common law; IL 720 ILCS 5/17-1; TX Penal Code §32.46; Fed 18 USC §1341","notes":"Crosses civil/criminal boundary. Treble damages in many states."},
+{"word":"contempt","score":0.865,"tb":0.85,"em":1.0,"sd":1.0,"cj":1.0,"cf":0.5,"as":0.7,"jur":"ALL","statutes":"IL 750 ILCS 5/607.5; TX Tex. Gov. Code §21.002; Fed 18 USC §401","notes":"Unlocks incarceration. Available everywhere. Highest-stakes single word."},
+{"word":"willful","score":0.845,"tb":0.9,"em":0.9,"sd":1.0,"cj":1.0,"cf":0.4,"as":0.8,"jur":"ALL","statutes":"Turner v. Rogers; IL 750 ILCS 5/505; TX Tex. Fam. Code §157","notes":"Gatekeeping word for contempt. If conduct isn't willful, no contempt."},
+{"word":"unconscionable","score":0.813,"tb":0.65,"em":0.85,"sd":1.0,"cj":0.8,"cf":0.7,"as":0.85,"jur":"ALL","statutes":"TX DTPA §17.50; UCC §2-302; IL 815 ILCS 505/2","notes":"Treble damages in consumer contexts. High friction. Contract AND statutory."},
+{"word":"frivolous","score":0.780,"tb":0.8,"em":0.7,"sd":1.0,"cj":0.95,"cf":0.5,"as":0.75,"jur":"ALL","statutes":"IL Rule 137; Fed FRCP 11; NY 22 NYCRR §130; TX TRCP 13","notes":"Universal sanctions trigger. Lower friction than obdurate but broader reach."},
+{"word":"vexatious","score":0.773,"tb":0.75,"em":0.7,"sd":1.0,"cj":0.7,"cf":0.65,"as":0.8,"jur":"ALL","statutes":"IL 508(b); FL §57.105; CA CCP §391; Fed 28 USC §1927","notes":"Multi-state statutory word. Some states have vexatious litigant statutes."},
+{"word":"dissipation","score":0.768,"tb":0.6,"em":0.8,"sd":1.0,"cj":0.8,"cf":0.55,"as":0.85,"jur":"ALL","statutes":"IL 503(d)(2); TX Tex. Fam. Code §7.009; CA Fam. Code §1101; NY DRL §236(B)","notes":"Property division weapon. Every divorce state has a version."},
+{"word":"treble","score":0.768,"tb":0.4,"em":0.95,"sd":1.0,"cj":0.7,"cf":0.6,"as":0.9,"jur":"ALL","statutes":"TX DTPA §17.50; Fed RICO 18 USC §1964; IL Consumer Fraud Act","notes":"3x damages. Converts small claims into large ones. The multiplier word."},
+{"word":"default judgment","score":0.753,"tb":0.4,"em":0.95,"sd":1.0,"cj":1.0,"cf":0.3,"as":0.9,"jur":"ALL","statutes":"IL 735 ILCS 5/2-1301; TX TRCP 239; Fed FRCP 55","notes":"Win by absence. The Hertz business model. Bill of review to undo."},
+{"word":"contumacious","score":0.750,"tb":0.55,"em":0.8,"sd":0.8,"cj":0.6,"cf":0.9,"as":0.85,"jur":"ALL","statutes":"Contempt doctrine; Black's Law","notes":"Highest friction among statutory-adjacent words. Signals deep legal knowledge."},
+{"word":"obdurate","score":0.748,"tb":0.7,"em":0.7,"sd":1.0,"cj":0.4,"cf":0.75,"as":0.8,"jur":"IL","statutes":"750 ILCS 5/508(b)","notes":"IL-specific statutory word. Signals fluency. Triggers fee shifting."},
+{"word":"coercive","score":0.745,"tb":0.75,"em":0.85,"sd":0.9,"cj":0.9,"cf":0.35,"as":0.6,"jur":"ALL","statutes":"Logston 103 Ill.2d 266; Turner; Int'l Shoe","notes":"Civil contempt MUST be coercive not punitive. If purge can't coerce, jail is unconstitutional."},
+{"word":"deemed admitted","score":0.743,"tb":0.45,"em":0.85,"sd":1.0,"cj":0.9,"cf":0.4,"as":0.9,"jur":"ALL","statutes":"IL Rule 216; TX TRCP 198.2(c); Fed FRCP 36(a)","notes":"Silence = admission. 28-30 day deadline. Devastating if opponent misses it."},
+{"word":"duress","score":0.740,"tb":0.55,"em":0.8,"sd":0.9,"cj":0.95,"cf":0.5,"as":0.8,"jur":"ALL","statutes":"Contract law; IL 2-1401; Restatement 2d §175","notes":"Vitiates consent. Universal. Allocation judgment attack vector."},
+{"word":"bad faith","score":0.740,"tb":0.7,"em":0.75,"sd":0.8,"cj":0.9,"cf":0.55,"as":0.8,"jur":"ALL","statutes":"Contract law; Insurance law; IL 215 ILCS 5/155","notes":"Universal concept. Fee shifting in many contexts."},
+{"word":"purge","score":0.730,"tb":0.7,"em":0.9,"sd":0.9,"cj":0.9,"cf":0.3,"as":0.5,"jur":"ALL","statutes":"Contempt doctrine; IL case law; Turner","notes":"The key to the jailhouse door. Must be achievable. If purge > ability, it's punitive."},
+{"word":"candor","score":0.720,"tb":0.6,"em":0.7,"sd":1.0,"cj":0.9,"cf":0.4,"as":0.75,"jur":"ALL","statutes":"RPC 3.3; ABA Model Rules","notes":"Duty to tribunal. Attorney-specific. ARDC and sanctions weapon."},
+{"word":"spoliation","score":0.718,"tb":0.35,"em":0.85,"sd":0.8,"cj":0.8,"cf":0.7,"as":0.9,"jur":"ALL","statutes":"IL case law; Fed common law","notes":"Evidence destruction. Only deploy with proof. Adverse inference instruction."},
+{"word":"servitude","score":0.705,"tb":0.3,"em":0.8,"sd":0.7,"cj":0.8,"cf":0.9,"as":0.9,"jur":"ALL","statutes":"13th Amendment; IL Const","notes":"Nuclear constitutional word. Income imputation = involuntary servitude."},
+{"word":"fiduciary","score":0.703,"tb":0.55,"em":0.75,"sd":0.9,"cj":0.9,"cf":0.4,"as":0.75,"jur":"ALL","statutes":"IL case law; Common law; ERISA","notes":"Highest standard of care. Spouse and attorney both owe fiduciary duties."},
+{"word":"estoppel","score":0.698,"tb":0.65,"em":0.65,"sd":0.9,"cj":0.95,"cf":0.4,"as":0.7,"jur":"ALL","statutes":"Common law; IL case law; Fed","notes":"Prevents contradictory positions. Collateral estoppel for class action opt-out weapon."},
+{"word":"collateral estoppel","score":0.685,"tb":0.45,"em":0.75,"sd":0.9,"cj":0.9,"cf":0.35,"as":0.85,"jur":"ALL","statutes":"Parklane Hosiery v. Shore","notes":"The opt-out weapon. Class finding binds defendant in individual suits."},
+{"word":"res judicata","score":0.680,"tb":0.5,"em":0.7,"sd":1.0,"cj":1.0,"cf":0.3,"as":0.6,"jur":"ALL","statutes":"Common law; IL case law; Fed","notes":"Claim preclusion. Once decided, can't relitigate."},
+{"word":"dereliction","score":0.675,"tb":0.5,"em":0.7,"sd":0.6,"cj":0.7,"cf":0.8,"as":0.9,"jur":"ALL","statutes":"RPC 1.1; RPC 1.3; ARDC","notes":"Attorney discipline word. Targets counsel directly."},
+{"word":"adverse inference","score":0.670,"tb":0.4,"em":0.75,"sd":0.8,"cj":0.9,"cf":0.45,"as":0.85,"jur":"ALL","statutes":"IL case law; Fed case law; Spoliation doctrine","notes":"If they destroyed evidence, court may infer it was bad for them."},
+{"word":"unclean hands","score":0.655,"tb":0.5,"em":0.6,"sd":0.8,"cj":0.9,"cf":0.5,"as":0.8,"jur":"ALL","statutes":"Equity doctrine; IL case law","notes":"Party seeking equity must come with clean hands."},
+{"word":"vitiate","score":0.643,"tb":0.4,"em":0.7,"sd":0.6,"cj":0.6,"cf":0.85,"as":0.8,"jur":"ALL","statutes":"Contract law; Duress doctrine","notes":"Consent destruction word. High friction. Allocation challenge weapon."},
+{"word":"meritorious","score":0.635,"tb":0.5,"em":0.6,"sd":1.0,"cj":0.8,"cf":0.3,"as":0.6,"jur":"ALL","statutes":"IL 2-1401; TX TRCP 329b; Fed FRCP 60(b)","notes":"Bill of review / relief from judgment. Universal concept."},
+{"word":"sua sponte","score":0.633,"tb":0.4,"em":0.65,"sd":0.8,"cj":0.9,"cf":0.6,"as":0.5,"jur":"ALL","statutes":"Judicial doctrine","notes":"Court acts on its own motion. Invite the judge to act."},
+{"word":"laches","score":0.630,"tb":0.45,"em":0.55,"sd":0.8,"cj":0.9,"cf":0.55,"as":0.7,"jur":"ALL","statutes":"Equity doctrine; IL case law","notes":"Unreasonable delay in asserting rights. 13-month false FDA = laches."},
+{"word":"nunc pro tunc","score":0.625,"tb":0.3,"em":0.6,"sd":0.9,"cj":0.8,"cf":0.7,"as":0.5,"jur":"ALL","statutes":"IL case law; Fed","notes":"Now for then. Retroactive correction of record."},
+{"word":"expedited","score":0.618,"tb":0.5,"em":0.6,"sd":1.0,"cj":0.7,"cf":0.25,"as":0.6,"jur":"ALL","statutes":"IL 607.5; Various","notes":"Signals urgency. Statutory in 607.5. Forces faster court action."},
+{"word":"remedial","score":0.615,"tb":0.6,"em":0.65,"sd":0.8,"cj":0.85,"cf":0.25,"as":0.5,"jur":"ALL","statutes":"Contempt doctrine; Logston","notes":"Civil contempt must be remedial, not punitive."},
+{"word":"interim","score":0.610,"tb":0.5,"em":0.55,"sd":1.0,"cj":0.7,"cf":0.25,"as":0.65,"jur":"ALL","statutes":"IL 508(a); NY DRL §237; CA Fam. Code §2030","notes":"Level-the-playing-field word. Forces court to address disparity NOW."},
+{"word":"in pari delicto","score":0.608,"tb":0.35,"em":0.55,"sd":0.7,"cj":0.7,"cf":0.8,"as":0.7,"jur":"ALL","statutes":"Equity doctrine","notes":"Both parties equally at fault. Mutual noncompliance defense."},
+{"word":"substantial hardship","score":0.600,"tb":0.55,"em":0.5,"sd":1.0,"cj":0.7,"cf":0.3,"as":0.5,"jur":"ALL","statutes":"735 ILCS 5/5-105; Fee waiver statutes","notes":"Fee waiver trigger. Creates judicial finding of inability."},
+{"word":"proportionate","score":0.580,"tb":0.55,"em":0.6,"sd":0.7,"cj":0.8,"cf":0.3,"as":0.55,"jur":"ALL","statutes":"8th Amend / Timbs; IL Const","notes":"Excessive fines defense. Purge must be proportionate to ability."},
+{"word":"retardation","score":0.563,"tb":0.5,"em":0.6,"sd":0.3,"cj":0.2,"cf":0.95,"as":0.9,"jur":"IL","statutes":"Custom — economic usage","notes":"DEPLOYED. Highest cognitive friction (0.95). Low statutory depth — devastating when defined. One-shot weapon.","status":"deployed"},
+{"word":"pernicious","score":0.528,"tb":0.45,"em":0.5,"sd":0.3,"cj":0.4,"cf":0.85,"as":0.85,"jur":"ALL","statutes":"Case law","notes":"Parental alienation word. Very high friction. Low statutory depth."},
+{"word":"improvident","score":0.525,"tb":0.45,"em":0.5,"sd":0.4,"cj":0.3,"cf":0.8,"as":0.8,"jur":"ALL","statutes":"Case law; Black's Law","notes":"Settlement rejection word. High friction, lower statutory depth."},
+{"word":"umgängessabotage","score":0.410,"tb":0.3,"em":0.4,"sd":0.0,"cj":0.1,"cf":1.0,"as":0.9,"jur":"SE","statutes":"Swedish family law","notes":"Contact sabotage. No English equivalent. The missing word IS the argument.","status":"foreign"},
+{"word":"mu'sir","score":0.405,"tb":0.3,"em":0.4,"sd":0.0,"cj":0.1,"cf":1.0,"as":0.85,"jur":"ISLAMIC","statutes":"Quran 2:280; Sharia courts","notes":"One unable to pay, entitled to respite. No English equivalent.","status":"foreign"},
+{"word":"Pflichtteil","score":0.370,"tb":0.25,"em":0.35,"sd":0.0,"cj":0.1,"cf":0.95,"as":0.8,"jur":"DE","statutes":"BGB §2303","notes":"Duty-portion. Children cannot be fully disinherited. No US equivalent except Louisiana.","status":"foreign"},
+{"word":"legitieme portie","score":0.363,"tb":0.25,"em":0.35,"sd":0.0,"cj":0.1,"cf":0.9,"as":0.8,"jur":"NL","statutes":"BW Book 4","notes":"Dutch forced heirship. The word that started the dead-person analysis.","status":"foreign"},
+{"word":"capitis deminutio","score":0.348,"tb":0.2,"em":0.3,"sd":0.0,"cj":0.1,"cf":0.95,"as":0.8,"jur":"LATIN","statutes":"Roman law","notes":"Loss of family status. No modern equivalent. Parental erasure has no legal category.","status":"foreign"},
+{"word":"Restschuldbefreiung","score":0.348,"tb":0.2,"em":0.35,"sd":0.0,"cj":0.1,"cf":0.9,"as":0.75,"jur":"DE","statutes":"InsO §286-303","notes":"Remaining-debt-liberation. No family law equivalent anywhere.","status":"foreign"}
+];
+
+const colors = {tb:'#4dabf7', em:'#ff6b6b', sd:'#ffd43b', cj:'#69db7c', cf:'#cc5de8', as:'#ff922b'};
+const weights = {tb:0.20, em:0.25, sd:0.20, cj:0.10, cf:0.15, as:0.10};
+
+function getTier(score) {
+    if (score >= 0.75) return {cls:'nuclear', label:'NUCLEAR'};
+    if (score >= 0.60) return {cls:'high', label:'HIGH'};
+    if (score >= 0.45) return {cls:'medium', label:'MEDIUM'};
+    return {cls:'low', label:'GAP'};
+}
+
+let currentData = [...data];
+
+function render() {
+    const viz = document.getElementById('viz');
+    viz.innerHTML = '';
+    const maxScore = Math.max(...currentData.map(d => d.score));
+
+    currentData.forEach((d, i) => {
+        const tier = getTier(d.score);
+        const pct = (d.score / maxScore) * 100;
+
+        const row = document.createElement('div');
+        row.className = 'word-row';
+        row.onclick = () => {
+            const det = row.nextElementSibling;
+            if (det && det.classList.contains('detail')) det.classList.toggle('open');
+        };
+
+        const wordColor = d.status === 'deployed' ? '#69db7c' : d.status === 'foreign' ? '#cc5de8' : '#e8eaf0';
+
+        row.innerHTML = `
+            <span class="rank">${i+1}</span>
+            <span class="word" style="color:${wordColor}">${d.word}</span>
+            <span class="score" style="color:${tier.cls==='nuclear'?'#ff6b6b':tier.cls==='high'?'#ffd43b':'#69db7c'}">${d.score.toFixed(3)}</span>
+            <div class="bar-container">
+                <div class="bar" style="width:${pct}%">
+                    <div class="bar-inner">
+                        <div class="bar-segment" style="width:${d.tb*weights.tb/d.score*100}%;background:${colors.tb}"></div>
+                        <div class="bar-segment" style="width:${d.em*weights.em/d.score*100}%;background:${colors.em}"></div>
+                        <div class="bar-segment" style="width:${d.sd*weights.sd/d.score*100}%;background:${colors.sd}"></div>
+                        <div class="bar-segment" style="width:${d.cj*weights.cj/d.score*100}%;background:${colors.cj}"></div>
+                        <div class="bar-segment" style="width:${d.cf*weights.cf/d.score*100}%;background:${colors.cf}"></div>
+                        <div class="bar-segment" style="width:${d.as*weights.as/d.score*100}%;background:${colors.as}"></div>
+                    </div>
+                </div>
+            </div>
+            <span class="jur">${d.jur}</span>
+            <span class="tier tier-${tier.cls}">${tier.label}</span>
+        `;
+        viz.appendChild(row);
+
+        const detail = document.createElement('div');
+        detail.className = 'detail';
+        const axes = [
+            {key:'tb',label:'Trigger Breadth',color:colors.tb},
+            {key:'em',label:'Effect Magnitude',color:colors.em},
+            {key:'sd',label:'Statutory Depth',color:colors.sd},
+            {key:'cj',label:'Cross-Jurisdiction',color:colors.cj},
+            {key:'cf',label:'Cognitive Friction',color:colors.cf},
+            {key:'as',label:'Asymmetry',color:colors.as}
+        ];
+        detail.innerHTML = `
+            <div class="stat-grid">
+                ${axes.map(a => `<div class="stat">
+                    <div class="stat-label">${a.label}</div>
+                    <div class="stat-value" style="color:${a.color}">${d[a.key].toFixed(2)}</div>
+                    <div class="stat-bar"><div class="stat-bar-fill" style="width:${d[a.key]*100}%;background:${a.color}"></div></div>
+                </div>`).join('')}
+            </div>
+            <div class="notes">${d.notes}</div>
+            <div class="statutes">Statutes: <span>${d.statutes}</span></div>
+        `;
+        viz.appendChild(detail);
+    });
+}
+
+function filterTier(tier, btn) {
+    document.querySelectorAll('.controls button').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    if (tier === 'all') currentData = [...data];
+    else if (tier === 'foreign') currentData = data.filter(d => d.status === 'foreign');
+    else if (tier === 'nuclear') currentData = data.filter(d => d.score >= 0.75);
+    else if (tier === 'high') currentData = data.filter(d => d.score >= 0.60 && d.score < 0.75);
+    else if (tier === 'medium') currentData = data.filter(d => d.score >= 0.45 && d.score < 0.60);
+    render();
+}
+
+function sortBy(key, btn) {
+    if (key === 'score') currentData.sort((a,b) => b.score - a.score);
+    else if (key === 'friction') currentData.sort((a,b) => b.cf - a.cf);
+    else if (key === 'effect') currentData.sort((a,b) => b.em - a.em);
+    render();
+}
+
+render();
+</script>
+</body>
+</html>
