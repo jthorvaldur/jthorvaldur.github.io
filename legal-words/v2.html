@@ -1,0 +1,342 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Legal Leverage Words v2 — 50 States + International</title>
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body { background: #0a0e1a; color: #c8d0e0; font-family: 'SF Mono', 'Fira Code', monospace; font-size: 13px; }
+h1 { font-family: 'Inter', system-ui, sans-serif; font-size: 22px; color: #e8eaf0; margin: 30px 30px 5px; font-weight: 600; }
+.subtitle { color: #6b7394; margin: 0 30px 20px; font-size: 13px; }
+.formula { background: #12162a; border: 1px solid #1e2540; border-radius: 8px; padding: 16px 20px; margin: 0 30px 20px; font-size: 12px; color: #8b93b0; }
+.formula code { color: #7eb8ff; }
+.formula .weight { color: #f0a040; }
+
+.stats-bar { display: flex; gap: 30px; margin: 20px 30px; padding: 16px 20px; background: #12162a; border-radius: 8px; border: 1px solid #1e2540; flex-wrap: wrap; }
+.stats-bar .stat { text-align: center; min-width: 80px; }
+.stats-bar .stat-num { font-size: 24px; font-weight: 700; color: #e8eaf0; }
+.stats-bar .stat-label { font-size: 11px; color: #6b7394; margin-top: 2px; }
+
+.search-box { margin: 0 30px 15px; }
+.search-box input { width: 100%; max-width: 400px; background: #12162a; border: 1px solid #1e2540; border-radius: 6px; padding: 8px 14px; color: #e8eaf0; font-family: inherit; font-size: 13px; outline: none; }
+.search-box input:focus { border-color: #4a5580; }
+.search-box input::placeholder { color: #4a5580; }
+
+.jur-pills { display: flex; gap: 6px; margin: 0 30px 15px; flex-wrap: wrap; }
+.jur-pill { background: #1a1f35; border: 1px solid #2a3050; color: #6b7394; padding: 4px 10px; border-radius: 4px; cursor: pointer; font-size: 11px; font-family: inherit; transition: all 0.2s; }
+.jur-pill:hover { background: #252b48; color: #c8d0e0; }
+.jur-pill.active { border-color: #7eb8ff; color: #7eb8ff; background: #1a2540; }
+.jur-pill.foreign { border-color: #cc5de8; color: #cc5de8; }
+.jur-pill.foreign.active { background: #2a1540; }
+.jur-pill .count { opacity: 0.5; margin-left: 3px; }
+
+.controls { display: flex; gap: 8px; margin: 0 30px 15px; flex-wrap: wrap; }
+.controls button { background: #1a1f35; border: 1px solid #2a3050; color: #8b93b0; padding: 5px 12px; border-radius: 5px; cursor: pointer; font-size: 11px; font-family: inherit; transition: all 0.2s; }
+.controls button:hover, .controls button.active { background: #252b48; color: #e8eaf0; border-color: #4a5580; }
+.controls button.active { border-color: #7eb8ff; color: #7eb8ff; }
+
+.legend { display: flex; gap: 14px; margin: 0 30px 15px; flex-wrap: wrap; }
+.legend-item { display: flex; align-items: center; gap: 5px; font-size: 11px; color: #6b7394; }
+.legend-swatch { width: 10px; height: 10px; border-radius: 2px; }
+
+.viz { margin: 0 30px; }
+.word-row { display: grid; grid-template-columns: 30px 200px 60px 1fr 50px 90px; align-items: center; padding: 7px 10px; border-bottom: 1px solid #141830; transition: background 0.15s; cursor: pointer; }
+.word-row:hover { background: #141830; }
+.word-row .rank { color: #4a5580; font-size: 11px; }
+.word-row .word { font-weight: 600; font-size: 12px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.word-row .score { font-weight: 600; text-align: right; font-size: 12px; }
+.word-row .bar-container { padding: 0 8px; }
+.word-row .bar { height: 16px; border-radius: 3px; position: relative; transition: width 0.4s ease; }
+.word-row .bar-inner { height: 100%; border-radius: 3px; display: flex; }
+.word-row .bar-segment { height: 100%; opacity: 0.85; }
+.word-row .jur { font-size: 10px; color: #6b7394; text-align: center; }
+.word-row .tier { font-size: 9px; padding: 2px 7px; border-radius: 3px; text-align: center; font-weight: 600; }
+.tier-nuclear { background: #3d1515; color: #ff6b6b; }
+.tier-high { background: #2d2a15; color: #ffd43b; }
+.tier-medium { background: #152d1a; color: #69db7c; }
+.tier-low { background: #15202d; color: #74c0fc; }
+.tier-gap { background: #251540; color: #cc5de8; }
+
+.detail { display: none; grid-column: 1 / -1; background: #0f1325; padding: 14px 18px; border-radius: 6px; margin: 3px 0 6px; }
+.detail.open { display: block; }
+.detail .stat-grid { display: grid; grid-template-columns: repeat(6, 1fr); gap: 8px; margin-bottom: 10px; }
+.detail .stat { text-align: center; }
+.detail .stat-label { font-size: 9px; color: #4a5580; text-transform: uppercase; letter-spacing: 0.05em; }
+.detail .stat-value { font-size: 15px; font-weight: 600; margin-top: 2px; }
+.detail .stat-bar { height: 3px; background: #1a1f35; border-radius: 2px; margin-top: 3px; }
+.detail .stat-bar-fill { height: 100%; border-radius: 2px; }
+.detail .notes { color: #8b93b0; font-size: 12px; margin-top: 6px; line-height: 1.5; }
+.detail .statutes { color: #6b7394; font-size: 11px; margin-top: 4px; }
+.detail .statutes span { color: #7eb8ff; }
+
+.foreign-section { margin: 30px; padding: 20px; background: #12162a; border: 1px solid #2a1540; border-radius: 8px; }
+.foreign-section h3 { color: #cc5de8; font-size: 14px; margin-bottom: 12px; font-family: 'Inter', system-ui, sans-serif; }
+.foreign-card { display: inline-block; background: #1a1535; border: 1px solid #35254a; border-radius: 6px; padding: 10px 14px; margin: 4px; min-width: 200px; vertical-align: top; }
+.foreign-card .fw { color: #cc5de8; font-weight: 700; font-size: 14px; }
+.foreign-card .fj { color: #6b7394; font-size: 10px; margin-top: 2px; }
+.foreign-card .fn { color: #8b93b0; font-size: 11px; margin-top: 6px; line-height: 1.4; }
+
+.showing { color: #4a5580; font-size: 11px; margin: 0 30px 8px; }
+
+footer { margin: 30px; padding-top: 20px; border-top: 1px solid #1a1f35; color: #4a5580; font-size: 11px; }
+footer a { color: #7eb8ff; text-decoration: none; }
+
+@media (max-width: 768px) {
+  .word-row { grid-template-columns: 25px 140px 50px 1fr 40px 70px; font-size: 11px; }
+  .stats-bar { gap: 15px; }
+  .detail .stat-grid { grid-template-columns: repeat(3, 1fr); }
+}
+</style>
+</head>
+<body>
+
+<h1>Legal Leverage Words <span style="color:#7eb8ff; font-size:14px;">v2</span></h1>
+<p class="subtitle" id="subtitle">Loading...</p>
+
+<div class="stats-bar" id="stats-bar"></div>
+
+<div class="formula">
+<code>leverage</code> = (<code>trigger_breadth</code> x <span class="weight">0.20</span>) + (<code>effect_magnitude</code> x <span class="weight">0.25</span>) + (<code>statutory_depth</code> x <span class="weight">0.20</span>) + (<code>cross_jurisdiction</code> x <span class="weight">0.10</span>) + (<code>cognitive_friction</code> x <span class="weight">0.15</span>) + (<code>asymmetry</code> x <span class="weight">0.10</span>)
+</div>
+
+<div class="search-box">
+<input type="text" id="search" placeholder="Search words, statutes, notes..." oninput="applyFilters()">
+</div>
+
+<div class="jur-pills" id="jur-pills"></div>
+
+<div class="controls">
+<button class="active" onclick="setTier('all', this)">All</button>
+<button onclick="setTier('nuclear', this)">Nuclear</button>
+<button onclick="setTier('high', this)">High</button>
+<button onclick="setTier('medium', this)">Medium</button>
+<button onclick="setTier('foreign', this)">Foreign</button>
+<span style="border-left:1px solid #2a3050; margin:0 4px"></span>
+<button onclick="sortBy('score')">By Score</button>
+<button onclick="sortBy('friction')">By Friction</button>
+<button onclick="sortBy('effect')">By Effect</button>
+<button onclick="sortBy('asymmetry')">By Asymmetry</button>
+</div>
+
+<div class="legend">
+<div class="legend-item"><div class="legend-swatch" style="background:#4dabf7"></div> Trigger</div>
+<div class="legend-item"><div class="legend-swatch" style="background:#ff6b6b"></div> Effect</div>
+<div class="legend-item"><div class="legend-swatch" style="background:#ffd43b"></div> Statutory</div>
+<div class="legend-item"><div class="legend-swatch" style="background:#69db7c"></div> Cross-Jur</div>
+<div class="legend-item"><div class="legend-swatch" style="background:#cc5de8"></div> Friction</div>
+<div class="legend-item"><div class="legend-swatch" style="background:#ff922b"></div> Asymmetry</div>
+</div>
+
+<div class="showing" id="showing"></div>
+<div class="viz" id="viz"></div>
+
+<div class="foreign-section" id="foreign-section"></div>
+
+<footer>
+CaseLedger Research — Legal Leverage Word Index v2<br>
+<a href="index.html">← Original 48-word visualization</a> | Data updated dynamically from PostgreSQL<br>
+Scoring: trigger_breadth(0.20) + effect_magnitude(0.25) + statutory_depth(0.20) + cross_jurisdiction(0.10) + cognitive_friction(0.15) + asymmetry(0.10)
+</footer>
+
+<script>
+const data = [{"word": "sanctions", "score": 0.915, "tb": 0.9, "em": 1, "sd": 1, "cj": 0.95, "cf": 0.6, "jur": "ALL", "statutes": "IL Rule 137; TX TRCP 13; CA CCP §128.5; NY 22 NYCRR §130; Fed FRCP 11", "notes": "THE word that makes the attorney pay. Universal across all jurisdictions. Changes incentive structure.", "as": 1}, {"word": "perjury", "score": 0.8925, "tb": 0.6, "em": 1, "sd": 1, "cj": 1, "cf": 0.85, "jur": "ALL", "statutes": "IL 735 ILCS 5/1-109; TX Penal Code §37.02; Fed 18 USC §1621", "notes": "Nuclear — makes false sworn statement a felony. Universal.", "as": 0.95}, {"word": "fraud", "score": 0.8725, "tb": 0.8, "em": 0.95, "sd": 0.9, "cj": 1, "cf": 0.7, "jur": "ALL", "statutes": "Common law; IL 720 ILCS 5/17-1; TX Penal Code §32.46; Fed 18 USC §1341", "notes": "Crosses civil/criminal boundary. Treble damages in many states. Highest friction.", "as": 0.9}, {"word": "willful disobedience", "score": 0.87, "tb": 0.85, "em": 1, "sd": 1, "cj": 0.9, "cf": 0.6, "jur": "CA", "statutes": "CCP §1209(a)(5)", "notes": "Gate for contempt. If disobedience is not willful (inability to comply), no contempt. Key defense AND offense.", "as": 0.7}, {"word": "enforce by contempt", "score": 0.865, "tb": 0.9, "em": 1, "sd": 1, "cj": 0.9, "cf": 0.5, "jur": "TX", "statutes": "Tex. Fam. Code §157.001", "notes": "Any provision enforceable by contempt — broader than most states. Must specify exact provision and manner of violation.", "as": 0.7}, {"word": "contempt", "score": 0.865, "tb": 0.85, "em": 1, "sd": 1, "cj": 1, "cf": 0.5, "jur": "ALL", "statutes": "IL 750 ILCS 5/607.5; TX Tex. Gov. Code §21.002; Fed 18 USC §401", "notes": "Unlocks incarceration. Available everywhere. Highest-stakes single word.", "as": 0.7}, {"word": "breach of fiduciary duty", "score": 0.8525, "tb": 0.8, "em": 1, "sd": 1, "cj": 0.25, "cf": 0.85, "jur": "CA", "statutes": "Cal. Fam. Code §1101", "notes": "CA unique — most states say dissipation, CA says fiduciary breach. 50% standard, 100% for fraud/malice/oppression.", "as": 0.9}, {"word": "disobedience", "score": 0.85, "tb": 0.85, "em": 1, "sd": 1, "cj": 0.85, "cf": 0.5, "jur": "NY", "statutes": "Judiciary Law §753", "notes": "NY unique — civil contempt does NOT require willfulness. Just disobedience + knowledge + prejudice. Lower bar than most states.", "as": 0.7}, {"word": "willfully failed to comply", "score": 0.85, "tb": 0.85, "em": 1, "sd": 1, "cj": 0.85, "cf": 0.5, "jur": "PA", "statutes": "23 Pa.C.S. §3502", "notes": "Standard contempt gate. Up to 6 months county jail. Must prove willfulness — inability is defense.", "as": 0.7}, {"word": "disobedience", "score": 0.845, "tb": 0.85, "em": 1, "sd": 1, "cj": 0.8, "cf": 0.5, "jur": "OH", "statutes": "ORC §2705.02", "notes": "Standard contempt gate. Must be willful. $250 fine / 30 days standard. 90 days for child support.", "as": 0.7}, {"word": "disobedience", "score": 0.845, "tb": 0.85, "em": 1, "sd": 1, "cj": 0.8, "cf": 0.5, "jur": "MI", "statutes": "MCL §600.1701", "notes": "Standard contempt gate. Fine or imprisonment or both. Must be willful disobedience of lawful order.", "as": 0.7}, {"word": "willful noncompliance", "score": 0.845, "tb": 0.85, "em": 1, "sd": 1, "cj": 0.8, "cf": 0.5, "jur": "NC", "statutes": "NCGS §5A-21", "notes": "NC unique — four explicit elements all required. Willfulness AND ability treated as separate requirements.", "as": 0.7}, {"word": "willful", "score": 0.84499997, "tb": 0.9, "em": 0.9, "sd": 1, "cj": 1, "cf": 0.4, "jur": "ALL", "statutes": "Turner v. Rogers; IL 750 ILCS 5/505; TX Tex. Fam. Code §157", "notes": "Gatekeeping word for contempt. If conduct isnt willful, no contempt. Defense AND offense.", "as": 0.8}, {"word": "willful violation", "score": 0.84250003, "tb": 0.85, "em": 1, "sd": 1, "cj": 0.85, "cf": 0.45, "jur": "FL", "statutes": "Fla. Stat. §38.22", "notes": "Standard contempt gate. Four elements all required. Bowen presumption of ability from prior order shifts burden.", "as": 0.7}, {"word": "wasteful dissipation", "score": 0.8425, "tb": 0.75, "em": 0.9, "sd": 1, "cj": 0.7, "cf": 0.75, "jur": "NY", "statutes": "DRL §236B(5)(d)(12)", "notes": "NY specific phrase. Includes transfers in contemplation of divorce without fair consideration. Equitable distribution factor.", "as": 0.85}, {"word": "financial misconduct", "score": 0.84000003, "tb": 0.8, "em": 1, "sd": 1, "cj": 0.25, "cf": 0.8, "jur": "OH", "statutes": "ORC §3105.171(E)", "notes": "OH unique — broader than dissipation. Four categories: dissipation, destruction, concealment, fraud. Court compensates with larger share.", "as": 0.85}, {"word": "death penalty sanctions", "score": 0.84, "tb": 0.7, "em": 1, "sd": 0.9, "cj": 0.6, "cf": 0.9, "jur": "TX", "statutes": "TRCP Rule 215", "notes": "TX term of art — striking pleading or default. Requires willful noncompliance + lesser sanctions tried first. Nuclear but available.", "as": 0.75}, {"word": "fraud on the community", "score": 0.8375, "tb": 0.75, "em": 1, "sd": 1, "cj": 0.2, "cf": 0.85, "jur": "TX", "statutes": "Tex. Fam. Code §7.009", "notes": "TX unique — reconstituted estate concept. Court rebuilds what should have existed. Actual fraud (intent) vs constructive (waste). Devastating remedy.", "as": 0.9}, {"word": "dissipation", "score": 0.8225, "tb": 0.75, "em": 0.85, "sd": 1, "cj": 0.75, "cf": 0.7, "jur": "GA", "statutes": "OCGA §19-5-13", "notes": "Standard dissipation word. GA equitable division gives court broad authority to compensate for waste.", "as": 0.8}, {"word": "dissipation", "score": 0.8225, "tb": 0.75, "em": 0.85, "sd": 1, "cj": 0.75, "cf": 0.7, "jur": "PA", "statutes": "23 Pa.C.S. §3502(a)(10)", "notes": "PA broader — considers dissipation, depreciation, AND appreciation. Most states only look at active waste.", "as": 0.8}, {"word": "dissipation", "score": 0.8225, "tb": 0.75, "em": 0.85, "sd": 1, "cj": 0.75, "cf": 0.7, "jur": "MI", "statutes": "MCL §552.401", "notes": "Standard dissipation word. MI equitable distribution considers dissipation, depreciation, appreciation.", "as": 0.8}, {"word": "custodial interference", "score": 0.82, "tb": 0.5, "em": 1, "sd": 1, "cj": 0.6, "cf": 0.8, "jur": "NY", "statutes": "Penal Law §135.45", "notes": "Criminal offense — class A misdemeanor. Nuclear option. Requires intent to permanently/protractedly hold. Most states have equivalent.", "as": 0.9}, {"word": "willful violation", "score": 0.8175, "tb": 0.85, "em": 0.9, "sd": 1, "cj": 0.85, "cf": 0.45, "jur": "GA", "statutes": "OCGA §15-1-4", "notes": "Standard contempt gate. 20 days / $1,000 per violation — lower max than some states but per-violation multiplier.", "as": 0.7}, {"word": "interference with custody", "score": 0.815, "tb": 0.55, "em": 1, "sd": 1, "cj": 0.65, "cf": 0.7, "jur": "OH", "statutes": "ORC §2919.23", "notes": "Criminal misdemeanor 1. Knowing OR reckless — lower mens rea than most states. Includes harboring.", "as": 0.85}, {"word": "interference with custody", "score": 0.815, "tb": 0.55, "em": 1, "sd": 1, "cj": 0.65, "cf": 0.7, "jur": "GA", "statutes": "OCGA §16-5-45", "notes": "Three forms: taking, harboring, retaining. Interstate = felony (1-5 years). Knowing or reckless standard.", "as": 0.85}, {"word": "parental kidnapping", "score": 0.8125, "tb": 0.45, "em": 1, "sd": 1, "cj": 0.55, "cf": 0.85, "jur": "MI", "statutes": "MCL §750.350a", "notes": "Felony. Up to 1 year 1 day and $2,000. Nuclear option. MI has specific parental kidnapping statute.", "as": 0.9}, {"word": "unconscionable", "score": 0.8125, "tb": 0.65, "em": 0.85, "sd": 1, "cj": 0.8, "cf": 0.7, "jur": "ALL", "statutes": "TX DTPA §17.50; UCC §2-302; IL 815 ILCS 505/2", "notes": "Treble damages in consumer contexts. High friction. Contract AND statutory.", "as": 0.85}, {"word": "misuse", "score": 0.8025, "tb": 0.9, "em": 0.85, "sd": 1, "cj": 0.7, "cf": 0.5, "jur": "CA", "statutes": "CCP §2023.010; CCP §2023.030", "notes": "Eight statutory categories of discovery misuse. Triggers escalating sanctions including terminating sanctions.", "as": 0.65}, {"word": "willfully fails to disclose", "score": 0.8, "tb": 0.85, "em": 0.85, "sd": 1, "cj": 0.65, "cf": 0.55, "jur": "NY", "statutes": "CPLR §3126", "notes": "Willful and contumacious inferred from repeated noncompliance. Ultimate sanction: striking pleading or default judgment.", "as": 0.7}, {"word": "contempt of court", "score": 0.79, "tb": 0.85, "em": 0.85, "sd": 1, "cj": 0.9, "cf": 0.35, "jur": "OH", "statutes": "Ohio Civ.R. 37", "notes": "2023 expansion — failure to confer now sanctionable. Full range including contempt, preclusion, default.", "as": 0.65}, {"word": "frivolous", "score": 0.78, "tb": 0.8, "em": 0.7, "sd": 1, "cj": 0.95, "cf": 0.5, "jur": "ALL", "statutes": "IL Rule 137; Fed FRCP 11; NY 22 NYCRR §130; TX TRCP 13", "notes": "Universal sanctions trigger. Lower friction than obdurate but broader reach.", "as": 0.75}, {"word": "as are just", "score": 0.7775, "tb": 0.9, "em": 0.85, "sd": 1, "cj": 0.75, "cf": 0.3, "jur": "GA", "statutes": "OCGA §9-11-37", "notes": "Modeled on federal Rule 37. Full range including contempt. Broad judicial discretion.", "as": 0.65}, {"word": "as are just", "score": 0.7775, "tb": 0.9, "em": 0.85, "sd": 1, "cj": 0.75, "cf": 0.3, "jur": "MI", "statutes": "MCR 2.313", "notes": "Modeled on federal Rule 37. Full range. Court discretion. May treat as contempt.", "as": 0.65}, {"word": "as are just", "score": 0.7775, "tb": 0.9, "em": 0.85, "sd": 1, "cj": 0.75, "cf": 0.3, "jur": "NC", "statutes": "NCGS §1A-1, Rule 37", "notes": "Modeled on federal Rule 37. Full range including contempt. Broad judicial discretion.", "as": 0.65}, {"word": "vexatious", "score": 0.7725, "tb": 0.75, "em": 0.7, "sd": 1, "cj": 0.7, "cf": 0.65, "jur": "ALL", "statutes": "IL 508(b); FL §57.105; CA CCP §391; Fed 28 USC §1927", "notes": "Multi-state statutory word. Some states have vexatious litigant statutes.", "as": 0.8}, {"word": "frustrates", "score": 0.77, "tb": 0.85, "em": 0.8, "sd": 1, "cj": 0.15, "cf": 0.7, "jur": "CA", "statutes": "Cal. Fam. Code §271", "notes": "CA-specific trigger — unique framing. Judge evaluates whether conduct frustrates settlement policy. No need-based showing.", "as": 0.8}, {"word": "substantial change of circumstance", "score": 0.77, "tb": 0.95, "em": 0.8, "sd": 1, "cj": 0.85, "cf": 0.3, "jur": "OH", "statutes": "ORC §3119.79", "notes": "OH unique — 10% deviation from guidelines IS automatic substantial change. Math-driven, not narrative-driven.", "as": 0.5}, {"word": "dissipation", "score": 0.76750004, "tb": 0.6, "em": 0.8, "sd": 1, "cj": 0.8, "cf": 0.55, "jur": "ALL", "statutes": "IL 503(d)(2); TX Tex. Fam. Code §7.009; CA Fam. Code §1101; NY DRL §236(B)", "notes": "Property division weapon. Every divorce state has a version.", "as": 0.85}, {"word": "waste neglect devalue convert", "score": 0.7675, "tb": 0.7, "em": 0.85, "sd": 1, "cj": 0.15, "cf": 0.8, "jur": "NC", "statutes": "NCGS §50-20(c)(12)", "notes": "NC unique — four explicit bad act categories. Focus on POST-SEPARATION period. Mirrored by four good act categories.", "as": 0.8}, {"word": "treble", "score": 0.7675, "tb": 0.4, "em": 0.95, "sd": 1, "cj": 0.7, "cf": 0.6, "jur": "ALL", "statutes": "TX DTPA §17.50; Fed RICO 18 USC §1964; IL Consumer Fraud Act", "notes": "3x damages. Converts small claims into large ones. The multiplier word.", "as": 0.9}, {"word": "materially and substantially changed", "score": 0.7675, "tb": 0.9, "em": 0.8, "sd": 1, "cj": 0.85, "cf": 0.35, "jur": "TX", "statutes": "Tex. Fam. Code §156.401", "notes": "TX doubles up — material AND substantial. Also has automatic 3-year/20%/$100 trigger. Two paths to modification.", "as": 0.5}, {"word": "as is just", "score": 0.765, "tb": 0.9, "em": 0.85, "sd": 1, "cj": 0.55, "cf": 0.35, "jur": "PA", "statutes": "Pa.R.C.P. 4019", "notes": "Broadest discovery sanctions power — willfulness deleted. Court has unfettered discretion. Unique among states.", "as": 0.65}, {"word": "transporting child outside state", "score": 0.765, "tb": 0.4, "em": 1, "sd": 1, "cj": 0.4, "cf": 0.7, "jur": "NC", "statutes": "NCGS §14-320.1", "notes": "Class I felony. Specific to interstate. Requires intent to violate. Nuclear option.", "as": 0.9}, {"word": "substantial change", "score": 0.765, "tb": 0.9, "em": 0.8, "sd": 1, "cj": 0.9, "cf": 0.3, "jur": "NY", "statutes": "DRL §236B(9)(b)", "notes": "Same concept as other states. NY adds two additional triggers: cohabitation tantamount to marriage AND extreme hardship.", "as": 0.5}, {"word": "material change", "score": 0.76, "tb": 0.9, "em": 0.8, "sd": 1, "cj": 0.85, "cf": 0.3, "jur": "CA", "statutes": "Cal. Fam. Code §3651(a)", "notes": "CA uses material change vs IL substantial change. Same concept, slightly lower threshold language.", "as": 0.5}, {"word": "change of circumstances", "score": 0.7525, "tb": 0.9, "em": 0.8, "sd": 1, "cj": 0.85, "cf": 0.25, "jur": "MI", "statutes": "MCL §552.517", "notes": "MI has 10% automatic trigger like OH. Lower threshold than \"substantial change.\" Formula-driven.", "as": 0.5}, {"word": "changed circumstances", "score": 0.7525, "tb": 0.9, "em": 0.8, "sd": 1, "cj": 0.85, "cf": 0.25, "jur": "NC", "statutes": "NCGS §50-13.7", "notes": "Standard threshold. Court must apply guidelines. Any interested party may move — not just parents.", "as": 0.5}, {"word": "default judgment", "score": 0.7525, "tb": 0.4, "em": 0.95, "sd": 1, "cj": 1, "cf": 0.3, "jur": "ALL", "statutes": "IL 735 ILCS 5/2-1301; TX TRCP 239; Fed FRCP 55", "notes": "Win by absence. The Hertz business model. Bill of review to undo.", "as": 0.9}, {"word": "contumacious", "score": 0.75, "tb": 0.55, "em": 0.8, "sd": 0.8, "cj": 0.6, "cf": 0.9, "jur": "ALL", "statutes": "Contempt doctrine; Black's Law", "notes": "Highest friction among statutory-adjacent words. Signals deep legal knowledge.", "as": 0.85}, {"word": "obdurate", "score": 0.7475, "tb": 0.7, "em": 0.75, "sd": 1, "cj": 0.3, "cf": 0.8, "jur": "PA", "statutes": "42 Pa.C.S. §2503(9)", "notes": "PA uses same word as IL. High cognitive friction — readers pause. Sanctions for stubbornly unreasonable conduct.", "as": 0.7}, {"word": "obdurate", "score": 0.7475, "tb": 0.7, "em": 0.7, "sd": 1, "cj": 0.4, "cf": 0.75, "jur": "IL", "statutes": "750 ILCS 5/508(b)", "notes": "IL-specific statutory word. Signals fluency. Triggers fee shifting.", "as": 0.8}, {"word": "purge", "score": 0.7475, "tb": 0.6, "em": 0.9, "sd": 0.9, "cj": 0.85, "cf": 0.65, "jur": "NY", "statutes": "Judiciary Law §756", "notes": "Contemnor holds keys to the jail. Must have present ability to purge. Inability = punitive = unconstitutional.", "as": 0.4}, {"word": "changed circumstances", "score": 0.7475, "tb": 0.9, "em": 0.8, "sd": 1, "cj": 0.8, "cf": 0.25, "jur": "PA", "statutes": "23 Pa.C.S. §3105(b)", "notes": "PA uses \"changed\" not \"substantial change\" — potentially lower threshold. Applies to support, custody, and visitation.", "as": 0.5}, {"word": "purge", "score": 0.7475, "tb": 0.6, "em": 0.9, "sd": 0.9, "cj": 0.85, "cf": 0.65, "jur": "OH", "statutes": "ORC §2705.05", "notes": "Must have present ability to purge. Without it, incarceration is punitive = unconstitutional.", "as": 0.4}, {"word": "purge condition", "score": 0.7475, "tb": 0.6, "em": 0.9, "sd": 1, "cj": 0.8, "cf": 0.55, "jur": "NC", "statutes": "NCGS §5A-22", "notes": "Imprisonment continues until purge satisfied. Max $500 fine. Purge must be achievable.", "as": 0.4}, {"word": "coercive", "score": 0.745, "tb": 0.75, "em": 0.85, "sd": 0.9, "cj": 0.9, "cf": 0.35, "jur": "ALL", "statutes": "Logston 103 Ill.2d 266; Turner; Int'l Shoe", "notes": "Gatekeeping word — civil contempt MUST be coercive not punitive. If purge cant coerce, jail is unconstitutional.", "as": 0.6}, {"word": "deemed admitted", "score": 0.7425, "tb": 0.45, "em": 0.85, "sd": 1, "cj": 0.9, "cf": 0.4, "jur": "ALL", "statutes": "IL Rule 216; TX TRCP 198.2(c); Fed FRCP 36(a)", "notes": "Silence = admission. 28-30 day deadline. Devastating if opponent misses it.", "as": 0.9}, {"word": "duress", "score": 0.74, "tb": 0.55, "em": 0.8, "sd": 0.9, "cj": 0.95, "cf": 0.5, "jur": "ALL", "statutes": "Contract law; IL 2-1401; Restatement 2d §175", "notes": "Vitiates consent. Universal. Allocation judgment attack vector.", "as": 0.8}, {"word": "bad faith", "score": 0.74, "tb": 0.7, "em": 0.75, "sd": 0.8, "cj": 0.9, "cf": 0.55, "jur": "ALL", "statutes": "Contract law; Insurance law; IL 215 ILCS 5/155", "notes": "Universal concept. Fee shifting in many contexts. Insurance bad faith = extra damages.", "as": 0.8}, {"word": "willful disobedience", "score": 0.7375, "tb": 0.65, "em": 0.8, "sd": 1, "cj": 0.7, "cf": 0.45, "jur": "PA", "statutes": "23 Pa.C.S. §5323(g)", "notes": "Custody-specific sanctions. Make-up time, fees, contempt. Must be willful — good faith misunderstanding is defense.", "as": 0.7}, {"word": "coercive", "score": 0.7375, "tb": 0.6, "em": 0.9, "sd": 0.8, "cj": 0.8, "cf": 0.75, "jur": "CA", "statutes": "CCP §1218", "notes": "Coercive vs punitive distinction is the defense. Purge must be achievable — present ability to comply required.", "as": 0.4}, {"word": "purge", "score": 0.72999996, "tb": 0.7, "em": 0.9, "sd": 0.9, "cj": 0.9, "cf": 0.3, "jur": "ALL", "statutes": "Contempt doctrine; IL case law; Turner", "notes": "The key to the jailhouse door. Must be achievable. If purge > ability, its punitive.", "as": 0.5}, {"word": "not well grounded in fact", "score": 0.7275, "tb": 0.7, "em": 0.7, "sd": 1, "cj": 0.7, "cf": 0.55, "jur": "NC", "statutes": "NCGS §1A-1, Rule 11", "notes": "Modeled on federal Rule 11. Attorney certification. Three bases: fact, law, or improper purpose.", "as": 0.6}, {"word": "frivolous", "score": 0.725, "tb": 0.7, "em": 0.7, "sd": 1, "cj": 0.9, "cf": 0.4, "jur": "CA", "statutes": "CCP §128.5; CCP §128.7", "notes": "Standard sanctions word — defined as totally without merit. 21-day safe harbor weakens surprise value.", "as": 0.6}, {"word": "frivolous", "score": 0.725, "tb": 0.7, "em": 0.7, "sd": 1, "cj": 0.9, "cf": 0.4, "jur": "NY", "statutes": "22 NYCRR §130-1.1", "notes": "Three-prong test: no merit, delay/harass, or false facts. Does NOT apply to Family Court Art. 3, 7, 8 proceedings.", "as": 0.6}, {"word": "willfully or voluntarily unemployed", "score": 0.72249997, "tb": 0.7, "em": 0.75, "sd": 1, "cj": 0.7, "cf": 0.4, "jur": "GA", "statutes": "OCGA §19-6-15(f)", "notes": "GA imputation standard. Not limited to avoiding support — any unreasonable career choice triggers imputation.", "as": 0.65}, {"word": "candor", "score": 0.72, "tb": 0.6, "em": 0.7, "sd": 1, "cj": 0.9, "cf": 0.4, "jur": "ALL", "statutes": "RPC 3.3; ABA Model Rules", "notes": "Duty to tribunal. Attorney-specific. ARDC and sanctions weapon.", "as": 0.75}, {"word": "arbitrary", "score": 0.71750003, "tb": 0.75, "em": 0.7, "sd": 1, "cj": 0.5, "cf": 0.55, "jur": "PA", "statutes": "42 Pa.C.S. §2503(9)", "notes": "Lower bar than obdurate — no need to show intent to harass, just absence of rational basis.", "as": 0.6}, {"word": "spoliation", "score": 0.71750003, "tb": 0.35, "em": 0.85, "sd": 0.8, "cj": 0.8, "cf": 0.7, "jur": "ALL", "statutes": "IL case law; Fed common law", "notes": "Evidence destruction. Only deploy with proof. Adverse inference instruction.", "as": 0.9}, {"word": "change of income or financial status", "score": 0.7175, "tb": 0.9, "em": 0.8, "sd": 1, "cj": 0.5, "cf": 0.25, "jur": "GA", "statutes": "OCGA §19-6-19", "notes": "GA includes voluntary changes — broader trigger than \"substantial change.\" Any change of income or status suffices.", "as": 0.5}, {"word": "civil contempt for disobedience", "score": 0.7175, "tb": 0.6, "em": 0.9, "sd": 1, "cj": 0.4, "cf": 0.45, "jur": "PA", "statutes": "Pa.R.C.P. 1915.12", "notes": "Custody-specific contempt procedure. Must specify exact provision and facts. PA has separate track for custody violations.", "as": 0.65}, {"word": "false accusation", "score": 0.7175, "tb": 0.5, "em": 0.75, "sd": 1, "cj": 0.4, "cf": 0.7, "jur": "CA", "statutes": "Cal. Fam. Code §3027.1", "notes": "Sanctions for knowingly false abuse reports in custody. Must prove accuser KNEW it was false — high bar but devastating.", "as": 0.85}, {"word": "frivolous conduct", "score": 0.715, "tb": 0.7, "em": 0.7, "sd": 1, "cj": 0.8, "cf": 0.4, "jur": "OH", "statutes": "ORC §2323.51", "notes": "Three-prong test like other states. 30-day window after final judgment. Must file separately.", "as": 0.6}, {"word": "parenting time violation", "score": 0.7075, "tb": 0.65, "em": 0.85, "sd": 1, "cj": 0.3, "cf": 0.4, "jur": "MI", "statutes": "MCL §552.642", "notes": "MI unique — escalating mandatory sanctions: $250/$500 + make-up + fees + community service. Teeth.", "as": 0.75}, {"word": "full and accurate", "score": 0.7075, "tb": 0.85, "em": 0.7, "sd": 1, "cj": 0.6, "cf": 0.35, "jur": "CA", "statutes": "Cal. Fam. Code §2100; Cal. Fam. Code §2104; Cal. Fam. Code §2105", "notes": "Fiduciary duty standard for disclosure. Preliminary cannot be waived. Pairs with perjury risk on declaration.", "as": 0.5}, {"word": "not well grounded in fact", "score": 0.7075, "tb": 0.7, "em": 0.7, "sd": 1, "cj": 0.5, "cf": 0.55, "jur": "MI", "statutes": "MCR 2.114", "notes": "Modeled on federal Rule 11. Attorney signature as certification. Three bases: fact, law, or improper purpose.", "as": 0.6}, {"word": "servitude", "score": 0.705, "tb": 0.3, "em": 0.8, "sd": 0.7, "cj": 0.8, "cf": 0.9, "jur": "ALL", "statutes": "13th Amendment; IL Const", "notes": "Nuclear constitutional word. Income imputation = involuntary servitude argument.", "as": 0.9}, {"word": "fiduciary", "score": 0.7025, "tb": 0.55, "em": 0.75, "sd": 0.9, "cj": 0.9, "cf": 0.4, "jur": "ALL", "statutes": "IL case law; Common law; ERISA", "notes": "Highest standard of care. Spouse has fiduciary duty re: marital assets. Attorney has fiduciary duty to client.", "as": 0.75}, {"word": "estoppel", "score": 0.6975, "tb": 0.65, "em": 0.65, "sd": 0.9, "cj": 0.95, "cf": 0.4, "jur": "ALL", "statutes": "Common law; IL case law; Fed", "notes": "Prevents contradictory positions. Collateral estoppel for class action. Judicial estoppel for FDA.", "as": 0.7}, {"word": "groundless", "score": 0.6925, "tb": 0.65, "em": 0.7, "sd": 1, "cj": 0.3, "cf": 0.65, "jur": "TX", "statutes": "TRCP Rule 13", "notes": "TX-specific word. Must be BOTH groundless AND bad faith/harassment. Good faith presumption makes it harder to trigger.", "as": 0.6}, {"word": "complete absence of justiciable issue", "score": 0.6875, "tb": 0.55, "em": 0.7, "sd": 1, "cj": 0.15, "cf": 0.85, "jur": "GA", "statutes": "OCGA §9-15-14", "notes": "GA unique phrase — very high cognitive friction. Higher bar than \"frivolous\" — complete absence of justiciable issue.", "as": 0.6}, {"word": "inability to pay", "score": 0.685, "tb": 0.5, "em": 0.85, "sd": 1, "cj": 0.6, "cf": 0.55, "jur": "TX", "statutes": "Tex. Fam. Code §157.008", "notes": "Four-part test — ALL elements required. Missing any one defeats the defense. Burden on obligor. TX-specific formulation.", "as": 0.3}, {"word": "collateral estoppel", "score": 0.685, "tb": 0.45, "em": 0.75, "sd": 0.9, "cj": 0.9, "cf": 0.35, "jur": "ALL", "statutes": "Parklane Hosiery v. Shore", "notes": "The opt-out weapon. Class finding binds defendant in individual suits.", "as": 0.85}, {"word": "not supported by material facts", "score": 0.685, "tb": 0.75, "em": 0.7, "sd": 1, "cj": 0.3, "cf": 0.5, "jur": "FL", "statutes": "Fla. Stat. §57.105(1)", "notes": "FL-specific phrase. Mandatory fee award (shall). Both party AND attorney liable equally. 21-day safe harbor.", "as": 0.55}, {"word": "financial affidavit", "score": 0.6825, "tb": 0.85, "em": 0.7, "sd": 1, "cj": 0.5, "cf": 0.25, "jur": "FL", "statutes": "Fla. Fam. L. R. P. 12.285", "notes": "Cannot be waived — rare among states. 45-day deadline. Short/long form based on income. Foundation for all calculations.", "as": 0.5}, {"word": "reasonable attorney's fees", "score": 0.6825, "tb": 0.8, "em": 0.65, "sd": 1, "cj": 0.9, "cf": 0.2, "jur": "TX", "statutes": "Tex. Fam. Code §106.002", "notes": "Generic — no conduct requirement. Lower friction than IL obdurate or CA frustrates. Purely discretionary.", "as": 0.4}, {"word": "res judicata", "score": 0.68, "tb": 0.5, "em": 0.7, "sd": 1, "cj": 1, "cf": 0.3, "jur": "ALL", "statutes": "Common law; IL case law; Fed", "notes": "Claim preclusion. Once decided, cant relitigate. Class action context.", "as": 0.6}, {"word": "initial disclosures", "score": 0.675, "tb": 0.85, "em": 0.65, "sd": 1, "cj": 0.55, "cf": 0.25, "jur": "OH", "statutes": "Ohio Civ.R. 26(B)", "notes": "2023 expanded requirements. Automatic without request. Financial statements, tax returns, account statements.", "as": 0.5}, {"word": "dereliction", "score": 0.675, "tb": 0.5, "em": 0.7, "sd": 0.6, "cj": 0.7, "cf": 0.8, "jur": "ALL", "statutes": "RPC 1.1; RPC 1.3; ARDC", "notes": "Attorney discipline word. Targets counsel directly.", "as": 0.9}, {"word": "adverse inference", "score": 0.67, "tb": 0.4, "em": 0.75, "sd": 0.8, "cj": 0.9, "cf": 0.45, "jur": "ALL", "statutes": "IL case law; Fed case law; Spoliation doctrine", "notes": "If they destroyed evidence, jury/judge may infer it was bad for them.", "as": 0.85}, {"word": "carry on or defend", "score": 0.67, "tb": 0.75, "em": 0.7, "sd": 1, "cj": 0.35, "cf": 0.5, "jur": "MI", "statutes": "MCL §552.13", "notes": "Need-based. MI-specific phrasing. Enables disadvantaged party to participate. Standard family law fee shifting.", "as": 0.35}, {"word": "less monied", "score": 0.6675, "tb": 0.7, "em": 0.75, "sd": 1, "cj": 0.2, "cf": 0.6, "jur": "NY", "statutes": "DRL §237", "notes": "NY-specific framing. Rebuttable presumption is powerful — shifts burden to monied spouse. Need-based not conduct-based.", "as": 0.3}, {"word": "initial disclosures", "score": 0.665, "tb": 0.8, "em": 0.65, "sd": 1, "cj": 0.55, "cf": 0.25, "jur": "NC", "statutes": "NC Rule 26.1", "notes": "Mandatory without request. All accounts, property, debts, income, tax returns.", "as": 0.5}, {"word": "inventory and appraisement", "score": 0.6625, "tb": 0.8, "em": 0.65, "sd": 1, "cj": 0.45, "cf": 0.3, "jur": "PA", "statutes": "Pa.R.C.P. 1920.33", "notes": "PA-specific — all property at separation date. Must include income/expense. Tax returns on request.", "as": 0.5}, {"word": "equitable", "score": 0.6625, "tb": 0.8, "em": 0.65, "sd": 1, "cj": 0.7, "cf": 0.2, "jur": "OH", "statutes": "ORC §3105.73", "notes": "Broad discretion — considers totality. Mandatory for support contempt. Generic word but powerful in OH context.", "as": 0.4}, {"word": "sworn inventory", "score": 0.6575, "tb": 0.8, "em": 0.65, "sd": 1, "cj": 0.4, "cf": 0.3, "jur": "TX", "statutes": "Tex. Fam. Code §6.504", "notes": "Must characterize as community or separate. Sworn under penalty of perjury. Foundation for all property disputes.", "as": 0.5}, {"word": "verified statement", "score": 0.6575, "tb": 0.8, "em": 0.65, "sd": 1, "cj": 0.4, "cf": 0.3, "jur": "MI", "statutes": "MCR 3.206(C)", "notes": "MI-specific mandatory form. Verified under oath. Must include all financial info. Filed with court.", "as": 0.5}, {"word": "unclean hands", "score": 0.65500003, "tb": 0.5, "em": 0.6, "sd": 0.8, "cj": 0.9, "cf": 0.5, "jur": "ALL", "statutes": "Equity doctrine; IL case law", "notes": "Party seeking equity must come with clean hands. If they hid assets, they cant seek contempt for nonpayment.", "as": 0.8}, {"word": "net worth statement", "score": 0.6475, "tb": 0.8, "em": 0.65, "sd": 1, "cj": 0.3, "cf": 0.3, "jur": "NY", "statutes": "DRL §236B(4)", "notes": "NY-specific mandatory form. Sworn under perjury. Must include tax returns. Foundation for all financial disputes.", "as": 0.5}, {"word": "insufficient means", "score": 0.6475, "tb": 0.7, "em": 0.65, "sd": 1, "cj": 0.5, "cf": 0.4, "jur": "NC", "statutes": "NCGS §50-13.6", "notes": "Need-based + good faith. NC also allows fees for frivolous actions. Applies to custody, support, contempt.", "as": 0.35}, {"word": "vitiate", "score": 0.6425, "tb": 0.4, "em": 0.7, "sd": 0.6, "cj": 0.6, "cf": 0.85, "jur": "ALL", "statutes": "Contract law; Duress doctrine", "notes": "Consent destruction word. High friction. Allocation challenge weapon.", "as": 0.8}, {"word": "financial circumstances", "score": 0.6425, "tb": 0.75, "em": 0.65, "sd": 1, "cj": 0.6, "cf": 0.2, "jur": "GA", "statutes": "OCGA §19-6-2", "notes": "Generic word but GA context is powerful — enforceable by contempt attachment. Must consider both parties.", "as": 0.4}, {"word": "domestic relations financial affidavit", "score": 0.6425, "tb": 0.8, "em": 0.65, "sd": 1, "cj": 0.25, "cf": 0.3, "jur": "GA", "statutes": "GA Uniform Superior Court Rule 24.2", "notes": "GA-specific mandatory form. Cannot be waived. All income, assets, liabilities, expenses.", "as": 0.5}, {"word": "knowingly false report", "score": 0.635, "tb": 0.45, "em": 0.5, "sd": 1, "cj": 0.5, "cf": 0.6, "jur": "TX", "statutes": "Tex. Fam. Code §153.013", "notes": "Only $500 max penalty — surprisingly low. But evidence is admissible in conservatorship proceedings — the real teeth.", "as": 0.8}, {"word": "meritorious", "score": 0.635, "tb": 0.5, "em": 0.6, "sd": 1, "cj": 0.8, "cf": 0.3, "jur": "ALL", "statutes": "IL 2-1401; TX TRCP 329b; Fed FRCP 60(b)", "notes": "Bill of review / relief from judgment. Universal concept.", "as": 0.6}, {"word": "sua sponte", "score": 0.6325, "tb": 0.4, "em": 0.65, "sd": 0.8, "cj": 0.9, "cf": 0.6, "jur": "ALL", "statutes": "Judicial doctrine", "notes": "Court acts on its own motion. Invite the judge to act sua sponte to correct errors.", "as": 0.5}, {"word": "laches", "score": 0.63, "tb": 0.45, "em": 0.55, "sd": 0.8, "cj": 0.9, "cf": 0.55, "jur": "ALL", "statutes": "Equity doctrine; IL case law", "notes": "Unreasonable delay in asserting rights. 13-month false FDA = laches in correcting it.", "as": 0.7}, {"word": "nunc pro tunc", "score": 0.625, "tb": 0.3, "em": 0.6, "sd": 0.9, "cj": 0.8, "cf": 0.7, "jur": "ALL", "statutes": "IL case law; Fed", "notes": "Now for then. Retroactive correction of record. Technical but powerful.", "as": 0.5}, {"word": "expedited", "score": 0.6175, "tb": 0.5, "em": 0.6, "sd": 1, "cj": 0.7, "cf": 0.25, "jur": "ALL", "statutes": "IL 607.5; Various", "notes": "Signals urgency. Statutory in 607.5. Forces faster court action.", "as": 0.6}, {"word": "remedial", "score": 0.615, "tb": 0.6, "em": 0.65, "sd": 0.8, "cj": 0.85, "cf": 0.25, "jur": "ALL", "statutes": "Contempt doctrine; Logston", "notes": "Civil contempt must be remedial/coercive, not punitive. If it cant remedy, its punishment.", "as": 0.5}, {"word": "interim", "score": 0.61, "tb": 0.5, "em": 0.55, "sd": 1, "cj": 0.7, "cf": 0.25, "jur": "ALL", "statutes": "IL 508(a); NY DRL §237; CA Fam. Code §2030", "notes": "Level-the-playing-field word. Forces court to address disparity NOW not at trial.", "as": 0.65}, {"word": "in pari delicto", "score": 0.6075, "tb": 0.35, "em": 0.55, "sd": 0.7, "cj": 0.7, "cf": 0.8, "jur": "ALL", "statutes": "Equity doctrine", "notes": "Both parties equally at fault. Mutual noncompliance defense.", "as": 0.7}, {"word": "substantial hardship", "score": 0.6, "tb": 0.55, "em": 0.5, "sd": 1, "cj": 0.7, "cf": 0.3, "jur": "ALL", "statutes": "735 ILCS 5/5-105; Fee waiver statutes", "notes": "Fee waiver trigger. Creates judicial finding of inability.", "as": 0.5}, {"word": "imprisoned for debt except fraud", "score": 0.59, "tb": 0.45, "em": 0.5, "sd": 1, "cj": 0.1, "cf": 0.7, "jur": "FL", "statutes": "Fla. Const. Art. I, §11", "notes": "Unique FL provision — fraud exception to debt imprisonment ban. No other state has this explicit exception.", "as": 0.6}, {"word": "proportionate", "score": 0.58, "tb": 0.55, "em": 0.6, "sd": 0.7, "cj": 0.8, "cf": 0.3, "jur": "ALL", "statutes": "8th Amend / Timbs; IL Const", "notes": "Excessive fines defense. Purge must be proportionate to ability.", "as": 0.55}, {"word": "retardation", "score": 0.5625, "tb": 0.5, "em": 0.6, "sd": 0.3, "cj": 0.2, "cf": 0.95, "jur": "IL", "statutes": "Custom — economic usage", "notes": "DEPLOYED in case. Highest cognitive friction. Low statutory depth but devastating when defined. One-shot.", "as": 0.9}, {"word": "imprisoned for debt", "score": 0.555, "tb": 0.4, "em": 0.3, "sd": 1, "cj": 0.95, "cf": 0.5, "jur": "TX", "statutes": "Tex. Const. Art. I, §18", "notes": "Strongest state language — \"shall EVER.\" But child support is duty not debt. Mostly defensive in contempt proceedings.", "as": 0.3}, {"word": "imprisoned for debt", "score": 0.555, "tb": 0.4, "em": 0.3, "sd": 1, "cj": 0.95, "cf": 0.5, "jur": "CA", "statutes": "Cal. Const. Art. I, §10", "notes": "Constitutional floor — mostly defensive. Does not block contempt for willful support nonpayment.", "as": 0.3}, {"word": "imprisoned for debt except fraud", "score": 0.545, "tb": 0.4, "em": 0.45, "sd": 1, "cj": 0.3, "cf": 0.55, "jur": "NC", "statutes": "NC Const. Art. I, §28", "notes": "Fraud exception like FL and OH. Support is duty not debt. Standard among fraud-exception states.", "as": 0.4}, {"word": "imprisoned for debt unless fraud", "score": 0.545, "tb": 0.4, "em": 0.45, "sd": 1, "cj": 0.3, "cf": 0.55, "jur": "OH", "statutes": "Ohio Const. Art. I, §15", "notes": "Fraud exception like FL. Support is duty not debt. Fraud of concealing income reopens incarceration door.", "as": 0.4}, {"word": "pernicious", "score": 0.52750003, "tb": 0.45, "em": 0.5, "sd": 0.3, "cj": 0.4, "cf": 0.85, "jur": "ALL", "statutes": "Case law", "notes": "Parental alienation word. Very high friction. Low statutory depth.", "as": 0.85}, {"word": "improvident", "score": 0.525, "tb": 0.45, "em": 0.5, "sd": 0.4, "cj": 0.3, "cf": 0.8, "jur": "ALL", "statutes": "Case law; Black's Law", "notes": "Settlement rejection word. High friction, lower statutory depth.", "as": 0.8}, {"word": "imprisoned for debt except fraud or breach of trust", "score": 0.515, "tb": 0.4, "em": 0.4, "sd": 1, "cj": 0.1, "cf": 0.6, "jur": "MI", "statutes": "Mich. Const. Art. I, §21", "notes": "Broadest exceptions — fraud AND breach of trust. Only applies to contract debt. Support is duty, not contract.", "as": 0.35}, {"word": "no imprisonment for debt", "score": 0.51, "tb": 0.4, "em": 0.3, "sd": 1, "cj": 0.5, "cf": 0.5, "jur": "GA", "statutes": "Ga. Const. Art. I, §1, ¶23", "notes": "Absolute ban — no fraud exception unlike FL/OH. Strongest state constitutional protection for debtors.", "as": 0.3}, {"word": "not continued in prison", "score": 0.4875, "tb": 0.35, "em": 0.35, "sd": 1, "cj": 0.1, "cf": 0.6, "jur": "PA", "statutes": "Pa. Const. Art. I, §16", "notes": "Weakest constitutional protection — conditional on surrendering estate AND no fraud presumption. Historical relic.", "as": 0.3}, {"word": "umgangessabotage", "score": 0.41, "tb": 0.3, "em": 0.4, "sd": 0, "cj": 0.1, "cf": 1, "jur": "SE", "statutes": "Swedish family law", "notes": "Contact sabotage. No English equivalent. The missing word IS the argument.", "as": 0.9}, {"word": "mu'sir", "score": 0.405, "tb": 0.3, "em": 0.4, "sd": 0, "cj": 0.1, "cf": 1, "jur": "ISLAMIC", "statutes": "Quran 2:280; Sharia courts", "notes": "One unable to pay. Entitled to respite. No English equivalent.", "as": 0.85}, {"word": "Pflichtteil", "score": 0.37, "tb": 0.25, "em": 0.35, "sd": 0, "cj": 0.1, "cf": 0.95, "jur": "DE", "statutes": "BGB §2303", "notes": "Duty-portion. Children cannot be fully disinherited. No US equivalent except Louisiana.", "as": 0.8}, {"word": "legitieme portie", "score": 0.36249998, "tb": 0.25, "em": 0.35, "sd": 0, "cj": 0.1, "cf": 0.9, "jur": "NL", "statutes": "BW Book 4", "notes": "Legitimate portion. Dutch forced heirship. The word that started the dead-person analysis.", "as": 0.8}, {"word": "capitis deminutio", "score": 0.3475, "tb": 0.2, "em": 0.3, "sd": 0, "cj": 0.1, "cf": 0.95, "jur": "LATIN", "statutes": "Roman law", "notes": "Loss of family status. No modern equivalent. Parental erasure has no legal category.", "as": 0.8}, {"word": "Restschuldbefreiung", "score": 0.3475, "tb": 0.2, "em": 0.35, "sd": 0, "cj": 0.1, "cf": 0.9, "jur": "DE", "statutes": "InsO §286-303", "notes": "Remaining-debt-liberation. German insolvency discharge. No family law equivalent anywhere.", "as": 0.75}, {"word": "statutory abolition", "score": 0.305, "tb": 0.3, "em": 0.2, "sd": 0.5, "cj": 0.15, "cf": 0.4, "jur": "NY", "statutes": "N.Y. CPLR §5250", "notes": "Weakest protection — no constitutional provision. Legislature could reverse. Contempt of debtor exam still available.", "as": 0.2}];
+
+const foreignJurs = new Set(['DE','SE','NL','ISLAMIC','LATIN','FR','JP','KR','SA','AE','BR','MX','IT','CH','NO','DK','IN-HMA','IL-ISR','ZA','GB','CA-ON','AU']);
+const usStates = new Set(['AL','AK','AZ','AR','CA','CO','CT','DE','FL','GA','HI','ID','IL','IN','IA','KS','KY','LA','ME','MD','MA','MI','MN','MS','MO','MT','NE','NV','NH','NJ','NM','NY','NC','ND','OH','OK','OR','PA','RI','SC','SD','TN','TX','UT','VT','VA','WA','WV','WI','WY']);
+
+const colors = {tb:'#4dabf7', em:'#ff6b6b', sd:'#ffd43b', cj:'#69db7c', cf:'#cc5de8', as:'#ff922b'};
+const weights = {tb:0.20, em:0.25, sd:0.20, cj:0.10, cf:0.15, as:0.10};
+
+let activeJur = null;
+let activeTier = 'all';
+let sortKey = 'score';
+
+function isForeign(d) {
+    return foreignJurs.has(d.jur) && !usStates.has(d.jur) && d.jur !== 'ALL';
+}
+
+function getTier(d) {
+    if (isForeign(d)) return {cls:'gap', label:'GAP'};
+    if (d.score >= 0.75) return {cls:'nuclear', label:'NUCLEAR'};
+    if (d.score >= 0.60) return {cls:'high', label:'HIGH'};
+    if (d.score >= 0.45) return {cls:'medium', label:'MEDIUM'};
+    return {cls:'low', label:'LOW'};
+}
+
+function initStats() {
+    const jurs = new Set(data.map(d => d.jur));
+    const usCount = [...jurs].filter(j => usStates.has(j) || j === 'ALL').length;
+    const intlCount = [...jurs].filter(j => foreignJurs.has(j)).length;
+    const nuclear = data.filter(d => !isForeign(d) && d.score >= 0.75).length;
+    const high = data.filter(d => !isForeign(d) && d.score >= 0.60 && d.score < 0.75).length;
+    const foreign = data.filter(d => isForeign(d)).length;
+
+    document.getElementById('subtitle').textContent = 
+        `Dominance scoring across ${jurs.size} jurisdictions — ${data.length} words, 6 scoring axes`;
+
+    document.getElementById('stats-bar').innerHTML = `
+        <div class="stat"><div class="stat-num">${data.length}</div><div class="stat-label">Words Scored</div></div>
+        <div class="stat"><div class="stat-num">${jurs.size}</div><div class="stat-label">Jurisdictions</div></div>
+        <div class="stat"><div class="stat-num">${nuclear}</div><div class="stat-label">Nuclear</div></div>
+        <div class="stat"><div class="stat-num">${high}</div><div class="stat-label">High</div></div>
+        <div class="stat"><div class="stat-num">${foreign}</div><div class="stat-label">Foreign (Gap)</div></div>
+    `;
+}
+
+function initJurPills() {
+    const jurCounts = {};
+    data.forEach(d => { jurCounts[d.jur] = (jurCounts[d.jur] || 0) + 1; });
+    
+    const pills = document.getElementById('jur-pills');
+    const allPill = document.createElement('span');
+    allPill.className = 'jur-pill active';
+    allPill.textContent = 'ALL';
+    allPill.onclick = () => { activeJur = null; applyFilters(); updatePillStates(); };
+    pills.appendChild(allPill);
+
+    // US states first, sorted
+    const usJurs = Object.keys(jurCounts).filter(j => usStates.has(j) || j === 'ALL').sort();
+    const intlJurs = Object.keys(jurCounts).filter(j => foreignJurs.has(j)).sort();
+    const otherJurs = Object.keys(jurCounts).filter(j => !usStates.has(j) && !foreignJurs.has(j) && j !== 'ALL').sort();
+
+    [...usJurs, ...otherJurs, ...intlJurs].forEach(j => {
+        if (j === 'ALL') return;
+        const pill = document.createElement('span');
+        pill.className = 'jur-pill' + (foreignJurs.has(j) ? ' foreign' : '');
+        pill.innerHTML = `${j}<span class="count">${jurCounts[j]}</span>`;
+        pill.onclick = () => { activeJur = (activeJur === j ? null : j); applyFilters(); updatePillStates(); };
+        pills.appendChild(pill);
+    });
+}
+
+function updatePillStates() {
+    document.querySelectorAll('.jur-pill').forEach(p => {
+        const j = p.textContent.replace(/\d+/g, '').trim();
+        p.classList.toggle('active', activeJur === null ? j === 'ALL' : j === activeJur);
+    });
+}
+
+function applyFilters() {
+    const search = document.getElementById('search').value.toLowerCase();
+    let filtered = data.filter(d => {
+        if (activeJur && d.jur !== activeJur) return false;
+        if (activeTier === 'nuclear' && (isForeign(d) || d.score < 0.75)) return false;
+        if (activeTier === 'high' && (isForeign(d) || d.score < 0.60 || d.score >= 0.75)) return false;
+        if (activeTier === 'medium' && (isForeign(d) || d.score < 0.45 || d.score >= 0.60)) return false;
+        if (activeTier === 'foreign' && !isForeign(d)) return false;
+        if (search) {
+            const s = d.word + ' ' + d.statutes + ' ' + d.notes + ' ' + d.jur;
+            if (!s.toLowerCase().includes(search)) return false;
+        }
+        return true;
+    });
+
+    if (sortKey === 'score') filtered.sort((a,b) => b.score - a.score);
+    else if (sortKey === 'friction') filtered.sort((a,b) => b.cf - a.cf);
+    else if (sortKey === 'effect') filtered.sort((a,b) => b.em - a.em);
+    else if (sortKey === 'asymmetry') filtered.sort((a,b) => b.as - a.as);
+
+    document.getElementById('showing').textContent = `Showing ${filtered.length} of ${data.length} words`;
+    render(filtered);
+}
+
+function setTier(tier, btn) {
+    activeTier = tier;
+    document.querySelectorAll('.controls button').forEach(b => b.classList.remove('active'));
+    if (btn) btn.classList.add('active');
+    applyFilters();
+}
+
+function sortBy(key) {
+    sortKey = key;
+    applyFilters();
+}
+
+function render(items) {
+    const viz = document.getElementById('viz');
+    viz.innerHTML = '';
+    if (!items.length) { viz.innerHTML = '<div style="color:#4a5580;padding:20px">No matching words</div>'; return; }
+    const maxScore = Math.max(...items.map(d => d.score));
+
+    items.forEach((d, i) => {
+        const tier = getTier(d);
+        const pct = (d.score / maxScore) * 100;
+        const isFgn = isForeign(d);
+
+        const row = document.createElement('div');
+        row.className = 'word-row';
+        row.onclick = () => {
+            const det = row.nextElementSibling;
+            if (det && det.classList.contains('detail')) det.classList.toggle('open');
+        };
+
+        const wordColor = isFgn ? '#cc5de8' : (d.score >= 0.75 ? '#ff6b6b' : d.score >= 0.60 ? '#ffd43b' : '#e8eaf0');
+
+        row.innerHTML = `
+            <span class="rank">${i+1}</span>
+            <span class="word" style="color:${wordColor}" title="${d.word}">${d.word}</span>
+            <span class="score" style="color:${tier.cls==='nuclear'?'#ff6b6b':tier.cls==='high'?'#ffd43b':tier.cls==='gap'?'#cc5de8':'#69db7c'}">${d.score.toFixed(3)}</span>
+            <div class="bar-container">
+                <div class="bar" style="width:${pct}%">
+                    <div class="bar-inner">
+                        <div class="bar-segment" style="width:${d.tb*weights.tb/d.score*100}%;background:${colors.tb}"></div>
+                        <div class="bar-segment" style="width:${d.em*weights.em/d.score*100}%;background:${colors.em}"></div>
+                        <div class="bar-segment" style="width:${d.sd*weights.sd/d.score*100}%;background:${colors.sd}"></div>
+                        <div class="bar-segment" style="width:${d.cj*weights.cj/d.score*100}%;background:${colors.cj}"></div>
+                        <div class="bar-segment" style="width:${d.cf*weights.cf/d.score*100}%;background:${colors.cf}"></div>
+                        <div class="bar-segment" style="width:${d.as*weights.as/d.score*100}%;background:${colors.as}"></div>
+                    </div>
+                </div>
+            </div>
+            <span class="jur">${d.jur}</span>
+            <span class="tier tier-${tier.cls}">${tier.label}</span>
+        `;
+        viz.appendChild(row);
+
+        const detail = document.createElement('div');
+        detail.className = 'detail';
+        const axes = [
+            {key:'tb',label:'Trigger',color:colors.tb},
+            {key:'em',label:'Effect',color:colors.em},
+            {key:'sd',label:'Statutory',color:colors.sd},
+            {key:'cj',label:'Cross-Jur',color:colors.cj},
+            {key:'cf',label:'Friction',color:colors.cf},
+            {key:'as',label:'Asymmetry',color:colors.as}
+        ];
+        detail.innerHTML = `
+            <div class="stat-grid">
+                ${axes.map(a => `<div class="stat">
+                    <div class="stat-label">${a.label}</div>
+                    <div class="stat-value" style="color:${a.color}">${d[a.key].toFixed(2)}</div>
+                    <div class="stat-bar"><div class="stat-bar-fill" style="width:${d[a.key]*100}%;background:${a.color}"></div></div>
+                </div>`).join('')}
+            </div>
+            <div class="notes">${d.notes}</div>
+            <div class="statutes">Statutes: <span>${d.statutes}</span></div>
+        `;
+        viz.appendChild(detail);
+    });
+}
+
+function initForeignSection() {
+    const foreign = data.filter(d => isForeign(d)).sort((a,b) => b.cf - a.cf);
+    if (!foreign.length) { document.getElementById('foreign-section').style.display = 'none'; return; }
+    
+    const section = document.getElementById('foreign-section');
+    section.innerHTML = `<h3>Foreign Leverage Words — Concepts Without English Equivalents</h3>
+        <p style="color:#6b7394;font-size:12px;margin-bottom:12px">These words name legal concepts that exist in other systems but have no single English term. The missing word <em>is</em> the argument.</p>
+        ${foreign.map(d => `<div class="foreign-card">
+            <div class="fw">${d.word}</div>
+            <div class="fj">${d.jur} · ${d.score.toFixed(3)} · Friction: ${d.cf.toFixed(2)}</div>
+            <div class="fn">${d.notes}</div>
+        </div>`).join('')}`;
+}
+
+initStats();
+initJurPills();
+initForeignSection();
+applyFilters();
+</script>
+</body>
+</html>
