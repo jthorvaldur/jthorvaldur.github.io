@@ -1,0 +1,663 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>The 10 Dimensions of Deformation</title>
+<meta name="description" content="Every translation answers — implicitly — questions that English allows to remain unanswered. Each unanswered question is a latent dimension.">
+<meta property="og:title" content="The 10 Dimensions of Deformation">
+<meta property="og:description" content="Every translation answers — implicitly — questions that English allows to remain unanswered. Each unanswered question is a latent dimension.">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://jthorvaldur.github.io/enemies/dimensions.html">
+<style>
+:root {
+    --bg: #0d1117; --fg: #c9d1d9; --accent: #58a6ff;
+    --border: #30363d; --surface: #161b22; --surface2: #21262d;
+    --green: #3fb950; --yellow: #d29922; --red: #f85149;
+    --d1: #bb9af7; --d2: #f85149; --d3: #7aa2f7; --d4: #e0af68;
+    --d5: #9ece6a; --d6: #f7768e; --d7: #ff9e64; --d8: #73daca;
+    --d9: #b4f9f8; --d10: #c0caf5;
+}
+* { margin:0; padding:0; box-sizing:border-box; }
+body { font-family: 'SF Mono','Fira Code','JetBrains Mono',monospace; background:var(--bg); color:var(--fg); line-height:1.6; padding:2rem; max-width:1400px; margin:0 auto; }
+h1 { color:var(--accent); font-size:1.8rem; margin-bottom:0.5rem; }
+h2 { color:var(--accent); font-size:1.3rem; margin:2.5rem 0 1rem; border-bottom:1px solid var(--border); padding-bottom:0.5rem; }
+h3 { color:var(--fg); font-size:1.1rem; margin:1.5rem 0 0.5rem; }
+.subtitle { color:#8b949e; margin-bottom:2rem; font-size:0.95rem; line-height:1.7; max-width:900px; }
+a { color:var(--accent); text-decoration:none; }
+a:hover { text-decoration:underline; }
+nav { background:var(--surface); border:1px solid var(--border); border-radius:6px; padding:1rem; margin:1rem 0 2rem; display:flex; flex-wrap:wrap; gap:0.5rem 1.5rem; }
+nav a { color:var(--accent); text-decoration:none; font-size:0.85rem; }
+nav a.current { color:var(--fg); font-weight:bold; border-bottom:2px solid var(--accent); }
+.stats { display:grid; grid-template-columns:repeat(auto-fit, minmax(180px, 1fr)); gap:1rem; margin:1rem 0 2rem; }
+.stat { background:var(--surface); border:1px solid var(--border); border-radius:6px; padding:1rem; text-align:center; }
+.stat .value { font-size:2rem; color:var(--accent); font-weight:bold; }
+.stat .label { font-size:0.8rem; color:#8b949e; }
+
+/* Dimension cards */
+.dimension-card {
+    background:var(--surface);
+    border:1px solid var(--border);
+    border-radius:6px;
+    margin:1.5rem 0;
+    padding:1.5rem;
+    border-left-width:4px;
+    border-left-style:solid;
+}
+.dimension-card .dim-header {
+    display:flex;
+    align-items:baseline;
+    gap:0.75rem;
+    margin-bottom:0.75rem;
+}
+.dimension-card .dim-id {
+    font-size:1.3rem;
+    font-weight:bold;
+    opacity:0.6;
+}
+.dimension-card .dim-title {
+    font-size:1.1rem;
+    font-weight:bold;
+}
+.dimension-card .dim-question {
+    background:var(--surface2);
+    border:1px solid var(--border);
+    border-radius:4px;
+    padding:0.75rem 1rem;
+    margin:0.75rem 0;
+    font-style:italic;
+    color:#e6edf3;
+    font-size:0.9rem;
+}
+.spectrum {
+    background:var(--bg);
+    border:1px solid var(--border);
+    border-radius:4px;
+    padding:1rem;
+    margin:0.75rem 0;
+    overflow-x:auto;
+}
+.spectrum-title {
+    font-size:0.75rem;
+    color:#8b949e;
+    text-transform:uppercase;
+    letter-spacing:0.05em;
+    margin-bottom:0.5rem;
+}
+.spectrum-bar {
+    display:flex;
+    align-items:center;
+    gap:0;
+    margin:0.5rem 0;
+    position:relative;
+}
+.spectrum-track {
+    flex:1;
+    height:3px;
+    background:var(--border);
+    position:relative;
+    margin:0 0.5rem;
+}
+.spectrum-point {
+    display:inline-block;
+    background:var(--surface2);
+    border:1px solid var(--border);
+    border-radius:3px;
+    padding:2px 8px;
+    font-size:0.72rem;
+    white-space:nowrap;
+    position:relative;
+}
+.spectrum-point.active {
+    border-color:var(--accent);
+    color:var(--accent);
+}
+.spectrum-label-left, .spectrum-label-right {
+    font-size:0.7rem;
+    color:#8b949e;
+    white-space:nowrap;
+}
+.spectrum-row {
+    display:flex;
+    align-items:center;
+    gap:0.5rem;
+    margin:0.4rem 0;
+    flex-wrap:wrap;
+}
+.spectrum-row .lang-tag {
+    display:inline-block;
+    background:var(--surface2);
+    border:1px solid var(--border);
+    border-radius:3px;
+    padding:2px 8px;
+    font-size:0.75rem;
+    white-space:nowrap;
+}
+.spectrum-row .position-label {
+    font-size:0.72rem;
+    color:#8b949e;
+    min-width:160px;
+}
+
+.english-gap {
+    background:#1c1407;
+    border-left:3px solid var(--yellow);
+    padding:0.75rem 1rem;
+    margin:0.75rem 0;
+    font-size:0.85rem;
+}
+.english-gap strong {
+    color:var(--yellow);
+}
+
+.law-note {
+    background:rgba(88, 166, 255, 0.05);
+    border-left:3px solid var(--accent);
+    padding:0.75rem 1rem;
+    margin:0.75rem 0;
+    font-size:0.82rem;
+    color:#8b949e;
+}
+.law-note strong {
+    color:var(--accent);
+}
+
+.detail-text {
+    font-size:0.85rem;
+    color:var(--fg);
+    margin:0.5rem 0;
+    line-height:1.7;
+}
+.detail-text .native {
+    color:var(--accent);
+    font-weight:600;
+}
+.detail-text em {
+    color:#e6edf3;
+    font-style:italic;
+}
+
+footer { color:#8b949e; margin-top:3rem; font-size:0.8rem; text-align:center; padding:1rem 0; border-top:1px solid var(--border); }
+footer a { color:#8b949e; }
+</style>
+</head>
+<body>
+
+<h1>The 10 Dimensions of Deformation</h1>
+<p class="subtitle">Every translation answers &mdash; implicitly &mdash; questions that English allows to remain unanswered. Each unanswered question is a latent dimension.</p>
+
+<nav>
+    <a href="index.html">Index</a>
+    <a href="translations.html">Translations</a>
+    <a href="dimensions.html" class="current">Dimensions</a>
+    <a href="unsayable.html">Unsayable</a>
+    <a href="algorithms.html">Algorithms</a>
+</nav>
+
+<div class="stats">
+    <div class="stat"><div class="value">10</div><div class="label">Latent Dimensions</div></div>
+    <div class="stat"><div class="value">15+</div><div class="label">Languages Examined</div></div>
+    <div class="stat"><div class="value">10</div><div class="label">Questions English Refuses</div></div>
+    <div class="stat"><div class="value">&infin;</div><div class="label">Deformation Surface</div></div>
+</div>
+
+
+<!-- ==================== D1 ==================== -->
+<div class="dimension-card" style="border-left-color:var(--d1)">
+    <div class="dim-header">
+        <span class="dim-id" style="color:var(--d1)">D1</span>
+        <span class="dim-title" style="color:var(--d1)">Lexical Status of <em>idea</em></span>
+    </div>
+    <div class="dim-question">Is <em>idea</em> a native concept, a Greek loan, or a periphrasis built from process verbs?</div>
+
+    <div class="spectrum">
+        <div class="spectrum-title">Spectrum: noun-status of &ldquo;idea&rdquo;</div>
+        <div class="spectrum-row">
+            <span class="position-label">Native eidetic noun</span>
+            <span class="lang-tag" style="border-color:var(--d1)">Greek &mdash; &#7984;&delta;&#941;&alpha;</span>
+            <span class="lang-tag">Latin &mdash; idea</span>
+        </div>
+        <div class="spectrum-row">
+            <span class="position-label">Loanword via Greek/Latin</span>
+            <span class="lang-tag">French &mdash; id&eacute;e</span>
+            <span class="lang-tag">German &mdash; Idee</span>
+            <span class="lang-tag">Spanish &mdash; idea</span>
+            <span class="lang-tag">Russian &mdash; &#1080;&#1076;&#1077;&#1103;</span>
+        </div>
+        <div class="spectrum-row">
+            <span class="position-label">Native, process-flavored</span>
+            <span class="lang-tag">Sanskrit &mdash; bh&#257;van&#257;</span>
+            <span class="lang-tag">Arabic &mdash; fikra</span>
+            <span class="lang-tag">Chinese &mdash; &#24605;&#24819; / &#24565;</span>
+            <span class="lang-tag">Japanese &mdash; &#24605;&#24819;</span>
+        </div>
+        <div class="spectrum-row">
+            <span class="position-label">No discrete count noun</span>
+            <span class="lang-tag" style="border-color:var(--yellow)">Navajo</span>
+            <span class="lang-tag" style="border-color:var(--yellow)">Old English</span>
+            <span class="lang-tag" style="border-color:var(--yellow)">Gothic</span>
+        </div>
+    </div>
+
+    <div class="detail-text">
+        Greek <span class="native">&#7984;&delta;&#941;&alpha;</span> derives from <em>idein</em> &mdash; &ldquo;to see.&rdquo; The word is native, and it names a visible form. English borrows it wholesale, but strips the visual metaphor. In Sanskrit, <span class="native">bh&#257;van&#257;</span> is a gerundive: not &ldquo;a thing seen&rdquo; but &ldquo;a bringing-into-being.&rdquo; In Navajo, there is no noun; one must say something like &ldquo;what-is-being-thought&rdquo; &mdash; a verb phrase, never a countable object.
+    </div>
+
+    <div class="english-gap">
+        <strong>What English refuses to specify:</strong> Whether &ldquo;idea&rdquo; names a static object or an ongoing mental event. English treats it as a thing you &ldquo;have&rdquo; &mdash; a possession, not a process. This is a Greek inheritance that most speakers never notice.
+    </div>
+
+    <div class="law-note">
+        <strong>Law / Philosophy:</strong> Intellectual property law depends on ideas being discrete, countable objects that can be owned. If your language treats ideas as events rather than things, the entire framework of IP becomes a category error.
+    </div>
+</div>
+
+
+<!-- ==================== D2 ==================== -->
+<div class="dimension-card" style="border-left-color:var(--d2)">
+    <div class="dim-header">
+        <span class="dim-id" style="color:var(--d2)">D2</span>
+        <span class="dim-title" style="color:var(--d2)">Ontology of <em>enemy</em></span>
+    </div>
+    <div class="dim-question">Is &ldquo;enemy&rdquo; a public/political enemy or a personal enemy? Is it animate? Permanent or situational?</div>
+
+    <div class="spectrum">
+        <div class="spectrum-title">Spectrum: what kind of adversary?</div>
+        <div class="spectrum-row">
+            <span class="position-label">Public / foreign enemy</span>
+            <span class="lang-tag" style="border-color:var(--d2)">Latin &mdash; hostis</span>
+            <span class="lang-tag">Greek &mdash; &#960;&#959;&#955;&#941;&#956;&#953;&#959;&#962;</span>
+        </div>
+        <div class="spectrum-row">
+            <span class="position-label">Personal enemy</span>
+            <span class="lang-tag" style="border-color:var(--d2)">Latin &mdash; inimicus</span>
+            <span class="lang-tag">Greek &mdash; &#7952;&#967;&#952;&#961;&#972;&#962;</span>
+        </div>
+        <div class="spectrum-row">
+            <span class="position-label">Relational (in the relation)</span>
+            <span class="lang-tag" style="border-color:var(--yellow)">Mandarin &mdash; &#25973;</span>
+        </div>
+        <div class="spectrum-row">
+            <span class="position-label">Directional (comes against)</span>
+            <span class="lang-tag" style="border-color:var(--green)">Navajo &mdash; naash&#704;a&#704;ii</span>
+        </div>
+    </div>
+
+    <div class="detail-text">
+        Latin makes a distinction modern European languages have collapsed: <span class="native">hostis</span> is the enemy of the state, the foreigner at war; <span class="native">inimicus</span> is the man who hates you personally. &ldquo;Our enemies&rdquo; in English refuses to choose. Mandarin <span class="native">&#25973;</span> locates the enmity in the <em>relation</em>, not in the person &mdash; nobody is essentially an enemy. Navajo <span class="native">naash&#704;a&#704;ii</span> carries a directional sense: <em>the one who comes against me</em>, an orientation in space, not a classification.
+    </div>
+
+    <div class="english-gap">
+        <strong>What English refuses to specify:</strong> Whether &ldquo;enemies&rdquo; denotes a political category or a personal grievance. Whether enmity is a permanent property of a person or a situational relation. English lets you mean both, or neither.
+    </div>
+
+    <div class="law-note">
+        <strong>Law / Philosophy:</strong> The hostis/inimicus distinction maps directly onto international humanitarian law. An <em>enemy combatant</em> (hostis) has legal protections. A personal enemy (inimicus) does not. Collapsing the distinction enables euphemism &mdash; calling personal vendettas &ldquo;national security.&rdquo;
+    </div>
+</div>
+
+
+<!-- ==================== D3 ==================== -->
+<div class="dimension-card" style="border-left-color:var(--d3)">
+    <div class="dim-header">
+        <span class="dim-id" style="color:var(--d3)">D3</span>
+        <span class="dim-title" style="color:var(--d3)">Copula Behavior</span>
+    </div>
+    <div class="dim-question">Does the language <em>predicate</em> &ldquo;X is Y&rdquo;, or <em>demonstrate</em> &ldquo;this is X&rdquo;?</div>
+
+    <div class="spectrum">
+        <div class="spectrum-title">Spectrum: what does &ldquo;is&rdquo; do?</div>
+        <div class="spectrum-row">
+            <span class="position-label">Ostensive (zero copula)</span>
+            <span class="lang-tag" style="border-color:var(--d3)">Russian &mdash; &#1101;&#1090;&#1086; + zero</span>
+            <span class="lang-tag">Ukrainian &mdash; &#1094;&#1077; + zero</span>
+            <span class="lang-tag">Hebrew &mdash; zero (present)</span>
+        </div>
+        <div class="spectrum-row">
+            <span class="position-label">Contrastive copula</span>
+            <span class="lang-tag" style="border-color:var(--yellow)">Mandarin &mdash; &#32780;&#26159;</span>
+        </div>
+        <div class="spectrum-row">
+            <span class="position-label">Flat, neutral</span>
+            <span class="lang-tag" style="border-color:#8b949e">English &mdash; &ldquo;are&rdquo;</span>
+        </div>
+    </div>
+
+    <div class="detail-text">
+        Russian and Ukrainian use a zero copula with a demonstrative (<span class="native">&#1101;&#1090;&#1086;</span> / <span class="native">&#1094;&#1077;</span>): the sentence doesn&rsquo;t assert identity so much as <em>point</em> at it. Hebrew drops the copula in present tense entirely &mdash; existential predication without a linking verb. Mandarin splits the work: <span class="native">&#26159;</span> for plain identification, <span class="native">&#32780;&#26159;</span> for contrastive correction, sharpening the rhetorical force. English uses flat <em>are</em> in both clauses &mdash; maximum semantic neutrality, minimum rhetorical signaling.
+    </div>
+
+    <div class="english-gap">
+        <strong>What English refuses to specify:</strong> Whether &ldquo;are&rdquo; is identifying, correcting, pointing, or merely linking. The same three-letter word carries all these functions without marking which one is active.
+    </div>
+
+    <div class="law-note">
+        <strong>Law / Philosophy:</strong> Legal definitions rely on &ldquo;X is Y&rdquo; constructions. Whether this <em>asserts</em> identity or <em>stipulates</em> it changes what counts as a counter-argument. In Russian legal discourse, the demonstrative forces stipulative reading; English hides the distinction.
+    </div>
+</div>
+
+
+<!-- ==================== D4 ==================== -->
+<div class="dimension-card" style="border-left-color:var(--d4)">
+    <div class="dim-header">
+        <span class="dim-id" style="color:var(--d4)">D4</span>
+        <span class="dim-title" style="color:var(--d4)">Evidentiality</span>
+    </div>
+    <div class="dim-question">Must the speaker mark <em>how they know</em> this? The dimension along which English allows the most rhetorical bluffing.</div>
+
+    <div class="spectrum">
+        <div class="spectrum-title">Spectrum: is source-of-knowledge grammatically required?</div>
+        <div class="spectrum-row">
+            <span class="position-label">Obligatory (grammaticalized)</span>
+            <span class="lang-tag" style="border-color:var(--d4)">Quechua</span>
+            <span class="lang-tag" style="border-color:var(--d4)">Aymara</span>
+            <span class="lang-tag">Amazonian languages</span>
+        </div>
+        <div class="spectrum-row">
+            <span class="position-label">Optional but available</span>
+            <span class="lang-tag">Turkish &mdash; -mi&#351;</span>
+            <span class="lang-tag">Japanese &mdash; &#12425;&#12375;&#12356; / &#12381;&#12358;&#12384;</span>
+            <span class="lang-tag">Bulgarian</span>
+        </div>
+        <div class="spectrum-row">
+            <span class="position-label">Absent</span>
+            <span class="lang-tag" style="border-color:#8b949e">English</span>
+            <span class="lang-tag" style="border-color:#8b949e">most Indo-European</span>
+            <span class="lang-tag" style="border-color:#8b949e">Chinese</span>
+            <span class="lang-tag" style="border-color:#8b949e">Arabic</span>
+        </div>
+    </div>
+
+    <div class="detail-text">
+        In Quechua, every statement <em>must</em> carry a suffix marking whether the speaker saw it, heard it from someone, or inferred it. There is no grammatically unmarked assertion. Turkish <span class="native">-mi&#351;</span> optionally marks hearsay or inference &mdash; using it signals distance from the claim. English has no such machinery. &ldquo;Our enemies are not bad people&rdquo; arrives with zero evidential marking. The speaker could be reporting first-hand knowledge, hearsay, conjecture, or deliberate fiction &mdash; the grammar does not distinguish.
+    </div>
+
+    <div class="english-gap">
+        <strong>What English refuses to specify:</strong> Whether the speaker witnessed, was told, inferred, or invented the claim. This is the single largest rhetorical gap in the language. Every English declarative sentence is an evidential bluff.
+    </div>
+
+    <div class="law-note">
+        <strong>Law / Philosophy:</strong> Hearsay rules in common law are a <em>procedural</em> patch for a <em>grammatical</em> absence. If English marked evidentiality, half of evidence law would be redundant. Quechua speakers cannot make an unattributed assertion &mdash; the grammar functions as a built-in oath.
+    </div>
+</div>
+
+
+<!-- ==================== D5 ==================== -->
+<div class="dimension-card" style="border-left-color:var(--d5)">
+    <div class="dim-header">
+        <span class="dim-id" style="color:var(--d5)">D5</span>
+        <span class="dim-title" style="color:var(--d5)">Animacy and Number of <em>ideas</em></span>
+    </div>
+    <div class="dim-question">Are ideas animate? Countable? Is &ldquo;ideas&rdquo; a plural of discrete objects or an undifferentiated substance?</div>
+
+    <div class="spectrum">
+        <div class="spectrum-title">Spectrum: ontological status of &ldquo;ideas&rdquo;</div>
+        <div class="spectrum-row">
+            <span class="position-label">Animate, countable</span>
+            <span class="lang-tag" style="border-color:var(--d5)">English &mdash; &ldquo;bad ideas&rdquo;</span>
+        </div>
+        <div class="spectrum-row">
+            <span class="position-label">Inanimate, countable</span>
+            <span class="lang-tag">Russian &mdash; &#1087;&#1083;&#1086;&#1093;&#1080;&#1077; &#1080;&#1076;&#1077;&#1080;</span>
+        </div>
+        <div class="spectrum-row">
+            <span class="position-label">No obligatory plural</span>
+            <span class="lang-tag" style="border-color:var(--yellow)">Mandarin</span>
+            <span class="lang-tag" style="border-color:var(--yellow)">Japanese</span>
+            <span class="lang-tag" style="border-color:var(--yellow)">Korean</span>
+        </div>
+        <div class="spectrum-row">
+            <span class="position-label">Excluded from animacy</span>
+            <span class="lang-tag" style="border-color:var(--red)">Navajo &mdash; animacy hierarchy</span>
+        </div>
+    </div>
+
+    <div class="detail-text">
+        Navajo organizes nouns into an animacy hierarchy that determines verb agreement and word order. Ideas sit near the bottom &mdash; excluded from agency-eligible slots. They cannot grammatically &ldquo;do&rdquo; anything. In Mandarin, Japanese, and Korean, there is no obligatory plural marking: <em>enemies are bad-thinking</em> treats thought as a substance, not a count noun. Russian <span class="native">&#1054;&#1085;&#1080; &mdash; &#1087;&#1083;&#1086;&#1093;&#1080;&#1077; &#1080;&#1076;&#1077;&#1080;</span> with bare instrumental is closer to &ldquo;they constitute bad-idea-ness&rdquo; &mdash; a predicated quality, not a collection of objects.
+    </div>
+
+    <div class="english-gap">
+        <strong>What English refuses to specify:</strong> Whether ideas are agents capable of action, or inert objects to be possessed. English freely says &ldquo;the idea grabbed me&rdquo; and &ldquo;I had an idea&rdquo; &mdash; treating ideas as both animate and inanimate within the same conversation.
+    </div>
+
+    <div class="law-note">
+        <strong>Law / Philosophy:</strong> Legal personhood for corporations depends on the same slippage. If your grammar forces you to choose whether abstract entities have agency, &ldquo;the corporation decided&rdquo; becomes either grammatical or not &mdash; never ambiguous.
+    </div>
+</div>
+
+
+<!-- ==================== D6 ==================== -->
+<div class="dimension-card" style="border-left-color:var(--d6)">
+    <div class="dim-header">
+        <span class="dim-id" style="color:var(--d6)">D6</span>
+        <span class="dim-title" style="color:var(--d6)">Negation Scope</span>
+    </div>
+    <div class="dim-question">Does the negation attach to &ldquo;people&rdquo; or to &ldquo;bad&rdquo;? Are they good-people, or not-people?</div>
+
+    <div class="spectrum">
+        <div class="spectrum-title">Spectrum: where does &ldquo;not&rdquo; land?</div>
+        <div class="spectrum-row">
+            <span class="position-label">Brackets whole predicate</span>
+            <span class="lang-tag" style="border-color:var(--d6)">French &mdash; ne...pas</span>
+        </div>
+        <div class="spectrum-row">
+            <span class="position-label">Contrastive presupposition</span>
+            <span class="lang-tag">Japanese &mdash; &#12391;&#12399;&#12394;&#12356;</span>
+        </div>
+        <div class="spectrum-row">
+            <span class="position-label">Clean clausal negator</span>
+            <span class="lang-tag" style="border-color:var(--green)">Turkish &mdash; de&#287;il</span>
+        </div>
+        <div class="spectrum-row">
+            <span class="position-label">Structurally ambiguous</span>
+            <span class="lang-tag" style="border-color:var(--red)">English &mdash; &ldquo;not bad people&rdquo;</span>
+        </div>
+    </div>
+
+    <div class="detail-text">
+        &ldquo;Not bad people&rdquo; in English is structurally ambiguous. Does <em>not</em> negate <em>bad</em> (yielding: they are people who are not-bad) or negate the whole noun phrase (yielding: they are not [bad people])? French <span class="native">ne...pas</span> brackets the entire predicate, removing this ambiguity. Turkish <span class="native">de&#287;il</span> is a clean clausal negator &mdash; it negates exactly the clause it governs, no structural wiggle room. Japanese <span class="native">&#12391;&#12399;&#12394;&#12356;</span> is contrastive: it presupposes that someone expected otherwise, and corrects them.
+    </div>
+
+    <div class="english-gap">
+        <strong>What English refuses to specify:</strong> The scope of negation. &ldquo;Not bad people&rdquo; can mean &ldquo;people who aren&rsquo;t bad&rdquo; or &ldquo;not people at all (in the bad-person category).&rdquo; Context, prosody, and the listener&rsquo;s priors do the work that grammar should.
+    </div>
+
+    <div class="law-note">
+        <strong>Law / Philosophy:</strong> Negation scope matters enormously in statutory interpretation. &ldquo;No person shall be denied&rdquo; vs &ldquo;a person shall not be denied&rdquo; &mdash; courts argue about these as if syntax were destiny. In Turkish, the argument would not arise.
+    </div>
+</div>
+
+
+<!-- ==================== D7 ==================== -->
+<div class="dimension-card" style="border-left-color:var(--d7)">
+    <div class="dim-header">
+        <span class="dim-id" style="color:var(--d7)">D7</span>
+        <span class="dim-title" style="color:var(--d7)">Definiteness / Genericity of <em>enemies</em></span>
+    </div>
+    <div class="dim-question">&ldquo;Our enemies&rdquo; &mdash; a specific cohort of identifiable adversaries, or the generic class of anyone who opposes us?</div>
+
+    <div class="spectrum">
+        <div class="spectrum-title">Spectrum: specific or generic?</div>
+        <div class="spectrum-row">
+            <span class="position-label">Article flips reading</span>
+            <span class="lang-tag" style="border-color:var(--d7)">Greek &mdash; &#7952;&#967;&#952;&#961;&#959;&#943; &plusmn; article</span>
+        </div>
+        <div class="spectrum-row">
+            <span class="position-label">Possessive blocks article</span>
+            <span class="lang-tag" style="border-color:var(--d7)">Arabic &mdash; &#1571;&#1593;&#1583;&#1575;&#1572;&#1606;&#1575;</span>
+        </div>
+        <div class="spectrum-row">
+            <span class="position-label">Context-dependent</span>
+            <span class="lang-tag" style="border-color:var(--yellow)">Mandarin &mdash; &#25105;&#20204;&#30340;&#25932;&#20154;</span>
+        </div>
+        <div class="spectrum-row">
+            <span class="position-label">Ambiguous by design</span>
+            <span class="lang-tag" style="border-color:#8b949e">English &mdash; &ldquo;our enemies&rdquo;</span>
+        </div>
+    </div>
+
+    <div class="detail-text">
+        In Greek, the presence or absence of the definite article on <span class="native">&#7952;&#967;&#952;&#961;&#959;&#943;</span> flips between a specific group and a generic class. Arabic <span class="native">&#1571;&#1593;&#1583;&#1575;&#1572;&#1606;&#1575;</span> cannot take the definite article because the possessive pronoun blocks it &mdash; the reading defaults to class-generic. Mandarin <span class="native">&#25105;&#20204;&#30340;&#25932;&#20154;</span> is ambiguous; only surrounding discourse disambiguates. English &ldquo;our enemies&rdquo; freely oscillates between &ldquo;those specific people&rdquo; and &ldquo;anyone who opposes us&rdquo; &mdash; and speakers rarely notice the switch.
+    </div>
+
+    <div class="english-gap">
+        <strong>What English refuses to specify:</strong> Whether &ldquo;our enemies&rdquo; is a closed list or an open class. This ambiguity is politically useful: a leader can target specific adversaries while appearing to speak about abstract threats.
+    </div>
+
+    <div class="law-note">
+        <strong>Law / Philosophy:</strong> &ldquo;Enemy combatant&rdquo; designations in post-9/11 law exploited exactly this ambiguity. Is the category defined by specific individuals, or by a generic property anyone might satisfy? The English allows both readings simultaneously.
+    </div>
+</div>
+
+
+<!-- ==================== D8 ==================== -->
+<div class="dimension-card" style="border-left-color:var(--d8)">
+    <div class="dim-header">
+        <span class="dim-id" style="color:var(--d8)">D8</span>
+        <span class="dim-title" style="color:var(--d8)">Moral Lexeme</span>
+    </div>
+    <div class="dim-question">What does &ldquo;bad&rdquo; translate to, and along what axis? This is the deepest word.</div>
+
+    <div class="spectrum">
+        <div class="spectrum-title">Spectrum: the moral vocabulary</div>
+        <div class="spectrum-row">
+            <span class="position-label">Defective, miscalibrated</span>
+            <span class="lang-tag" style="border-color:var(--d8)">Latin &mdash; malus</span>
+            <span class="lang-tag">French &mdash; mauvais</span>
+            <span class="lang-tag">Spanish &mdash; malo</span>
+        </div>
+        <div class="spectrum-row">
+            <span class="position-label">Ugly, base, ignoble</span>
+            <span class="lang-tag" style="border-color:var(--d8)">Greek &mdash; &#954;&#945;&#954;&#972;&#962;</span>
+        </div>
+        <div class="spectrum-row">
+            <span class="position-label">Morally evil, malevolent</span>
+            <span class="lang-tag" style="border-color:var(--red)">German &mdash; b&ouml;se</span>
+        </div>
+        <div class="spectrum-row">
+            <span class="position-label">Low quality, defective</span>
+            <span class="lang-tag">German &mdash; schlecht</span>
+        </div>
+        <div class="spectrum-row">
+            <span class="position-label">Ugly / inauspicious</span>
+            <span class="lang-tag">Turkish &mdash; k&ouml;t&uuml;</span>
+        </div>
+        <div class="spectrum-row">
+            <span class="position-label">Harmful, polluting</span>
+            <span class="lang-tag">Tahitian &mdash; papa</span>
+            <span class="lang-tag">Hawaiian &mdash; &#699;ino</span>
+        </div>
+        <div class="spectrum-row">
+            <span class="position-label">Unskillful (technical)</span>
+            <span class="lang-tag" style="border-color:var(--green)">Sanskrit &mdash; &#2309;&#2325;&#2369;&#2358;&#2354; / akushala</span>
+        </div>
+    </div>
+
+    <div class="detail-text">
+        This is the deepest word. Latin <span class="native">malus</span> means defective, miscalibrated &mdash; a tool that doesn&rsquo;t work right. Greek <span class="native">&#954;&#945;&#954;&#972;&#962;</span> fuses the aesthetic and the moral: ugly, base, ignoble &mdash; you can <em>see</em> the badness. German splits what English conflates: <span class="native">b&ouml;se</span> is morally evil, willed malevolence; <span class="native">schlecht</span> is merely low-quality, defective. Turkish <span class="native">k&ouml;t&uuml;</span> runs broader than English &ldquo;bad,&rdquo; covering ugly, inauspicious, and harmful. Hawaiian <span class="native">&#699;ino</span> frames badness as pollution &mdash; something that contaminates. And Buddhist Sanskrit <span class="native">akushala</span> (&#2309;&#2325;&#2369;&#2358;&#2354;) replaces the entire moral framework: not evil, not ugly, not defective, but <em>unskillful</em> &mdash; the technical term for what should replace &ldquo;bad&rdquo; if rigor mattered.
+    </div>
+
+    <div class="english-gap">
+        <strong>What English refuses to specify:</strong> The <em>axis</em> of badness. Is it a moral judgment (b&ouml;se), an aesthetic one (&#954;&#945;&#954;&#972;&#962;), a functional one (malus), or a soteriological one (akushala)? English &ldquo;bad&rdquo; collapses all four into a single syllable and dares you to ask which one was meant.
+    </div>
+
+    <div class="law-note">
+        <strong>Law / Philosophy:</strong> &ldquo;Bad faith&rdquo; in contract law, &ldquo;bad act&rdquo; in criminal law, &ldquo;bad character&rdquo; in evidence law &mdash; each uses a different axis of &ldquo;bad&rdquo; without acknowledging it. German jurisprudence, forced to choose between b&ouml;se and schlecht, cannot hide the distinction.
+    </div>
+</div>
+
+
+<!-- ==================== D9 ==================== -->
+<div class="dimension-card" style="border-left-color:var(--d9)">
+    <div class="dim-header">
+        <span class="dim-id" style="color:var(--d9)">D9</span>
+        <span class="dim-title" style="color:var(--d9)">Person-Marking on <em>we</em></span>
+    </div>
+    <div class="dim-question">Who is &ldquo;we&rdquo;? Is the listener included? In Tagalog, the sentence MUST choose: is the listener one of us-against-them?</div>
+
+    <div class="spectrum">
+        <div class="spectrum-title">Spectrum: inclusive/exclusive &ldquo;we&rdquo;</div>
+        <div class="spectrum-row">
+            <span class="position-label">Must distinguish (inclusive)</span>
+            <span class="lang-tag" style="border-color:var(--d9)">Tagalog &mdash; tayo (incl.)</span>
+            <span class="lang-tag">Quechua &mdash; -nchik (incl.)</span>
+            <span class="lang-tag">Hawaiian &mdash; k&#257;kou (incl.)</span>
+            <span class="lang-tag">M&#257;ori &mdash; t&#257;tou (incl.)</span>
+        </div>
+        <div class="spectrum-row">
+            <span class="position-label">Must distinguish (exclusive)</span>
+            <span class="lang-tag" style="border-color:var(--d9)">Tagalog &mdash; kami (excl.)</span>
+            <span class="lang-tag">Quechua &mdash; -yku (excl.)</span>
+            <span class="lang-tag">Hawaiian &mdash; m&#257;kou (excl.)</span>
+            <span class="lang-tag">Indonesian &mdash; kami (excl.)</span>
+        </div>
+        <div class="spectrum-row">
+            <span class="position-label">No distinction</span>
+            <span class="lang-tag" style="border-color:#8b949e">English &mdash; &ldquo;we&rdquo;</span>
+            <span class="lang-tag" style="border-color:#8b949e">most European languages</span>
+        </div>
+    </div>
+
+    <div class="detail-text">
+        In Tagalog, translating &ldquo;our enemies&rdquo; forces an immediate political commitment. <span class="native">Tayo</span> (inclusive) means the listener is part of &ldquo;us&rdquo; &mdash; we and our enemies are <em>your</em> problem too. <span class="native">Kami</span> (exclusive) means the listener is outside &ldquo;us&rdquo; &mdash; this is <em>our</em> fight, not yours. Quechua makes the same split with <span class="native">-nchik</span> (inclusive) vs <span class="native">-yku</span> (exclusive). Hawaiian triples it: <span class="native">k&#257;kou</span> (all of us including you), <span class="native">m&#257;kou</span> (us but not you), and dual forms for exactly-two.
+    </div>
+
+    <div class="english-gap">
+        <strong>What English refuses to specify:</strong> Whether &ldquo;we&rdquo; includes the listener. This is not a minor omission. Every use of &ldquo;we&rdquo; in political speech exploits this gap &mdash; &ldquo;we must act&rdquo; invites you into a coalition you never agreed to join.
+    </div>
+
+    <div class="law-note">
+        <strong>Law / Philosophy:</strong> &ldquo;We the People&rdquo; is the founding ambiguity of American constitutional law. Inclusive or exclusive? The document never specifies. In Tagalog or Quechua, the preamble would have to commit.
+    </div>
+</div>
+
+
+<!-- ==================== D10 ==================== -->
+<div class="dimension-card" style="border-left-color:var(--d10)">
+    <div class="dim-header">
+        <span class="dim-id" style="color:var(--d10)">D10</span>
+        <span class="dim-title" style="color:var(--d10)">Idea as Substance vs Event</span>
+    </div>
+    <div class="dim-question">The deepest divide. Does your language treat an idea as a thing that exists, or an event that happens?</div>
+
+    <div class="spectrum">
+        <div class="spectrum-title">Spectrum: the metaphysics of thought</div>
+        <div class="spectrum-row">
+            <span class="position-label">Noun &mdash; a static thing</span>
+            <span class="lang-tag" style="border-color:var(--d10)">Greek &mdash; &#7984;&delta;&#941;&alpha;</span>
+            <span class="lang-tag">Latin &mdash; idea</span>
+            <span class="lang-tag">English &mdash; idea</span>
+            <span class="lang-tag">most Indo-European</span>
+        </div>
+        <div class="spectrum-row">
+            <span class="position-label">Verbal noun &mdash; a thought-event</span>
+            <span class="lang-tag" style="border-color:var(--green)">Chinese &mdash; &#24565;</span>
+            <span class="lang-tag" style="border-color:var(--green)">Sanskrit &mdash; bh&#257;van&#257;</span>
+            <span class="lang-tag" style="border-color:var(--green)">Arabic &mdash; fikra</span>
+        </div>
+    </div>
+
+    <div class="detail-text">
+        This is the deepest divide. Greek/Latin and most Indo-European languages treat an idea as a <em>noun</em> &mdash; a static, bounded thing. You can have one, hold one, lose one. Chinese <span class="native">&#24565;</span> (ni&agrave;n) is a verbal noun: a thought-arising, a flash of mentation, something that <em>happens</em> rather than something that <em>is</em>. Sanskrit <span class="native">bh&#257;van&#257;</span> is a gerundive &mdash; &ldquo;a bringing-into-being,&rdquo; the process of cultivation, not its product. Arabic <span class="native">fikra</span> retains the verbal root f-k-r (to think, to reflect) &mdash; the noun is a nominalized action, not a free-standing entity.
+    </div>
+
+    <div class="detail-text">
+        The English sentence treats enemies as <em>being</em> a class of object. In Buddhist-substrate languages, enemies <em>arise as</em> a process. You do not <em>have</em> enemies; enmity <em>occurs</em>. You do not <em>hold</em> ideas; thinking <em>happens</em>. The entire grammar of possession and classification dissolves.
+    </div>
+
+    <div class="english-gap">
+        <strong>What English refuses to specify:</strong> Whether ideas exist independently of the thinker. English grammar presupposes that they do &mdash; you &ldquo;have&rdquo; ideas, they &ldquo;belong&rdquo; to you, they can be &ldquo;stolen.&rdquo; This is not a fact about the world. It is a fact about English.
+    </div>
+
+    <div class="law-note">
+        <strong>Law / Philosophy:</strong> The entire edifice of intellectual property &mdash; patents, copyrights, trade secrets &mdash; requires ideas to be things, not events. In a language where ideas are verb-events, &ldquo;owning&rdquo; one is as incoherent as &ldquo;owning&rdquo; a sneeze. D10 is where translation becomes legislation.
+    </div>
+</div>
+
+
+<footer>
+    <a href="https://jthorvaldur.github.io">jthorvaldur.github.io</a> &mdash; The 10 Dimensions of Deformation
+</footer>
+
+</body>
+</html>

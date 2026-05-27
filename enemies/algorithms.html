@@ -1,0 +1,568 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>The Mathematics of Untranslatability</title>
+<meta name="description" content="Operator kernels, min-cut, Tucker tensors, and persistent homology — a formal pipeline for measuring what cannot be said.">
+<meta property="og:title" content="The Mathematics of Untranslatability">
+<meta property="og:description" content="Operator kernels, min-cut, Tucker tensors, and persistent homology — a formal pipeline for measuring what cannot be said.">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://jthorvaldur.github.io/enemies/algorithms.html">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="The Mathematics of Untranslatability">
+<meta name="twitter:description" content="Operator kernels, min-cut, Tucker tensors, and persistent homology — a formal pipeline for measuring what cannot be said.">
+<style>
+:root {
+    --bg: #0d1117; --fg: #c9d1d9; --accent: #58a6ff;
+    --border: #30363d; --surface: #161b22; --surface2: #21262d;
+    --green: #3fb950; --yellow: #d29922; --red: #f85149;
+}
+* { margin:0; padding:0; box-sizing:border-box; }
+body { font-family: 'SF Mono','Fira Code','JetBrains Mono',monospace; background:var(--bg); color:var(--fg); line-height:1.6; padding:2rem; max-width:1400px; margin:0 auto; }
+h1 { color:var(--accent); font-size:1.8rem; margin-bottom:0.5rem; }
+h2 { color:var(--accent); font-size:1.3rem; margin:2.5rem 0 1rem; border-bottom:1px solid var(--border); padding-bottom:0.5rem; }
+h3 { color:var(--fg); font-size:1.1rem; margin:1.5rem 0 0.5rem; }
+.subtitle { color:#8b949e; margin-bottom:2rem; line-height:1.7; }
+a { color:var(--accent); text-decoration:none; }
+a:hover { text-decoration:underline; }
+.stats { display:grid; grid-template-columns:repeat(auto-fit, minmax(180px, 1fr)); gap:1rem; margin:1rem 0; }
+.stat { background:var(--surface); border:1px solid var(--border); border-radius:6px; padding:1rem; text-align:center; }
+.stat .value { font-size:2rem; color:var(--accent); font-weight:bold; }
+.stat .label { font-size:0.8rem; color:#8b949e; }
+table { width:100%; border-collapse:collapse; margin:1rem 0; font-size:0.85rem; }
+th, td { padding:6px 10px; border:1px solid var(--border); text-align:left; }
+th { background:var(--surface2); color:var(--accent); position:sticky; top:0; }
+tr:hover { background:var(--surface); }
+.formula { background:var(--surface); border-left:3px solid var(--accent); padding:1rem; margin:1rem 0; font-size:0.85rem; overflow-x:auto; line-height:1.8; }
+.formula-title { color:var(--accent); font-weight:bold; font-size:0.8rem; margin-bottom:0.5rem; }
+nav { background:var(--surface); border:1px solid var(--border); border-radius:6px; padding:1rem; margin:1rem 0; display:flex; flex-wrap:wrap; gap:0.5rem 1.5rem; }
+nav a { color:var(--accent); text-decoration:none; font-size:0.85rem; }
+nav a.active { color:var(--fg); font-weight:bold; }
+.key-finding { background:var(--surface); border:1px solid var(--border); border-left:3px solid var(--yellow); border-radius:6px; padding:1.5rem; margin:1.5rem 0; font-size:0.9rem; line-height:1.7; }
+.key-finding .finding-title { color:var(--yellow); font-weight:bold; font-size:0.9rem; margin-bottom:0.75rem; }
+.factor-cards { display:grid; grid-template-columns:repeat(auto-fit, minmax(300px, 1fr)); gap:1rem; margin:1rem 0; }
+.factor-card { background:var(--surface); border:1px solid var(--border); border-radius:6px; padding:1.2rem; }
+.factor-card .factor-name { color:var(--accent); font-weight:bold; font-size:1rem; margin-bottom:0.5rem; }
+.factor-card .factor-var { color:var(--yellow); font-size:0.8rem; margin-bottom:0.75rem; }
+.factor-card .factor-poles { font-size:0.82rem; line-height:1.7; }
+.factor-card .pole-label { color:var(--green); font-weight:bold; font-size:0.75rem; }
+.factor-card .pole-neg { color:var(--red); font-weight:bold; font-size:0.75rem; }
+.escalation { background:var(--surface); border:1px solid var(--border); border-radius:6px; padding:1.5rem; margin:1rem 0; }
+.escalation .esc-title { color:var(--accent); font-weight:bold; font-size:1rem; margin-bottom:0.75rem; }
+.escalation .esc-body { font-size:0.88rem; line-height:1.7; }
+.status-substantive { color:var(--green); font-weight:bold; }
+.status-diagnostic { color:var(--yellow); font-weight:bold; }
+.status-gap { color:var(--red); font-weight:bold; }
+.status-gate { color:#bc8cff; font-weight:bold; }
+.pipeline-section { display:inline-block; background:var(--surface2); border:1px solid var(--border); border-radius:3px; padding:1px 8px; font-size:0.75rem; font-weight:600; }
+p { margin:0.75rem 0; font-size:0.9rem; line-height:1.7; }
+.correction { background:var(--surface); border-left:3px solid var(--red); padding:1rem; margin:1rem 0; font-size:0.85rem; overflow-x:auto; line-height:1.8; }
+.correction-label { color:var(--red); font-weight:bold; font-size:0.8rem; margin-bottom:0.3rem; }
+.corrected-label { color:var(--green); font-weight:bold; font-size:0.8rem; margin-bottom:0.3rem; }
+blockquote { background:var(--surface); border-left:3px solid var(--accent); padding:1.2rem 1.5rem; margin:1.5rem 0; font-size:0.95rem; line-height:1.8; font-style:italic; }
+footer { color:#8b949e; margin-top:3rem; font-size:0.8rem; text-align:center; padding:1rem 0; border-top:1px solid var(--border); }
+footer a { color:#8b949e; }
+</style>
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "WebPage",
+  "headline": "The Mathematics of Untranslatability",
+  "author": {"@type": "Person", "name": "Joel Thorarinson", "url": "https://jthorvaldur.github.io"},
+  "publisher": {"@type": "Person", "name": "Joel Thorarinson"},
+  "datePublished": "2026-05-27",
+  "url": "https://jthorvaldur.github.io/enemies/algorithms.html",
+  "description": "Operator kernels, min-cut, Tucker tensors, and persistent homology — a formal pipeline for measuring what cannot be said.",
+  "isPartOf": {"@type": "WebSite", "name": "Thorarinson", "url": "https://jthorvaldur.github.io"}
+}
+</script>
+</head>
+<body>
+
+<h1>The Mathematics of Untranslatability</h1>
+<p class="subtitle">Operator kernels, min-cut, Tucker tensors, and persistent homology &mdash; a formal pipeline for measuring what cannot be said.</p>
+
+<nav>
+    <a href="index.html">Overview</a>
+    <a href="translations.html">Translations</a>
+    <a href="dimensions.html">Dimensions</a>
+    <a href="unsayable.html">The Unsayable</a>
+    <a href="algorithms.html" class="active">Algorithms</a>
+</nav>
+
+<div class="stats">
+    <div class="stat"><div class="value">12</div><div class="label">Pipeline Stages</div></div>
+    <div class="stat"><div class="value">7</div><div class="label">Substantive Methods</div></div>
+    <div class="stat"><div class="value">3</div><div class="label">Diagnostic-Only Methods</div></div>
+    <div class="stat"><div class="value">3</div><div class="label">Gatekeeper Tests</div></div>
+    <div class="stat"><div class="value">~30</div><div class="label">Panel-Critical Pairs</div></div>
+</div>
+
+
+<!-- ============================================================ -->
+<!-- SECTION 1: WHY PCA IS WRONG -->
+<!-- ============================================================ -->
+
+<h2 id="pca-wrong">&sect;1. Why PCA Is Wrong (The Binding Constraint)</h2>
+
+<p>From the <em>Dimensionality Illusion</em> paper (Thorarinson &amp; Hensgen, 2026): <strong>PCA variance is not semantic information.</strong> Variance maximization captures directions of largest geometric spread &mdash; the coarse inter-domain axes. The fine-grained intra-concept distinctions that this exercise exists to surface live in the <strong>long tail</strong> of low-variance dimensions. PCA discards them by design.</p>
+
+<div class="key-finding">
+    <div class="finding-title">THE LONG-TAIL PROBLEM</div>
+    The distinctions between <code>bh&#x101;van&#x101;</code> (cultivated mental construct) and <code>&#x5FF5;</code> (arising thought) and <code>idea</code> (eidetic form) are encoded in dimensions that explain &lt;1% of variance each. These are exactly the dimensions PCA throws away first. Cross-lingual semantic decomposition is the canonical long-tail problem.
+</div>
+
+<p>Two failure modes apply directly:</p>
+
+<p><strong>Collapse (CISA).</strong> Distinct semantic axes that happen to co-vary across most of the panel merge under PCA. Sanskrit <code>bh&#x101;van&#x101;</code> and Greek <code>idea</code> project to nearby points on the dominant substance&ndash;process axis, even though their underlying ontology of mind is incommensurable.</p>
+
+<p><strong>Distortion.</strong> Functionally equivalent encodings that use orthogonal grammatical machinery &mdash; Quechua evidential <code>-mi</code> and Turkish <code>-mi&#x15F;</code> &mdash; are torn apart in the principal subspace, even though they realize the same semantic dimension.</p>
+
+<div class="formula">
+    <div class="formula-title">COMPRESSION ADMISSIBILITY GATE</div>
+    Compression admissible at dim k &nbsp;&hArr;&nbsp; SCL<sub>k</sub> &lt; 0.10 &nbsp;AND&nbsp; CISA<sub>k</sub> = 0 &nbsp;on the panel-critical pair set P
+</div>
+
+<h3>CISA Hot Spots</h3>
+
+<table>
+    <thead>
+        <tr><th>Pair</th><th>Full-Space Relation</th><th>PCA-3 Relation</th><th>Aliasing Risk</th></tr>
+    </thead>
+    <tbody>
+        <tr>
+            <td>Sanskrit <code>bh&#x101;van&#x101;</code> &sim; Chinese <code>&#x5FF5;</code></td>
+            <td>Both process-ontology, but bh&#x101;van&#x101; is <em>cultivated</em>; &#x5FF5; is <em>arising</em></td>
+            <td>Both at F1&minus; pole, F3 differs subtly</td>
+            <td style="color:var(--red)">High</td>
+        </tr>
+        <tr>
+            <td>Greek <code>idea</code> &sim; German <code>Idee</code></td>
+            <td>Eidetic form vs Kantian regulative concept</td>
+            <td>Both at F1+ substance pole</td>
+            <td style="color:var(--red)">High</td>
+        </tr>
+        <tr>
+            <td>Quechua evidential &sim; Bulgarian renarrative</td>
+            <td>Both grammaticalized witness-marking; Quechua 3-way, Bulgarian binary</td>
+            <td>Both at F2+ commitment pole</td>
+            <td style="color:var(--yellow)">Medium</td>
+        </tr>
+        <tr>
+            <td>Navajo process-of-thinking &sim; Sanskrit <code>bh&#x101;van&#x101;</code></td>
+            <td>Substance-rejection vs cultivation &mdash; opposite philosophical postures</td>
+            <td>Both at F1&minus;</td>
+            <td style="color:var(--red)"><strong>Severe</strong></td>
+        </tr>
+    </tbody>
+</table>
+
+<blockquote>
+    PCA confirms what you already knew and hides what you wanted to discover.
+</blockquote>
+
+
+<!-- ============================================================ -->
+<!-- SECTION 2: THE FACTOR MODEL -->
+<!-- ============================================================ -->
+
+<h2 id="factor-model">&sect;2. The Factor Model (Diagnostic Only)</h2>
+
+<p>Encode each translation <em>l</em> as a vector x<sub>l</sub> &isin; &#x211D;<sup>d</sup> along ten hand-encoded dimensions (d &asymp; 30 after one-hot expansion). Stack into X &isin; &#x211D;<sup>L&times;d</sup>, L &asymp; 50. The first three principal components explain ~62% of variance. Their interpretation is reported below <strong>as a diagnostic only</strong> &mdash; not as a substantive description of the semantic field.</p>
+
+<div class="factor-cards">
+    <div class="factor-card">
+        <div class="factor-name">F1: Substance&ndash;Process Axis</div>
+        <div class="factor-var">28% of variance</div>
+        <div class="factor-poles">
+            <span class="pole-label">+</span> Idea-as-noun, count morphology, definite articles, copular predication. Greek, Latin, English, German.<br>
+            <span class="pole-neg">&minus;</span> Verbal-noun idea, no plural, ostensive demonstratives, contrastive copula. Classical Chinese, Sanskrit, Navajo.
+        </div>
+    </div>
+    <div class="factor-card">
+        <div class="factor-name">F2: Speaker-Commitment Axis</div>
+        <div class="factor-var">21% of variance</div>
+        <div class="factor-poles">
+            <span class="pole-label">+</span> Evidentiality required, animacy hierarchy, inclusive/exclusive <em>we</em>. Quechua, Navajo, Tagalog, M&#x101;ori.<br>
+            <span class="pole-neg">&minus;</span> No obligatory evidentiality, no clusivity. English, Mandarin, Russian.
+        </div>
+    </div>
+    <div class="factor-card">
+        <div class="factor-name">F3: Moral-Lexeme Texture</div>
+        <div class="factor-var">13% of variance</div>
+        <div class="factor-poles">
+            <span class="pole-label">+</span> Aesthetic/ignobility fusion. Greek <code>kakos</code>, Turkish <code>k&ouml;t&uuml;</code>.<br>
+            <span class="pole-neg">&minus;</span> Malevolent agency (<code>b&ouml;se</code>) or technical unskillfulness (<code>akushala</code>).
+        </div>
+    </div>
+</div>
+
+<div class="key-finding">
+    <div class="finding-title">ENGLISH: THE MAXIMAL UNDERDETERMINATION CORNER</div>
+    English sits at x<sub>EN</sub> &asymp; (+substance, &minus;commitment, middle-moral). The diagnostic confirms that English occupies the corner of the panel where grammatical specification is <em>lowest</em>. But everything interesting is in the residual &mdash; the 38% of variance the factor model does not explain is precisely the long tail where <code>bh&#x101;van&#x101;</code> separates from <code>&#x5FF5;</code> and Tagalog <code>tayo</code> separates from <code>kami</code>.
+</div>
+
+
+<!-- ============================================================ -->
+<!-- SECTION 3: BEYOND FACTORS -->
+<!-- ============================================================ -->
+
+<h2 id="beyond-factors">&sect;3. Beyond Factors &mdash; Three Escalations</h2>
+
+<div class="escalation">
+    <div class="esc-title">3a. Tucker Tensor Decomposition</div>
+    <div class="esc-body">
+        <p>Form the 3-tensor <strong>T</strong> &isin; &#x211D;<sup>L&times;W&times;A</sup> where L = language, W = content-word slot (<code>enemy</code>, <code>bad</code>, <code>people</code>, <code>idea</code>), A = semantic axis.</p>
+
+        <div class="formula">
+            <div class="formula-title">TUCKER DECOMPOSITION</div>
+            &#x1D4AF; &asymp; &#x1D4A2; &times;<sub>1</sub> U<sup>(L)</sup> &times;<sub>2</sub> U<sup>(W)</sup> &times;<sub>3</sub> U<sup>(A)</sup>
+        </div>
+
+        <p>The core tensor <strong>&#x1D4A2;</strong> exposes <strong>entanglement</strong>: which language&ndash;word pairs co-load on which axes? Diagonal core = clean factor model; large off-diagonal entries = a particular language treats a particular word in a non-generic way. Predicted hot spot: Navajo &times; <code>idea</code> &times; animacy is off-diagonal.</p>
+    </div>
+</div>
+
+<div class="escalation">
+    <div class="esc-title">3b. Operator-Theoretic Translation</div>
+    <div class="esc-body">
+        <p>Each translation is a bounded linear operator T<sub>l</sub> : C &rarr; L<sub>l</sub> from concept space to lexical space.</p>
+
+        <div class="formula">
+            <div class="formula-title">ROUND-TRIP DISTORTION</div>
+            T<sub>m</sub><sup>*</sup> T<sub>l</sub> : C &rarr; C<br><br>
+            Kernel of T<sub>m</sub><sup>*</sup> T<sub>l</sub> = the literally untranslatable subspace between l and m
+        </div>
+
+        <div class="formula">
+            <div class="formula-title">THE UNSAYABLE SUBSPACE</div>
+            U = &cap;<sub>l</sub> ker(T<sub>l</sub><sup>*</sup> T<sub>l</sub>)<br><br>
+            dim(U) = absolute untranslatability dimension
+        </div>
+
+        <p>The orthogonal complement of &sum;<sub>l</sub> im(T<sub>l</sub>) inside C is the residue that <em>every</em> language in the panel fails to reach.</p>
+
+        <div class="key-finding">
+            <div class="finding-title">INVERSE OF PCA</div>
+            Represent T<sub>l</sub> via paraphrase-back-translation regression. Estimate the kernel via SVD of the fitted operator, <strong>keeping the small singular values</strong>. The <em>Dimensionality Illusion</em> paper's central point applies inversely: the small singular directions are exactly the directions of interest.
+        </div>
+    </div>
+</div>
+
+<div class="escalation">
+    <div class="esc-title">3c. Persistent Homology</div>
+    <div class="esc-body">
+        <p>Treat the L translations as a point cloud in embedding space. Compute the Vietoris&ndash;Rips filtration.</p>
+
+        <div class="formula">
+            <div class="formula-title">CONCEPTUAL HOLES</div>
+            Persistent H<sub>1</sub> generators = conceptual holes &mdash; regions encircled by translations but never landed on.
+        </div>
+
+        <p>These are the most rigorous formalization of <em>what is not communicated</em>. Each persistent 1-cycle identifies a region of concept space that translations orbit around without occupying &mdash; a semantic lacuna with topological proof of existence.</p>
+    </div>
+</div>
+
+
+<!-- ============================================================ -->
+<!-- SECTION 4: THE CORRECTED PIPELINE -->
+<!-- ============================================================ -->
+
+<h2 id="pipeline">&sect;4. The Corrected Pipeline (12 Stages)</h2>
+
+<p>Every step that compresses or projects the embedding space is gated by a domain-conditional retrieval test on the panel-critical pair set. A step is admissible only if it preserves the operationally critical distinctions; if it does not, it is used only as a diagnostic.</p>
+
+<h3><span class="pipeline-section" style="color:var(--green)">INFORMATION-PRESERVING CORE</span></h3>
+
+<table>
+    <thead>
+        <tr><th>#</th><th>Algorithm</th><th>Status</th><th>Output</th><th>PCA-Blindness Notes</th></tr>
+    </thead>
+    <tbody>
+        <tr>
+            <td>1</td>
+            <td>Ensemble multilingual embed<br><span style="font-size:0.75rem;color:#8b949e">LaBSE + BGE-M3 + e5-large</span></td>
+            <td><span class="status-substantive">substantive</span></td>
+            <td>x<sub>l</sub> &isin; &#x211D;<sup>d</sup>, d &isin; {768, 1024}</td>
+            <td>Single-model embedding inherits training biases; ensembling reduces idiosyncratic compression. Keep all three; do not reduce.</td>
+        </tr>
+        <tr>
+            <td>2</td>
+            <td>Hand-encode axis matrix A<br><span style="font-size:0.75rem;color:#8b949e">Two-pass: LLM &rarr; linguist audit</span></td>
+            <td><span class="status-substantive">substantive</span></td>
+            <td>A &isin; &#x211D;<sup>L&times;d<sub>axis</sub></sup>, d<sub>axis</sub> &asymp; 30</td>
+            <td>This is the field the variance-maximizers will distort. It is the artifact of record.</td>
+        </tr>
+        <tr>
+            <td>5</td>
+            <td>Procrustes panel<br><span style="font-size:0.75rem;color:#8b949e">Orthogonal Procrustes pairwise</span></td>
+            <td><span class="status-substantive">substantive</span></td>
+            <td>Residual R<sub>lm</sub> = &Vert;X<sub>l</sub> &minus; Q<sub>lm</sub>X<sub>m</sub>&Vert;<sub>F</sub></td>
+            <td>Does not compress; rotates only. Information-preserving.</td>
+        </tr>
+        <tr>
+            <td>6</td>
+            <td>Min-cut on rank-correlation graph<br><span style="font-size:0.75rem;color:#8b949e">Stoer&ndash;Wagner / Shi&ndash;Malik</span></td>
+            <td><span class="status-substantive">substantive</span></td>
+            <td>Cut partition + conductance &Phi;(S)</td>
+            <td>Edge weights from Spearman rank correlation, not Euclidean residuals. See &sect;5.</td>
+        </tr>
+        <tr>
+            <td>7</td>
+            <td>Per-axis JSD<br><span style="font-size:0.75rem;color:#8b949e">Pairwise on hand-coded distributions</span></td>
+            <td><span class="status-substantive">substantive</span></td>
+            <td>Per-axis untranslatability scalar</td>
+            <td>Operates on hand-encoded matrix A directly. PCA-free.</td>
+        </tr>
+        <tr>
+            <td>8</td>
+            <td>Sinkhorn OT<br><span style="font-size:0.75rem;color:#8b949e">&epsilon;-regularized Wasserstein-2</span></td>
+            <td><span class="status-substantive">substantive</span></td>
+            <td>Transport plan &pi;*</td>
+            <td>Operates in full embedding space; no projection. Immune by construction.</td>
+        </tr>
+        <tr>
+            <td>10</td>
+            <td>Operator kernels<br><span style="font-size:0.75rem;color:#8b949e">ker(T<sub>l</sub><sup>*</sup>T<sub>l</sub>) &cap; over panel</span></td>
+            <td><span class="status-substantive">substantive</span></td>
+            <td>Unsayable subspace U</td>
+            <td>The most theoretically clean step. Keep SMALL singular values.</td>
+        </tr>
+    </tbody>
+</table>
+
+<h3><span class="pipeline-section" style="color:var(--yellow)">DIAGNOSTICS, NOT SUBSTANTIVE</span></h3>
+
+<table>
+    <thead>
+        <tr><th>#</th><th>Algorithm</th><th>Status</th><th>Output</th><th>PCA-Blindness Notes</th></tr>
+    </thead>
+    <tbody>
+        <tr>
+            <td>3</td>
+            <td>PCA / oblique factor analysis<br><span style="font-size:0.75rem;color:#8b949e">Diagonalize X<sup>T</sup>X + Promax</span></td>
+            <td><span class="status-diagnostic">diagnostic only</span></td>
+            <td>Loadings, scree plot</td>
+            <td>Run it. Look at it. Do not interpret as the field. Annotate with CISA failures.</td>
+        </tr>
+        <tr>
+            <td>4</td>
+            <td>UMAP<br><span style="font-size:0.75rem;color:#8b949e">n_neighbors=15, min_dist=0.0</span></td>
+            <td><span class="status-diagnostic">diagnostic only</span></td>
+            <td>2D coordinates</td>
+            <td>Preserves local rank, not variance. Validate against SCL on P before trusting.</td>
+        </tr>
+        <tr>
+            <td>9</td>
+            <td>Tucker decomposition<br><span style="font-size:0.75rem;color:#8b949e">HOSVD with &ell;<sub>1</sub> sparsity on core</span></td>
+            <td><span class="status-diagnostic">diagnostic only</span></td>
+            <td>Core G + factor matrices</td>
+            <td>Same PCA-blindness applies per mode. Use for entanglement diagnosis, not compression.</td>
+        </tr>
+    </tbody>
+</table>
+
+<h3><span class="pipeline-section" style="color:var(--red)">GAP DETECTION</span></h3>
+
+<table>
+    <thead>
+        <tr><th>#</th><th>Algorithm</th><th>Status</th><th>Output</th><th>PCA-Blindness Notes</th></tr>
+    </thead>
+    <tbody>
+        <tr>
+            <td>12</td>
+            <td>LLM gap matrix<br><span style="font-size:0.75rem;color:#8b949e">Per-axis: "can language l encode dimension a?"</span></td>
+            <td><span class="status-substantive">substantive</span></td>
+            <td>Binary gap matrix</td>
+            <td>The only step that catches <em>absent</em> concepts, which no geometric method can.</td>
+        </tr>
+    </tbody>
+</table>
+
+<h3><span class="pipeline-section" style="color:#bc8cff">GATEKEEPERS (applied at every projection)</span></h3>
+
+<table>
+    <thead>
+        <tr><th>Test</th><th>Definition</th><th>Threshold</th></tr>
+    </thead>
+    <tbody>
+        <tr>
+            <td><span class="status-gate">DCRP</span></td>
+            <td>Domain-Conditional Retrieval Precision &mdash; can a query for "akushala-style claim" retrieve language l's translation more accurately than chance?</td>
+            <td>Computed on P, not random pairs</td>
+        </tr>
+        <tr>
+            <td><span class="status-gate">SCL</span></td>
+            <td>Semantic Coherence Loss: SCL<sub>k</sub> = 1 &minus; &rho;(sim<sub>full</sub>, sim<sub>k</sub>) via Spearman rank correlation over P</td>
+            <td>SCL<sub>k</sub> &lt; 0.10</td>
+        </tr>
+        <tr>
+            <td><span class="status-gate">CISA</span></td>
+            <td>Compression-Induced Semantic Aliasing: count of pairs (a,b) &isin; P with sim<sub>full</sub>(a,b) &lt; &tau;<sub>distinct</sub> but sim<sub>k</sub>(a,b) &ge; &tau;<sub>alias</sub></td>
+            <td>CISA<sub>k</sub> = 0</td>
+        </tr>
+    </tbody>
+</table>
+
+<div class="formula">
+    <div class="formula-title">PIPELINE ARCHITECTURE</div>
+    <pre style="color:var(--fg);font-size:0.82rem;line-height:1.6;margin:0;white-space:pre-wrap;">
+<span style="color:var(--green)">[INFORMATION-PRESERVING CORE]</span>
+ 1.  Ensemble multilingual embed           (LaBSE + BGE-M3 + e5-large)
+ 2.  Hand-encode axis matrix A             (two-pass: LLM &rarr; linguist audit)
+ 3.  Compute panel-critical pair set P     (~30 pairs)
+ 5.  Procrustes panel                      (rotation only, no compression)
+ 6.  Min-cut on rank-correlation graph     (Spearman-weighted edges)
+ 7.  Per-axis JSD                          (operates on A, PCA-free)
+ 8.  Sinkhorn OT in full embedding space   (no projection)
+ 9.  Operator-kernel intersection          (keep SMALL singular values)
+
+<span style="color:var(--yellow)">[DIAGNOSTICS, NOT SUBSTANTIVE]</span>
+ 3.  PCA / oblique FA                      (diagnostic only &mdash; annotate CISA failures)
+ 4.  UMAP                                  (validate against SCL before trusting)
+ 9.  Tucker w/ &ell;<sub>1</sub> sparsity on core           (use for entanglement, not compression)
+11.  Persistent H<sub>1</sub> via witness complex        (topological, full embedding)
+
+<span style="color:var(--red)">[GAP DETECTION]</span>
+12.  LLM gap matrix                        (catches absences geometry cannot)
+
+<span style="color:#bc8cff">[GATEKEEPERS, applied at every projection]</span>
+     DCRP-analog on P,  SCL<sub>k</sub> &lt; 0.10,  CISA<sub>k</sub> = 0</pre>
+</div>
+
+
+<!-- ============================================================ -->
+<!-- SECTION 5: MIN-CUT, CORRECTED -->
+<!-- ============================================================ -->
+
+<h2 id="min-cut">&sect;5. Min-Cut, Corrected</h2>
+
+<p>The original sketch built edge weights from the Procrustes residual &Vert;r<sub>lm</sub>&Vert;&sup2; &mdash; a Euclidean quantity dominated by principal-component spread. This is exactly what PCA can already see.</p>
+
+<div class="correction">
+    <div class="correction-label">ORIGINAL (WRONG)</div>
+    w<sub>lm</sub> = &Vert;r<sub>lm</sub>&Vert;&sup2; &nbsp;&nbsp;&mdash;&nbsp;&nbsp; Euclidean, PCA-dominated
+</div>
+
+<div class="formula">
+    <div class="corrected-label">CORRECTED</div>
+    w<sub>lm</sub> = &rho;(rank<sub>l</sub>(P), rank<sub>m</sub>(P)) &nbsp;&nbsp;&mdash;&nbsp;&nbsp; Spearman, rank-preserving
+</div>
+
+<p>Where rank<sub>l</sub>(P) is the rank-order of similarities over the panel-critical pair set as encoded in language l. This weight is <strong>invariant under monotone transformations</strong> of similarity &mdash; it cannot be inflated by high-variance axes that dominate cosine distances.</p>
+
+<div class="formula">
+    <div class="formula-title">CONDUCTANCE (replaces raw cut value)</div>
+    &Phi;(S) = cut(S, S&#x0304;) / min(vol S, vol S&#x0304;)<br><br>
+    Scale-invariant, aligned with the Laplacian spectral gap.
+</div>
+
+<p>Run <strong>Stoer&ndash;Wagner</strong> for global min-cut on the rank-correlation graph; <strong>normalized cut</strong> (Shi&ndash;Malik) for soft multi-way partitions.</p>
+
+<div class="key-finding">
+    <div class="finding-title">WHAT THE CUT NOW MEANS</div>
+    The boundary across which the panel-critical pair set is ordered differently. Two languages are "close" iff they order the critical pairs the same way, regardless of metric magnitudes. This is the rigorous version of "where translation breaks down."
+</div>
+
+
+<!-- ============================================================ -->
+<!-- SECTION 6: SINKHORN OT -->
+<!-- ============================================================ -->
+
+<h2 id="sinkhorn">&sect;6. Sinkhorn OT</h2>
+
+<p>Wasserstein-2 between empirical content-word embedding distributions, full dimensionality. The optimal transport plan &pi;* identifies which content-word pairs pay the translation cost. Crucially: <strong>OT operates in the original space</strong>, no projection. It is immune to PCA-blindness by construction.</p>
+
+<div class="formula">
+    <div class="formula-title">OPTIMAL TRANSPORT</div>
+    W<sub>2</sub>(&mu;<sub>l</sub>, &mu;<sub>m</sub>) = min<sub>&pi;</sub> &int; &Vert;x &minus; y&Vert;&sup2; d&pi;(x, y)<br><br>
+    &epsilon;-regularized Sinkhorn for computational tractability.
+</div>
+
+<p>The marginals of &pi;* over content-word slots give the per-word untranslatability budget across the panel:</p>
+
+<div class="stats">
+    <div class="stat">
+        <div class="value" style="color:var(--red)">High</div>
+        <div class="label"><code>idea</code><br>Pays disproportionately</div>
+    </div>
+    <div class="stat">
+        <div class="value" style="color:var(--red)">High</div>
+        <div class="label"><code>bad</code><br>Pays disproportionately</div>
+    </div>
+    <div class="stat">
+        <div class="value" style="color:var(--green)">Low</div>
+        <div class="label"><code>people</code><br>Cheap to transport</div>
+    </div>
+    <div class="stat">
+        <div class="value" style="color:var(--green)">Low</div>
+        <div class="label"><code>enemy</code><br>Cheap to transport</div>
+    </div>
+</div>
+
+<p>Prediction: <code>idea</code> and <code>bad</code> carry the bulk of the translation cost because they sit at the intersection of substance&ndash;process ontology and moral-lexeme texture &mdash; the two axes with highest cross-lingual divergence. <code>people</code> and <code>enemy</code> are near-universal; the transport plan barely moves them.</p>
+
+
+<!-- ============================================================ -->
+<!-- SECTION 7: THE CROSS-DOMAIN CONNECTION -->
+<!-- ============================================================ -->
+
+<h2 id="cross-domain">&sect;7. The Cross-Domain Connection</h2>
+
+<p>The legal-retrieval failure mode and the cross-lingual decomposition failure mode are <strong>the same structural problem</strong>: variance captures coarse structure while the long tail carries operationally critical signal.</p>
+
+<table>
+    <thead>
+        <tr><th>Property</th><th>Legal Domain</th><th>Cross-Lingual Domain</th></tr>
+    </thead>
+    <tbody>
+        <tr>
+            <td>Canonical pair</td>
+            <td><code>Pflichtteil</code> vs <code>elective share</code></td>
+            <td><code>bh&#x101;van&#x101;</code> vs <code>idea</code></td>
+        </tr>
+        <tr>
+            <td>What PCA sees</td>
+            <td>Both are "inheritance law" &mdash; coarse domain match</td>
+            <td>Both are "mental construct" &mdash; coarse substance pole</td>
+        </tr>
+        <tr>
+            <td>What PCA misses</td>
+            <td>Pflichtteil is mandatory share; elective share is opt-in. Operationally opposite.</td>
+            <td>bh&#x101;van&#x101; is cultivated process; idea is eidetic form. Ontologically incommensurable.</td>
+        </tr>
+        <tr>
+            <td>Where signal lives</td>
+            <td>Dimensions 9&ndash;16 (variance &lt;2% each)</td>
+            <td>Dimensions beyond F3 (variance &lt;1% each)</td>
+        </tr>
+        <tr>
+            <td>Failure mode</td>
+            <td>CISA: distinct concepts aliased after compression</td>
+            <td>CISA: distinct ontologies aliased after compression</td>
+        </tr>
+        <tr>
+            <td>Correct method</td>
+            <td>Domain-conditional retrieval on critical pair set</td>
+            <td>Rank-preserving methods on panel-critical pair set</td>
+        </tr>
+        <tr>
+            <td>Core insight</td>
+            <td colspan="2" style="text-align:center;color:var(--yellow);font-weight:bold;">Coarse benchmarks license silent failure on long-tail signal. The mechanism is universal.</td>
+        </tr>
+    </tbody>
+</table>
+
+<div class="key-finding">
+    <div class="finding-title">THE UNIVERSAL LAW</div>
+    If the transfer coefficient &tau;<sub>D<sub>1</sub>&rarr;D<sub>2</sub></sub> between the legal and cross-lingual domains is near-constant &mdash; and extends to medical, time-series, and regime-detection domains &mdash; the <em>Dimensionality Illusion</em> hardens from a domain-specific result to a <strong>universal law of variance-vs-information divergence in semantic spaces</strong>. The corollary applies to any future cross-domain work: do not collapse the long tail without a domain-conditional retrieval test on a panel-critical pair set.
+</div>
+
+
+<footer>
+    <a href="https://jthorvaldur.github.io">jthorvaldur.github.io</a> &middot; Joel Thorarinson
+</footer>
+
+</body>
+</html>
