@@ -1,0 +1,556 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Definition Leakage: How Fast Legal English Decays</title>
+<meta name="description" content="Every legal definition is a compression algorithm applied to continuous reality. The leakage rate measures how fast the boundary fails.">
+<meta property="og:title" content="Definition Leakage: How Fast Legal English Decays">
+<meta property="og:description" content="Every legal definition is a compression algorithm applied to continuous reality. The leakage rate measures how fast the boundary fails.">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://jthorvaldur.github.io/enemies/leakage.html">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="Definition Leakage: How Fast Legal English Decays">
+<meta name="twitter:description" content="Legal definitions are compression algorithms. The leakage rate measures how fast the boundary fails.">
+<style>
+:root {
+    --bg: #0d1117; --fg: #c9d1d9; --accent: #58a6ff;
+    --border: #30363d; --surface: #161b22; --surface2: #21262d;
+    --green: #3fb950; --yellow: #d29922; --red: #f85149;
+    --purple: #bc8cff; --orange: #f0883e;
+}
+* { margin:0; padding:0; box-sizing:border-box; }
+body { font-family: 'SF Mono','Fira Code','JetBrains Mono',monospace; background:var(--bg); color:var(--fg); line-height:1.6; padding:2rem; max-width:1400px; margin:0 auto; }
+h1 { color:var(--accent); font-size:1.8rem; margin-bottom:0.5rem; }
+h2 { color:var(--accent); font-size:1.3rem; margin:2.5rem 0 1rem; border-bottom:1px solid var(--border); padding-bottom:0.5rem; }
+h3 { color:var(--fg); font-size:1.1rem; margin:1.5rem 0 0.5rem; }
+.subtitle { color:#8b949e; margin-bottom:2rem; font-size:0.95rem; line-height:1.7; max-width:1100px; }
+a { color:var(--accent); text-decoration:none; }
+a:hover { text-decoration:underline; }
+p { margin:0.75rem 0; font-size:0.9rem; line-height:1.7; }
+nav { background:var(--surface); border:1px solid var(--border); border-radius:6px; padding:1rem; margin:1rem 0; display:flex; flex-wrap:wrap; gap:0.5rem 1.5rem; }
+nav a { color:var(--accent); text-decoration:none; font-size:0.85rem; }
+nav a.active { color:var(--fg); font-weight:bold; }
+.formula { background:var(--surface); border-left:3px solid var(--accent); padding:1rem; margin:1rem 0; font-size:0.85rem; overflow-x:auto; line-height:1.8; }
+.formula-title { color:var(--accent); font-weight:bold; font-size:0.8rem; margin-bottom:0.5rem; }
+.formula pre { font-family:inherit; white-space:pre; color:var(--fg); margin:0; }
+blockquote { background:var(--surface); border-left:3px solid var(--accent); padding:1.2rem 1.5rem; margin:1.5rem 0; font-size:0.9rem; line-height:1.8; }
+.key-finding { background:var(--surface); border:1px solid var(--border); border-left:3px solid var(--yellow); border-radius:6px; padding:1.5rem; margin:1.5rem 0; font-size:0.9rem; line-height:1.7; }
+.key-finding .finding-title { color:var(--yellow); font-weight:bold; font-size:0.9rem; margin-bottom:0.75rem; }
+.callout { background:var(--surface); border:1px solid var(--border); border-left:3px solid var(--orange); border-radius:6px; padding:1.5rem; margin:1.5rem 0; font-size:0.9rem; line-height:1.7; }
+.callout-red { border-left-color:var(--red); }
+.callout-green { border-left-color:var(--green); }
+.callout-purple { border-left-color:var(--purple); }
+ol, ul { margin:0.75rem 0 0.75rem 1.5rem; font-size:0.9rem; line-height:1.7; }
+li { margin:0.3rem 0; }
+
+/* Concept cards */
+.concept-card {
+    background:var(--surface); border:1px solid var(--border); border-radius:6px;
+    margin:1.5rem 0; overflow:hidden;
+}
+.concept-header {
+    padding:1.2rem 1.5rem; border-bottom:1px solid var(--border);
+    display:flex; align-items:baseline; gap:1rem; flex-wrap:wrap;
+}
+.concept-title { color:var(--accent); font-size:1.1rem; font-weight:bold; }
+.concept-tag {
+    display:inline-block; padding:2px 8px; border-radius:3px;
+    font-size:0.7rem; font-weight:600; text-transform:uppercase; letter-spacing:0.05em;
+}
+.tag-irc { background:#58a6ff22; color:var(--accent); }
+.tag-legal { background:#f8514922; color:var(--red); }
+.tag-linguistic { background:#bc8cff22; color:var(--purple); }
+.tag-orange { background:#f0883e22; color:var(--orange); }
+.tag-green { background:#3fb95022; color:var(--green); }
+.concept-body { padding:1.5rem; }
+.concept-body p { font-size:0.9rem; line-height:1.7; margin-bottom:1rem; }
+.concept-body p:last-child { margin-bottom:0; }
+
+.chart-container {
+    background:var(--surface); border:1px solid var(--border); border-radius:6px;
+    padding:1.5rem; margin:1.5rem 0;
+}
+.chart-container canvas { width:100% !important; }
+.chart-title { color:var(--accent); font-weight:bold; font-size:0.95rem; margin-bottom:0.75rem; }
+.chart-caption { color:#8b949e; font-size:0.8rem; margin-top:0.75rem; line-height:1.6; }
+.uncertainty-box {
+    background:#1a1510; border:1px solid var(--yellow); border-radius:6px;
+    padding:1.5rem; margin:2rem 0; font-size:0.88rem; line-height:1.7;
+}
+.uncertainty-box .ub-title { color:var(--yellow); font-weight:bold; font-size:0.95rem; margin-bottom:0.75rem; }
+.uncertainty-box ul { margin:0.5rem 0 0.5rem 1.5rem; }
+.uncertainty-box li { margin:0.3rem 0; }
+
+footer { color:#8b949e; margin-top:3rem; font-size:0.8rem; text-align:center; padding:1rem 0; border-top:1px solid var(--border); }
+footer a { color:#8b949e; }
+</style>
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "WebPage",
+  "headline": "Definition Leakage: How Fast Legal English Decays",
+  "author": {"@type": "Person", "name": "Joel Thorarinson", "url": "https://jthorvaldur.github.io"},
+  "publisher": {"@type": "Person", "name": "Joel Thorarinson"},
+  "datePublished": "2026-05-27",
+  "url": "https://jthorvaldur.github.io/enemies/leakage.html",
+  "description": "Every legal definition is a compression algorithm applied to continuous reality. The leakage rate measures how fast the boundary fails.",
+  "isPartOf": {"@type": "WebSite", "name": "Thorarinson", "url": "https://jthorvaldur.github.io"}
+}
+</script>
+</head>
+<body>
+
+<h1>Definition Leakage: How Fast Legal English Decays</h1>
+<p class="subtitle">Every legal definition is a compression algorithm applied to continuous reality. The leakage rate measures how fast the boundary fails.</p>
+
+<nav>
+    <a href="index.html">Overview</a>
+    <a href="translations.html">Translations</a>
+    <a href="dimensions.html">Dimensions</a>
+    <a href="unsayable.html">The Unsayable</a>
+    <a href="algorithms.html">Algorithms</a>
+    <a href="languages.html">Languages</a>
+    <a href="integration.html">Integration</a>
+    <a href="taxcode.html">Tax Code</a>
+    <a href="network.html">Network</a>
+    <a href="gametheory.html">Game Theory</a>
+    <a href="leakage.html" class="active">Leakage</a>
+</nav>
+
+<!-- ===============================================================
+     SECTION 1: THE CONCEPT
+     =============================================================== -->
+
+<h2 id="concept">1. The Concept</h2>
+
+<p>A legal definition is a compression: it takes the continuous, high-dimensional space of real-world economic activity and maps it to a discrete category (taxable/non-taxable, qualified/unqualified, income/not-income). Like any compression, it loses information at the boundary. The &ldquo;leakage rate&rdquo; is the frequency at which real-world cases arrive at the boundary and the definition fails to classify them.</p>
+
+<div class="formula">
+    <div class="formula-title">Leakage Rate</div>
+<pre>L(d, t) = cases_litigating_boundary(d, t) / total_cases(t)
+
+where d = definition, t = time period</pre>
+</div>
+
+<p>The leakage rate is a function of:</p>
+
+<ol>
+    <li><strong>Precision of the definition</strong> &mdash; more words = narrower boundary = less leakage&hellip; in theory</li>
+    <li><strong>Dimensionality of economic reality</strong> &mdash; more complex economy = more edge cases = more leakage</li>
+    <li><strong>Time since enactment</strong> &mdash; older definitions face novel situations their drafters didn&rsquo;t anticipate</li>
+</ol>
+
+<!-- ===============================================================
+     SECTION 2: THE DIMENSIONALITY CONNECTION
+     =============================================================== -->
+
+<h2 id="dimensionality">2. The Dimensionality Connection</h2>
+
+<p>This is where the <a href="dimensions.html">Dimensionality Illusion paper</a> connects directly.</p>
+
+<p>A definition is a low-dimensional projection of high-dimensional reality:</p>
+
+<ul>
+    <li><strong>&ldquo;Fair market value&rdquo;</strong> = a 1-dimensional projection (a single price) of a high-dimensional negotiation space (parties&rsquo; preferences, market conditions, information asymmetry, time pressure)</li>
+    <li><strong>&ldquo;Qualified plan&rdquo;</strong> = a binary projection (yes/no) of a high-dimensional design space (contribution limits, vesting schedules, non-discrimination tests, distribution rules)</li>
+    <li><strong>&ldquo;Trade or business&rdquo;</strong> = NO projection at all &mdash; undefined, infinite leakage</li>
+</ul>
+
+<p>When economic reality is low-dimensional (simple transactions, traditional businesses), the projection works. When reality is high-dimensional (crypto, derivatives, digital assets, international structures, gig economy), the projection FAILS &mdash; the definition cannot classify novel arrangements because they occupy dimensions the definition wasn&rsquo;t designed to capture.</p>
+
+<div class="key-finding">
+    <div class="finding-title">The CISA Failure</div>
+    This is EXACTLY the CISA failure from the Dimensionality Illusion paper: the compressed representation appears to cover the case, but the critical distinction lives in a dimension the compression discarded.
+</div>
+
+<!-- ===============================================================
+     SECTION 3: CASE STUDIES
+     =============================================================== -->
+
+<h2 id="cases">3. Case Studies &mdash; Leakage in Action</h2>
+
+<p>For each term: the definition, the leakage pattern, and the dimensionality explanation.</p>
+
+<!-- 3a. Trade or Business -->
+
+<div class="concept-card">
+    <div class="concept-header">
+        <span class="concept-title">3a. &ldquo;Trade or Business&rdquo; &mdash; Infinite Leakage</span>
+        <span class="concept-tag tag-irc">339+ uses</span>
+        <span class="concept-tag tag-legal">Never defined</span>
+    </div>
+    <div class="concept-body">
+        <p><strong>Definition:</strong> NONE. Used 339+ times in the IRC. Never defined by statute.</p>
+
+        <p><strong>Leakage rate:</strong> maximal &mdash; every new economic arrangement requires fresh litigation.</p>
+
+        <p><em>Groetzinger v. Commissioner</em> (1987): the Supreme Court could not define it. Said it must be determined case-by-case. The non-definition is an infinite-bandwidth channel &mdash; it can mean anything, therefore it means nothing until a court decides.</p>
+
+        <p><strong>Key cases:</strong> <em>Groetzinger</em> (gambling), <em>Whipple v. Commissioner</em> (lending to corporations), <em>Higgins v. Commissioner</em> (investment management). Each case arrived at the boundary, and the boundary was not there.</p>
+    </div>
+</div>
+
+<!-- 3b. Fair Market Value -->
+
+<div class="concept-card">
+    <div class="concept-header">
+        <span class="concept-title">3b. &ldquo;Fair Market Value&rdquo; &mdash; 38 Words, Constant Leakage</span>
+        <span class="concept-tag tag-orange">38 words</span>
+        <span class="concept-tag tag-legal">Constant litigation</span>
+    </div>
+    <div class="concept-body">
+        <p><strong>Definition:</strong> &ldquo;the price at which the property would change hands between a willing buyer and a willing seller, neither being under any compulsion to buy or to sell and both having reasonable knowledge of relevant facts&rdquo;</p>
+
+        <p>38 words. Still litigated constantly because:</p>
+
+        <ul>
+            <li><strong>&ldquo;Willing buyer&rdquo;</strong> &mdash; what about distressed sales?</li>
+            <li><strong>&ldquo;Reasonable knowledge&rdquo;</strong> &mdash; how much information is reasonable?</li>
+            <li><strong>&ldquo;No compulsion&rdquo;</strong> &mdash; what about regulatory requirements to sell?</li>
+        </ul>
+
+        <p><strong>Dimensionality:</strong> the definition projects a multi-dimensional negotiation onto a single number. Every dimension it discards is a potential litigation vector.</p>
+    </div>
+</div>
+
+<!-- 3c. Substantially All -->
+
+<div class="concept-card">
+    <div class="concept-header">
+        <span class="concept-title">3c. &ldquo;Substantially All&rdquo; &mdash; The Vagueness Leak</span>
+        <span class="concept-tag tag-linguistic">Quantization problem</span>
+    </div>
+    <div class="concept-body">
+        <p><strong>Definition:</strong> not defined in the IRC. IRS guidelines suggest 90% of assets and 70% of operating assets.</p>
+
+        <p>But &ldquo;substantially&rdquo; is inherently vague &mdash; it maps a continuous variable (percentage) to a binary outcome (yes/no) without specifying the threshold.</p>
+
+        <p>This is a <strong>quantization problem</strong>: where do you put the boundary? 85%? 90%? 95%? Every boundary generates disputes at the margin.</p>
+    </div>
+</div>
+
+<!-- 3d. Ordinary and Necessary -->
+
+<div class="concept-card">
+    <div class="concept-header">
+        <span class="concept-title">3d. &ldquo;Ordinary and Necessary&rdquo; &mdash; The Moral Leak</span>
+        <span class="concept-tag tag-linguistic">Moral lexeme</span>
+        <span class="concept-tag tag-legal">Case-by-case</span>
+    </div>
+    <div class="concept-body">
+        <p><strong>Definition:</strong> not defined. <em>Welch v. Helvering</em> (1933): &ldquo;life in all its fullness must supply the answer.&rdquo;</p>
+
+        <p>This is the moral-lexeme problem (<a href="dimensions.html">D8 from dimensions.html</a>): &ldquo;ordinary&rdquo; could mean <em>akushala</em> (unskillful), <em>schlecht</em> (low quality), or <em>kakos</em> (base). English doesn&rsquo;t distinguish.</p>
+
+        <p><strong>Leakage:</strong> any expense that is plausibly &ldquo;ordinary&rdquo; in one context is arguably &ldquo;extraordinary&rdquo; in another. The definition can never be precise because the underlying concept is gradient, not binary.</p>
+    </div>
+</div>
+
+<!-- 3e. Security -->
+
+<div class="concept-card">
+    <div class="concept-header">
+        <span class="concept-title">3e. &ldquo;Security&rdquo; (Securities Act) &mdash; The Compression Failure</span>
+        <span class="concept-tag tag-irc">Howey Test (1946)</span>
+        <span class="concept-tag tag-legal">Crypto crisis</span>
+    </div>
+    <div class="concept-body">
+        <p><strong>The Howey Test (1946):</strong> &ldquo;an investment of money in a common enterprise with a reasonable expectation of profits to be derived from the efforts of others&rdquo;</p>
+
+        <p>This 4-factor test is a <strong>PCA-4 projection</strong> of economic reality.</p>
+
+        <p>It worked for stocks and bonds (low-dimensional financial instruments). It fails for crypto (NFTs, staking, yield farming, governance tokens) because crypto occupies dimensions the Howey test wasn&rsquo;t designed to capture.</p>
+
+        <p>This is the canonical CISA failure: distinct economic arrangements that the 4-factor compression merges into a single &ldquo;security&rdquo; category.</p>
+    </div>
+</div>
+
+<!-- ===============================================================
+     SECTION 4: LEAKAGE OVER TIME (Chart)
+     =============================================================== -->
+
+<h2 id="leakage-chart">4. Leakage Over Time</h2>
+
+<div class="chart-container">
+    <div class="chart-title">Estimated Leakage Rate by Definition Over Time</div>
+    <canvas id="leakageChart" height="480"></canvas>
+    <div class="chart-caption">
+        Conceptual chart. X-axis: time since definition enacted. Y-axis: estimated leakage rate (cases per year disputing the definition). &ldquo;Trade or business&rdquo; is flat at maximum &mdash; never defined. &ldquo;Fair market value&rdquo; shows steady moderate leakage. &ldquo;Qualified plan&rdquo; starts low, then increases as new plan designs emerge. &ldquo;Security&rdquo; under Howey stays low until 2017, then spikes with crypto. The curves show that leakage accelerates as economic dimensionality increases. The crypto era is a dimensionality explosion that broke multiple definitions simultaneously.
+    </div>
+</div>
+
+<!-- ===============================================================
+     SECTION 5: THE COMPRESSION-LEAKAGE TRADEOFF
+     =============================================================== -->
+
+<h2 id="tradeoff">5. The Compression-Leakage Tradeoff</h2>
+
+<p>More precise definitions leak less initially but more catastrophically when the boundary fails:</p>
+
+<ul>
+    <li><strong>Vague definitions</strong> (like &ldquo;ordinary and necessary&rdquo;): constant low-grade leakage, never catastrophic</li>
+    <li><strong>Precise definitions</strong> (like &ldquo;qualified plan&rdquo; with its 18 requirements): low leakage normally, but when a novel structure falls in the gap, the entire definition framework fails</li>
+</ul>
+
+<p>This is the <strong>bias-variance tradeoff</strong> from machine learning, applied to legal language:</p>
+
+<ul>
+    <li><strong>High bias</strong> (vague definition): consistent error, never great, never catastrophic</li>
+    <li><strong>High variance</strong> (precise definition): low error in-sample, potentially huge error out-of-sample</li>
+</ul>
+
+<div class="formula">
+    <div class="formula-title">Bias-Variance in Legal Definitions</div>
+<pre>Total_error  = bias&sup2; + variance + irreducible_noise
+Legal analog: Total_leakage = vagueness&sup2; + boundary_failure + irreducible_ambiguity</pre>
+</div>
+
+<div class="key-finding">
+    <div class="finding-title">The R_def Connection</div>
+    The IRC&rsquo;s growth from 0.5 to 2.0&ndash;3.0 R<sub>def</sub> ratio is the legal system&rsquo;s attempt to reduce bias (vagueness) by adding variance (precise definitions) &mdash; but as the ML community knows, this doesn&rsquo;t reduce total error unless you also reduce noise (grammatical ambiguity of English).
+</div>
+
+<!-- ===============================================================
+     SECTION 6: IMPLICATIONS
+     =============================================================== -->
+
+<h2 id="implications">6. Implications</h2>
+
+<p>Definitions are not permanent &mdash; they <strong>decay</strong> as economic reality evolves away from the drafter&rsquo;s assumptions.</p>
+
+<p>The <strong>half-life of a tax definition</strong> (estimated: 15&ndash;25 years before major litigation challenges the boundary) could be computed from case law data.</p>
+
+<p>AI and NLP tools could potentially detect high-leakage definitions before they fail &mdash; flag definitions with low-dimensional projections applied to high-dimensional economic domains.</p>
+
+<div class="callout callout-purple">
+    <strong>The detection problem:</strong> A definition is most dangerous when it appears to work. The Howey test classified securities correctly for 70 years. The failure was invisible until the dimensionality of financial instruments exploded. Proactive leakage detection would require measuring the dimensionality of the economic domain against the dimensionality of the definition &mdash; and flagging gaps before litigation reveals them.
+</div>
+
+<!-- ===============================================================
+     UNCERTAINTY
+     =============================================================== -->
+
+<div class="uncertainty-box">
+    <div class="ub-title">Uncertainty</div>
+    <ul>
+        <li>Leakage rate data would need an actual case law corpus to compute precisely. The figures in the chart are conceptual, not empirical.</li>
+        <li>The ML analogy (bias-variance tradeoff, PCA projection) is structural, not mathematical. Legal definitions do not literally perform PCA; the mapping is illustrative.</li>
+        <li>The Howey-crypto connection is the author&rsquo;s analytical framing. Courts and regulators are actively disputing whether Howey applies to specific crypto instruments, and the legal outcome is undetermined.</li>
+        <li>The 15&ndash;25 year half-life estimate is a hypothesis, not a measurement. Computing it rigorously would require systematic analysis of case law filing dates against definition enactment dates.</li>
+        <li>The CISA failure analogy assumes that the Dimensionality Illusion framework applies to legal classification. This is a cross-domain transfer; the domains may differ in ways the analogy does not capture.</li>
+    </ul>
+</div>
+
+<footer>
+    Sources: <em>Groetzinger v. Commissioner</em>, 480 U.S. 23 (1987) &middot;
+    <em>Welch v. Helvering</em>, 290 U.S. 111 (1933) &middot;
+    <em>Whipple v. Commissioner</em>, 373 U.S. 193 (1963) &middot;
+    <em>Higgins v. Commissioner</em>, 312 U.S. 212 (1941) &middot;
+    <em>SEC v. W.J. Howey Co.</em>, 328 U.S. 293 (1946) &middot;
+    Tax Foundation (2024) &middot; Cornell Legal Information Institute &middot;
+    IRS Revenue Rulings<br><br>
+    <a href="index.html">Overview</a> &middot; <a href="translations.html">Translations</a> &middot;
+    <a href="dimensions.html">Dimensions</a> &middot; <a href="unsayable.html">The Unsayable</a> &middot;
+    <a href="algorithms.html">Algorithms</a> &middot; <a href="languages.html">Languages</a> &middot;
+    <a href="integration.html">Integration</a> &middot; <a href="taxcode.html">Tax Code</a> &middot;
+    <a href="network.html">Network</a> &middot; <a href="gametheory.html">Game Theory</a> &middot;
+    <a href="leakage.html">Leakage</a>
+</footer>
+
+<script>
+// === LEAKAGE OVER TIME CHART ===
+(function() {
+    const canvas = document.getElementById('leakageChart');
+    const ctx = canvas.getContext('2d');
+    const dpr = window.devicePixelRatio || 1;
+
+    function resize() {
+        const rect = canvas.parentElement.getBoundingClientRect();
+        const w = rect.width - 48;
+        const h = 480;
+        canvas.width = w * dpr;
+        canvas.height = h * dpr;
+        canvas.style.width = w + 'px';
+        canvas.style.height = h + 'px';
+        ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+        return { w, h };
+    }
+
+    function draw() {
+        const { w, h } = resize();
+        const pad = { top: 40, right: 160, bottom: 60, left: 80 };
+        const pw = w - pad.left - pad.right;
+        const ph = h - pad.top - pad.bottom;
+
+        ctx.clearRect(0, 0, w, h);
+
+        // Scale
+        const xMin = 1910, xMax = 2030;
+        const yMin = 0, yMax = 100;
+
+        function toX(year) { return pad.left + (year - xMin) / (xMax - xMin) * pw; }
+        function toY(val) { return pad.top + (1 - (val - yMin) / (yMax - yMin)) * ph; }
+
+        // Grid lines
+        ctx.strokeStyle = '#21262d';
+        ctx.lineWidth = 1;
+        ctx.setLineDash([2, 4]);
+        for (let y = 0; y <= 100; y += 20) {
+            const yy = toY(y);
+            ctx.beginPath(); ctx.moveTo(pad.left, yy); ctx.lineTo(pad.left + pw, yy); ctx.stroke();
+        }
+        for (let yr = 1920; yr <= 2020; yr += 20) {
+            const xx = toX(yr);
+            ctx.beginPath(); ctx.moveTo(xx, pad.top); ctx.lineTo(xx, pad.top + ph); ctx.stroke();
+        }
+        ctx.setLineDash([]);
+
+        // Y axis labels
+        ctx.fillStyle = '#8b949e';
+        ctx.font = '11px SF Mono, Fira Code, monospace';
+        ctx.textAlign = 'right';
+        for (let y = 0; y <= 100; y += 20) {
+            ctx.fillText(y + '%', pad.left - 10, toY(y) + 4);
+        }
+
+        // X axis labels
+        ctx.textAlign = 'center';
+        for (let yr = 1920; yr <= 2020; yr += 20) {
+            ctx.fillText(yr.toString(), toX(yr), pad.top + ph + 20);
+        }
+
+        // Axis titles
+        ctx.fillStyle = '#58a6ff';
+        ctx.font = '12px SF Mono, Fira Code, monospace';
+        ctx.textAlign = 'center';
+        ctx.fillText('Year', (pad.left + pad.left + pw) / 2, h - 8);
+        ctx.save();
+        ctx.translate(16, h / 2);
+        ctx.rotate(-Math.PI / 2);
+        ctx.fillText('Estimated Leakage Rate', 0, 0);
+        ctx.restore();
+
+        // Curves data: [year, leakage_rate]
+        const curves = [
+            {
+                name: '"Trade or business"',
+                color: '#f85149',
+                // Flat at high level — never defined
+                data: [[1913,85],[1930,88],[1950,90],[1970,88],[1987,92],[2000,90],[2010,90],[2020,92],[2026,93]]
+            },
+            {
+                name: '"Fair market value"',
+                color: '#d29922',
+                // Steady moderate leakage
+                data: [[1913,15],[1930,20],[1950,30],[1970,35],[1986,38],[2000,40],[2010,42],[2020,45],[2026,48]]
+            },
+            {
+                name: '"Qualified plan"',
+                color: '#3fb950',
+                // Low then increasing
+                data: [[1954,5],[1970,8],[1986,12],[2000,18],[2010,25],[2020,35],[2026,40]]
+            },
+            {
+                name: '"Security" (Howey)',
+                color: '#bc8cff',
+                // Low until crypto era
+                data: [[1946,5],[1960,8],[1980,10],[2000,12],[2010,14],[2017,18],[2020,55],[2023,75],[2026,80]]
+            }
+        ];
+
+        // Draw each curve
+        for (const curve of curves) {
+            const d = curve.data;
+
+            // Filled area
+            ctx.beginPath();
+            ctx.moveTo(toX(d[0][0]), toY(d[0][1]));
+            for (let i = 1; i < d.length; i++) {
+                const prevX = toX(d[i-1][0]);
+                const prevY = toY(d[i-1][1]);
+                const currX = toX(d[i][0]);
+                const currY = toY(d[i][1]);
+                const cpX = (prevX + currX) / 2;
+                ctx.quadraticCurveTo(cpX, prevY, currX, currY);
+            }
+            ctx.lineTo(toX(d[d.length - 1][0]), pad.top + ph);
+            ctx.lineTo(toX(d[0][0]), pad.top + ph);
+            ctx.closePath();
+            ctx.fillStyle = curve.color + '15';
+            ctx.fill();
+
+            // Line
+            ctx.beginPath();
+            ctx.moveTo(toX(d[0][0]), toY(d[0][1]));
+            for (let i = 1; i < d.length; i++) {
+                const prevX = toX(d[i-1][0]);
+                const prevY = toY(d[i-1][1]);
+                const currX = toX(d[i][0]);
+                const currY = toY(d[i][1]);
+                const cpX = (prevX + currX) / 2;
+                ctx.quadraticCurveTo(cpX, prevY, currX, currY);
+            }
+            ctx.strokeStyle = curve.color;
+            ctx.lineWidth = 2;
+            ctx.stroke();
+
+            // Points
+            for (const [year, val] of d) {
+                ctx.beginPath();
+                ctx.arc(toX(year), toY(val), 3, 0, Math.PI * 2);
+                ctx.fillStyle = curve.color;
+                ctx.fill();
+                ctx.strokeStyle = '#0d1117';
+                ctx.lineWidth = 1;
+                ctx.stroke();
+            }
+        }
+
+        // Legend (right side)
+        ctx.font = '10px SF Mono, Fira Code, monospace';
+        ctx.textAlign = 'left';
+        const legendX = pad.left + pw + 15;
+        let legendY = pad.top + 20;
+        for (const curve of curves) {
+            // Color swatch
+            ctx.fillStyle = curve.color;
+            ctx.fillRect(legendX, legendY - 4, 12, 3);
+            // Label
+            ctx.fillStyle = curve.color;
+            ctx.fillText(curve.name, legendX + 18, legendY);
+            legendY += 18;
+        }
+
+        // Crypto era annotation
+        ctx.save();
+        ctx.setLineDash([4, 4]);
+        ctx.strokeStyle = '#bc8cff';
+        ctx.lineWidth = 1;
+        ctx.beginPath();
+        ctx.moveTo(toX(2017), pad.top);
+        ctx.lineTo(toX(2017), pad.top + ph);
+        ctx.stroke();
+        ctx.restore();
+        ctx.fillStyle = '#bc8cff';
+        ctx.font = '10px SF Mono, Fira Code, monospace';
+        ctx.textAlign = 'left';
+        ctx.fillText('Crypto era', toX(2017) + 5, pad.top + 15);
+
+        // Axes
+        ctx.strokeStyle = '#30363d';
+        ctx.lineWidth = 1;
+        ctx.beginPath();
+        ctx.moveTo(pad.left, pad.top);
+        ctx.lineTo(pad.left, pad.top + ph);
+        ctx.lineTo(pad.left + pw, pad.top + ph);
+        ctx.stroke();
+    }
+
+    draw();
+    window.addEventListener('resize', draw);
+})();
+</script>
+
+</body>
+</html>

@@ -1,0 +1,796 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>The Tax Code as Network</title>
+<meta name="description" content="70,000 cross-references. The IRC is not a list of rules — it is a directed graph where every definition depends on other definitions. The topology reveals what word counts cannot.">
+<meta property="og:title" content="The Tax Code as Network">
+<meta property="og:description" content="70,000 cross-references. The IRC is a directed graph. The topology reveals what word counts cannot.">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://jthorvaldur.github.io/enemies/network.html">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="The Tax Code as Network">
+<meta name="twitter:description" content="70,000 cross-references. The IRC is a directed graph. The topology reveals what word counts cannot.">
+<style>
+:root {
+    --bg: #0d1117; --fg: #c9d1d9; --accent: #58a6ff;
+    --border: #30363d; --surface: #161b22; --surface2: #21262d;
+    --green: #3fb950; --yellow: #d29922; --red: #f85149;
+    --purple: #bc8cff; --orange: #f0883e;
+}
+* { margin:0; padding:0; box-sizing:border-box; }
+body { font-family: 'SF Mono','Fira Code','JetBrains Mono',monospace; background:var(--bg); color:var(--fg); line-height:1.6; padding:2rem; max-width:1400px; margin:0 auto; }
+h1 { color:var(--accent); font-size:1.8rem; margin-bottom:0.5rem; }
+h2 { color:var(--accent); font-size:1.3rem; margin:2.5rem 0 1rem; border-bottom:1px solid var(--border); padding-bottom:0.5rem; }
+h3 { color:var(--fg); font-size:1.1rem; margin:1.5rem 0 0.5rem; }
+.subtitle { color:#8b949e; margin-bottom:2rem; font-size:0.95rem; line-height:1.7; max-width:1100px; }
+a { color:var(--accent); text-decoration:none; }
+a:hover { text-decoration:underline; }
+p { margin:0.75rem 0; font-size:0.9rem; line-height:1.7; }
+nav { background:var(--surface); border:1px solid var(--border); border-radius:6px; padding:1rem; margin:1rem 0; display:flex; flex-wrap:wrap; gap:0.5rem 1.5rem; }
+nav a { color:var(--accent); text-decoration:none; font-size:0.85rem; }
+nav a.active { color:var(--fg); font-weight:bold; }
+.stats { display:grid; grid-template-columns:repeat(auto-fit, minmax(180px, 1fr)); gap:1rem; margin:1rem 0; }
+.stat { background:var(--surface); border:1px solid var(--border); border-radius:6px; padding:1rem; text-align:center; }
+.stat .value { font-size:2rem; color:var(--accent); font-weight:bold; }
+.stat .label { font-size:0.8rem; color:#8b949e; }
+table { width:100%; border-collapse:collapse; margin:1rem 0; font-size:0.85rem; }
+th, td { padding:6px 10px; border:1px solid var(--border); text-align:left; }
+th { background:var(--surface2); color:var(--accent); position:sticky; top:0; }
+tr:hover { background:var(--surface); }
+.formula { background:var(--surface); border-left:3px solid var(--accent); padding:1rem; margin:1rem 0; font-size:0.85rem; overflow-x:auto; line-height:1.8; }
+.formula-title { color:var(--accent); font-weight:bold; font-size:0.8rem; margin-bottom:0.5rem; }
+blockquote { background:var(--surface); border-left:3px solid var(--accent); padding:1.2rem 1.5rem; margin:1.5rem 0; font-size:0.9rem; line-height:1.8; }
+.key-finding { background:var(--surface); border:1px solid var(--border); border-left:3px solid var(--yellow); border-radius:6px; padding:1.5rem; margin:1.5rem 0; font-size:0.9rem; line-height:1.7; }
+.key-finding .finding-title { color:var(--yellow); font-weight:bold; font-size:0.9rem; margin-bottom:0.75rem; }
+.callout { background:var(--surface); border:1px solid var(--border); border-left:3px solid var(--orange); border-radius:6px; padding:1.5rem; margin:1.5rem 0; font-size:0.9rem; line-height:1.7; }
+.callout-red { border-left-color:var(--red); }
+.callout-green { border-left-color:var(--green); }
+.callout-purple { border-left-color:var(--purple); }
+.chart-container {
+    background:var(--surface); border:1px solid var(--border); border-radius:6px;
+    padding:1.5rem; margin:1.5rem 0;
+}
+.chart-container canvas { width:100% !important; }
+.chart-title { color:var(--accent); font-weight:bold; font-size:0.95rem; margin-bottom:0.75rem; }
+.chart-caption { color:#8b949e; font-size:0.8rem; margin-top:0.75rem; line-height:1.6; }
+.uncertainty-box {
+    background:#1a1510; border:1px solid var(--yellow); border-radius:6px;
+    padding:1.5rem; margin:2rem 0; font-size:0.88rem; line-height:1.7;
+}
+.uncertainty-box .ub-title { color:var(--yellow); font-weight:bold; font-size:0.95rem; margin-bottom:0.75rem; }
+.uncertainty-box ul { margin:0.5rem 0 0.5rem 1.5rem; }
+.uncertainty-box li { margin:0.3rem 0; }
+
+/* Metric cards */
+.metric-grid {
+    display:grid; grid-template-columns:repeat(auto-fit, minmax(300px, 1fr));
+    gap:1rem; margin:1rem 0;
+}
+.metric-card {
+    background:var(--surface); border:1px solid var(--border);
+    border-top:2px solid var(--accent); border-radius:6px; padding:1.2rem;
+}
+.metric-card .mc-title { color:var(--accent); font-size:0.9rem; font-weight:bold; margin-bottom:0.5rem; }
+.metric-card p { font-size:0.85rem; line-height:1.6; color:#8b949e; margin:0.4rem 0; }
+.metric-card .mc-prediction { color:var(--yellow); font-size:0.82rem; margin-top:0.5rem; }
+
+/* Comparison table styling */
+.compare-grid {
+    display:grid; grid-template-columns:repeat(auto-fit, minmax(250px, 1fr));
+    gap:1rem; margin:1rem 0;
+}
+.compare-card {
+    background:var(--surface); border:1px solid var(--border);
+    border-radius:6px; padding:1.2rem;
+}
+.compare-card .cc-title { color:var(--accent); font-size:0.9rem; font-weight:bold; margin-bottom:0.5rem; }
+.compare-card .cc-type { color:var(--purple); font-size:0.75rem; font-weight:600; text-transform:uppercase; letter-spacing:0.05em; margin-bottom:0.5rem; }
+.compare-card p { font-size:0.82rem; line-height:1.6; color:#8b949e; margin:0.3rem 0; }
+
+/* Graph controls */
+.graph-controls {
+    display:flex; flex-wrap:wrap; gap:0.5rem; margin:0.75rem 0;
+}
+.graph-controls button {
+    background:var(--surface2); border:1px solid var(--border); color:var(--fg);
+    font-family:inherit; font-size:0.75rem; padding:4px 10px; border-radius:4px;
+    cursor:pointer; transition:border-color 0.2s;
+}
+.graph-controls button:hover { border-color:var(--accent); color:var(--accent); }
+.graph-controls button.active { border-color:var(--accent); color:var(--accent); background:rgba(88,166,255,0.1); }
+.graph-legend {
+    display:flex; flex-wrap:wrap; gap:0.75rem 1.5rem; margin:0.75rem 0; font-size:0.75rem; color:#8b949e;
+}
+.graph-legend .leg-item { display:flex; align-items:center; gap:0.35rem; }
+.graph-legend .leg-dot { width:10px; height:10px; border-radius:50%; display:inline-block; }
+
+footer { color:#8b949e; margin-top:3rem; font-size:0.8rem; text-align:center; padding:1rem 0; border-top:1px solid var(--border); }
+footer a { color:#8b949e; }
+</style>
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "WebPage",
+  "headline": "The Tax Code as Network",
+  "author": {"@type": "Person", "name": "Joel Thorarinson", "url": "https://jthorvaldur.github.io"},
+  "publisher": {"@type": "Person", "name": "Joel Thorarinson"},
+  "datePublished": "2026-05-27",
+  "url": "https://jthorvaldur.github.io/enemies/network.html",
+  "description": "70,000 cross-references. The IRC is not a list of rules — it is a directed graph where every definition depends on other definitions.",
+  "isPartOf": {"@type": "WebSite", "name": "Thorarinson", "url": "https://jthorvaldur.github.io"}
+}
+</script>
+</head>
+<body>
+
+<h1>The Tax Code as Network</h1>
+<p class="subtitle">70,000 cross-references. The IRC is not a list of rules &mdash; it is a directed graph where every definition depends on other definitions. The topology reveals what word counts cannot.</p>
+
+<nav>
+    <a href="index.html">Overview</a>
+    <a href="translations.html">Translations</a>
+    <a href="dimensions.html">Dimensions</a>
+    <a href="unsayable.html">The Unsayable</a>
+    <a href="algorithms.html">Algorithms</a>
+    <a href="languages.html">Languages</a>
+    <a href="integration.html">Integration</a>
+    <a href="taxcode.html">Tax Code</a>
+    <a href="network.html" class="active">Network</a>
+    <a href="gametheory.html">Game Theory</a>
+    <a href="leakage.html">Leakage</a>
+</nav>
+
+<!-- ═══════════════════════════════════════════════════════════════
+     SECTION 1: THE NUMBERS
+     ═══════════════════════════════════════════════════════════════ -->
+
+<h2 id="stats">1. The Graph in Numbers</h2>
+
+<div class="stats">
+    <div class="stat"><div class="value">~70K</div><div class="label">Cross-references (2012 est.)</div></div>
+    <div class="stat"><div class="value">80K+</div><div class="label">Likely by 2026</div></div>
+    <div class="stat"><div class="value">800+</div><div class="label">IRC Sections as Nodes</div></div>
+    <div class="stat"><div class="value">4&ndash;6</div><div class="label">Estimated Graph Diameter (hops)</div></div>
+</div>
+
+<table>
+    <tr><th>Hub Section</th><th>Description</th><th>Role in Graph</th></tr>
+    <tr><td>&sect;7701</td><td>Definitions</td><td>Master hub &mdash; defines terms consumed by virtually every other section. Highest in-degree and out-degree.</td></tr>
+    <tr><td>&sect;61</td><td>Gross income</td><td>Foundational hub &mdash; &ldquo;all income from whatever source derived&rdquo; feeds into every income-related section.</td></tr>
+    <tr><td>&sect;162</td><td>Business deductions</td><td>Primary deduction hub &mdash; most deduction and expense sections reference it.</td></tr>
+    <tr><td>&sect;501</td><td>Exempt organizations</td><td>Cluster hub &mdash; anchors the exempt org subgraph (&sect;501&ndash;&sect;530).</td></tr>
+</table>
+
+<p>Most sections reach most others within 4&ndash;6 cross-references. The code is a small-world network: locally clustered, globally connected through a handful of hubs.</p>
+
+<!-- ═══════════════════════════════════════════════════════════════
+     SECTION 2: THE CROSS-REFERENCE GRAPH (Canvas)
+     ═══════════════════════════════════════════════════════════════ -->
+
+<h2 id="graph">2. The Cross-Reference Graph</h2>
+
+<p>A force-directed simulation of the IRC&rsquo;s top 40 sections. Node size = degree (number of cross-references). Color = subchapter. Edges show known cross-reference patterns. Drag nodes to explore the topology.</p>
+
+<div class="chart-container">
+    <div class="chart-title">IRC Cross-Reference Network &mdash; Top 40 Sections</div>
+    <div class="graph-legend">
+        <div class="leg-item"><span class="leg-dot" style="background:#f85149"></span> Definitions / General</div>
+        <div class="leg-item"><span class="leg-dot" style="background:#58a6ff"></span> Income / Rates</div>
+        <div class="leg-item"><span class="leg-dot" style="background:#3fb950"></span> Deductions</div>
+        <div class="leg-item"><span class="leg-dot" style="background:#d29922"></span> Corporate</div>
+        <div class="leg-item"><span class="leg-dot" style="background:#bc8cff"></span> Exempt Orgs</div>
+        <div class="leg-item"><span class="leg-dot" style="background:#f0883e"></span> Capital Gains</div>
+        <div class="leg-item"><span class="leg-dot" style="background:#8b949e"></span> Other</div>
+    </div>
+    <div class="graph-controls">
+        <button id="btnReset">Reset Layout</button>
+        <button id="btnFreeze">Freeze</button>
+        <button id="btnLabels" class="active">Labels</button>
+    </div>
+    <canvas id="graphCanvas" height="700"></canvas>
+    <div class="chart-caption">
+        Simulated model based on known hub sections and cross-reference patterns.
+        &sect;7701 (definitions) and &sect;61 (gross income) dominate &mdash; everything connects through them.
+        Full IRC XML parsing would reveal ~70,000+ edges; this model shows the structural skeleton.
+    </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════════
+     SECTION 3: NETWORK METRICS (Conceptual)
+     ═══════════════════════════════════════════════════════════════ -->
+
+<h2 id="metrics">3. Network Metrics (Conceptual)</h2>
+
+<p>Even without full graph data, the topology of the IRC is predictable from its structure. These are the metrics that a complete parse would reveal.</p>
+
+<div class="metric-grid">
+    <div class="metric-card">
+        <div class="mc-title">Degree Distribution</div>
+        <p>Predicted power-law distribution. A few sections (&sect;7701, &sect;61, &sect;162) are cited by hundreds of others; the vast majority are cited by fewer than ten. This is the Zipf structure again &mdash; the same rank-frequency law that governs word frequency in natural language governs citation frequency in the code.</p>
+        <div class="mc-prediction">Prediction: Zipf exponent &alpha; &asymp; 1.2&ndash;1.5, consistent with other legal citation networks.</div>
+    </div>
+
+    <div class="metric-card">
+        <div class="mc-title">Strongly Connected Components</div>
+        <p>Circular definition clusters. Example: &sect;61 defines income &rarr; &sect;1001 defines realized gain/loss &rarr; &sect;1221 defines capital asset &rarr; references back to &sect;61 concepts. This circularity is not a bug &mdash; it is the structure of the legal concept itself. The definitions are mutually constitutive.</p>
+        <div class="mc-prediction">Prediction: One giant SCC containing most income/deduction sections; smaller isolated components in procedural sections.</div>
+    </div>
+
+    <div class="metric-card">
+        <div class="mc-title">PageRank</div>
+        <p>The most &ldquo;important&rdquo; sections ranked by how many pathways flow through them. PageRank would reveal which sections are structurally indispensable &mdash; not by word count or political salience, but by network centrality.</p>
+        <div class="mc-prediction">Prediction: &sect;7701 (definitions) ranks #1 &mdash; it is the Google of the tax code. &sect;61 ranks #2. &sect;162 ranks #3.</div>
+    </div>
+
+    <div class="metric-card">
+        <div class="mc-title">Minimum Vertex Cut</div>
+        <p>The smallest set of sections whose removal disconnects the code. These are the STRUCTURAL pillars of US tax law &mdash; not the politically controversial ones, but the ones that hold the graph together.</p>
+        <div class="mc-prediction">Prediction: &sect;7701, &sect;61, &sect;162, &sect;501. Remove these four and the code fragments into isolated subgraphs.</div>
+    </div>
+
+    <div class="metric-card">
+        <div class="mc-title">Clustering Coefficient</div>
+        <p>Measures how tightly sections group into neighborhoods. High clustering means sections in a subchapter reference each other more than they reference distant sections &mdash; the code has local structure, not just global connectivity.</p>
+        <div class="mc-prediction">Prediction: High clustering in corporate tax (&sect;301&ndash;385), individual tax (&sect;1&ndash;199A), exempt orgs (&sect;501&ndash;530). Lower clustering in procedural sections.</div>
+    </div>
+
+    <div class="metric-card">
+        <div class="mc-title">Betweenness Centrality</div>
+        <p>The fraction of all shortest paths that pass through a given node. High betweenness means a section acts as a bridge between clusters &mdash; removing it would force longer paths through the code.</p>
+        <div class="mc-prediction">Prediction: &sect;7701 has the highest betweenness by far. &sect;267 (related party rules) may rank surprisingly high &mdash; it bridges corporate and individual tax subgraphs.</div>
+    </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════════
+     SECTION 4: THE "TRADE OR BUSINESS" BLACK HOLE
+     ═══════════════════════════════════════════════════════════════ -->
+
+<h2 id="blackhole">4. The &ldquo;Trade or Business&rdquo; Black Hole</h2>
+
+<p>In graph terms, &ldquo;trade or business&rdquo; is a node with massive in-degree (339+ references point to it) but <strong>zero out-degree from any definition section</strong> &mdash; it is never defined. In network theory, this is an <strong>absorbing state</strong>: information flows INTO the concept but never resolves.</p>
+
+<div class="formula">
+    <div class="formula-title">The Absorbing State</div>
+    In-degree(&ldquo;trade or business&rdquo;) = 339+ sections reference the term<br>
+    Out-degree(&ldquo;trade or business&rdquo; definition) = 0 &mdash; no section defines it<br><br>
+    Every section that references &ldquo;trade or business&rdquo; inherits its ambiguity.<br>
+    The ambiguity propagates through every connected path.
+</div>
+
+<p>Every section that references &ldquo;trade or business&rdquo; inherits its ambiguity. The graph structure shows <em>why</em> this single undefined term generates so much litigation: the ambiguity propagates through every connected path. A node with 339 in-edges and zero definitional resolution is a black hole in the network &mdash; meaning flows in and never comes back out.</p>
+
+<div class="callout callout-red">
+    <strong>The Supreme Court tried.</strong> In <em>Commissioner v. Groetzinger</em>, 480 U.S. 23 (1987), the Court considered and rejected a formal definition, concluding that the determination must be made on a case-by-case basis. The highest court in the system looked at the black hole and decided it was a feature, not a bug. The graph topology explains why: defining &ldquo;trade or business&rdquo; would require resolving 339+ dependent definitions simultaneously. The cascade risk was too high.
+</div>
+
+<div class="key-finding">
+    <div class="finding-title">Network Propagation of Ambiguity</div>
+    If &sect;162 says &ldquo;ordinary and necessary expenses of carrying on a trade or business,&rdquo; and &sect;199A says &ldquo;qualified business income from a trade or business,&rdquo; and &sect;469 says &ldquo;passive activity&rdquo; depends on &ldquo;trade or business&rdquo; &mdash; then the undefined term creates correlated uncertainty across the entire deduction subgraph. The sections are not independently ambiguous. They are <em>jointly</em> ambiguous, coupled through a shared undefined dependency.
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════════
+     SECTION 5: COMPARISON TO OTHER NETWORKS
+     ═══════════════════════════════════════════════════════════════ -->
+
+<h2 id="comparison">5. Comparison to Other Networks</h2>
+
+<div class="compare-grid">
+    <div class="compare-card">
+        <div class="cc-type">Information Network</div>
+        <div class="cc-title">The World Wide Web</div>
+        <p>Power-law degree distribution, hub-and-spoke structure. Google.com is to the web what &sect;7701 is to the IRC &mdash; a master index node that everything routes through. Both networks grew by preferential attachment: new pages link to existing hubs because those hubs already aggregate meaning.</p>
+    </div>
+
+    <div class="compare-card">
+        <div class="cc-type">Citation Network</div>
+        <div class="cc-title">Academic Paper Citations</div>
+        <p>Papers cite earlier papers. Seminal works become hubs. The IRC&rsquo;s cross-reference structure is isomorphic: foundational sections (&sect;61, &sect;7701) are cited by everything written after them. Both exhibit preferential attachment and long-tail degree distributions.</p>
+    </div>
+
+    <div class="compare-card">
+        <div class="cc-type">Biological Network</div>
+        <div class="cc-title">Gene Regulatory Networks</div>
+        <p>Feedback loops, circular dependencies, master regulators. The IRC&rsquo;s strongly connected components &mdash; where &sect;61 defines income, &sect;1001 defines gain, &sect;1221 defines capital asset, and all reference each other &mdash; mirror the mutual regulation of gene expression. Both systems use circularity as a structural feature, not a defect.</p>
+    </div>
+
+    <div class="compare-card">
+        <div class="cc-type">Infrastructure Network</div>
+        <div class="cc-title">HFT Microwave Network</div>
+        <p>A different kind of directed graph: physical towers transmitting market data at near-light-speed between exchanges. The IRC network is conceptual; the <a href="../hft/routes.html">HFT network</a> is physical. But both exhibit the same structural property: a small number of critical nodes whose failure cascades through the entire system.</p>
+    </div>
+</div>
+
+<div class="formula">
+    <div class="formula-title">Preferential Attachment in Legal Systems</div>
+    The IRC is a scale-free network that grew by preferential attachment. When Congress writes a new section, it references existing hub sections (&sect;61, &sect;162, &sect;7701) because those hubs already define the foundational terms. Each new reference increases the hub&rsquo;s degree, making it more likely to be referenced again. The rich get richer. The hubs get hubber. The code cannot grow any other way.
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════════
+     SECTION 6: WHAT THE NETWORK REVEALS THAT WORD COUNT CANNOT
+     ═══════════════════════════════════════════════════════════════ -->
+
+<h2 id="reveals">6. What the Network Reveals That Word Count Cannot</h2>
+
+<p>The <a href="taxcode.html">Tax Code page</a> measures the IRC by weight &mdash; 2.4 million words, 10 million with regulations. But weight alone cannot distinguish a load-bearing wall from a decorative panel. The network view can.</p>
+
+<table>
+    <tr><th>Word Count Says</th><th>Network Shows</th></tr>
+    <tr><td>The code is big.</td><td>WHERE it is interconnected &mdash; which parts are load-bearing.</td></tr>
+    <tr><td>All sections are equally &ldquo;part of the code.&rdquo;</td><td>A short section with high betweenness centrality matters more than a long section that is structurally isolated.</td></tr>
+    <tr><td>Simplification = fewer words.</td><td>Removing a hub section cascades &mdash; more breakage than removing an isolated section of equal length.</td></tr>
+    <tr><td>Growth is monotonic.</td><td>Growth is topological: new edges compound the connectivity of existing hubs.</td></tr>
+</table>
+
+<div class="key-finding">
+    <div class="finding-title">Why &ldquo;Simplification&rdquo; Always Fails</div>
+    You cannot remove nodes from a scale-free network without destroying connectivity. The IRC&rsquo;s hub structure means that every &ldquo;simplification&rdquo; bill must either (a) avoid touching hub sections, in which case it removes only low-connectivity sections that contribute little to complexity, or (b) touch hub sections, in which case it must rewrite every dependent section simultaneously. Option (a) is cosmetic. Option (b) is a full rewrite. There is no option (c). The network topology explains why the Tax Reform Act of 1986 &mdash; the most ambitious simplification in history &mdash; produced a net <em>increase</em> in word count: it touched hub sections and had to add more words to maintain connectivity.
+</div>
+
+<div class="callout callout-purple">
+    <strong>The graph-theoretic impossibility.</strong> Albert, Jeong, and Barab&aacute;si (2000) showed that scale-free networks are robust to random node removal but catastrophically vulnerable to targeted hub removal. The IRC has the same structure. Random section removal (repealing obscure provisions) barely affects the network. Targeted hub removal (redefining &ldquo;gross income&rdquo; or &ldquo;trade or business&rdquo;) would cascade through thousands of dependent sections. Congress intuitively understands this, which is why fundamental tax reform is discussed every election cycle and attempted never.
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════════
+     UNCERTAINTY
+     ═══════════════════════════════════════════════════════════════ -->
+
+<div class="uncertainty-box">
+    <div class="ub-title">Uncertainty</div>
+    <ul>
+        <li>The ~70,000 cross-reference estimate is from a 2012 Tax Foundation analysis. The actual number by 2026 is unknown but likely higher given TCJA and subsequent legislation.</li>
+        <li>The graph visualization is a <em>simulated model</em> based on known hub sections and documented cross-reference patterns, not a parse of the actual IRC XML. A true graph would require parsing all of Title 26 and resolving every &ldquo;as defined in&rdquo; / &ldquo;within the meaning of&rdquo; / &ldquo;under section&rdquo; reference.</li>
+        <li>Network metric predictions (power-law exponent, PageRank rankings, vertex cut set) are informed estimates based on analogous legal citation networks (Bommarito &amp; Katz, 2010; Boulet et al., 2011), not computed from IRC data.</li>
+        <li>The &ldquo;absorbing state&rdquo; metaphor for &ldquo;trade or business&rdquo; is the author&rsquo;s framing. Network theorists would call it a high-in-degree node with no definitional resolution, but &ldquo;absorbing state&rdquo; is borrowed from Markov chain terminology for rhetorical effect.</li>
+        <li>Preferential attachment is a growth model, not a proven mechanism of legislative drafting. Congress does not consciously attach to hubs &mdash; but the structural outcome is consistent with the model.</li>
+    </ul>
+</div>
+
+<footer>
+    Sources: Tax Foundation (2024) &middot; NTU Foundation &middot; Bommarito &amp; Katz, &ldquo;A Mathematical Approach to the Study of the United States Code&rdquo; (2010) &middot;
+    Albert, Jeong &amp; Barab&aacute;si, &ldquo;Error and Attack Tolerance of Complex Networks&rdquo; (2000) &middot;
+    Barab&aacute;si &amp; Albert, &ldquo;Emergence of Scaling in Random Networks&rdquo; (1999) &middot;
+    <em>Commissioner v. Groetzinger</em>, 480 U.S. 23 (1987) &middot;
+    Cornell Legal Information Institute &middot; Joint Committee on Taxation<br><br>
+    <a href="index.html">Overview</a> &middot; <a href="translations.html">Translations</a> &middot;
+    <a href="dimensions.html">Dimensions</a> &middot; <a href="unsayable.html">The Unsayable</a> &middot;
+    <a href="algorithms.html">Algorithms</a> &middot; <a href="languages.html">Languages</a> &middot;
+    <a href="integration.html">Integration</a> &middot; <a href="taxcode.html">Tax Code</a> &middot;
+    <a href="network.html">Network</a> &middot; <a href="gametheory.html">Game Theory</a> &middot;
+    <a href="leakage.html">Leakage</a>
+</footer>
+
+<script>
+// ═══════════════════════════════════════════════════════════════
+// FORCE-DIRECTED GRAPH: IRC Cross-Reference Network
+// ═══════════════════════════════════════════════════════════════
+(function() {
+    const canvas = document.getElementById('graphCanvas');
+    const ctx = canvas.getContext('2d');
+    const dpr = window.devicePixelRatio || 1;
+
+    // --- Node colors by subchapter ---
+    const C = {
+        def:     '#f85149',  // Definitions / General
+        income:  '#58a6ff',  // Income / Rates
+        deduct:  '#3fb950',  // Deductions
+        corp:    '#d29922',  // Corporate
+        exempt:  '#bc8cff',  // Exempt Orgs
+        capgain: '#f0883e',  // Capital Gains
+        other:   '#8b949e',  // Other
+    };
+
+    // --- Nodes: [id, label, category, degree (determines size)] ---
+    const nodesData = [
+        // Definitions / General
+        ['7701', '7701 Definitions',         C.def,     50],
+        ['7872', '7872 Below-mkt loans',     C.def,     8],
+        // Income / Rates
+        ['1',    '1 Tax rates',              C.income,  25],
+        ['2',    '2 Joint returns',          C.income,  12],
+        ['11',   '11 Corp tax rate',         C.income,  15],
+        ['61',   '61 Gross income',          C.income,  45],
+        ['63',   '63 Taxable income',        C.income,  20],
+        ['67',   '67 2% misc deductions',    C.income,  10],
+        ['199A', '199A QBI deduction',       C.income,  18],
+        // Deductions
+        ['162',  '162 Business deductions',  C.deduct,  40],
+        ['163',  '163 Interest deduction',   C.deduct,  22],
+        ['164',  '164 Taxes deduction',      C.deduct,  14],
+        ['170',  '170 Charitable deduction', C.deduct,  20],
+        ['167',  '167 Depreciation',         C.deduct,  16],
+        ['179',  '179 Expensing',            C.deduct,  14],
+        ['263',  '263 Capital expenditures',  C.deduct, 18],
+        ['267',  '267 Related party rules',  C.deduct,  22],
+        ['280A', '280A Home office',         C.deduct,  10],
+        // Corporate
+        ['301',  '301 Distributions',        C.corp,    20],
+        ['302',  '302 Redemptions',          C.corp,    16],
+        ['316',  '316 Dividend defined',     C.corp,    14],
+        ['351',  '351 Corp transfers',       C.corp,    18],
+        ['368',  '368 Reorganizations',      C.corp,    22],
+        ['382',  '382 Loss limitations',     C.corp,    16],
+        ['385',  '385 Debt vs equity',       C.corp,    12],
+        // Exempt organizations
+        ['501',  '501 Exemption',            C.exempt,  30],
+        ['509',  '509 Private foundations',  C.exempt,  14],
+        ['527',  '527 Political orgs',       C.exempt,  10],
+        ['529',  '529 Education savings',    C.exempt,  8],
+        // Capital Gains
+        ['1001', '1001 Gain/loss',           C.capgain, 25],
+        ['1012', '1012 Basis',               C.capgain, 18],
+        ['1014', '1014 Basis at death',      C.capgain, 14],
+        ['1031', '1031 Like-kind exchange',  C.capgain, 16],
+        ['1221', '1221 Capital asset def',   C.capgain, 20],
+        // Other
+        ['401',  '401 Qualified plans',      C.other,   24],
+        ['441',  '441 Accounting period',    C.other,   12],
+        ['469',  '469 Passive activity',     C.other,   18],
+        ['482',  '482 Transfer pricing',     C.other,   14],
+        ['6662', '6662 Accuracy penalties',  C.other,   16],
+    ];
+
+    // --- Edges: [source_id, target_id] ---
+    const edgesData = [
+        // §7701 connects to almost everything (definitions)
+        ['7701','61'],['7701','1'],['7701','11'],['7701','162'],['7701','170'],
+        ['7701','301'],['7701','351'],['7701','501'],['7701','1001'],['7701','1221'],
+        ['7701','401'],['7701','469'],['7701','199A'],['7701','267'],['7701','368'],
+        ['7701','382'],['7701','385'],['7701','6662'],['7701','482'],['7701','7872'],
+        // §61 (gross income) feeds into income-related sections
+        ['61','1'],['61','63'],['61','162'],['61','1001'],['61','199A'],
+        ['61','401'],['61','501'],['61','469'],['61','67'],
+        // §162 (business deductions) cross-references
+        ['162','61'],['162','263'],['162','267'],['162','280A'],['162','469'],
+        ['162','199A'],['162','6662'],['162','179'],['162','167'],
+        // §163 (interest)
+        ['163','61'],['163','267'],['163','469'],['163','7872'],
+        // §170 (charitable)
+        ['170','61'],['170','501'],['170','509'],['170','1001'],
+        // §199A (QBI)
+        ['199A','162'],['199A','1'],['199A','61'],['199A','469'],
+        // §263 (capital expenditures)
+        ['263','162'],['263','167'],['263','179'],['263','1012'],
+        // §267 (related parties)
+        ['267','162'],['267','301'],['267','1001'],['267','482'],['267','7701'],
+        // Corporate cluster
+        ['301','316'],['301','302'],['301','61'],['301','1001'],
+        ['302','301'],['302','316'],['302','1001'],
+        ['316','301'],['316','61'],
+        ['351','368'],['351','1001'],['351','1012'],['351','7701'],
+        ['368','351'],['368','382'],['368','301'],['368','1001'],
+        ['382','368'],['382','1'],['382','11'],
+        ['385','301'],['385','163'],['385','7701'],
+        // Exempt org cluster
+        ['501','7701'],['501','509'],['501','527'],['501','170'],['501','61'],
+        ['509','501'],['509','170'],
+        ['527','501'],['529','501'],
+        // Capital gains cluster
+        ['1001','61'],['1001','1012'],['1001','1221'],['1001','1014'],
+        ['1012','1001'],['1012','1014'],['1012','351'],['1012','1031'],
+        ['1014','1001'],['1014','1012'],
+        ['1031','1001'],['1031','1012'],['1031','1221'],['1031','7701'],
+        ['1221','61'],['1221','1001'],['1221','1031'],
+        // Other connections
+        ['401','61'],['401','7701'],['401','162'],['401','1001'],
+        ['441','61'],['441','1'],
+        ['469','162'],['469','61'],['469','1'],['469','199A'],
+        ['482','267'],['482','61'],['482','7701'],
+        ['6662','162'],['6662','61'],['6662','7701'],
+        // Cross-cluster bridges
+        ['7872','61'],['7872','267'],['7872','7701'],
+        ['164','61'],['164','1'],
+        ['167','263'],['167','179'],['167','162'],
+        ['179','167'],['179','162'],['179','263'],
+        ['63','61'],['63','162'],['63','170'],['63','163'],['63','164'],
+        ['2','1'],['2','63'],
+        ['280A','162'],['280A','61'],
+    ];
+
+    // --- Build node objects ---
+    let nodes = nodesData.map(([id, label, color, degree], i) => {
+        const angle = (i / nodesData.length) * Math.PI * 2;
+        const r = 180 + Math.random() * 120;
+        return {
+            id, label, color, degree,
+            radius: Math.max(4, Math.sqrt(degree) * 2.2),
+            x: 400 + Math.cos(angle) * r + (Math.random() - 0.5) * 60,
+            y: 350 + Math.sin(angle) * r + (Math.random() - 0.5) * 60,
+            vx: 0, vy: 0,
+            fx: null, fy: null, // fixed position when dragged
+        };
+    });
+
+    const nodeMap = {};
+    nodes.forEach(n => nodeMap[n.id] = n);
+
+    let edges = edgesData.map(([s, t]) => ({
+        source: nodeMap[s],
+        target: nodeMap[t],
+    })).filter(e => e.source && e.target);
+
+    // --- Simulation state ---
+    let frozen = false;
+    let showLabels = true;
+    let W, H;
+    let dragging = null;
+    let mouseX = 0, mouseY = 0;
+    let hovered = null;
+
+    function resize() {
+        const rect = canvas.parentElement.getBoundingClientRect();
+        W = rect.width - 48;
+        H = 700;
+        canvas.width = W * dpr;
+        canvas.height = H * dpr;
+        canvas.style.width = W + 'px';
+        canvas.style.height = H + 'px';
+        ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    }
+
+    // --- Force simulation ---
+    function tick() {
+        if (frozen && !dragging) return;
+
+        const alpha = 0.3;
+        const repulsion = 2800;
+        const attraction = 0.0055;
+        const linkDist = 100;
+        const damping = 0.85;
+        const centerX = W / 2;
+        const centerY = H / 2;
+
+        // Repulsion (charge)
+        for (let i = 0; i < nodes.length; i++) {
+            for (let j = i + 1; j < nodes.length; j++) {
+                const a = nodes[i], b = nodes[j];
+                let dx = a.x - b.x;
+                let dy = a.y - b.y;
+                let dist = Math.sqrt(dx * dx + dy * dy) || 1;
+                let force = repulsion / (dist * dist);
+                let fx = dx / dist * force;
+                let fy = dy / dist * force;
+                if (a.fx === null) { a.vx += fx * alpha; a.vy += fy * alpha; }
+                if (b.fx === null) { b.vx -= fx * alpha; b.vy -= fy * alpha; }
+            }
+        }
+
+        // Attraction (links)
+        for (const e of edges) {
+            let dx = e.target.x - e.source.x;
+            let dy = e.target.y - e.source.y;
+            let dist = Math.sqrt(dx * dx + dy * dy) || 1;
+            let force = (dist - linkDist) * attraction;
+            let fx = dx / dist * force;
+            let fy = dy / dist * force;
+            if (e.source.fx === null) { e.source.vx += fx * alpha; e.source.vy += fy * alpha; }
+            if (e.target.fx === null) { e.target.vx -= fx * alpha; e.target.vy -= fy * alpha; }
+        }
+
+        // Center gravity
+        for (const n of nodes) {
+            if (n.fx !== null) { n.x = n.fx; n.y = n.fy; n.vx = 0; n.vy = 0; continue; }
+            n.vx += (centerX - n.x) * 0.001;
+            n.vy += (centerY - n.y) * 0.001;
+            n.vx *= damping;
+            n.vy *= damping;
+            n.x += n.vx;
+            n.y += n.vy;
+            // Boundary
+            n.x = Math.max(n.radius + 10, Math.min(W - n.radius - 10, n.x));
+            n.y = Math.max(n.radius + 10, Math.min(H - n.radius - 10, n.y));
+        }
+    }
+
+    // --- Draw ---
+    function draw() {
+        ctx.clearRect(0, 0, W, H);
+
+        // Edges
+        for (const e of edges) {
+            const isHighlighted = hovered && (e.source === hovered || e.target === hovered);
+            ctx.beginPath();
+            ctx.moveTo(e.source.x, e.source.y);
+            ctx.lineTo(e.target.x, e.target.y);
+            if (isHighlighted) {
+                ctx.strokeStyle = 'rgba(200,209,217,0.35)';
+                ctx.lineWidth = 1.5;
+            } else {
+                ctx.strokeStyle = 'rgba(48,54,61,0.6)';
+                ctx.lineWidth = 0.5;
+            }
+            ctx.stroke();
+
+            // Arrowhead
+            if (isHighlighted) {
+                const dx = e.target.x - e.source.x;
+                const dy = e.target.y - e.source.y;
+                const dist = Math.sqrt(dx * dx + dy * dy) || 1;
+                const ux = dx / dist, uy = dy / dist;
+                const ax = e.target.x - ux * (e.target.radius + 3);
+                const ay = e.target.y - uy * (e.target.radius + 3);
+                const aSize = 5;
+                ctx.beginPath();
+                ctx.moveTo(ax, ay);
+                ctx.lineTo(ax - ux * aSize - uy * aSize * 0.5, ay - uy * aSize + ux * aSize * 0.5);
+                ctx.lineTo(ax - ux * aSize + uy * aSize * 0.5, ay - uy * aSize - ux * aSize * 0.5);
+                ctx.closePath();
+                ctx.fillStyle = 'rgba(200,209,217,0.5)';
+                ctx.fill();
+            }
+        }
+
+        // Nodes
+        for (const n of nodes) {
+            const isHov = n === hovered;
+            ctx.beginPath();
+            ctx.arc(n.x, n.y, n.radius, 0, Math.PI * 2);
+            ctx.fillStyle = isHov ? n.color : n.color + 'cc';
+            ctx.fill();
+            if (isHov) {
+                ctx.strokeStyle = '#fff';
+                ctx.lineWidth = 2;
+                ctx.stroke();
+            } else {
+                ctx.strokeStyle = n.color + '44';
+                ctx.lineWidth = 1;
+                ctx.stroke();
+            }
+        }
+
+        // Labels
+        if (showLabels) {
+            ctx.font = '9px SF Mono, Fira Code, monospace';
+            ctx.textAlign = 'center';
+            for (const n of nodes) {
+                const isHov = n === hovered;
+                // Only show labels for larger nodes or hovered
+                if (n.degree >= 14 || isHov) {
+                    const shortLabel = '§' + n.id;
+                    ctx.fillStyle = isHov ? '#fff' : '#8b949e';
+                    ctx.fillText(shortLabel, n.x, n.y - n.radius - 4);
+                }
+            }
+        }
+
+        // Tooltip for hovered node
+        if (hovered) {
+            const tt = hovered.label;
+            ctx.font = '11px SF Mono, Fira Code, monospace';
+            const tw = ctx.measureText(tt).width;
+            const tx = Math.min(hovered.x + 12, W - tw - 20);
+            const ty = Math.max(hovered.y - 20, 20);
+            ctx.fillStyle = '#161b22ee';
+            ctx.strokeStyle = '#30363d';
+            ctx.lineWidth = 1;
+            ctx.beginPath();
+            ctx.roundRect(tx - 6, ty - 13, tw + 12, 18, 3);
+            ctx.fill();
+            ctx.stroke();
+            ctx.fillStyle = hovered.color;
+            ctx.textAlign = 'left';
+            ctx.fillText(tt, tx, ty);
+        }
+    }
+
+    // --- Animation loop ---
+    function frame() {
+        tick();
+        draw();
+        requestAnimationFrame(frame);
+    }
+
+    // --- Mouse / touch handling ---
+    function getCanvasPos(e) {
+        const rect = canvas.getBoundingClientRect();
+        const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+        const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+        return {
+            x: (clientX - rect.left) * (W / rect.width),
+            y: (clientY - rect.top) * (H / rect.height),
+        };
+    }
+
+    function findNode(x, y) {
+        for (let i = nodes.length - 1; i >= 0; i--) {
+            const n = nodes[i];
+            const dx = x - n.x, dy = y - n.y;
+            if (dx * dx + dy * dy < (n.radius + 4) * (n.radius + 4)) return n;
+        }
+        return null;
+    }
+
+    canvas.addEventListener('mousedown', (e) => {
+        const p = getCanvasPos(e);
+        dragging = findNode(p.x, p.y);
+        if (dragging) {
+            dragging.fx = p.x;
+            dragging.fy = p.y;
+        }
+    });
+
+    canvas.addEventListener('mousemove', (e) => {
+        const p = getCanvasPos(e);
+        mouseX = p.x; mouseY = p.y;
+        if (dragging) {
+            dragging.fx = p.x;
+            dragging.fy = p.y;
+        }
+        hovered = findNode(p.x, p.y);
+        canvas.style.cursor = hovered ? 'grab' : 'default';
+    });
+
+    canvas.addEventListener('mouseup', () => {
+        if (dragging) { dragging.fx = null; dragging.fy = null; }
+        dragging = null;
+    });
+
+    canvas.addEventListener('mouseleave', () => {
+        if (dragging) { dragging.fx = null; dragging.fy = null; }
+        dragging = null;
+        hovered = null;
+    });
+
+    // Touch support
+    canvas.addEventListener('touchstart', (e) => {
+        e.preventDefault();
+        const p = getCanvasPos(e);
+        dragging = findNode(p.x, p.y);
+        if (dragging) { dragging.fx = p.x; dragging.fy = p.y; }
+    }, { passive: false });
+
+    canvas.addEventListener('touchmove', (e) => {
+        e.preventDefault();
+        if (dragging) {
+            const p = getCanvasPos(e);
+            dragging.fx = p.x;
+            dragging.fy = p.y;
+        }
+    }, { passive: false });
+
+    canvas.addEventListener('touchend', () => {
+        if (dragging) { dragging.fx = null; dragging.fy = null; }
+        dragging = null;
+    });
+
+    // --- Controls ---
+    document.getElementById('btnReset').addEventListener('click', () => {
+        nodes.forEach((n, i) => {
+            const angle = (i / nodes.length) * Math.PI * 2;
+            const r = 180 + Math.random() * 120;
+            n.x = W / 2 + Math.cos(angle) * r + (Math.random() - 0.5) * 60;
+            n.y = H / 2 + Math.sin(angle) * r + (Math.random() - 0.5) * 60;
+            n.vx = 0; n.vy = 0;
+            n.fx = null; n.fy = null;
+        });
+        frozen = false;
+        document.getElementById('btnFreeze').textContent = 'Freeze';
+        document.getElementById('btnFreeze').classList.remove('active');
+    });
+
+    document.getElementById('btnFreeze').addEventListener('click', function() {
+        frozen = !frozen;
+        this.textContent = frozen ? 'Unfreeze' : 'Freeze';
+        this.classList.toggle('active', frozen);
+    });
+
+    document.getElementById('btnLabels').addEventListener('click', function() {
+        showLabels = !showLabels;
+        this.classList.toggle('active', showLabels);
+    });
+
+    // --- Init ---
+    resize();
+    // Center initial positions
+    nodes.forEach(n => {
+        n.x = n.x - 400 + W / 2;
+        n.y = n.y - 350 + H / 2;
+    });
+    window.addEventListener('resize', () => { resize(); });
+    frame();
+})();
+</script>
+
+</body>
+</html>
