@@ -1,0 +1,944 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Illinois Family Court — The IMDMA Network</title>
+<meta name="description" content="750 ILCS 5 as a directed graph. Every section of the Illinois Marriage and Dissolution of Marriage Act connected by cross-references, procedural dependencies, and definitional chains.">
+<meta property="og:title" content="Illinois Family Court — The IMDMA Network">
+<meta property="og:description" content="750 ILCS 5 as a directed graph. Every section of the IMDMA connected by cross-references, procedural dependencies, and definitional chains.">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://jthorvaldur.github.io/enemies/familycourt.html">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="Illinois Family Court — The IMDMA Network">
+<meta name="twitter:description" content="750 ILCS 5 as a directed graph. Every section of the IMDMA connected by cross-references, procedural dependencies, and definitional chains.">
+<style>
+:root {
+    --bg: #0d1117; --fg: #c9d1d9; --accent: #58a6ff;
+    --border: #30363d; --surface: #161b22; --surface2: #21262d;
+    --green: #3fb950; --yellow: #d29922; --red: #f85149;
+    --purple: #bc8cff; --orange: #f0883e;
+}
+* { margin:0; padding:0; box-sizing:border-box; }
+body { font-family: 'SF Mono','Fira Code','JetBrains Mono',monospace; background:var(--bg); color:var(--fg); line-height:1.6; padding:2rem; max-width:1400px; margin:0 auto; }
+h1 { color:var(--accent); font-size:1.8rem; margin-bottom:0.5rem; }
+h2 { color:var(--accent); font-size:1.3rem; margin:2.5rem 0 1rem; border-bottom:1px solid var(--border); padding-bottom:0.5rem; }
+h3 { color:var(--fg); font-size:1.1rem; margin:1.5rem 0 0.5rem; }
+.subtitle { color:#8b949e; margin-bottom:2rem; font-size:0.95rem; line-height:1.7; max-width:1100px; }
+a { color:var(--accent); text-decoration:none; }
+a:hover { text-decoration:underline; }
+p { margin:0.75rem 0; font-size:0.9rem; line-height:1.7; }
+nav { background:var(--surface); border:1px solid var(--border); border-radius:6px; padding:1rem; margin:1rem 0; display:flex; flex-wrap:wrap; gap:0.5rem 1.5rem; }
+nav a { color:var(--accent); text-decoration:none; font-size:0.85rem; }
+nav a.active { color:var(--fg); font-weight:bold; }
+.stats { display:grid; grid-template-columns:repeat(auto-fit, minmax(180px, 1fr)); gap:1rem; margin:1rem 0; }
+.stat { background:var(--surface); border:1px solid var(--border); border-radius:6px; padding:1rem; text-align:center; }
+.stat .value { font-size:2rem; color:var(--accent); font-weight:bold; }
+.stat .label { font-size:0.8rem; color:#8b949e; }
+table { width:100%; border-collapse:collapse; margin:1rem 0; font-size:0.85rem; }
+th, td { padding:6px 10px; border:1px solid var(--border); text-align:left; }
+th { background:var(--surface2); color:var(--accent); position:sticky; top:0; }
+tr:hover { background:var(--surface); }
+.formula { background:var(--surface); border-left:3px solid var(--accent); padding:1rem; margin:1rem 0; font-size:0.85rem; overflow-x:auto; line-height:1.8; }
+.formula-title { color:var(--accent); font-weight:bold; font-size:0.8rem; margin-bottom:0.5rem; }
+blockquote { background:var(--surface); border-left:3px solid var(--accent); padding:1.2rem 1.5rem; margin:1.5rem 0; font-size:0.9rem; line-height:1.8; }
+.key-finding { background:var(--surface); border:1px solid var(--border); border-left:3px solid var(--yellow); border-radius:6px; padding:1.5rem; margin:1.5rem 0; font-size:0.9rem; line-height:1.7; }
+.key-finding .finding-title { color:var(--yellow); font-weight:bold; font-size:0.9rem; margin-bottom:0.75rem; }
+.callout { background:var(--surface); border:1px solid var(--border); border-left:3px solid var(--orange); border-radius:6px; padding:1.5rem; margin:1.5rem 0; font-size:0.9rem; line-height:1.7; }
+.callout-red { border-left-color:var(--red); }
+.callout-green { border-left-color:var(--green); }
+.callout-purple { border-left-color:var(--purple); }
+.chart-container {
+    background:var(--surface); border:1px solid var(--border); border-radius:6px;
+    padding:1.5rem; margin:1.5rem 0;
+}
+.chart-container canvas { width:100% !important; }
+.chart-title { color:var(--accent); font-weight:bold; font-size:0.95rem; margin-bottom:0.75rem; }
+.chart-caption { color:#8b949e; font-size:0.8rem; margin-top:0.75rem; line-height:1.6; }
+.uncertainty-box {
+    background:#1a1510; border:1px solid var(--yellow); border-radius:6px;
+    padding:1.5rem; margin:2rem 0; font-size:0.88rem; line-height:1.7;
+}
+.uncertainty-box .ub-title { color:var(--yellow); font-weight:bold; font-size:0.95rem; margin-bottom:0.75rem; }
+.uncertainty-box ul { margin:0.5rem 0 0.5rem 1.5rem; }
+.uncertainty-box li { margin:0.3rem 0; }
+
+/* Metric cards */
+.metric-grid {
+    display:grid; grid-template-columns:repeat(auto-fit, minmax(300px, 1fr));
+    gap:1rem; margin:1rem 0;
+}
+.metric-card {
+    background:var(--surface); border:1px solid var(--border);
+    border-top:2px solid var(--accent); border-radius:6px; padding:1.2rem;
+}
+.metric-card .mc-title { color:var(--accent); font-size:0.9rem; font-weight:bold; margin-bottom:0.5rem; }
+.metric-card p { font-size:0.85rem; line-height:1.6; color:#8b949e; margin:0.4rem 0; }
+.metric-card .mc-refs { color:var(--yellow); font-size:0.82rem; margin-top:0.5rem; }
+
+/* Compare grid */
+.compare-grid {
+    display:grid; grid-template-columns:repeat(auto-fit, minmax(250px, 1fr));
+    gap:1rem; margin:1rem 0;
+}
+.compare-card {
+    background:var(--surface); border:1px solid var(--border);
+    border-radius:6px; padding:1.2rem;
+}
+.compare-card .cc-title { color:var(--accent); font-size:0.9rem; font-weight:bold; margin-bottom:0.5rem; }
+.compare-card .cc-type { color:var(--purple); font-size:0.75rem; font-weight:600; text-transform:uppercase; letter-spacing:0.05em; margin-bottom:0.5rem; }
+.compare-card p { font-size:0.82rem; line-height:1.6; color:#8b949e; margin:0.3rem 0; }
+
+/* Graph controls */
+.graph-controls {
+    display:flex; flex-wrap:wrap; gap:0.5rem; margin:0.75rem 0;
+}
+.graph-controls button {
+    background:var(--surface2); border:1px solid var(--border); color:var(--fg);
+    font-family:inherit; font-size:0.75rem; padding:4px 10px; border-radius:4px;
+    cursor:pointer; transition:border-color 0.2s;
+}
+.graph-controls button:hover { border-color:var(--accent); color:var(--accent); }
+.graph-controls button.active { border-color:var(--accent); color:var(--accent); background:rgba(88,166,255,0.1); }
+.graph-legend {
+    display:flex; flex-wrap:wrap; gap:0.75rem 1.5rem; margin:0.75rem 0; font-size:0.75rem; color:#8b949e;
+}
+.graph-legend .leg-item { display:flex; align-items:center; gap:0.35rem; }
+.graph-legend .leg-dot { width:10px; height:10px; border-radius:50%; display:inline-block; }
+
+/* Procedural DAG */
+.dag-step {
+    display:flex; align-items:flex-start; gap:1rem; margin:0.75rem 0;
+}
+.dag-num {
+    background:var(--accent); color:var(--bg); width:28px; height:28px; border-radius:50%;
+    display:flex; align-items:center; justify-content:center; font-weight:bold; font-size:0.85rem;
+    flex-shrink:0;
+}
+.dag-content { flex:1; }
+.dag-content .dag-section { color:var(--accent); font-weight:bold; font-size:0.85rem; }
+.dag-content .dag-desc { color:#8b949e; font-size:0.82rem; }
+.dag-arrow {
+    margin-left:13px; border-left:2px solid var(--border); height:12px;
+}
+
+footer { color:#8b949e; margin-top:3rem; font-size:0.8rem; text-align:center; padding:1rem 0; border-top:1px solid var(--border); }
+footer a { color:#8b949e; }
+</style>
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "WebPage",
+  "headline": "Illinois Family Court — The IMDMA Network",
+  "author": {"@type": "Person", "name": "Joel Thorarinson", "url": "https://jthorvaldur.github.io"},
+  "publisher": {"@type": "Person", "name": "Joel Thorarinson"},
+  "datePublished": "2026-05-27",
+  "url": "https://jthorvaldur.github.io/enemies/familycourt.html",
+  "description": "750 ILCS 5 as a directed graph. Every section of the Illinois Marriage and Dissolution of Marriage Act connected by cross-references, procedural dependencies, and definitional chains.",
+  "isPartOf": {"@type": "WebSite", "name": "Thorarinson", "url": "https://jthorvaldur.github.io"}
+}
+</script>
+</head>
+<body>
+
+<h1>Illinois Family Court &mdash; The IMDMA Network</h1>
+<p class="subtitle">750 ILCS 5 as a directed graph. Every section of the Illinois Marriage and Dissolution of Marriage Act connected by cross-references, procedural dependencies, and definitional chains.</p>
+
+<nav>
+    <a href="index.html">Overview</a>
+    <a href="translations.html">Translations</a>
+    <a href="dimensions.html">Dimensions</a>
+    <a href="unsayable.html">The Unsayable</a>
+    <a href="algorithms.html">Algorithms</a>
+    <a href="languages.html">Languages</a>
+    <a href="integration.html">Integration</a>
+    <a href="taxcode.html">Tax Code</a>
+    <a href="network.html">Network</a>
+    <a href="gametheory.html">Game Theory</a>
+    <a href="leakage.html">Leakage</a>
+    <a href="familycourt.html" class="active">Family Court</a>
+</nav>
+
+<!-- ═══════════════════════════════════════════════════════════════
+     SECTION 1: THE IMDMA STRUCTURE
+     ═══════════════════════════════════════════════════════════════ -->
+
+<h2 id="structure">1. The IMDMA Structure</h2>
+
+<div class="stats">
+    <div class="stat"><div class="value">~50</div><div class="label">Sections in 750 ILCS 5</div></div>
+    <div class="stat"><div class="value">~200</div><div class="label">Cross-references</div></div>
+    <div class="stat"><div class="value">4</div><div class="label">Key Articles</div></div>
+    <div class="stat"><div class="value">2</div><div class="label">Loosely Connected Subgraphs</div></div>
+</div>
+
+<table>
+    <tr><th>Article</th><th>Sections</th><th>Covers</th></tr>
+    <tr><td>Part 1&ndash;4</td><td>&sect;102, &sect;401, &sect;404.1</td><td>Definitions, dissolution grounds, bifurcation</td></tr>
+    <tr><td>Part 5 &mdash; Financial</td><td>&sect;501&ndash;&sect;513</td><td>Disclosure, agreements, property, maintenance, child support, attorney fees</td></tr>
+    <tr><td>Part 6 &mdash; Parenting</td><td>&sect;602&ndash;&sect;610</td><td>Decision-making, parenting time, plans, relocation, restriction, modification</td></tr>
+    <tr><td>Modification</td><td>&sect;510, &sect;610.5</td><td>Post-judgment modification of financial and parenting orders</td></tr>
+</table>
+
+<p>The IMDMA is small enough to read in a weekend but dense enough to litigate for years. Unlike the IRC&rsquo;s 800+ sections and ~70,000 cross-references, the IMDMA packs its complexity into definitional ambiguity and judicial discretion rather than structural sprawl.</p>
+
+<!-- ═══════════════════════════════════════════════════════════════
+     SECTION 2: THE NETWORK GRAPH
+     ═══════════════════════════════════════════════════════════════ -->
+
+<h2 id="graph">2. The Network Graph</h2>
+
+<p>A force-directed simulation of the IMDMA&rsquo;s major sections. Node size = in-degree (how many other sections reference it). Color = article grouping. Edges show cross-references and procedural dependencies. Drag nodes to explore the topology.</p>
+
+<div class="chart-container">
+    <div class="chart-title">IMDMA Cross-Reference Network &mdash; 750 ILCS 5</div>
+    <div class="graph-legend">
+        <div class="leg-item"><span class="leg-dot" style="background:#f85149"></span> Definitions / Dissolution (Part 1&ndash;4)</div>
+        <div class="leg-item"><span class="leg-dot" style="background:#58a6ff"></span> Financial (&sect;501&ndash;&sect;510)</div>
+        <div class="leg-item"><span class="leg-dot" style="background:#3fb950"></span> Parenting (&sect;602&ndash;&sect;610)</div>
+        <div class="leg-item"><span class="leg-dot" style="background:#d29922"></span> Modification (&sect;510, &sect;610.5)</div>
+    </div>
+    <div class="graph-controls">
+        <button id="btnReset">Reset Layout</button>
+        <button id="btnFreeze">Freeze</button>
+        <button id="btnLabels" class="active">Labels</button>
+    </div>
+    <canvas id="graphCanvas" height="700"></canvas>
+    <div class="chart-caption">
+        Model based on statutory cross-references and procedural dependencies in the IMDMA (750 ILCS 5).
+        Two clusters emerge: Financial (&sect;501&ndash;&sect;510, blue) and Parenting (&sect;602&ndash;&sect;610, green), bridged primarily by &sect;505 (child support depends on parenting time).
+        &sect;102 (definitions) and &sect;501 (disclosure) are the structural anchors.
+    </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════════
+     SECTION 3: THE HUB SECTIONS
+     ═══════════════════════════════════════════════════════════════ -->
+
+<h2 id="hubs">3. The Hub Sections</h2>
+
+<p>&sect;503 (Property) and &sect;505 (Child Support) are the hubs &mdash; everything flows through them. &sect;501 (Disclosure) is the gatekeeper &mdash; nothing proceeds without financial disclosure.</p>
+
+<div class="metric-grid">
+    <div class="metric-card">
+        <div class="mc-title">&sect;503 &mdash; Disposition of Property and Debts</div>
+        <p>The core property division section. Distinguishes marital from non-marital property. Courts must consider &ldquo;all relevant factors&rdquo; &mdash; another non-exhaustive factor list. Every financial section references &sect;503 because you cannot calculate maintenance, support, or fees without knowing how property was divided.</p>
+        <div class="mc-refs">Referenced by: &sect;502, &sect;504, &sect;505, &sect;508, &sect;510, &sect;501</div>
+    </div>
+
+    <div class="metric-card">
+        <div class="mc-title">&sect;505 &mdash; Child Support</div>
+        <p>Calculates support using income shares and parenting time allocation. This section bridges the financial and parenting subgraphs &mdash; support amount depends on &sect;602.7 (parenting time percentage) and &sect;504 (maintenance). The most computationally intensive section: it requires inputs from at least four other sections.</p>
+        <div class="mc-refs">Referenced by: &sect;504, &sect;508, &sect;510, &sect;602.7, &sect;513</div>
+    </div>
+
+    <div class="metric-card">
+        <div class="mc-title">&sect;501 &mdash; Disclosure Requirements</div>
+        <p>The gatekeeper node. Requires full financial disclosure (income, assets, debts, expenses) before the court can proceed on property, maintenance, or support. Without &sect;501 compliance, the entire financial subgraph is blocked. This is the minimum vertex cut of the financial side.</p>
+        <div class="mc-refs">Required before: &sect;503, &sect;504, &sect;505, &sect;508</div>
+    </div>
+
+    <div class="metric-card">
+        <div class="mc-title">&sect;102 &mdash; Definitions</div>
+        <p>The &sect;7701 of family law. Defines foundational terms used throughout the Act. Every section implicitly depends on &sect;102 for the meaning of &ldquo;marriage,&rdquo; &ldquo;child,&rdquo; &ldquo;court,&rdquo; and other base concepts. Highest out-degree: it feeds into everything.</p>
+        <div class="mc-refs">Referenced by: all sections (implicit dependency)</div>
+    </div>
+
+    <div class="metric-card">
+        <div class="mc-title">&sect;602.7 &mdash; Allocation of Parenting Time</div>
+        <p>The hub of Part 6. Parenting time allocation drives the entire parenting subgraph and connects to the financial side through &sect;505 (child support). Uses the &ldquo;best interests of the child&rdquo; standard &mdash; a 17-factor test that is simultaneously the most important and least defined concept in the IMDMA.</p>
+        <div class="mc-refs">Referenced by: &sect;505, &sect;602.5, &sect;602.10, &sect;603.10, &sect;610.5</div>
+    </div>
+
+    <div class="metric-card">
+        <div class="mc-title">&sect;510 &mdash; Modification and Termination</div>
+        <p>The feedback loop. Allows post-judgment modification of maintenance and child support upon showing &ldquo;substantial change in circumstances.&rdquo; Creates a cycle: judgment &rarr; changed circumstances &rarr; modification &rarr; new judgment. Most contested motions in Cook County are &sect;510 petitions.</p>
+        <div class="mc-refs">Modifies: &sect;504, &sect;505. See also: &sect;610.5 (parenting plan modification)</div>
+    </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════════
+     SECTION 4: THE DISCLOSURE BOTTLENECK
+     ═══════════════════════════════════════════════════════════════ -->
+
+<h2 id="disclosure">4. The Disclosure Bottleneck</h2>
+
+<p>&sect;501 is the gatekeeper node. Financial disclosure is REQUIRED before:</p>
+
+<table>
+    <tr><th>Downstream Section</th><th>What It Does</th><th>Why Disclosure Is Required</th></tr>
+    <tr><td>&sect;503 &mdash; Property division</td><td>Divides marital vs. non-marital assets and debts</td><td>Cannot divide what you do not know exists</td></tr>
+    <tr><td>&sect;504 &mdash; Maintenance</td><td>Sets spousal support amount and duration</td><td>Maintenance depends on both parties&rsquo; financial circumstances</td></tr>
+    <tr><td>&sect;505 &mdash; Child support</td><td>Calculates support obligation</td><td>Income shares model requires verified income</td></tr>
+    <tr><td>&sect;508 &mdash; Attorney fees</td><td>Allocates fees based on financial disparity</td><td>Fee shifting requires proof of inability to pay</td></tr>
+</table>
+
+<p>Without disclosure, the entire financial side of the case is blocked. &sect;501 is the minimum vertex cut &mdash; remove it and the financial subgraph disconnects from the rest of the IMDMA.</p>
+
+<div class="callout callout-red">
+    <strong>In practice, this is where cases stall.</strong> One party refuses to disclose. The other party&rsquo;s remedies (Rule 219(c) sanctions, contempt) are slow. The bottleneck is designed to protect fairness but is exploitable by delay. A party with more resources can afford to wait; a party without resources cannot compel production without spending money they do not have on motions to compel. The procedural safeguard becomes a weapon of attrition.
+</div>
+
+<div class="formula">
+    <div class="formula-title">The Gatekeeper Structure</div>
+    &sect;401 (Dissolution filed) &rarr; &sect;501 (Disclosure) &rarr; {&sect;503, &sect;504, &sect;505, &sect;508}<br><br>
+    Remove &sect;501 from the graph:<br>
+    &nbsp;&nbsp;Financial subgraph: disconnected. No basis for property, maintenance, or support orders.<br>
+    &nbsp;&nbsp;Parenting subgraph: unaffected. &sect;602&ndash;&sect;610 do not depend on financial disclosure.<br><br>
+    This asymmetry explains why parenting disputes can proceed while financial disputes stall.
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════════
+     SECTION 5: PARENTING vs FINANCIAL SUBGRAPHS
+     ═══════════════════════════════════════════════════════════════ -->
+
+<h2 id="subgraphs">5. Parenting vs. Financial Subgraphs</h2>
+
+<p>The IMDMA has two loosely connected subgraphs:</p>
+
+<div class="compare-grid">
+    <div class="compare-card">
+        <div class="cc-type">Financial Subgraph</div>
+        <div class="cc-title">&sect;501&ndash;&sect;510</div>
+        <p>Property division, maintenance, child support, attorney fees. Internally dense: &sect;503 feeds &sect;504 feeds &sect;505, and &sect;508 considers all three. &sect;501 (disclosure) is the entry point. &sect;510 (modification) creates feedback loops.</p>
+        <p style="color:var(--accent);">Nodes: &sect;501, &sect;502, &sect;503, &sect;504, &sect;505, &sect;506, &sect;508, &sect;510, &sect;513</p>
+    </div>
+
+    <div class="compare-card">
+        <div class="cc-type">Parenting Subgraph</div>
+        <div class="cc-title">&sect;602&ndash;&sect;610</div>
+        <p>Decision-making, parenting time, plans, relocation, restriction. Also internally dense: &sect;602.5 and &sect;602.7 are allocated together, documented in &sect;602.10, modifiable via &sect;610.5. &sect;603.10 (restriction) is the enforcement edge.</p>
+        <p style="color:var(--green);">Nodes: &sect;602.5, &sect;602.7, &sect;602.10, &sect;602.11, &sect;603.10, &sect;607.5, &sect;609.2, &sect;610.5</p>
+    </div>
+</div>
+
+<p>The two subgraphs connect primarily through two bridges:</p>
+
+<div class="key-finding">
+    <div class="finding-title">Bridge Sections</div>
+    <strong>&sect;505 (child support)</strong> &rarr; depends on &sect;602.7 (parenting time). Support amount varies with the percentage of overnight parenting time. This is the primary bridge between the financial and parenting clusters.<br><br>
+    <strong>&sect;503 (property division)</strong> &rarr; affects ability to pay support (&sect;505) and maintain housing, which affects parenting time arguments (&sect;602.7). This is the secondary bridge &mdash; weaker, mediated through the &ldquo;ability to provide a suitable home&rdquo; factor in best-interests analysis.
+</div>
+
+<p>The graph visualization makes this two-cluster structure visible. Financial nodes cluster left (blue), parenting nodes cluster right (green), with &sect;505 and &sect;503 pulling toward both clusters.</p>
+
+<!-- ═══════════════════════════════════════════════════════════════
+     SECTION 6: COMPARISON TO THE IRC
+     ═══════════════════════════════════════════════════════════════ -->
+
+<h2 id="comparison">6. Comparison to the IRC</h2>
+
+<table>
+    <tr><th>Dimension</th><th>IRC (Title 26)</th><th>IMDMA (750 ILCS 5)</th></tr>
+    <tr><td>Nodes</td><td>800+ sections</td><td>~50 sections</td></tr>
+    <tr><td>Cross-references</td><td>~70,000</td><td>~200</td></tr>
+    <tr><td>Hub section</td><td>&sect;7701 (definitions)</td><td>&sect;102 (definitions)</td></tr>
+    <tr><td>Gatekeeper</td><td>None (no prerequisite)</td><td>&sect;501 (disclosure required first)</td></tr>
+    <tr><td>Undefined key term</td><td>&ldquo;trade or business&rdquo;</td><td>&ldquo;best interests of the child&rdquo; (&sect;602.7)</td></tr>
+    <tr><td>Feedback loop</td><td>Tax planning &rarr; litigation &rarr; codification</td><td>Custody disputes &rarr; case law &rarr; statutory reform</td></tr>
+    <tr><td>Network type</td><td>Scale-free (power-law degree)</td><td>Two-cluster with bridges</td></tr>
+    <tr><td>Complexity source</td><td>Structural sprawl, circular definitions</td><td>Judicial discretion, factor-list ambiguity</td></tr>
+</table>
+
+<div class="key-finding">
+    <div class="finding-title">The IMDMA&rsquo;s &ldquo;Trade or Business&rdquo;</div>
+    &ldquo;Best interests of the child&rdquo; is to the IMDMA what &ldquo;trade or business&rdquo; is to the IRC. It is the most important concept and the least defined. &sect;602.7(b) provides a 17-factor test, but the factors are non-exhaustive, subjective, and unweighted. Judges have enormous discretion in how to balance them. Like &ldquo;trade or business,&rdquo; the term has massive in-degree (referenced throughout Part 6) and zero definitional resolution &mdash; an absorbing state that generates litigation because it can never be fully resolved. Every parenting case is, at bottom, a dispute over what &ldquo;best interests&rdquo; means for a specific child.
+</div>
+
+<div class="callout callout-purple">
+    <strong>The structural difference.</strong> The IRC&rsquo;s complexity is architectural &mdash; it has too many parts, too many cross-references, too many circular definitions. The IMDMA&rsquo;s complexity is discretionary &mdash; it has relatively few parts, but each part delegates enormous power to the judge. The IRC is a maze. The IMDMA is an arena.
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════════
+     SECTION 7: FOR PRO SE LITIGANTS
+     ═══════════════════════════════════════════════════════════════ -->
+
+<h2 id="prose">7. For Pro Se Litigants</h2>
+
+<p>The procedural DAG &mdash; the order in which the code is designed to be traversed:</p>
+
+<div class="dag-step">
+    <div class="dag-num">1</div>
+    <div class="dag-content">
+        <div class="dag-section">&sect;401 &mdash; File for Dissolution</div>
+        <div class="dag-desc">Petition establishes jurisdiction. Without this, nothing else can proceed. Includes grounds (irretrievable breakdown, 6-month separation).</div>
+    </div>
+</div>
+<div class="dag-arrow"></div>
+<div class="dag-step">
+    <div class="dag-num">2</div>
+    <div class="dag-content">
+        <div class="dag-section">&sect;501 &mdash; Exchange Financial Disclosures</div>
+        <div class="dag-desc">Both parties must file financial affidavits. Tax returns, pay stubs, asset statements, debt schedules. This is mandatory and must be complete before financial orders.</div>
+    </div>
+</div>
+<div class="dag-arrow"></div>
+<div class="dag-step">
+    <div class="dag-num">3</div>
+    <div class="dag-content">
+        <div class="dag-section">&sect;602.10 &mdash; Propose Parenting Plan</div>
+        <div class="dag-desc">Both parties must file proposed parenting plans within 120 days of service. Covers decision-making (&sect;602.5), parenting time (&sect;602.7), and dispute resolution.</div>
+    </div>
+</div>
+<div class="dag-arrow"></div>
+<div class="dag-step">
+    <div class="dag-num">4</div>
+    <div class="dag-content">
+        <div class="dag-section">&sect;503&ndash;&sect;505 &mdash; Property, Maintenance, Support</div>
+        <div class="dag-desc">Argue property division, maintenance, and child support. Requires &sect;501 complete. These are typically addressed together because they are interdependent.</div>
+    </div>
+</div>
+<div class="dag-arrow"></div>
+<div class="dag-step">
+    <div class="dag-num">5</div>
+    <div class="dag-content">
+        <div class="dag-section">&sect;502 or Trial &mdash; Agreement or Litigation</div>
+        <div class="dag-desc">Reach a marital settlement agreement (&sect;502) or proceed to trial. Most cases settle. The ones that don&rsquo;t are the ones where the graph&rsquo;s ambiguities matter most.</div>
+    </div>
+</div>
+<div class="dag-arrow"></div>
+<div class="dag-step">
+    <div class="dag-num">6</div>
+    <div class="dag-content">
+        <div class="dag-section">Judgment of Dissolution</div>
+        <div class="dag-desc">Court enters final judgment incorporating all orders. After this, &sect;510 and &sect;610.5 govern modifications.</div>
+    </div>
+</div>
+
+<div class="callout">
+    <strong>The gap between the DAG and reality.</strong> The code is designed to be read top-down: dissolution &rarr; disclosure &rarr; allocation &rarr; judgment. In practice, courts handle these in parallel, and the procedural dependencies are not always enforced. Parenting plans may be litigated before disclosure is complete. Temporary orders may set support before property is divided. The gap between the code&rsquo;s DAG and the court&rsquo;s actual workflow is where pro se litigants get lost. The code assumes sequential processing; the court operates concurrently. If you are representing yourself, understand the DAG &mdash; then understand that the court may not follow it.
+</div>
+
+<h3>Common Traps</h3>
+
+<div class="metric-grid">
+    <div class="metric-card">
+        <div class="mc-title">Trap 1: Assuming Disclosure Happens Automatically</div>
+        <p>It does not. &sect;501 requires both parties to disclose, but enforcement requires motions. If the other side does not produce documents, you must file a Motion to Compel (Supreme Court Rule 219(c)). This costs time and money, which is exactly the point if the other side is trying to delay.</p>
+    </div>
+
+    <div class="metric-card">
+        <div class="mc-title">Trap 2: Conflating Parenting Time with Custody</div>
+        <p>Illinois eliminated the word &ldquo;custody&rdquo; in the 2016 IMDMA reform. There is now &ldquo;allocation of parental responsibilities&rdquo; (&sect;602.5 for decision-making, &sect;602.7 for time). Using old terminology in filings signals unfamiliarity with the current statute.</p>
+    </div>
+
+    <div class="metric-card">
+        <div class="mc-title">Trap 3: Ignoring the &sect;505/&sect;602.7 Bridge</div>
+        <p>Child support depends on parenting time percentage. If you negotiate parenting time without understanding its financial implications (or vice versa), you may lock in a support obligation you did not intend. The two subgraphs are not independent &mdash; &sect;505 bridges them.</p>
+    </div>
+
+    <div class="metric-card">
+        <div class="mc-title">Trap 4: Missing Modification Deadlines</div>
+        <p>&sect;610.5 requires a showing of &ldquo;substantial change&rdquo; and has a two-year presumption against modification for non-emergency changes. &sect;510 modifications of maintenance are lost if you fail to petition before a deadline in the original order. The modification sections have their own procedural requirements that are easy to miss.</p>
+    </div>
+</div>
+
+<h3>Which Sections to Read First</h3>
+
+<table>
+    <tr><th>Priority</th><th>Section</th><th>Why</th></tr>
+    <tr><td>1</td><td>&sect;102 &mdash; Definitions</td><td>Defines every term used in the Act. Read this before anything else.</td></tr>
+    <tr><td>2</td><td>&sect;602.7 &mdash; Parenting time</td><td>The 17-factor &ldquo;best interests&rdquo; test. This is what the judge will apply.</td></tr>
+    <tr><td>3</td><td>&sect;501 &mdash; Disclosure</td><td>Understand what you must produce and what you can demand.</td></tr>
+    <tr><td>4</td><td>&sect;505 &mdash; Child support</td><td>The income shares calculation. Know how your number is computed.</td></tr>
+    <tr><td>5</td><td>&sect;503 &mdash; Property division</td><td>Marital vs. non-marital property. Know the classification rules.</td></tr>
+    <tr><td>6</td><td>&sect;508 &mdash; Attorney fees</td><td>Fee shifting based on financial disparity. Know your rights to contribution.</td></tr>
+    <tr><td>7</td><td>&sect;510, &sect;610.5 &mdash; Modification</td><td>Know what can change after judgment and what triggers are required.</td></tr>
+</table>
+
+<!-- ═══════════════════════════════════════════════════════════════
+     UNCERTAINTY
+     ═══════════════════════════════════════════════════════════════ -->
+
+<div class="uncertainty-box">
+    <div class="ub-title">Uncertainty</div>
+    <ul>
+        <li>The ~200 cross-reference estimate is based on a reading of the statutory text, not a formal parse. The actual count depends on how you define a &ldquo;cross-reference&rdquo; (explicit statutory citations vs. implicit procedural dependencies).</li>
+        <li>The graph visualization is a model based on the author&rsquo;s reading of 750 ILCS 5 and its procedural structure. It is not generated from a formal parse of the ILCS XML.</li>
+        <li>The &ldquo;best interests&rdquo; analysis draws on the statutory factor list (&sect;602.7(b)) but the weighting and application of factors varies by judge, courtroom, and case. There is no algorithmic resolution.</li>
+        <li>Procedural descriptions reflect Cook County practice as of 2026. Other Illinois counties may handle case flow differently.</li>
+        <li>This page is an analytical tool, not legal advice. If you are representing yourself in Illinois family court, read the actual statute (available at <a href="https://www.ilga.gov/legislation/ilcs/ilcs4.asp?ActID=2086">ilga.gov</a>) and consider consulting a licensed attorney for case-specific guidance.</li>
+    </ul>
+</div>
+
+<footer>
+    Sources: Illinois General Assembly &mdash; <a href="https://www.ilga.gov/legislation/ilcs/ilcs4.asp?ActID=2086">750 ILCS 5</a> &middot;
+    Cook County Circuit Court &middot; Illinois Supreme Court Rules &middot;
+    P.A. 99-90 (2016 IMDMA reform) &middot;
+    Illinois Department of Healthcare and Family Services (child support guidelines)<br><br>
+    <a href="index.html">Overview</a> &middot; <a href="translations.html">Translations</a> &middot;
+    <a href="dimensions.html">Dimensions</a> &middot; <a href="unsayable.html">The Unsayable</a> &middot;
+    <a href="algorithms.html">Algorithms</a> &middot; <a href="languages.html">Languages</a> &middot;
+    <a href="integration.html">Integration</a> &middot; <a href="taxcode.html">Tax Code</a> &middot;
+    <a href="network.html">Network</a> &middot; <a href="gametheory.html">Game Theory</a> &middot;
+    <a href="leakage.html">Leakage</a> &middot;
+    <a href="familycourt.html">Family Court</a>
+</footer>
+
+<script>
+// ═══════════════════════════════════════════════════════════════
+// FORCE-DIRECTED GRAPH: IMDMA Cross-Reference Network
+// ═══════════════════════════════════════════════════════════════
+(function() {
+    const canvas = document.getElementById('graphCanvas');
+    const ctx = canvas.getContext('2d');
+    const dpr = window.devicePixelRatio || 1;
+
+    // --- Node colors by article ---
+    const C = {
+        def:     '#f85149',  // Definitions / Dissolution (Part 1-4)
+        fin:     '#58a6ff',  // Financial (§501-§510)
+        parent:  '#3fb950',  // Parenting (§602-§610)
+        mod:     '#d29922',  // Modification (§510, §610.5)
+    };
+
+    // --- Nodes: [id, label, shortLabel, category, inDegree (determines size), description] ---
+    const nodesData = [
+        // Definitions / Dissolution
+        ['102',    '102 Definitions',             '102',     C.def,    22, 'Foundational definitions used throughout the Act'],
+        ['401',    '401 Dissolution grounds',     '401',     C.def,    14, 'Grounds for dissolution — irretrievable breakdown'],
+        ['404.1',  '404.1 Bifurcation',           '404.1',   C.def,    6,  'Allows dissolution of marriage before resolving other issues'],
+
+        // Financial
+        ['501',    '501 Disclosure',              '501',     C.fin,    18, 'Financial disclosure requirements — the gatekeeper'],
+        ['502',    '502 Agreements',              '502',     C.fin,    12, 'Marital settlement agreement provisions'],
+        ['503',    '503 Property',                '503',     C.fin,    20, 'Disposition of property and debts — marital vs non-marital'],
+        ['504',    '504 Maintenance',             '504',     C.fin,    16, 'Spousal maintenance (alimony) — amount and duration'],
+        ['505',    '505 Child support',           '505',     C.fin,    18, 'Child support calculation — income shares model'],
+        ['506',    '506 Representation of child', '506',     C.fin,    8,  'Appointment of attorney or GAL for the child'],
+        ['508',    '508 Attorney fees',           '508',     C.fin,    14, 'Contribution to attorney fees and costs'],
+        ['513',    '513 Contribution to costs',   '513',     C.fin,    8,  'Contribution to costs of education and training'],
+
+        // Parenting
+        ['602.5',  '602.5 Decision-making',       '602.5',   C.parent, 12, 'Allocation of significant decision-making responsibilities'],
+        ['602.7',  '602.7 Parenting time',        '602.7',   C.parent, 18, 'Allocation of parenting time — 17-factor best interests test'],
+        ['602.10', '602.10 Parenting plan',       '602.10',  C.parent, 14, 'Required parenting plan — documents time and decision-making'],
+        ['602.11', '602.11 Relocation',           '602.11',  C.parent, 10, 'Parental relocation provisions and notice requirements'],
+        ['603.10', '603.10 Restriction',          '603.10',  C.parent, 10, 'Restriction of parenting time — abuse or endangerment'],
+        ['607.5',  '607.5 Non-parent visitation', '607.5',   C.parent, 6,  'Visitation rights for grandparents and non-parents'],
+        ['609.2',  '609.2 Military deployment',   '609.2',   C.parent, 6,  'Parenting time during military deployment'],
+
+        // Modification
+        ['510',    '510 Modification',            '510',     C.mod,    16, 'Modification of maintenance, support, and financial orders'],
+        ['610.5',  '610.5 Parenting modification','610.5',   C.mod,    12, 'Modification of parenting plan and allocation orders'],
+    ];
+
+    // --- Edges: [source_id, target_id] ---
+    const edgesData = [
+        // §401 → all subsequent sections (dissolution must be filed first)
+        ['401','501'],['401','502'],['401','503'],['401','504'],['401','505'],
+        ['401','602.5'],['401','602.7'],['401','602.10'],
+
+        // §501 (disclosure) → financial sections (gatekeeper)
+        ['501','503'],['501','504'],['501','505'],['501','508'],
+
+        // §503 (property) ↔ §502 (agreements)
+        ['503','502'],['502','503'],
+
+        // §504 (maintenance) → §503 (property) — maintenance considers property allocation
+        ['504','503'],
+
+        // §505 (child support) → §504 (maintenance) — support considers maintenance
+        ['505','504'],
+        // §505 → §602.7 (parenting time) — support depends on parenting time
+        ['505','602.7'],
+
+        // §602.5 (decision-making) → §602.7 (parenting time) — allocated together
+        ['602.5','602.7'],
+        ['602.7','602.5'],
+
+        // §602.7 → §602.10 (parenting plan) — time allocation documented in plan
+        ['602.7','602.10'],
+        ['602.5','602.10'],
+
+        // §602.10 → §610.5 (modification) — plans can be modified
+        ['602.10','610.5'],
+
+        // §603.10 (restriction) → §602.7 (parenting time) — can restrict allocated time
+        ['603.10','602.7'],
+
+        // §602.11 (relocation) → §602.7 — relocation changes parenting time
+        ['602.11','602.7'],
+        ['602.11','610.5'],
+
+        // §607.5 (non-parent visitation) → §602.7 — visitation relates to parenting time
+        ['607.5','602.7'],
+
+        // §609.2 (military) → §602.7 — deployment affects parenting time
+        ['609.2','602.7'],
+
+        // §508 (attorney fees) → §503, §504, §505 — fees consider financial circumstances
+        ['508','503'],['508','504'],['508','505'],
+
+        // §510 (modification) → §504, §505 — maintenance and support can be modified
+        ['510','504'],['510','505'],
+
+        // §610.5 (parenting modification) → §602.7 — modifies parenting time
+        ['610.5','602.7'],
+        ['610.5','602.5'],
+
+        // §513 (contribution to costs) → §505 — related to support obligations
+        ['513','505'],
+
+        // §506 (child representation) → §602.7 — GAL reports on best interests
+        ['506','602.7'],
+        ['506','602.5'],
+
+        // All sections → §102 (definitions) — implicit foundational dependency
+        ['501','102'],['502','102'],['503','102'],['504','102'],['505','102'],
+        ['506','102'],['508','102'],['510','102'],['513','102'],
+        ['602.5','102'],['602.7','102'],['602.10','102'],['602.11','102'],
+        ['603.10','102'],['607.5','102'],['609.2','102'],['610.5','102'],
+        ['401','102'],['404.1','102'],
+
+        // §404.1 (bifurcation) → §401 — bifurcation depends on dissolution filing
+        ['404.1','401'],
+    ];
+
+    // --- Build node objects ---
+    // Position financial nodes on the left, parenting on the right
+    let nodes = nodesData.map(([id, label, shortLabel, color, inDegree, desc], i) => {
+        let cx, cy;
+        if (color === C.def) {
+            // Definitions/dissolution at top center
+            cx = 400 + (i - 1) * 100 + (Math.random() - 0.5) * 40;
+            cy = 120 + (Math.random() - 0.5) * 40;
+        } else if (color === C.fin) {
+            // Financial on the left
+            const fi = i - 3; // index within financial group
+            const angle = (fi / 8) * Math.PI * 0.8 + Math.PI * 0.6;
+            cx = 250 + Math.cos(angle) * 150 + (Math.random() - 0.5) * 30;
+            cy = 380 + Math.sin(angle) * 120 + (Math.random() - 0.5) * 30;
+        } else if (color === C.parent) {
+            // Parenting on the right
+            const pi = i - 11;
+            const angle = (pi / 7) * Math.PI * 0.8 - Math.PI * 0.4;
+            cx = 580 + Math.cos(angle) * 150 + (Math.random() - 0.5) * 30;
+            cy = 380 + Math.sin(angle) * 120 + (Math.random() - 0.5) * 30;
+        } else {
+            // Modification at bottom
+            cx = 400 + (i - 19) * 120 + (Math.random() - 0.5) * 40;
+            cy = 580 + (Math.random() - 0.5) * 40;
+        }
+        return {
+            id, label, shortLabel, color, inDegree, desc,
+            radius: Math.max(5, Math.sqrt(inDegree) * 2.5),
+            x: cx,
+            y: cy,
+            vx: 0, vy: 0,
+            fx: null, fy: null,
+        };
+    });
+
+    const nodeMap = {};
+    nodes.forEach(n => nodeMap[n.id] = n);
+
+    let edges = edgesData.map(([s, t]) => ({
+        source: nodeMap[s],
+        target: nodeMap[t],
+    })).filter(e => e.source && e.target);
+
+    // --- Simulation state ---
+    let frozen = false;
+    let showLabels = true;
+    let W, H;
+    let dragging = null;
+    let mouseX = 0, mouseY = 0;
+    let hovered = null;
+
+    function resize() {
+        const rect = canvas.parentElement.getBoundingClientRect();
+        W = rect.width - 48;
+        H = 700;
+        canvas.width = W * dpr;
+        canvas.height = H * dpr;
+        canvas.style.width = W + 'px';
+        canvas.style.height = H + 'px';
+        ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    }
+
+    // --- Force simulation ---
+    function tick() {
+        if (frozen && !dragging) return;
+
+        const alpha = 0.3;
+        const repulsion = 3200;
+        const attraction = 0.005;
+        const linkDist = 110;
+        const damping = 0.85;
+        const centerX = W / 2;
+        const centerY = H / 2;
+
+        // Repulsion (charge)
+        for (let i = 0; i < nodes.length; i++) {
+            for (let j = i + 1; j < nodes.length; j++) {
+                const a = nodes[i], b = nodes[j];
+                let dx = a.x - b.x;
+                let dy = a.y - b.y;
+                let dist = Math.sqrt(dx * dx + dy * dy) || 1;
+                let force = repulsion / (dist * dist);
+                let fx = dx / dist * force;
+                let fy = dy / dist * force;
+                if (a.fx === null) { a.vx += fx * alpha; a.vy += fy * alpha; }
+                if (b.fx === null) { b.vx -= fx * alpha; b.vy -= fy * alpha; }
+            }
+        }
+
+        // Attraction (links)
+        for (const e of edges) {
+            let dx = e.target.x - e.source.x;
+            let dy = e.target.y - e.source.y;
+            let dist = Math.sqrt(dx * dx + dy * dy) || 1;
+            let force = (dist - linkDist) * attraction;
+            let fx = dx / dist * force;
+            let fy = dy / dist * force;
+            if (e.source.fx === null) { e.source.vx += fx * alpha; e.source.vy += fy * alpha; }
+            if (e.target.fx === null) { e.target.vx -= fx * alpha; e.target.vy -= fy * alpha; }
+        }
+
+        // Gentle cluster separation: push financial left, parenting right
+        for (const n of nodes) {
+            if (n.color === '#58a6ff') { // financial
+                n.vx += (centerX * 0.55 - n.x) * 0.0008;
+            } else if (n.color === '#3fb950') { // parenting
+                n.vx += (centerX * 1.45 - n.x) * 0.0008;
+            }
+        }
+
+        // Center gravity
+        for (const n of nodes) {
+            if (n.fx !== null) { n.x = n.fx; n.y = n.fy; n.vx = 0; n.vy = 0; continue; }
+            n.vx += (centerX - n.x) * 0.0005;
+            n.vy += (centerY - n.y) * 0.0005;
+            n.vx *= damping;
+            n.vy *= damping;
+            n.x += n.vx;
+            n.y += n.vy;
+            // Boundary
+            n.x = Math.max(n.radius + 10, Math.min(W - n.radius - 10, n.x));
+            n.y = Math.max(n.radius + 10, Math.min(H - n.radius - 10, n.y));
+        }
+    }
+
+    // --- Draw ---
+    function draw() {
+        ctx.clearRect(0, 0, W, H);
+
+        // Cluster labels (faint)
+        ctx.font = '11px SF Mono, Fira Code, monospace';
+        ctx.textAlign = 'center';
+        ctx.fillStyle = 'rgba(88,166,255,0.15)';
+        ctx.fillText('FINANCIAL', W * 0.28, 30);
+        ctx.fillStyle = 'rgba(63,185,80,0.15)';
+        ctx.fillText('PARENTING', W * 0.72, 30);
+
+        // Edges
+        for (const e of edges) {
+            const isHighlighted = hovered && (e.source === hovered || e.target === hovered);
+            ctx.beginPath();
+            ctx.moveTo(e.source.x, e.source.y);
+            ctx.lineTo(e.target.x, e.target.y);
+            if (isHighlighted) {
+                ctx.strokeStyle = 'rgba(200,209,217,0.35)';
+                ctx.lineWidth = 1.5;
+            } else {
+                ctx.strokeStyle = 'rgba(48,54,61,0.6)';
+                ctx.lineWidth = 0.5;
+            }
+            ctx.stroke();
+
+            // Arrowhead
+            if (isHighlighted) {
+                const dx = e.target.x - e.source.x;
+                const dy = e.target.y - e.source.y;
+                const dist = Math.sqrt(dx * dx + dy * dy) || 1;
+                const ux = dx / dist, uy = dy / dist;
+                const ax = e.target.x - ux * (e.target.radius + 3);
+                const ay = e.target.y - uy * (e.target.radius + 3);
+                const aSize = 5;
+                ctx.beginPath();
+                ctx.moveTo(ax, ay);
+                ctx.lineTo(ax - ux * aSize - uy * aSize * 0.5, ay - uy * aSize + ux * aSize * 0.5);
+                ctx.lineTo(ax - ux * aSize + uy * aSize * 0.5, ay - uy * aSize - ux * aSize * 0.5);
+                ctx.closePath();
+                ctx.fillStyle = 'rgba(200,209,217,0.5)';
+                ctx.fill();
+            }
+        }
+
+        // Nodes
+        for (const n of nodes) {
+            const isHov = n === hovered;
+            ctx.beginPath();
+            ctx.arc(n.x, n.y, n.radius, 0, Math.PI * 2);
+            ctx.fillStyle = isHov ? n.color : n.color + 'cc';
+            ctx.fill();
+            if (isHov) {
+                ctx.strokeStyle = '#fff';
+                ctx.lineWidth = 2;
+                ctx.stroke();
+            } else {
+                ctx.strokeStyle = n.color + '44';
+                ctx.lineWidth = 1;
+                ctx.stroke();
+            }
+        }
+
+        // Labels
+        if (showLabels) {
+            ctx.font = '9px SF Mono, Fira Code, monospace';
+            ctx.textAlign = 'center';
+            for (const n of nodes) {
+                const isHov = n === hovered;
+                if (n.inDegree >= 10 || isHov) {
+                    const lbl = '§' + n.shortLabel;
+                    ctx.fillStyle = isHov ? '#fff' : '#8b949e';
+                    ctx.fillText(lbl, n.x, n.y - n.radius - 4);
+                }
+            }
+        }
+
+        // Tooltip for hovered node
+        if (hovered) {
+            const lines = [hovered.label, hovered.desc];
+            ctx.font = '11px SF Mono, Fira Code, monospace';
+            const maxW = Math.max(ctx.measureText(lines[0]).width, ctx.measureText(lines[1]).width);
+            const tx = Math.min(hovered.x + 12, W - maxW - 24);
+            const ty = Math.max(hovered.y - 34, 26);
+
+            ctx.fillStyle = '#161b22ee';
+            ctx.strokeStyle = '#30363d';
+            ctx.lineWidth = 1;
+            ctx.beginPath();
+            ctx.roundRect(tx - 6, ty - 13, maxW + 12, 36, 3);
+            ctx.fill();
+            ctx.stroke();
+
+            ctx.textAlign = 'left';
+            ctx.fillStyle = hovered.color;
+            ctx.fillText(lines[0], tx, ty);
+            ctx.fillStyle = '#8b949e';
+            ctx.font = '10px SF Mono, Fira Code, monospace';
+            ctx.fillText(lines[1], tx, ty + 16);
+        }
+    }
+
+    // --- Animation loop ---
+    function frame() {
+        tick();
+        draw();
+        requestAnimationFrame(frame);
+    }
+
+    // --- Mouse / touch handling ---
+    function getCanvasPos(e) {
+        const rect = canvas.getBoundingClientRect();
+        const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+        const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+        return {
+            x: (clientX - rect.left) * (W / rect.width),
+            y: (clientY - rect.top) * (H / rect.height),
+        };
+    }
+
+    function findNode(x, y) {
+        for (let i = nodes.length - 1; i >= 0; i--) {
+            const n = nodes[i];
+            const dx = x - n.x, dy = y - n.y;
+            if (dx * dx + dy * dy < (n.radius + 4) * (n.radius + 4)) return n;
+        }
+        return null;
+    }
+
+    canvas.addEventListener('mousedown', (e) => {
+        const p = getCanvasPos(e);
+        dragging = findNode(p.x, p.y);
+        if (dragging) {
+            dragging.fx = p.x;
+            dragging.fy = p.y;
+        }
+    });
+
+    canvas.addEventListener('mousemove', (e) => {
+        const p = getCanvasPos(e);
+        mouseX = p.x; mouseY = p.y;
+        if (dragging) {
+            dragging.fx = p.x;
+            dragging.fy = p.y;
+        }
+        hovered = findNode(p.x, p.y);
+        canvas.style.cursor = hovered ? 'grab' : 'default';
+    });
+
+    canvas.addEventListener('mouseup', () => {
+        if (dragging) { dragging.fx = null; dragging.fy = null; }
+        dragging = null;
+    });
+
+    canvas.addEventListener('mouseleave', () => {
+        if (dragging) { dragging.fx = null; dragging.fy = null; }
+        dragging = null;
+        hovered = null;
+    });
+
+    // Touch support
+    canvas.addEventListener('touchstart', (e) => {
+        e.preventDefault();
+        const p = getCanvasPos(e);
+        dragging = findNode(p.x, p.y);
+        if (dragging) { dragging.fx = p.x; dragging.fy = p.y; }
+    }, { passive: false });
+
+    canvas.addEventListener('touchmove', (e) => {
+        e.preventDefault();
+        if (dragging) {
+            const p = getCanvasPos(e);
+            dragging.fx = p.x;
+            dragging.fy = p.y;
+        }
+    }, { passive: false });
+
+    canvas.addEventListener('touchend', () => {
+        if (dragging) { dragging.fx = null; dragging.fy = null; }
+        dragging = null;
+    });
+
+    // --- Controls ---
+    document.getElementById('btnReset').addEventListener('click', () => {
+        nodes.forEach((n, i) => {
+            const angle = (i / nodes.length) * Math.PI * 2;
+            const r = 180 + Math.random() * 120;
+            n.x = W / 2 + Math.cos(angle) * r + (Math.random() - 0.5) * 60;
+            n.y = H / 2 + Math.sin(angle) * r + (Math.random() - 0.5) * 60;
+            n.vx = 0; n.vy = 0;
+            n.fx = null; n.fy = null;
+        });
+        frozen = false;
+        document.getElementById('btnFreeze').textContent = 'Freeze';
+        document.getElementById('btnFreeze').classList.remove('active');
+    });
+
+    document.getElementById('btnFreeze').addEventListener('click', function() {
+        frozen = !frozen;
+        this.textContent = frozen ? 'Unfreeze' : 'Freeze';
+        this.classList.toggle('active', frozen);
+    });
+
+    document.getElementById('btnLabels').addEventListener('click', function() {
+        showLabels = !showLabels;
+        this.classList.toggle('active', showLabels);
+    });
+
+    // --- Init ---
+    resize();
+    nodes.forEach(n => {
+        n.x = n.x - 400 + W / 2;
+        n.y = n.y - 350 + H / 2;
+    });
+    window.addEventListener('resize', () => { resize(); });
+    frame();
+})();
+</script>
+
+</body>
+</html>
