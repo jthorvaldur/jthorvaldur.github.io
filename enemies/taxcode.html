@@ -1,0 +1,680 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>The Tax Code as Grammar Patch</title>
+<meta name="description" content="The Internal Revenue Code is 2.4 million words long because English grammar refuses to be precise. Every definition section is a prosthesis for a missing grammatical feature.">
+<meta property="og:title" content="The Tax Code as Grammar Patch">
+<meta property="og:description" content="The IRC is 10 million words of natural language processing that attempts to convert ambiguous English into deterministic rules.">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://jthorvaldur.github.io/enemies/taxcode.html">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="The Tax Code as Grammar Patch">
+<meta name="twitter:description" content="The IRC is 10 million words of natural language processing that attempts to convert ambiguous English into deterministic rules.">
+<style>
+:root {
+    --bg: #0d1117; --fg: #c9d1d9; --accent: #58a6ff;
+    --border: #30363d; --surface: #161b22; --surface2: #21262d;
+    --green: #3fb950; --yellow: #d29922; --red: #f85149;
+    --purple: #bc8cff; --orange: #f0883e;
+}
+* { margin:0; padding:0; box-sizing:border-box; }
+body { font-family: 'SF Mono','Fira Code','JetBrains Mono',monospace; background:var(--bg); color:var(--fg); line-height:1.6; padding:2rem; max-width:1400px; margin:0 auto; }
+h1 { color:var(--accent); font-size:1.8rem; margin-bottom:0.5rem; }
+h2 { color:var(--accent); font-size:1.3rem; margin:2.5rem 0 1rem; border-bottom:1px solid var(--border); padding-bottom:0.5rem; }
+h3 { color:var(--fg); font-size:1.1rem; margin:1.5rem 0 0.5rem; }
+.subtitle { color:#8b949e; margin-bottom:2rem; font-size:0.95rem; line-height:1.7; max-width:1100px; }
+a { color:var(--accent); text-decoration:none; }
+a:hover { text-decoration:underline; }
+p { margin:0.75rem 0; font-size:0.9rem; line-height:1.7; }
+nav { background:var(--surface); border:1px solid var(--border); border-radius:6px; padding:1rem; margin:1rem 0; display:flex; flex-wrap:wrap; gap:0.5rem 1.5rem; }
+nav a { color:var(--accent); text-decoration:none; font-size:0.85rem; }
+nav a.active { color:var(--fg); font-weight:bold; }
+.stats { display:grid; grid-template-columns:repeat(auto-fit, minmax(180px, 1fr)); gap:1rem; margin:1rem 0; }
+.stat { background:var(--surface); border:1px solid var(--border); border-radius:6px; padding:1rem; text-align:center; }
+.stat .value { font-size:2rem; color:var(--accent); font-weight:bold; }
+.stat .label { font-size:0.8rem; color:#8b949e; }
+table { width:100%; border-collapse:collapse; margin:1rem 0; font-size:0.85rem; }
+th, td { padding:6px 10px; border:1px solid var(--border); text-align:left; }
+th { background:var(--surface2); color:var(--accent); position:sticky; top:0; }
+tr:hover { background:var(--surface); }
+.formula { background:var(--surface); border-left:3px solid var(--accent); padding:1rem; margin:1rem 0; font-size:0.85rem; overflow-x:auto; line-height:1.8; }
+.formula-title { color:var(--accent); font-weight:bold; font-size:0.8rem; margin-bottom:0.5rem; }
+blockquote { background:var(--surface); border-left:3px solid var(--accent); padding:1.2rem 1.5rem; margin:1.5rem 0; font-size:0.9rem; line-height:1.8; }
+.key-finding { background:var(--surface); border:1px solid var(--border); border-left:3px solid var(--yellow); border-radius:6px; padding:1.5rem; margin:1.5rem 0; font-size:0.9rem; line-height:1.7; }
+.key-finding .finding-title { color:var(--yellow); font-weight:bold; font-size:0.9rem; margin-bottom:0.75rem; }
+.callout { background:var(--surface); border:1px solid var(--border); border-left:3px solid var(--orange); border-radius:6px; padding:1.5rem; margin:1.5rem 0; font-size:0.9rem; line-height:1.7; }
+.callout-red { border-left-color:var(--red); }
+.callout-green { border-left-color:var(--green); }
+.callout-purple { border-left-color:var(--purple); }
+.chart-container {
+    background:var(--surface); border:1px solid var(--border); border-radius:6px;
+    padding:1.5rem; margin:1.5rem 0;
+}
+.chart-container canvas { width:100% !important; }
+.chart-title { color:var(--accent); font-weight:bold; font-size:0.95rem; margin-bottom:0.75rem; }
+.chart-caption { color:#8b949e; font-size:0.8rem; margin-top:0.75rem; line-height:1.6; }
+.uncertainty-box {
+    background:#1a1510; border:1px solid var(--yellow); border-radius:6px;
+    padding:1.5rem; margin:2rem 0; font-size:0.88rem; line-height:1.7;
+}
+.uncertainty-box .ub-title { color:var(--yellow); font-weight:bold; font-size:0.95rem; margin-bottom:0.75rem; }
+.uncertainty-box ul { margin:0.5rem 0 0.5rem 1.5rem; }
+.uncertainty-box li { margin:0.3rem 0; }
+
+/* Concept cards */
+.concept-card {
+    background:var(--surface); border:1px solid var(--border); border-radius:6px;
+    margin:1.5rem 0; overflow:hidden;
+}
+.concept-header {
+    padding:1.2rem 1.5rem; border-bottom:1px solid var(--border);
+    display:flex; align-items:baseline; gap:1rem; flex-wrap:wrap;
+}
+.concept-title { color:var(--accent); font-size:1.1rem; font-weight:bold; }
+.concept-tag {
+    display:inline-block; padding:2px 8px; border-radius:3px;
+    font-size:0.7rem; font-weight:600; text-transform:uppercase; letter-spacing:0.05em;
+}
+.tag-irc { background:#58a6ff22; color:var(--accent); }
+.tag-legal { background:#f8514922; color:var(--red); }
+.tag-linguistic { background:#bc8cff22; color:var(--purple); }
+.concept-body { padding:1.5rem; }
+.concept-body p { font-size:0.9rem; line-height:1.7; margin-bottom:1rem; }
+.concept-body p:last-child { margin-bottom:0; }
+
+/* Circular definition cards */
+.circular-grid {
+    display:grid; grid-template-columns:repeat(auto-fit, minmax(280px, 1fr));
+    gap:1rem; margin:1rem 0;
+}
+.circular-item {
+    background:var(--surface); border:1px solid var(--border);
+    border-top:2px solid var(--red); border-radius:6px; padding:1.2rem;
+}
+.circular-item .circ-title { color:var(--red); font-size:0.85rem; font-weight:bold; margin-bottom:0.5rem; }
+.circular-item .circ-section { color:var(--accent); font-size:0.75rem; margin-bottom:0.5rem; }
+.circular-item p { font-size:0.82rem; line-height:1.6; color:#8b949e; }
+
+/* Feedback loop */
+.feedback-loop {
+    background:var(--surface); border:1px solid var(--border); border-radius:6px;
+    padding:1.5rem; margin:1.5rem 0;
+}
+.loop-step {
+    display:flex; align-items:baseline; gap:0.75rem;
+    padding:0.5rem 0; font-size:0.88rem; line-height:1.6;
+}
+.loop-num {
+    background:var(--accent); color:var(--bg); width:24px; height:24px;
+    border-radius:50%; display:flex; align-items:center; justify-content:center;
+    font-size:0.75rem; font-weight:bold; flex-shrink:0;
+}
+.loop-arrow {
+    text-align:center; color:var(--accent); font-size:1.2rem; padding:0.2rem 0;
+}
+
+footer { color:#8b949e; margin-top:3rem; font-size:0.8rem; text-align:center; padding:1rem 0; border-top:1px solid var(--border); }
+footer a { color:#8b949e; }
+</style>
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "WebPage",
+  "headline": "The Tax Code as Grammar Patch",
+  "author": {"@type": "Person", "name": "Joel Thorarinson", "url": "https://jthorvaldur.github.io"},
+  "publisher": {"@type": "Person", "name": "Joel Thorarinson"},
+  "datePublished": "2026-05-27",
+  "url": "https://jthorvaldur.github.io/enemies/taxcode.html",
+  "description": "The Internal Revenue Code is 2.4 million words long because English grammar refuses to be precise. Every definition section is a prosthesis for a missing grammatical feature.",
+  "isPartOf": {"@type": "WebSite", "name": "Thorarinson", "url": "https://jthorvaldur.github.io"}
+}
+</script>
+</head>
+<body>
+
+<h1>The Tax Code as Grammar Patch</h1>
+<p class="subtitle">The Internal Revenue Code is 2.4 million words long because English grammar refuses to be precise. Every definition section is a prosthesis for a missing grammatical feature.</p>
+
+<nav>
+    <a href="index.html">Overview</a>
+    <a href="translations.html">Translations</a>
+    <a href="dimensions.html">Dimensions</a>
+    <a href="unsayable.html">The Unsayable</a>
+    <a href="algorithms.html">Algorithms</a>
+    <a href="languages.html">Languages</a>
+    <a href="integration.html">Integration</a>
+    <a href="taxcode.html" class="active">Tax Code</a>
+</nav>
+
+<!-- ═══════════════════════════════════════════════════════════════
+     SECTION 1: THE NUMBERS
+     ═══════════════════════════════════════════════════════════════ -->
+
+<h2 id="numbers">1. The Numbers</h2>
+
+<div class="stats">
+    <div class="stat"><div class="value">2.4M</div><div class="label">Words in the IRC Alone (2024)</div></div>
+    <div class="stat"><div class="value">7.6M</div><div class="label">Words in Tax Regulations</div></div>
+    <div class="stat"><div class="value">75,000</div><div class="label">Pages (Code + Regs + Guidance)</div></div>
+    <div class="stat"><div class="value">$546B</div><div class="label">Annual Compliance Cost</div></div>
+</div>
+
+<table>
+    <tr><th>Year</th><th>Word Count (Code + Regulations)</th><th>IRC Sections</th><th>Cross-References</th></tr>
+    <tr><td>1913</td><td>~5,000</td><td>&mdash;</td><td>&mdash;</td></tr>
+    <tr><td>1954</td><td>~1,400,000</td><td>103</td><td>&mdash;</td></tr>
+    <tr><td>1991</td><td>&mdash;</td><td>&mdash;</td><td>&lt;50,000</td></tr>
+    <tr><td>2005</td><td>&mdash;</td><td>736</td><td>&mdash;</td></tr>
+    <tr><td>2012</td><td>&mdash;</td><td>&mdash;</td><td>~70,000</td></tr>
+    <tr><td>2024</td><td>~10,000,000</td><td>800+</td><td>&mdash;</td></tr>
+</table>
+
+<div class="formula">
+    <div class="formula-title">Growth Rate</div>
+    ~144,500 words per year since 1955 &mdash; the equivalent of adding a full-length novel of definitions every 6 months.
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════════
+     SECTION 2: THE GROWTH CURVE
+     ═══════════════════════════════════════════════════════════════ -->
+
+<h2 id="growth">2. The Growth Curve</h2>
+
+<p>The shape of the curve tells the story. This is not linear growth driven by new policy. It is exponential growth driven by definitional patches &mdash; each new rule introduces terms that require further definition, which introduces further terms.</p>
+
+<div class="chart-container">
+    <div class="chart-title">U.S. Tax Code Word Count Over Time (Code + Regulations)</div>
+    <canvas id="growthChart" height="480"></canvas>
+    <div class="chart-caption">
+        Key legislative events annotated. The Revenue Act of 1913 was ~5,000 words. By 2024, the code plus regulations exceeded 10 million. The curve is driven not by policy complexity alone, but by the compounding cost of defining English terms with sufficient precision for legal determinism.
+    </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════════
+     SECTION 3: THE DEFINITION MACHINE
+     ═══════════════════════════════════════════════════════════════ -->
+
+<h2 id="definitions">3. The Definition Machine</h2>
+
+<p>The core argument: the IRC&rsquo;s complexity is substantially driven by the need to <strong>define</strong> terms that English grammar leaves ambiguous. The code is not primarily a description of tax policy. It is a definitional apparatus &mdash; a machine for pinning down meaning that the grammar refuses to fix.</p>
+
+<!-- 3a. §7701 -->
+
+<div class="concept-card">
+    <div class="concept-header">
+        <span class="concept-title">3a. &sect;7701 &mdash; The Master Dictionary</span>
+        <span class="concept-tag tag-irc">50+ definitions</span>
+    </div>
+    <div class="concept-body">
+        <p>Section 7701 contains 50+ definitions for general use across the entire Internal Revenue Code. It is the grammar patch layer &mdash; the place where English words are forcibly assigned precise meanings.</p>
+
+        <p><strong>&ldquo;Person&rdquo;</strong> &mdash; includes corporations, partnerships, trusts, estates, associations, and companies. Not just humans. The word &ldquo;person&rdquo; in the IRC does not mean what it means in English.</p>
+
+        <p><strong>&ldquo;Taxpayer&rdquo;</strong> &mdash; means &ldquo;a person subject to any internal revenue tax.&rdquo; Circular: defined using &ldquo;person,&rdquo; which is itself redefined.</p>
+
+        <p><strong>&ldquo;Employee&rdquo;</strong> &mdash; &ldquo;includes an officer of a corporation.&rdquo; The word &ldquo;includes&rdquo; here is itself ambiguous: is the list exhaustive or illustrative?</p>
+
+        <p><strong>&ldquo;Trade or business&rdquo;</strong> &mdash; famously, &sect;7701 <em>does not define this term</em>. It is the most fundamental term in tax law, used 339+ times in the code, and it has no statutory definition. The absence has generated thousands of court cases over a century. The fact that the most important term in the IRC is <em>undefined</em> is the perfect illustration: English lets you use a phrase without specifying its boundary, and sometimes even the 10-million-word patch cannot close the gap.</p>
+    </div>
+</div>
+
+<!-- 3b. "For purposes of this section" -->
+
+<div class="concept-card">
+    <div class="concept-header">
+        <span class="concept-title">3b. &ldquo;For purposes of this section&rdquo; &mdash; Local Definitions</span>
+        <span class="concept-tag tag-linguistic">Scope marking</span>
+    </div>
+    <div class="concept-body">
+        <p>The phrase &ldquo;for purposes of this section&rdquo; appears hundreds of times in the IRC. Each occurrence creates a <strong>local definition</strong> that overrides the general meaning &mdash; a scoping mechanism that English grammar does not natively provide. It is the tax code&rsquo;s version of a namespace.</p>
+    </div>
+</div>
+
+<table>
+    <tr><th>Section</th><th>Term</th><th>General Meaning</th><th>Local Definition</th><th>Why Different</th></tr>
+    <tr><td>&sect;61</td><td>gross income</td><td>Everything you receive</td><td>&ldquo;all income from whatever source derived&rdquo;</td><td>Broader than common usage</td></tr>
+    <tr><td>&sect;162</td><td>ordinary and necessary</td><td>Common and required</td><td>Not defined &mdash; courts decide case-by-case</td><td>English can&rsquo;t specify</td></tr>
+    <tr><td>&sect;401(k)</td><td>qualified plan</td><td>A good plan</td><td>Specific 18-requirement checklist</td><td>Precision via enumeration</td></tr>
+    <tr><td>&sect;1031</td><td>like-kind</td><td>Similar things</td><td>Real property for real property (post-TCJA)</td><td>Not common meaning</td></tr>
+    <tr><td>&sect;529</td><td>qualified</td><td>Meeting standards</td><td>Specific education savings account requirements</td><td>Different &ldquo;qualified&rdquo;</td></tr>
+    <tr><td>&sect;280A</td><td>home office</td><td>Where you work at home</td><td>&ldquo;Regular and exclusive use as principal place of business&rdquo;</td><td>Much narrower</td></tr>
+    <tr><td>&sect;132</td><td>de minimis</td><td>Trivially small</td><td>&ldquo;so small as to make accounting for it unreasonable&rdquo;</td><td>Still vague</td></tr>
+    <tr><td>&sect;501(c)(3)</td><td>organized and operated</td><td>Structured and running</td><td>&ldquo;exclusively for religious, charitable, scientific&hellip;&rdquo;</td><td>&ldquo;exclusively&rdquo; means &ldquo;primarily&rdquo; per case law</td></tr>
+</table>
+
+<!-- 3c. The Redefinition Problem -->
+
+<div class="concept-card">
+    <div class="concept-header">
+        <span class="concept-title">3c. The Redefinition Problem</span>
+        <span class="concept-tag tag-legal">Polysemy</span>
+    </div>
+    <div class="concept-body">
+        <p>The same English word gets redefined in different sections of the IRC:</p>
+
+        <p><strong>&ldquo;Qualified&rdquo;</strong> means different things in &sect;401 (retirement plans), &sect;529 (education savings), &sect;1031 (property exchanges), &sect;42 (low-income housing), and &sect;179 (depreciation). Five different meanings for one English word, each requiring its own definitional apparatus.</p>
+
+        <p><strong>&ldquo;Person&rdquo;</strong> in &sect;7701 includes corporations. In common English it means a human being. The gap between these two meanings is the entire body of entity taxation law.</p>
+
+        <p><strong>&ldquo;Income&rdquo;</strong> in &sect;61 is broader than economic income, narrower than accounting income, and different from cash flow. Three disciplines, three meanings, one English word.</p>
+
+        <p><strong>&ldquo;Employee&rdquo; vs &ldquo;independent contractor&rdquo;</strong> &mdash; the IRC&rsquo;s definition doesn&rsquo;t match the common law test, which doesn&rsquo;t match the economic reality test. Three legal frameworks, still arguing about what one English word means.</p>
+
+        <p>This is <em>exactly</em> the clusivity problem from the <a href="unsayable.html">unsayable analysis</a>: English &ldquo;we&rdquo; doesn&rsquo;t distinguish inclusive/exclusive. English &ldquo;qualified&rdquo; doesn&rsquo;t distinguish <em>which</em> qualifications. The tax code patches this with local definitions, but each patch creates new ambiguity at its boundary.</p>
+    </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════════
+     SECTION 4: THE GRAMMAR-TO-LAW PIPELINE
+     ═══════════════════════════════════════════════════════════════ -->
+
+<h2 id="pipeline">4. The Grammar-to-Law Pipeline</h2>
+
+<p>Each grammatical gap identified in the <a href="unsayable.html">enemies analysis</a> has a direct counterpart in the tax code. The table below maps the unsayable dimensions to the IRC patches that compensate for them.</p>
+
+<table>
+    <tr><th>English Gap (from enemies/)</th><th>Tax Code Patch</th><th>Cost of the Patch</th></tr>
+    <tr>
+        <td>No evidentiality marking</td>
+        <td>Documentation requirements, substantiation rules, record-keeping mandates</td>
+        <td>IRS form burden: 7.9 billion hours/year</td>
+    </tr>
+    <tr>
+        <td>No clusivity (&ldquo;we&rdquo; is ambiguous)</td>
+        <td>Entity classification rules (&sect;7701), check-the-box regulations</td>
+        <td>Entire body of entity law</td>
+    </tr>
+    <tr>
+        <td>No definitional scope marking</td>
+        <td>&ldquo;For purposes of this section&hellip;&rdquo; &mdash; hundreds of local definitions</td>
+        <td>Thousands of pages of definitions</td>
+    </tr>
+    <tr>
+        <td>No moral precision (&ldquo;bad&rdquo; is vague)</td>
+        <td>Penalty tiers: negligence (&sect;6662), substantial understatement, fraud (&sect;6663)</td>
+        <td>Each tier requires separate proof standard</td>
+    </tr>
+    <tr>
+        <td>Count noun bias (ideas as objects)</td>
+        <td>&ldquo;Property&rdquo; defined broadly to include intangible rights, creating IP taxation complexity</td>
+        <td>Transfer pricing rules (&sect;482)</td>
+    </tr>
+    <tr>
+        <td>No grammatical precision on time</td>
+        <td>Taxable year, accounting periods, recognition timing, realization doctrine</td>
+        <td>Entire temporal framework of tax law</td>
+    </tr>
+</table>
+
+<div class="key-finding">
+    <div class="finding-title">The Prosthesis</div>
+    If English had grammatical evidentiality, the IRS wouldn&rsquo;t need substantiation requirements. If English had definitional scoping, the phrase &ldquo;for purposes of this section&rdquo; wouldn&rsquo;t exist. If English had moral precision baked into its lexicon, the penalty tiers (negligence vs willful vs fraudulent) wouldn&rsquo;t need separate proof standards. The tax code is, in substantial part, a 10-million-word patch for a grammar that refuses to be precise.
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════════
+     SECTION 5: THE CIRCULAR DEFINITION PROBLEM
+     ═══════════════════════════════════════════════════════════════ -->
+
+<h2 id="circular">5. The Circular Definition Problem</h2>
+
+<p>Some of the IRC&rsquo;s most important terms are defined circularly or not at all. These are the places where the grammar patch fails &mdash; where English&rsquo;s ambiguity is so deep that even millions of words of definition cannot close the gap.</p>
+
+<div class="circular-grid">
+    <div class="circular-item">
+        <div class="circ-title">&ldquo;Trade or business&rdquo;</div>
+        <div class="circ-section">Used 339+ times. Never defined.</div>
+        <p>The Supreme Court in <em>Groetzinger</em> (1987) admitted it couldn&rsquo;t define it either. The most fundamental term in tax law has no statutory definition because English cannot draw the boundary between an activity that is a &ldquo;trade or business&rdquo; and one that is not.</p>
+    </div>
+    <div class="circular-item">
+        <div class="circ-title">&ldquo;Reasonable compensation&rdquo;</div>
+        <div class="circ-section">&sect;162(a)(1)</div>
+        <p>What is reasonable? Courts use multi-factor tests because English cannot specify. The word &ldquo;reasonable&rdquo; is itself a placeholder for a judgment that the grammar refuses to encode.</p>
+    </div>
+    <div class="circular-item">
+        <div class="circ-title">&ldquo;Ordinary and necessary&rdquo;</div>
+        <div class="circ-section">&sect;162</div>
+        <p><em>Welch v. Helvering</em> (1933): &ldquo;life in all its fullness must supply the answer.&rdquo; Justice Cardozo conceded that the phrase has no stable meaning &mdash; it is English at its most strategically vague.</p>
+    </div>
+    <div class="circular-item">
+        <div class="circ-title">&ldquo;Fair market value&rdquo;</div>
+        <div class="circ-section">Used everywhere</div>
+        <p>Defined in regulations as &ldquo;the price at which the property would change hands between a willing buyer and a willing seller, neither being under any compulsion to buy or to sell and both having reasonable knowledge of relevant facts.&rdquo; That is 38 words to define a 3-word phrase. And still litigated constantly.</p>
+    </div>
+    <div class="circular-item">
+        <div class="circ-title">&ldquo;Substantially all&rdquo;</div>
+        <div class="circ-section">&sect;368 (reorganizations)</div>
+        <p>Never defined. IRS guidelines suggest 90% of assets and 70% of operating assets. But &ldquo;substantially&rdquo; is inherently vague in English &mdash; it resists quantification because the language does not grammatically distinguish degrees of completeness.</p>
+    </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════════
+     SECTION 6: COMPARISON TO OTHER LEGAL SYSTEMS
+     ═══════════════════════════════════════════════════════════════ -->
+
+<h2 id="comparison">6. Comparison to Other Legal Systems</h2>
+
+<p>How do other legal traditions handle the same problem? The answer depends, in part, on the grammatical resources of the underlying language.</p>
+
+<div class="concept-card">
+    <div class="concept-header">
+        <span class="concept-title">German: Abgabenordnung</span>
+        <span class="concept-tag tag-linguistic">Compound nouns + case system</span>
+    </div>
+    <div class="concept-body">
+        <p>German&rsquo;s compound noun system allows precise term creation. &ldquo;Einkommensteuergesetz&rdquo; is one word: income-tax-law. The language&rsquo;s grammatical case system (nominative, accusative, dative, genitive) reduces referential ambiguity &mdash; you know <em>who</em> is doing <em>what</em> to <em>whom</em> from the noun endings, not from word order. German tax law is complex but more structurally precise. The grammar does some of the work that English offloads to definitions sections.</p>
+    </div>
+</div>
+
+<div class="concept-card">
+    <div class="concept-header">
+        <span class="concept-title">Civil Law Systems</span>
+        <span class="concept-tag tag-legal">Centralized codes</span>
+    </div>
+    <div class="concept-body">
+        <p>Civil law systems generally centralize definitions in codes rather than scattering them across sections. The &ldquo;for purposes of this section&rdquo; pattern is less common because the code structure is more systematic. Definitions are declared once and imported by reference &mdash; closer to how a programming language handles scope than how English handles context.</p>
+    </div>
+</div>
+
+<div class="concept-card">
+    <div class="concept-header">
+        <span class="concept-title">Chinese Tax Law</span>
+        <span class="concept-tag tag-linguistic">Topic-prominent grammar</span>
+    </div>
+    <div class="concept-body">
+        <p>Chinese&rsquo;s topic-prominent grammar and classifier system create different ambiguities. &ldquo;Income&rdquo; (&#x6240;&#x5F97;, su&#x1E4F;d&eacute;, &ldquo;that which is obtained&rdquo;) is more process-oriented than English&rsquo;s nominalization. The word itself encodes a directional metaphor &mdash; income is something that <em>arrives at you</em>, not something you <em>possess</em>. The conceptual framework is different before any law is written.</p>
+    </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════════
+     SECTION 7: THE INFORMATION-THEORETIC VIEW
+     ═══════════════════════════════════════════════════════════════ -->
+
+<h2 id="entropy">7. The Information-Theoretic View</h2>
+
+<p>The growth of the tax code can be modeled as an entropy reduction process.</p>
+
+<div class="formula">
+    <div class="formula-title">The Entropy Reduction Model</div>
+    English natural language has <strong>HIGH</strong> entropy (many possible interpretations per sentence).<br>
+    Legal precision requires <strong>LOW</strong> entropy (one interpretation per sentence).<br>
+    Each definition section reduces entropy locally but adds complexity globally.<br>
+    The 10-million-word count is an estimate of the information needed to pin English down to legal precision across the tax domain.
+</div>
+
+<div class="formula">
+    <div class="formula-title">Definition Overhead Ratio</div>
+    R<sub>def</sub> = (words of definition) / (words of operative rule)<br><br>
+    Early IRC (1913): &nbsp;R<sub>def</sub> &asymp; 0.5 &mdash; for every word of rule, half a word of definition<br>
+    Modern IRC (2024): R<sub>def</sub> &asymp; 2.0&ndash;3.0 &mdash; for every word that says what the law <em>is</em>, 2&ndash;3 words define what the terms <em>mean</em><br><br>
+    The ratio inverted. The definitions now outweigh the rules. The patch is larger than the program.
+</div>
+
+<div class="key-finding">
+    <div class="finding-title">The Codec</div>
+    The IRC is not a description of tax policy. It is a 10-million-word natural language processing system that attempts to convert ambiguous English into deterministic rules. It is, in information-theoretic terms, a codec &mdash; and it leaks.
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════════
+     SECTION 8: WHY IT KEEPS GROWING
+     ═══════════════════════════════════════════════════════════════ -->
+
+<h2 id="feedback">8. Why It Keeps Growing</h2>
+
+<p>The tax code cannot stop growing because it is trapped in a positive feedback loop. Each step in the cycle produces the input for the next.</p>
+
+<div class="feedback-loop">
+    <div class="loop-step"><span class="loop-num">1</span> A new economic activity creates new undefined terms that need patching.</div>
+    <div class="loop-arrow">&darr;</div>
+    <div class="loop-step"><span class="loop-num">2</span> Each definition creates boundary ambiguity that generates litigation.</div>
+    <div class="loop-arrow">&darr;</div>
+    <div class="loop-step"><span class="loop-num">3</span> Each court decision creates a new interpretive rule that gets codified.</div>
+    <div class="loop-arrow">&darr;</div>
+    <div class="loop-step"><span class="loop-num">4</span> Each codification uses more English terms that need defining.</div>
+    <div class="loop-arrow">&darr;</div>
+    <div class="loop-step"><span class="loop-num">5</span> Repeat. The loop has no termination condition.</div>
+</div>
+
+<p>This is the same structure as the extinction curve in the <a href="languages.html">languages page</a>, but inverted: instead of languages dying, definitions are being born. The tax code is the fastest-growing &ldquo;language&rdquo; in human history &mdash; 144,500 words per year, every year, for seven decades.</p>
+
+<div class="callout callout-red">
+    <strong>The feedback loop is structural, not political.</strong> Tax reform does not shrink the code. The Tax Reform Act of 1986 &mdash; the largest simplification attempt in history &mdash; produced a net <em>increase</em> in word count. Simplification in English requires more words, not fewer, because every removed ambiguity must be replaced with explicit specification. You cannot simplify a grammar patch without a better grammar.
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════════
+     UNCERTAINTY
+     ═══════════════════════════════════════════════════════════════ -->
+
+<div class="uncertainty-box">
+    <div class="ub-title">Uncertainty</div>
+    <ul>
+        <li>Word counts vary by source and counting methodology (Tax Foundation, NTU Foundation, and CCH use different baselines). The figures cited here follow the most commonly referenced estimates.</li>
+        <li>Growth rates are approximate; the code grows in legislative bursts, not at a constant rate.</li>
+        <li>The &ldquo;grammar patch&rdquo; framing is the author&rsquo;s analytical lens, not a claim from tax scholarship. Tax complexity has many causes &mdash; lobbying, political compromise, economic complexity &mdash; and grammatical ambiguity is one contributing factor, not the sole explanation.</li>
+        <li>The comparison to other legal systems is simplified. Every legal tradition struggles with definitional precision; the degree to which grammatical structure helps or hinders varies.</li>
+        <li>The definition overhead ratio is an estimate based on structural analysis of selected IRC sections, not a comprehensive measurement.</li>
+    </ul>
+</div>
+
+<footer>
+    Sources: Tax Foundation (2024) &middot; NTU Foundation &middot; IRS &middot; Cornell Legal Information Institute &middot;
+    <em>Groetzinger v. Commissioner</em>, 480 U.S. 23 (1987) &middot; <em>Welch v. Helvering</em>, 290 U.S. 111 (1933) &middot;
+    CCH Standard Federal Tax Reporter &middot; Joint Committee on Taxation<br><br>
+    <a href="index.html">Overview</a> &middot; <a href="translations.html">Translations</a> &middot;
+    <a href="dimensions.html">Dimensions</a> &middot; <a href="unsayable.html">The Unsayable</a> &middot;
+    <a href="algorithms.html">Algorithms</a> &middot; <a href="languages.html">Languages</a> &middot;
+    <a href="integration.html">Integration</a> &middot; <a href="taxcode.html">Tax Code</a>
+</footer>
+
+<script>
+// === GROWTH CURVE CHART: Tax Code Word Count Over Time ===
+(function() {
+    const canvas = document.getElementById('growthChart');
+    const ctx = canvas.getContext('2d');
+    const dpr = window.devicePixelRatio || 1;
+
+    function resize() {
+        const rect = canvas.parentElement.getBoundingClientRect();
+        const w = rect.width - 48;
+        const h = 480;
+        canvas.width = w * dpr;
+        canvas.height = h * dpr;
+        canvas.style.width = w + 'px';
+        canvas.style.height = h + 'px';
+        ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+        return { w, h };
+    }
+
+    function draw() {
+        const { w, h } = resize();
+        const pad = { top: 40, right: 40, bottom: 60, left: 80 };
+        const pw = w - pad.left - pad.right;
+        const ph = h - pad.top - pad.bottom;
+
+        ctx.clearRect(0, 0, w, h);
+
+        // Data: [year, words]
+        const data = [
+            [1913, 5000],
+            [1920, 15000],
+            [1939, 500000],
+            [1954, 1400000],
+            [1969, 2000000],
+            [1986, 3000000],
+            [2001, 4500000],
+            [2010, 7500000],
+            [2017, 10000000],
+            [2024, 10100000]
+        ];
+
+        // Legislative event annotations
+        const annotations = [
+            [1913, 5000, 'Revenue Act 1913', 'above-right'],
+            [1954, 1400000, 'IRC 1954', 'above-right'],
+            [1986, 3000000, 'Tax Reform Act 1986', 'above-left'],
+            [2017, 10000000, 'TCJA 2017', 'above-left']
+        ];
+
+        // Scale
+        const xMin = 1905, xMax = 2030;
+        const yMin = 0, yMax = 11000000;
+
+        function toX(year) { return pad.left + (year - xMin) / (xMax - xMin) * pw; }
+        function toY(words) { return pad.top + (1 - (words - yMin) / (yMax - yMin)) * ph; }
+
+        // Grid lines
+        ctx.strokeStyle = '#21262d';
+        ctx.lineWidth = 1;
+        ctx.setLineDash([2, 4]);
+        // Y grid
+        for (let y = 0; y <= 11000000; y += 1000000) {
+            const yy = toY(y);
+            ctx.beginPath(); ctx.moveTo(pad.left, yy); ctx.lineTo(w - pad.right, yy); ctx.stroke();
+        }
+        // X grid
+        for (let yr = 1920; yr <= 2020; yr += 20) {
+            const xx = toX(yr);
+            ctx.beginPath(); ctx.moveTo(xx, pad.top); ctx.lineTo(xx, pad.top + ph); ctx.stroke();
+        }
+        ctx.setLineDash([]);
+
+        // Y axis labels
+        ctx.fillStyle = '#8b949e';
+        ctx.font = '11px SF Mono, Fira Code, monospace';
+        ctx.textAlign = 'right';
+        for (let y = 0; y <= 10000000; y += 2000000) {
+            const label = y === 0 ? '0' : (y / 1000000) + 'M';
+            ctx.fillText(label, pad.left - 10, toY(y) + 4);
+        }
+
+        // X axis labels
+        ctx.textAlign = 'center';
+        const xLabels = [1913, 1920, 1940, 1960, 1980, 2000, 2020];
+        for (const yr of xLabels) {
+            ctx.fillText(yr.toString(), toX(yr), pad.top + ph + 20);
+        }
+
+        // Axis titles
+        ctx.fillStyle = '#58a6ff';
+        ctx.font = '12px SF Mono, Fira Code, monospace';
+        ctx.textAlign = 'center';
+        ctx.fillText('Year', w / 2, h - 8);
+        ctx.save();
+        ctx.translate(16, h / 2);
+        ctx.rotate(-Math.PI / 2);
+        ctx.fillText('Words (Code + Regulations)', 0, 0);
+        ctx.restore();
+
+        // Filled area under curve
+        ctx.beginPath();
+        ctx.moveTo(toX(data[0][0]), toY(data[0][1]));
+        for (let i = 1; i < data.length; i++) {
+            // Smooth curve using quadratic bezier
+            const prevX = toX(data[i-1][0]);
+            const prevY = toY(data[i-1][1]);
+            const currX = toX(data[i][0]);
+            const currY = toY(data[i][1]);
+            const cpX = (prevX + currX) / 2;
+            ctx.quadraticCurveTo(cpX, prevY, currX, currY);
+        }
+        ctx.lineTo(toX(data[data.length - 1][0]), pad.top + ph);
+        ctx.lineTo(toX(data[0][0]), pad.top + ph);
+        ctx.closePath();
+        const grad = ctx.createLinearGradient(0, pad.top, 0, pad.top + ph);
+        grad.addColorStop(0, 'rgba(88, 166, 255, 0.15)');
+        grad.addColorStop(1, 'rgba(88, 166, 255, 0.02)');
+        ctx.fillStyle = grad;
+        ctx.fill();
+
+        // The curve (line)
+        ctx.beginPath();
+        ctx.moveTo(toX(data[0][0]), toY(data[0][1]));
+        for (let i = 1; i < data.length; i++) {
+            const prevX = toX(data[i-1][0]);
+            const prevY = toY(data[i-1][1]);
+            const currX = toX(data[i][0]);
+            const currY = toY(data[i][1]);
+            const cpX = (prevX + currX) / 2;
+            ctx.quadraticCurveTo(cpX, prevY, currX, currY);
+        }
+        ctx.strokeStyle = '#58a6ff';
+        ctx.lineWidth = 2.5;
+        ctx.stroke();
+
+        // Data points
+        for (const [year, words] of data) {
+            ctx.beginPath();
+            ctx.arc(toX(year), toY(words), 4, 0, Math.PI * 2);
+            ctx.fillStyle = '#58a6ff';
+            ctx.fill();
+            ctx.strokeStyle = '#0d1117';
+            ctx.lineWidth = 1.5;
+            ctx.stroke();
+        }
+
+        // Annotation lines and labels for key legislative events
+        ctx.font = '10px SF Mono, Fira Code, monospace';
+        for (const [year, words, label, pos] of annotations) {
+            const px = toX(year);
+            const py = toY(words);
+
+            // Vertical dashed line from point to annotation
+            ctx.save();
+            ctx.setLineDash([3, 3]);
+            ctx.strokeStyle = '#d29922';
+            ctx.lineWidth = 1;
+
+            let textX, textY, align;
+
+            if (pos === 'above-right') {
+                textX = px + 10;
+                textY = py - 20;
+                align = 'left';
+                ctx.beginPath();
+                ctx.moveTo(px, py - 6);
+                ctx.lineTo(px, py - 14);
+                ctx.stroke();
+            } else {
+                textX = px - 10;
+                textY = py - 20;
+                align = 'right';
+                ctx.beginPath();
+                ctx.moveTo(px, py - 6);
+                ctx.lineTo(px, py - 14);
+                ctx.stroke();
+            }
+            ctx.restore();
+
+            // Label
+            ctx.fillStyle = '#d29922';
+            ctx.textAlign = align;
+            ctx.fillText(label, textX, textY);
+        }
+
+        // Callout: definition overhead ratio annotation
+        ctx.fillStyle = '#f85149';
+        ctx.font = '10px SF Mono, Fira Code, monospace';
+        ctx.textAlign = 'left';
+        const annX = toX(1960);
+        const annY = toY(7500000);
+        ctx.fillText('Exponential: driven by', annX, annY);
+        ctx.fillText('definitional patches', annX, annY + 14);
+
+        // Axes
+        ctx.strokeStyle = '#30363d';
+        ctx.lineWidth = 1;
+        ctx.beginPath();
+        ctx.moveTo(pad.left, pad.top);
+        ctx.lineTo(pad.left, pad.top + ph);
+        ctx.lineTo(w - pad.right, pad.top + ph);
+        ctx.stroke();
+    }
+
+    draw();
+    window.addEventListener('resize', draw);
+})();
+</script>
+
+</body>
+</html>
