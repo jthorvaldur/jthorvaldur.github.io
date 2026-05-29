@@ -503,6 +503,7 @@
     <button class="tab-btn" data-tab="physical">Physical Backing</button>
     <button class="tab-btn" data-tab="p2p">P2P Transfer</button>
     <button class="tab-btn" data-tab="supply">Supply Model</button>
+    <button class="tab-btn" data-tab="evaluation">Multi-Agent Eval</button>
   </div>
 
   <!-- ═══════════════════════════════════════════════ -->
@@ -874,6 +875,507 @@
     </div>
   </div>
 
+
+  <div class="tab-panel" id="panel-evaluation">
+    
+    <p class="section-label">Overall Assessment</p>
+    <div style="display:flex;gap:1.5rem;flex-wrap:wrap;margin-bottom:2rem;">
+      <div class="card" style="flex:1;min-width:250px;border-color:#e0af6844;">
+        <p style="font-family:'JetBrains Mono',monospace;font-size:0.55rem;letter-spacing:0.15em;text-transform:uppercase;color:#e0af68;margin-bottom:8px;">Consensus Verdict</p>
+        <p style="font-size:1.8rem;font-weight:600;color:#e0af68;text-transform:uppercase;">caution</p>
+        <p style="font-size:0.75rem;color:var(--muted);margin-top:4px;">4/9 agents agree</p>
+        <p style="font-size:0.7rem;color:var(--dim);margin-top:8px;">9 agents evaluated across 8 dimensions</p>
+      </div>
+      <div class="card" style="flex:1;min-width:250px;">
+        <p style="font-family:'JetBrains Mono',monospace;font-size:0.55rem;letter-spacing:0.15em;text-transform:uppercase;color:var(--accent);margin-bottom:8px;">Verdict Distribution</p>
+        <canvas id="chart-verdict-dist" height="120"></canvas>
+      </div>
+    </div>
+
+    <p class="section-label">Dimension Consensus (9 Agents)</p>
+    <div class="chart-row">
+      <div class="chart-wrap">
+        <h3>Score Range by Dimension</h3>
+        <canvas id="chart-dim-radar"></canvas>
+        <p class="chart-note">Shaded area = min/max range across agents. Line = mean score.</p>
+      </div>
+      <div class="chart-wrap">
+        <h3>Agent × Dimension Heatmap</h3>
+        <canvas id="chart-heatmap"></canvas>
+      </div>
+    </div>
+
+    <p class="section-label">Agent Perspectives (9 Agents)</p>
+    <div class="card-grid">
+      <div class="card" style="border-left: 3px solid #e0af68;">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
+          <h3 style="margin:0;">Regulatory</h3>
+          <span class="badge" style="background:#e0af6822;color:#e0af68;">CAUTION</span>
+        </div>
+        <p style="font-size:0.68rem;color:var(--dim);margin-bottom:8px;font-style:italic;">Securities attorney evaluating legal classification and compliance burden</p>
+        <p style="font-size:0.75rem;color:var(--muted);margin-bottom:8px;">Avg score: <span style="color:var(--text);font-weight:600;">5.1/10</span></p>
+        <p style="font-size:0.75rem;color:var(--text);margin-bottom:6px;font-weight:500;">Key insight:</p>
+        <p style="font-size:0.72rem;color:var(--muted);line-height:1.55;">The token price exceeding the arbitrage upper bound ($4.09 > $4.00) actually helps the security analysis — it means the token is priced by fundamentals (cost of goods), not speculation, which weakens the Howey investment contract argument.</p>
+      </div>
+<div class="card" style="border-left: 3px solid #73daca;">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
+          <h3 style="margin:0;">Supply Chain</h3>
+          <span class="badge" style="background:#73daca22;color:#73daca;">CONDITIONAL</span>
+        </div>
+        <p style="font-size:0.68rem;color:var(--dim);margin-bottom:8px;font-style:italic;">Commodity logistics operator evaluating physical custody and delivery feasibility</p>
+        <p style="font-size:0.75rem;color:var(--muted);margin-bottom:8px;">Avg score: <span style="color:var(--text);font-weight:600;">6.1/10</span></p>
+        <p style="font-size:0.75rem;color:var(--text);margin-bottom:6px;font-weight:500;">Key insight:</p>
+        <p style="font-size:0.72rem;color:var(--muted);line-height:1.55;">The audit cost structure is backwards. At current scale, you're paying $2,500/yr to audit $12,000 worth of honey (21% of inventory value annually). This only makes sense at 100K+ lbs where audit costs drop to <0.5% of value.</p>
+      </div>
+<div class="card" style="border-left: 3px solid #73daca;">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
+          <h3 style="margin:0;">Tokenomics</h3>
+          <span class="badge" style="background:#73daca22;color:#73daca;">CONDITIONAL</span>
+        </div>
+        <p style="font-size:0.68rem;color:var(--dim);margin-bottom:8px;font-style:italic;">DeFi protocol designer evaluating token mechanics and crypto-native risks</p>
+        <p style="font-size:0.75rem;color:var(--muted);margin-bottom:8px;">Avg score: <span style="color:var(--text);font-weight:600;">5.8/10</span></p>
+        <p style="font-size:0.75rem;color:var(--text);margin-bottom:6px;font-weight:500;">Key insight:</p>
+        <p style="font-size:0.72rem;color:var(--muted);line-height:1.55;">The 10% overhead margin is doing double damage: it pushes the token price above the arbitrage ceiling AND it strengthens the 'investment contract' argument because the margin implies profit extraction by the promoter.</p>
+      </div>
+<div class="card" style="border-left: 3px solid #9ece6a;">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
+          <h3 style="margin:0;">Agriculture</h3>
+          <span class="badge" style="background:#9ece6a22;color:#9ece6a;">GO</span>
+        </div>
+        <p style="font-size:0.68rem;color:var(--dim);margin-bottom:8px;font-style:italic;">Commodity market analyst evaluating honey industry dynamics and physical product risks</p>
+        <p style="font-size:0.75rem;color:var(--muted);margin-bottom:8px;">Avg score: <span style="color:var(--text);font-weight:600;">6.6/10</span></p>
+        <p style="font-size:0.75rem;color:var(--text);margin-bottom:6px;font-weight:500;">Key insight:</p>
+        <p style="font-size:0.72rem;color:var(--muted);line-height:1.55;">The current model targets commodity-grade wholesale ($3.50/lb) which has near-zero margin for platform overhead. Pivoting to premium/artisanal varieties ($15-30/lb) changes the economics entirely — a 10% overhead on $20 honey is $2.00, not $0.35. The anti-adulteration story is also stronger at the premium end.</p>
+      </div>
+<div class="card" style="border-left: 3px solid #9ece6a;">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
+          <h3 style="margin:0;">Technology</h3>
+          <span class="badge" style="background:#9ece6a22;color:#9ece6a;">GO</span>
+        </div>
+        <p style="font-size:0.68rem;color:var(--dim);margin-bottom:8px;font-style:italic;">Systems architect evaluating infrastructure choices and technical risk</p>
+        <p style="font-size:0.75rem;color:var(--muted);margin-bottom:8px;">Avg score: <span style="color:var(--text);font-weight:600;">7.2/10</span></p>
+        <p style="font-size:0.75rem;color:var(--text);margin-bottom:6px;font-weight:500;">Key insight:</p>
+        <p style="font-size:0.72rem;color:var(--muted);line-height:1.55;">The P2P transfer analysis overcomplicates things. For launch, you need exactly two transfer modes: on-chain (internet) and QR signed intent (farmers market). State channels, libp2p, and BLE mesh are engineering solutions looking for problems that don't exist yet. Ship with 2 modes, add others when usage data justifies them.</p>
+      </div>
+<div class="card" style="border-left: 3px solid #e0af68;">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
+          <h3 style="margin:0;">Market</h3>
+          <span class="badge" style="background:#e0af6822;color:#e0af68;">CAUTION</span>
+        </div>
+        <p style="font-size:0.68rem;color:var(--dim);margin-bottom:8px;font-style:italic;">Product strategist evaluating market fit, user personas, and go-to-market</p>
+        <p style="font-size:0.75rem;color:var(--muted);margin-bottom:8px;">Avg score: <span style="color:var(--text);font-weight:600;">5.5/10</span></p>
+        <p style="font-size:0.75rem;color:var(--text);margin-bottom:6px;font-weight:500;">Key insight:</p>
+        <p style="font-size:0.72rem;color:var(--muted);line-height:1.55;">The biggest competitor isn't another crypto project — it's the farmers market vendor who says 'I made this honey, here's my farm address, taste it.' That vendor offers everything the token promises (provenance, trust, direct relationship) without any technology. The token only wins when the buyer and seller are NOT in the same room — online, cross-regional, gifting.</p>
+      </div>
+<div class="card" style="border-left: 3px solid #e0af68;">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
+          <h3 style="margin:0;">Financial</h3>
+          <span class="badge" style="background:#e0af6822;color:#e0af68;">CAUTION</span>
+        </div>
+        <p style="font-size:0.68rem;color:var(--dim);margin-bottom:8px;font-style:italic;">CFO evaluating capital requirements, unit economics, and financial risk</p>
+        <p style="font-size:0.75rem;color:var(--muted);margin-bottom:8px;">Avg score: <span style="color:var(--text);font-weight:600;">5.4/10</span></p>
+        <p style="font-size:0.75rem;color:var(--text);margin-bottom:6px;font-weight:500;">Key insight:</p>
+        <p style="font-size:0.72rem;color:var(--muted);line-height:1.55;">The single biggest financial insight: at $3.50/lb wholesale, the net margin is $0.26/lb after variable costs. You'd need 334,615 lbs (507 drums) just to break even. That's a legitimate small warehouse operation. At $15/lb artisanal honey, break-even drops to ~29,000 lbs — still a lot but achievable with 5-10 beekeepers.</p>
+      </div>
+<div class="card" style="border-left: 3px solid #e0af68;">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
+          <h3 style="margin:0;">Adversarial</h3>
+          <span class="badge" style="background:#e0af6822;color:#e0af68;">CAUTION</span>
+        </div>
+        <p style="font-size:0.68rem;color:var(--dim);margin-bottom:8px;font-style:italic;">Red team analyst stress-testing every assumption and identifying kill scenarios</p>
+        <p style="font-size:0.75rem;color:var(--muted);margin-bottom:8px;">Avg score: <span style="color:var(--text);font-weight:600;">3.9/10</span></p>
+        <p style="font-size:0.75rem;color:var(--text);margin-bottom:6px;font-weight:500;">Key insight:</p>
+        <p style="font-size:0.72rem;color:var(--muted);line-height:1.55;">Every physical-backed token has a fundamental contradiction: blockchain eliminates the need to trust intermediaries, but physical custody requires trusting intermediaries. The honest pitch isn't 'trustless honey' — it's 'auditable honey with transparent custody.' The blockchain isn't replacing trust, it's making trust verifiable.</p>
+      </div>
+<div class="card" style="border-left: 3px solid #73daca;">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
+          <h3 style="margin:0;">Historical</h3>
+          <span class="badge" style="background:#73daca22;color:#73daca;">CONDITIONAL</span>
+        </div>
+        <p style="font-size:0.68rem;color:var(--dim);margin-bottom:8px;font-style:italic;">Analyst studying comparable projects to extract patterns of success and failure</p>
+        <p style="font-size:0.75rem;color:var(--muted);margin-bottom:8px;">Avg score: <span style="color:var(--text);font-weight:600;">5.2/10</span></p>
+        <p style="font-size:0.75rem;color:var(--text);margin-bottom:6px;font-weight:500;">Key insight:</p>
+        <p style="font-size:0.72rem;color:var(--muted);line-height:1.55;">The critical insight from comparables: the value-to-weight ratio determines viability. Gold: $77K/lb, storage cost is 0.005% of value. Honey: $4/lb, storage cost is 6% of value. This 1,200x disadvantage means honey tokenization ONLY works at premium pricing or B2B where the traceability service, not the commodity margin, generates revenue.</p>
+      </div>
+    </div>
+
+    <p class="section-label">Risk Matrix</p>
+    <div class="chart-row">
+      <div class="chart-wrap">
+        <h3>Likelihood × Impact</h3>
+        <canvas id="chart-risk-matrix"></canvas>
+        <p class="chart-note">Bubble size = severity (likelihood × impact). Top-right = critical.</p>
+      </div>
+      <div class="chart-wrap" style="overflow-x:auto;">
+        <h3>Top Risks by Severity</h3>
+        <table class="data-table">
+          <thead><tr><th>Sev</th><th>Risk</th><th>Prob</th><th>Impact</th><th>Mitigation</th><th>Source</th></tr></thead>
+          <tbody><tr>
+        <td style="color:#f7768e;font-weight:600;" class="mono">0.52</td>
+        <td>Arbitrage gap on day 1 — token overpriced vs physical</td>
+        <td class="mono">80%</td>
+        <td class="mono">65%</td>
+        <td style="font-size:0.7rem;color:var(--dim);">Reduce overhead margin from 10% to 5-7%, or explicitly model redemption friction...</td>
+        <td style="font-size:0.68rem;">Tokenomics</td>
+      </tr><tr>
+        <td style="color:#e0af68;font-weight:600;" class="mono">0.48</td>
+        <td>Storage cost as % of value is 1,200x worse than gold</td>
+        <td class="mono">80%</td>
+        <td class="mono">60%</td>
+        <td style="font-size:0.7rem;color:var(--dim);">Premium honey ($15-20/lb) reduces ratio to ~300x. Still worse than gold but mana...</td>
+        <td style="font-size:0.68rem;">Historical</td>
+      </tr><tr>
+        <td style="color:#e0af68;font-weight:600;" class="mono">0.44</td>
+        <td>Last-mile shipping costs make small redemptions uneconomic</td>
+        <td class="mono">80%</td>
+        <td class="mono">55%</td>
+        <td style="font-size:0.7rem;color:var(--dim);">Partner with regional food distributors. Offer aggregated monthly redemption bat...</td>
+        <td style="font-size:0.68rem;">Supply Chain</td>
+      </tr><tr>
+        <td style="color:#e0af68;font-weight:600;" class="mono">0.42</td>
+        <td>State money transmitter licensing blocks expansion</td>
+        <td class="mono">60%</td>
+        <td class="mono">70%</td>
+        <td style="font-size:0.7rem;color:var(--dim);">Start in states with crypto-friendly frameworks (WY, TX, CO). Apply for federal ...</td>
+        <td style="font-size:0.68rem;">Regulatory</td>
+      </tr><tr>
+        <td style="color:#e0af68;font-weight:600;" class="mono">0.42</td>
+        <td>Minimum viable redemption of 10.5 lbs excludes casual buyers</td>
+        <td class="mono">70%</td>
+        <td class="mono">60%</td>
+        <td style="font-size:0.7rem;color:var(--dim);">Offer local pickup option (zero shipping). Bundle with existing food delivery ne...</td>
+        <td style="font-size:0.68rem;">Supply Chain</td>
+      </tr><tr>
+        <td style="color:#e0af68;font-weight:600;" class="mono">0.42</td>
+        <td>Legal costs consume 46% of fixed expenses</td>
+        <td class="mono">70%</td>
+        <td class="mono">60%</td>
+        <td style="font-size:0.7rem;color:var(--dim);">Explore crypto-legal accelerators or DAO legal structures that amortize complian...</td>
+        <td style="font-size:0.68rem;">Financial</td>
+      </tr><tr>
+        <td style="color:#e0af68;font-weight:600;" class="mono">0.41</td>
+        <td>Break-even requires 334,615 lbs — aggressive for year 1</td>
+        <td class="mono">55%</td>
+        <td class="mono">75%</td>
+        <td style="font-size:0.7rem;color:var(--dim);">Phased approach: start with pre-sales/crowdfunding to validate demand before com...</td>
+        <td style="font-size:0.68rem;">Financial</td>
+      </tr><tr>
+        <td style="color:#e0af68;font-weight:600;" class="mono">0.39</td>
+        <td>Year 1 has 90% chance of loss</td>
+        <td class="mono">60%</td>
+        <td class="mono">65%</td>
+        <td style="font-size:0.7rem;color:var(--dim);">Limit year 1 capital deployment to $150K. Use pre-sales to validate before scali...</td>
+        <td style="font-size:0.68rem;">Financial</td>
+      </tr><tr>
+        <td style="color:#e0af68;font-weight:600;" class="mono">0.39</td>
+        <td>Pattern: agricultural commodity tokens fail at consumer scale</td>
+        <td class="mono">55%</td>
+        <td class="mono">70%</td>
+        <td style="font-size:0.7rem;color:var(--dim);">Hedge by building B2B traceability as parallel revenue stream. If consumer token...</td>
+        <td style="font-size:0.68rem;">Historical</td>
+      </tr><tr>
+        <td style="color:#e0af68;font-weight:600;" class="mono">0.36</td>
+        <td>Two-sided market fails — neither crypto nor honey buyers adopt</td>
+        <td class="mono">45%</td>
+        <td class="mono">80%</td>
+        <td style="font-size:0.7rem;color:var(--dim);">Start with ONE side: honey enthusiasts via food channels, not crypto channels. A...</td>
+        <td style="font-size:0.68rem;">Market</td>
+      </tr><tr>
+        <td style="color:#e0af68;font-weight:600;" class="mono">0.36</td>
+        <td>Tax compliance nightmare — every transfer is a taxable event</td>
+        <td class="mono">65%</td>
+        <td class="mono">55%</td>
+        <td style="font-size:0.7rem;color:var(--dim);">Implement automatic tax lot tracking. Integrate with crypto tax software. Provid...</td>
+        <td style="font-size:0.68rem;">Adversarial</td>
+      </tr><tr>
+        <td style="color:#e0af68;font-weight:600;" class="mono">0.35</td>
+        <td>Liquidity death spiral — low volume → wide spreads → no new buyers</td>
+        <td class="mono">50%</td>
+        <td class="mono">70%</td>
+        <td style="font-size:0.7rem;color:var(--dim);">Seed initial AMM pool with protocol-owned liquidity. Use bonding curve instead o...</td>
+        <td style="font-size:0.68rem;">Tokenomics</td>
+      </tr></tbody>
+        </table>
+      </div>
+    </div>
+
+    <p class="section-label">Validated Strengths</p>
+    <div class="chart-wrap">
+      <div style="margin-bottom:0.8rem;padding-bottom:0.8rem;border-bottom:1px solid var(--border);">
+        <div style="display:flex;justify-content:space-between;align-items:center;">
+          <p style="font-size:0.78rem;font-weight:500;">Honey never spoils under proper storage — unique among foods</p>
+          <span style="font-family:'JetBrains Mono',monospace;font-size:0.6rem;color:var(--green);">98%</span>
+        </div>
+        <p style="font-size:0.68rem;color:var(--dim);margin-top:4px;">3,000-year-old honey found in Egyptian tombs was still edible. No other commodity token can claim zero degradation risk </p>
+        <p style="font-size:0.58rem;color:var(--dim);margin-top:2px;">— Agriculture</p>
+      </div><div style="margin-bottom:0.8rem;padding-bottom:0.8rem;border-bottom:1px solid var(--border);">
+        <div style="display:flex;justify-content:space-between;align-items:center;">
+          <p style="font-size:0.78rem;font-weight:500;">Honey requires zero cold chain infrastructure</p>
+          <span style="font-family:'JetBrains Mono',monospace;font-size:0.6rem;color:var(--green);">95%</span>
+        </div>
+        <p style="font-size:0.68rem;color:var(--dim);margin-top:4px;">Unlike meat, dairy, or produce tokens, honey stores at ambient temperature indefinitely. This eliminates the #1 cost and</p>
+        <p style="font-size:0.58rem;color:var(--dim);margin-top:2px;">— Supply Chain</p>
+      </div><div style="margin-bottom:0.8rem;padding-bottom:0.8rem;border-bottom:1px solid var(--border);">
+        <div style="display:flex;justify-content:space-between;align-items:center;">
+          <p style="font-size:0.78rem;font-weight:500;">Base L2 costs are negligible ($0.005/cycle)</p>
+          <span style="font-family:'JetBrains Mono',monospace;font-size:0.6rem;color:var(--green);">95%</span>
+        </div>
+        <p style="font-size:0.68rem;color:var(--dim);margin-top:4px;">Gas costs are not a factor in economic viability. This was not true 2 years ago on L1.</p>
+        <p style="font-size:0.58rem;color:var(--dim);margin-top:2px;">— Tokenomics</p>
+      </div><div style="margin-bottom:0.8rem;padding-bottom:0.8rem;border-bottom:1px solid var(--border);">
+        <div style="display:flex;justify-content:space-between;align-items:center;">
+          <p style="font-size:0.78rem;font-weight:500;">Entire tech stack is open-source and auditable</p>
+          <span style="font-family:'JetBrains Mono',monospace;font-size:0.6rem;color:var(--green);">95%</span>
+        </div>
+        <p style="font-size:0.68rem;color:var(--dim);margin-top:4px;">No proprietary technology risk. ERC-1155, Chainlink, IPFS, Base are all open protocols with large developer communities.</p>
+        <p style="font-size:0.58rem;color:var(--dim);margin-top:2px;">— Technology</p>
+      </div><div style="margin-bottom:0.8rem;padding-bottom:0.8rem;border-bottom:1px solid var(--border);">
+        <div style="display:flex;justify-content:space-between;align-items:center;">
+          <p style="font-size:0.78rem;font-weight:500;">Honey's shelf life is uniquely favorable vs other food commodities</p>
+          <span style="font-family:'JetBrains Mono',monospace;font-size:0.6rem;color:var(--green);">95%</span>
+        </div>
+        <p style="font-size:0.68rem;color:var(--dim);margin-top:4px;">Coffee, grain, and dairy tokens all face spoilage. Honey doesn't. This eliminates the #1 operational risk that killed ot</p>
+        <p style="font-size:0.58rem;color:var(--dim);margin-top:2px;">— Historical</p>
+      </div><div style="margin-bottom:0.8rem;padding-bottom:0.8rem;border-bottom:1px solid var(--border);">
+        <div style="display:flex;justify-content:space-between;align-items:center;">
+          <p style="font-size:0.78rem;font-weight:500;">Honey adulteration is a real, quantified, $B-scale problem</p>
+          <span style="font-family:'JetBrains Mono',monospace;font-size:0.6rem;color:var(--green);">92%</span>
+        </div>
+        <p style="font-size:0.68rem;color:var(--dim);margin-top:4px;">FDA testing in 2020 found 10-20% of retail honey samples failed purity tests. Chinese honey laundering is documented by </p>
+        <p style="font-size:0.58rem;color:var(--dim);margin-top:2px;">— Agriculture</p>
+      </div><div style="margin-bottom:0.8rem;padding-bottom:0.8rem;border-bottom:1px solid var(--border);">
+        <div style="display:flex;justify-content:space-between;align-items:center;">
+          <p style="font-size:0.78rem;font-weight:500;">Warehouse receipt model is CFTC-recognized and centuries old</p>
+          <span style="font-family:'JetBrains Mono',monospace;font-size:0.6rem;color:var(--green);">90%</span>
+        </div>
+        <p style="font-size:0.68rem;color:var(--dim);margin-top:4px;">Grain, cotton, coffee all use warehouse receipts — honey fits the model</p>
+        <p style="font-size:0.58rem;color:var(--dim);margin-top:2px;">— Regulatory</p>
+      </div><div style="margin-bottom:0.8rem;padding-bottom:0.8rem;border-bottom:1px solid var(--border);">
+        <div style="display:flex;justify-content:space-between;align-items:center;">
+          <p style="font-size:0.78rem;font-weight:500;">ERC-1155 multi-variety model is genuinely elegant for honey</p>
+          <span style="font-family:'JetBrains Mono',monospace;font-size:0.6rem;color:var(--green);">90%</span>
+        </div>
+        <p style="font-size:0.68rem;color:var(--dim);margin-top:4px;">Each token ID = different honey variety. Batch mint at harvest, batch redeem for variety packs. No other token standard </p>
+        <p style="font-size:0.58rem;color:var(--dim);margin-top:2px;">— Tokenomics</p>
+      </div>
+    </div>
+
+    <p class="section-label">Priority Recommendations</p>
+    <div style="display:grid;grid-template-columns:1fr;gap:0.8rem;">
+      <div class="card" style="padding:1rem 1.2rem;">
+        <div style="display:flex;gap:8px;align-items:center;margin-bottom:6px;">
+          <span style="font-family:'JetBrains Mono',monospace;font-size:0.6rem;color:var(--accent);font-weight:600;">#1</span>
+          <span style="font-size:0.5rem;font-family:'JetBrains Mono',monospace;padding:2px 6px;border-radius:4px;background:#f7768e22;color:#f7768e;">EFFORT: HIGH</span>
+          <span style="font-size:0.5rem;font-family:'JetBrains Mono',monospace;padding:2px 6px;border-radius:4px;background:#9ece6a22;color:#9ece6a;">IMPACT: HIGH</span>
+          <span style="font-size:0.5rem;color:var(--dim);margin-left:auto;">Regulatory</span>
+        </div>
+        <p style="font-size:0.8rem;font-weight:500;margin-bottom:4px;">Get formal SEC no-action letter or staff guidance before launch</p>
+        <p style="font-size:0.7rem;color:var(--muted);line-height:1.5;">Eliminates existential regulatory risk. PAX Gold did this.</p>
+      </div><div class="card" style="padding:1rem 1.2rem;">
+        <div style="display:flex;gap:8px;align-items:center;margin-bottom:6px;">
+          <span style="font-family:'JetBrains Mono',monospace;font-size:0.6rem;color:var(--accent);font-weight:600;">#1</span>
+          <span style="font-size:0.5rem;font-family:'JetBrains Mono',monospace;padding:2px 6px;border-radius:4px;background:#e0af6822;color:#e0af68;">EFFORT: MEDIUM</span>
+          <span style="font-size:0.5rem;font-family:'JetBrains Mono',monospace;padding:2px 6px;border-radius:4px;background:#9ece6a22;color:#9ece6a;">IMPACT: HIGH</span>
+          <span style="font-size:0.5rem;color:var(--dim);margin-left:auto;">Supply Chain</span>
+        </div>
+        <p style="font-size:0.8rem;font-weight:500;margin-bottom:4px;">Partner with 1-2 existing USDA honey packers for initial custody</p>
+        <p style="font-size:0.7rem;color:var(--muted);line-height:1.5;">Avoid $500K+ warehouse buildout. Packers have equipment, permits, and intake testing.</p>
+      </div><div class="card" style="padding:1rem 1.2rem;">
+        <div style="display:flex;gap:8px;align-items:center;margin-bottom:6px;">
+          <span style="font-family:'JetBrains Mono',monospace;font-size:0.6rem;color:var(--accent);font-weight:600;">#1</span>
+          <span style="font-size:0.5rem;font-family:'JetBrains Mono',monospace;padding:2px 6px;border-radius:4px;background:#9ece6a22;color:#9ece6a;">EFFORT: LOW</span>
+          <span style="font-size:0.5rem;font-family:'JetBrains Mono',monospace;padding:2px 6px;border-radius:4px;background:#9ece6a22;color:#9ece6a;">IMPACT: HIGH</span>
+          <span style="font-size:0.5rem;color:var(--dim);margin-left:auto;">Tokenomics</span>
+        </div>
+        <p style="font-size:0.8rem;font-weight:500;margin-bottom:4px;">Fix the arbitrage gap: reduce overhead to 5% → token price $3.92 (within bounds)</p>
+        <p style="font-size:0.7rem;color:var(--muted);line-height:1.5;">Current 10% overhead puts price above arbitrage ceiling. At 5%: $3.50 + $0.24 + $0.175 = $3.92</p>
+      </div><div class="card" style="padding:1rem 1.2rem;">
+        <div style="display:flex;gap:8px;align-items:center;margin-bottom:6px;">
+          <span style="font-family:'JetBrains Mono',monospace;font-size:0.6rem;color:var(--accent);font-weight:600;">#1</span>
+          <span style="font-size:0.5rem;font-family:'JetBrains Mono',monospace;padding:2px 6px;border-radius:4px;background:#9ece6a22;color:#9ece6a;">EFFORT: LOW</span>
+          <span style="font-size:0.5rem;font-family:'JetBrains Mono',monospace;padding:2px 6px;border-radius:4px;background:#9ece6a22;color:#9ece6a;">IMPACT: HIGH</span>
+          <span style="font-size:0.5rem;color:var(--dim);margin-left:auto;">Agriculture</span>
+        </div>
+        <p style="font-size:0.8rem;font-weight:500;margin-bottom:4px;">Position as anti-adulteration solution, not crypto product</p>
+        <p style="font-size:0.7rem;color:var(--muted);line-height:1.5;">Lead with provenance and food safety. The blockchain is the mechanism, not the selling point. Consumers buy trust, not tokens.</p>
+      </div><div class="card" style="padding:1rem 1.2rem;">
+        <div style="display:flex;gap:8px;align-items:center;margin-bottom:6px;">
+          <span style="font-family:'JetBrains Mono',monospace;font-size:0.6rem;color:var(--accent);font-weight:600;">#1</span>
+          <span style="font-size:0.5rem;font-family:'JetBrains Mono',monospace;padding:2px 6px;border-radius:4px;background:#e0af6822;color:#e0af68;">EFFORT: MEDIUM</span>
+          <span style="font-size:0.5rem;font-family:'JetBrains Mono',monospace;padding:2px 6px;border-radius:4px;background:#9ece6a22;color:#9ece6a;">IMPACT: HIGH</span>
+          <span style="font-size:0.5rem;color:var(--dim);margin-left:auto;">Technology</span>
+        </div>
+        <p style="font-size:0.8rem;font-weight:500;margin-bottom:4px;">Build a fiat on-ramp: credit card → HONEY token in one step</p>
+        <p style="font-size:0.7rem;color:var(--muted);line-height:1.5;">Non-crypto honey buyers will never use a DEX. Integrate Stripe/Coinbase Commerce for direct purchase.</p>
+      </div><div class="card" style="padding:1rem 1.2rem;">
+        <div style="display:flex;gap:8px;align-items:center;margin-bottom:6px;">
+          <span style="font-family:'JetBrains Mono',monospace;font-size:0.6rem;color:var(--accent);font-weight:600;">#1</span>
+          <span style="font-size:0.5rem;font-family:'JetBrains Mono',monospace;padding:2px 6px;border-radius:4px;background:#9ece6a22;color:#9ece6a;">EFFORT: LOW</span>
+          <span style="font-size:0.5rem;font-family:'JetBrains Mono',monospace;padding:2px 6px;border-radius:4px;background:#9ece6a22;color:#9ece6a;">IMPACT: HIGH</span>
+          <span style="font-size:0.5rem;color:var(--dim);margin-left:auto;">Market</span>
+        </div>
+        <p style="font-size:0.8rem;font-weight:500;margin-bottom:4px;">Launch as a 'Honey CSA' — seasonal subscription, not token exchange</p>
+        <p style="font-size:0.7rem;color:var(--muted);line-height:1.5;">Frame as Community Supported Agriculture for honey. Buy a season's share, receive honey quarterly. Token is the share certificate.</p>
+      </div><div class="card" style="padding:1rem 1.2rem;">
+        <div style="display:flex;gap:8px;align-items:center;margin-bottom:6px;">
+          <span style="font-family:'JetBrains Mono',monospace;font-size:0.6rem;color:var(--accent);font-weight:600;">#1</span>
+          <span style="font-size:0.5rem;font-family:'JetBrains Mono',monospace;padding:2px 6px;border-radius:4px;background:#9ece6a22;color:#9ece6a;">EFFORT: LOW</span>
+          <span style="font-size:0.5rem;font-family:'JetBrains Mono',monospace;padding:2px 6px;border-radius:4px;background:#9ece6a22;color:#9ece6a;">IMPACT: HIGH</span>
+          <span style="font-size:0.5rem;color:var(--dim);margin-left:auto;">Financial</span>
+        </div>
+        <p style="font-size:0.8rem;font-weight:500;margin-bottom:4px;">Pivot pricing to premium honey ($15-20/lb) — commodity margins don't work</p>
+        <p style="font-size:0.7rem;color:var(--muted);line-height:1.5;">At $3.50 wholesale, net margin is $0.26/lb. At $15 wholesale (artisanal), net margin jumps to ~$3/lb. Break-even drops from {be['break_even_lbs']:,.0f} to ~30K lbs.</p>
+      </div><div class="card" style="padding:1rem 1.2rem;">
+        <div style="display:flex;gap:8px;align-items:center;margin-bottom:6px;">
+          <span style="font-family:'JetBrains Mono',monospace;font-size:0.6rem;color:var(--accent);font-weight:600;">#1</span>
+          <span style="font-size:0.5rem;font-family:'JetBrains Mono',monospace;padding:2px 6px;border-radius:4px;background:#9ece6a22;color:#9ece6a;">EFFORT: LOW</span>
+          <span style="font-size:0.5rem;font-family:'JetBrains Mono',monospace;padding:2px 6px;border-radius:4px;background:#9ece6a22;color:#9ece6a;">IMPACT: HIGH</span>
+          <span style="font-size:0.5rem;color:var(--dim);margin-left:auto;">Adversarial</span>
+        </div>
+        <p style="font-size:0.8rem;font-weight:500;margin-bottom:4px;">Answer the kill question first: 'why not just buy honey?'</p>
+        <p style="font-size:0.7rem;color:var(--muted);line-height:1.5;">If you can't articulate in one sentence why tokenization beats Amazon honey, stop building. The answer: 'verified wholesale pricing with transferable ownership.'</p>
+      </div><div class="card" style="padding:1rem 1.2rem;">
+        <div style="display:flex;gap:8px;align-items:center;margin-bottom:6px;">
+          <span style="font-family:'JetBrains Mono',monospace;font-size:0.6rem;color:var(--accent);font-weight:600;">#1</span>
+          <span style="font-size:0.5rem;font-family:'JetBrains Mono',monospace;padding:2px 6px;border-radius:4px;background:#9ece6a22;color:#9ece6a;">EFFORT: LOW</span>
+          <span style="font-size:0.5rem;font-family:'JetBrains Mono',monospace;padding:2px 6px;border-radius:4px;background:#9ece6a22;color:#9ece6a;">IMPACT: HIGH</span>
+          <span style="font-size:0.5rem;color:var(--dim);margin-left:auto;">Historical</span>
+        </div>
+        <p style="font-size:0.8rem;font-weight:500;margin-bottom:4px;">Study PAXG's regulatory playbook in detail — replicate for honey</p>
+        <p style="font-size:0.7rem;color:var(--muted);line-height:1.5;">Paxos published their regulatory strategy. Same framework applies: commodity classification, custodial structure, audit requirements.</p>
+      </div><div class="card" style="padding:1rem 1.2rem;">
+        <div style="display:flex;gap:8px;align-items:center;margin-bottom:6px;">
+          <span style="font-family:'JetBrains Mono',monospace;font-size:0.6rem;color:var(--accent);font-weight:600;">#2</span>
+          <span style="font-size:0.5rem;font-family:'JetBrains Mono',monospace;padding:2px 6px;border-radius:4px;background:#f7768e22;color:#f7768e;">EFFORT: HIGH</span>
+          <span style="font-size:0.5rem;font-family:'JetBrains Mono',monospace;padding:2px 6px;border-radius:4px;background:#9ece6a22;color:#9ece6a;">IMPACT: HIGH</span>
+          <span style="font-size:0.5rem;color:var(--dim);margin-left:auto;">Regulatory</span>
+        </div>
+        <p style="font-size:0.8rem;font-weight:500;margin-bottom:4px;">Structure as 98 Trust + UNA to separate token issuance from custody</p>
+        <p style="font-size:0.7rem;color:var(--muted);line-height:1.5;">Legal isolation between token smart contract and physical warehouse ops</p>
+      </div>
+    </div>
+
+    <script>
+    // Verdict distribution donut
+    new Chart(document.getElementById('chart-verdict-dist'), {
+      type: 'doughnut',
+      data: {
+        labels: ["caution", "conditional", "go"],
+        datasets: [{ data: [4, 3, 2], backgroundColor: ["#e0af68", "#73daca", "#9ece6a"],
+                      borderColor: 'rgba(7,7,15,0.8)', borderWidth: 2 }]
+      },
+      options: { responsive: true, cutout: '55%', plugins: { legend: { position: 'bottom' } } }
+    });
+
+    // Dimension radar
+    new Chart(document.getElementById('chart-dim-radar'), {
+      type: 'radar',
+      data: {
+        labels: ["Market Viability", "Technical Feasibility", "Regulatory Risk", "Economic Sustainability", "Competitive Advantage", "Operational Complexity", "Scalability", "Security"],
+        datasets: [
+          { label: 'Mean', data: [5.7, 7.8, 4.6, 4.7, 5.3, 4.8, 6.1, 6.2], borderColor: ACCENT, backgroundColor: ACCENT+'22',
+             borderWidth: 2, pointRadius: 4 },
+          { label: 'Min', data: [4.0, 7.0, 2.5, 3.0, 3.0, 3.0, 4.5, 4.0], borderColor: RED+'88', backgroundColor: RED+'11',
+             borderWidth: 1, pointRadius: 2, borderDash: [3,3] },
+          { label: 'Max', data: [7.5, 9.0, 7.0, 7.5, 8.0, 7.0, 9.0, 7.0], borderColor: GREEN+'88', backgroundColor: GREEN+'11',
+             borderWidth: 1, pointRadius: 2, borderDash: [3,3] },
+        ]
+      },
+      options: {
+        responsive: true,
+        plugins: { legend: { position: 'bottom' } },
+        scales: { r: {
+          beginAtZero: true, max: 10,
+          grid: { color: 'rgba(255,255,255,0.06)' },
+          angleLines: { color: 'rgba(255,255,255,0.06)' },
+          pointLabels: { font: { family: "'JetBrains Mono', monospace", size: 9, weight: 500 },
+                          color: 'rgba(232,232,244,0.6)' },
+          ticks: { display: false }
+        } }
+      }
+    });
+
+    // Heatmap (bar chart approximation)
+    (() => {
+      const agentNames = ["Regulatory", "Supply Chain", "Tokenomics", "Agriculture", "Technology", "Market", "Financial", "Adversarial", "Historical"];
+      const dimLabels = ["Market Viability", "Technical Feasibility", "Regulatory Risk", "Economic Sustainability", "Competitive Advantage", "Operational Complexity", "Scalability", "Security"];
+      const grid = [[6.0, 7.0, 3.0, 5.5, 4.0, 3.5, 4.5, 7.0], [7.0, 8.0, 5.5, 4.5, 6.5, 5.0, 6.0, 6.5], [5.5, 8.5, 4.0, 4.0, 5.0, 6.0, 7.5, 5.5], [7.5, 7.0, 6.5, 5.0, 8.0, 5.5, 6.0, 7.0], [6.0, 9.0, 7.0, 7.5, 6.0, 7.0, 9.0, 6.0], [5.0, 7.0, 5.0, 4.5, 5.5, 4.0, 6.5, 6.5], [5.5, 8.0, 4.0, 3.5, 4.5, 5.0, 5.5, 7.0], [4.0, 7.5, 2.5, 3.0, 3.0, 3.0, 4.5, 4.0], [5.0, 8.0, 4.0, 4.5, 5.0, 4.5, 5.0, 6.0]];
+      const colors = [ACCENT, ACCENT2, GREEN, AMBER, RED, TEAL, '#c0caf5', '#ff9e64', '#9ece6a'];
+
+      const datasets = agentNames.map((name, i) => ({
+        label: name,
+        data: grid[i],
+        backgroundColor: colors[i % colors.length] + '99',
+        borderColor: colors[i % colors.length],
+        borderWidth: 1,
+      }));
+
+      new Chart(document.getElementById('chart-heatmap'), {
+        type: 'bar',
+        data: { labels: dimLabels, datasets },
+        options: {
+          responsive: true,
+          plugins: {
+            legend: { position: 'bottom', labels: { font: { size: 9 } } },
+          },
+          scales: {
+            x: { grid: { display: false }, ticks: { font: { size: 8 }, maxRotation: 45 } },
+            y: { max: 10, grid: { color: 'rgba(255,255,255,0.04)' },
+                  title: { display: true, text: 'Score', font: { family: "'JetBrains Mono', monospace", size: 10 } } }
+          }
+        }
+      });
+    })();
+
+    // Risk matrix (bubble chart)
+    new Chart(document.getElementById('chart-risk-matrix'), {
+      type: 'bubble',
+      data: {
+        datasets: [{
+          label: 'Risks',
+          data: [{"x": 0.8, "y": 0.65, "r": 8, "label": "Arbitrage gap on day 1 \u2014 token overpriced vs physi"}, {"x": 0.8, "y": 0.6, "r": 8, "label": "Storage cost as % of value is 1,200x worse than go"}, {"x": 0.8, "y": 0.55, "r": 8, "label": "Last-mile shipping costs make small redemptions un"}, {"x": 0.6, "y": 0.7, "r": 8, "label": "State money transmitter licensing blocks expansion"}, {"x": 0.7, "y": 0.6, "r": 8, "label": "Minimum viable redemption of 10.5 lbs excludes cas"}, {"x": 0.7, "y": 0.6, "r": 8, "label": "Legal costs consume 46% of fixed expenses"}, {"x": 0.55, "y": 0.75, "r": 8, "label": "Break-even requires 334,615 lbs \u2014 aggressive for y"}, {"x": 0.6, "y": 0.65, "r": 8, "label": "Year 1 has 90% chance of loss"}, {"x": 0.55, "y": 0.7, "r": 8, "label": "Pattern: agricultural commodity tokens fail at con"}, {"x": 0.45, "y": 0.8, "r": 8, "label": "Two-sided market fails \u2014 neither crypto nor honey "}, {"x": 0.65, "y": 0.55, "r": 8, "label": "Tax compliance nightmare \u2014 every transfer is a tax"}, {"x": 0.5, "y": 0.7, "r": 8, "label": "Liquidity death spiral \u2014 low volume \u2192 wide spreads"}],
+          backgroundColor: RED + '55',
+          borderColor: RED,
+          borderWidth: 1,
+        }]
+      },
+      options: {
+        responsive: true,
+        plugins: {
+          legend: { display: false },
+          tooltip: {
+            callbacks: {
+              label: ctx => ctx.raw.label
+            }
+          }
+        },
+        scales: {
+          x: { min: 0, max: 1, title: { display: true, text: 'Likelihood',
+                font: { family: "'JetBrains Mono', monospace", size: 10 } },
+                grid: { color: 'rgba(255,255,255,0.04)' } },
+          y: { min: 0, max: 1, title: { display: true, text: 'Impact',
+                font: { family: "'JetBrains Mono', monospace", size: 10 } },
+                grid: { color: 'rgba(255,255,255,0.04)' } }
+        }
+      },
+      plugins: [{
+        id: 'quadrants',
+        beforeDraw(chart) {
+          const { ctx, chartArea: { left, right, top, bottom } } = chart;
+          const midX = (left + right) / 2;
+          const midY = (top + bottom) / 2;
+          ctx.save();
+          ctx.globalAlpha = 0.04;
+          ctx.fillStyle = GREEN; ctx.fillRect(left, midY, midX-left, bottom-midY);
+          ctx.fillStyle = AMBER; ctx.fillRect(midX, midY, right-midX, bottom-midY);
+          ctx.fillStyle = AMBER; ctx.fillRect(left, top, midX-left, midY-top);
+          ctx.fillStyle = RED; ctx.fillRect(midX, top, right-midX, midY-top);
+          ctx.restore();
+        }
+      }]
+    });
+    </script>
+  </div>
 </div>
 
 <footer>

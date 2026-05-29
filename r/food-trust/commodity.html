@@ -1,202 +1,578 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Protected Page</title>
-<style>
-:root {
-  --bg: #0f172a;
-  --card: #1e293b;
-  --border: #334155;
-  --text: #f1f5f9;
-  --text2: #94a3b8;
-  --accent: #6366f1;
-  --accent-hover: #818cf8;
-  --red: #f87171;
-}
-@media (prefers-color-scheme: light) {
-  :root {
-    --bg: #f0f2f5;
-    --card: #ffffff;
-    --border: #e5e7eb;
-    --text: #1a1a2e;
-    --text2: #6b7280;
-  }
-}
-* { margin: 0; padding: 0; box-sizing: border-box; }
-body {
-  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-  background: var(--bg);
-  color: var(--text);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  min-height: 100vh;
-  padding: 20px;
-}
-.login-card {
-  background: var(--card);
-  border: 1px solid var(--border);
-  border-radius: 16px;
-  padding: 40px;
-  max-width: 400px;
-  width: 100%;
-  box-shadow: 0 4px 6px rgba(0,0,0,0.1), 0 10px 15px rgba(0,0,0,0.1);
-}
-.login-card h1 {
-  font-size: 22px;
-  font-weight: 700;
-  margin-bottom: 8px;
-}
-.login-card p {
-  font-size: 14px;
-  color: var(--text2);
-  margin-bottom: 24px;
-}
-.input-group {
-  position: relative;
-  margin-bottom: 16px;
-}
-.input-group input {
-  width: 100%;
-  padding: 12px 16px;
-  font-size: 15px;
-  border: 1px solid var(--border);
-  border-radius: 10px;
-  background: var(--bg);
-  color: var(--text);
-  outline: none;
-  transition: border-color 0.2s;
-}
-.input-group input:focus {
-  border-color: var(--accent);
-}
-.btn {
-  width: 100%;
-  padding: 12px;
-  font-size: 15px;
-  font-weight: 600;
-  background: var(--accent);
-  color: #fff;
-  border: none;
-  border-radius: 10px;
-  cursor: pointer;
-  transition: background 0.2s;
-}
-.btn:hover { background: var(--accent-hover); }
-.btn:disabled { opacity: 0.6; cursor: not-allowed; }
-.error {
-  color: var(--red);
-  font-size: 13px;
-  margin-top: 10px;
-  display: none;
-}
-.loading {
-  display: none;
-  text-align: center;
-  padding: 40px;
-  font-size: 16px;
-  color: var(--text2);
-}
-</style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Honey as Unit of Account — Food Value Trust</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --bg: #07070f;
+      --surface: rgba(255,255,255,0.035);
+      --surface-hover: rgba(224,175,104,0.07);
+      --border: rgba(255,255,255,0.07);
+      --border-hover: rgba(224,175,104,0.30);
+      --text: #e8e8f4;
+      --muted: rgba(232,232,244,0.45);
+      --dim: rgba(232,232,244,0.25);
+      --accent: #e0af68;
+      --accent2: #d4956b;
+      --green: #9ece6a;
+      --amber: #e0af68;
+      --red: #f7768e;
+      --teal: #73daca;
+      --blue: #7aa2f7;
+      --glow: rgba(224,175,104,0.10);
+    }
+    html { scroll-behavior: smooth; }
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      -webkit-font-smoothing: antialiased;
+      line-height: 1.6;
+    }
+    .nav {
+      position: fixed; top: 0; left: 0; right: 0; z-index: 50;
+      padding: 0 2rem; height: 56px;
+      display: flex; align-items: center; justify-content: space-between;
+      background: rgba(7,7,15,0.85);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      border-bottom: 1px solid var(--border);
+    }
+    .nav-brand {
+      font-size: 0.72rem; font-weight: 600;
+      letter-spacing: 0.2em; text-transform: uppercase;
+      color: var(--accent); text-decoration: none;
+    }
+    .nav-links { display: flex; gap: 1.5rem; list-style: none; }
+    .nav-links a {
+      font-size: 0.78rem; font-weight: 400;
+      color: var(--muted); text-decoration: none; transition: color 0.2s;
+    }
+    .nav-links a:hover { color: var(--text); }
+    .nav-links a.active { color: var(--accent); }
+
+    main {
+      max-width: 960px; margin: 0 auto;
+      padding: 5rem 2rem 6rem;
+    }
+    .page-header {
+      margin-bottom: 3rem; padding-bottom: 2rem;
+      border-bottom: 1px solid var(--border);
+    }
+    .page-header .phase-tag {
+      font-size: 0.55rem; font-weight: 600;
+      letter-spacing: 0.12em; text-transform: uppercase;
+      color: var(--accent); background: rgba(224,175,104,0.1);
+      padding: 3px 10px; border-radius: 4px;
+      display: inline-block; margin-bottom: 1rem;
+    }
+    .page-header h1 {
+      font-size: clamp(1.8rem, 4vw, 2.6rem);
+      font-weight: 200; line-height: 1.2; margin-bottom: 0.8rem;
+    }
+    .page-header h1 strong { font-weight: 600; color: var(--accent); }
+    .page-header p {
+      font-size: 0.95rem; color: var(--muted); max-width: 600px; line-height: 1.7;
+    }
+
+    .section { margin-bottom: 4rem; }
+    .section-label {
+      font-size: 0.6rem; letter-spacing: 0.3em;
+      text-transform: uppercase; color: var(--accent);
+      margin-bottom: 1.5rem;
+      display: flex; align-items: center; gap: 0.8rem;
+      font-weight: 600;
+    }
+    .section-label::after {
+      content: ''; display: block; flex: 1;
+      height: 1px; background: var(--border);
+    }
+
+    .content-block {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 2rem;
+      margin-bottom: 1.5rem;
+    }
+    .content-block h2 {
+      font-size: 1.1rem; font-weight: 600;
+      margin-bottom: 0.8rem;
+    }
+    .content-block h3 {
+      font-size: 0.9rem; font-weight: 600;
+      margin-top: 1.2rem; margin-bottom: 0.4rem;
+      color: var(--amber);
+    }
+    .content-block p, .content-block li {
+      font-size: 0.85rem; color: var(--muted); line-height: 1.7;
+    }
+    .content-block ul, .content-block ol {
+      margin: 0.6rem 0 0.6rem 1.2rem;
+    }
+    .content-block li { margin-bottom: 0.3rem; }
+
+    /* Properties grid */
+    .properties-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+      gap: 1rem; margin-bottom: 1.5rem;
+    }
+    .property-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 1.4rem 1.6rem;
+      transition: border-color 0.2s, background 0.2s;
+    }
+    .property-card:hover {
+      border-color: var(--border-hover);
+      background: var(--surface-hover);
+    }
+    .property-card h3 {
+      font-size: 0.88rem; font-weight: 600;
+      margin-bottom: 0.4rem; color: var(--text);
+    }
+    .property-card p {
+      font-size: 0.78rem; color: var(--muted); line-height: 1.6;
+    }
+    .property-icon {
+      font-size: 1.3rem; margin-bottom: 0.5rem;
+      display: block;
+    }
+
+    /* Grade cards */
+    .grade-cards {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 1rem; margin: 1rem 0;
+    }
+    .grade-card {
+      background: rgba(0,0,0,0.3);
+      border-radius: 10px;
+      padding: 1.2rem 1.4rem;
+      border-left: 3px solid;
+    }
+    .grade-card.a { border-color: var(--green); }
+    .grade-card.b { border-color: var(--amber); }
+    .grade-card.c { border-color: var(--red); }
+    .grade-card h4 {
+      font-size: 0.85rem; font-weight: 600;
+      margin-bottom: 0.4rem;
+    }
+    .grade-card.a h4 { color: var(--green); }
+    .grade-card.b h4 { color: var(--amber); }
+    .grade-card.c h4 { color: var(--red); }
+    .grade-card p {
+      font-size: 0.75rem; color: var(--muted); line-height: 1.6;
+    }
+    .grade-card ul {
+      margin: 0.4rem 0 0 1rem; list-style: none;
+    }
+    .grade-card li {
+      font-size: 0.73rem; color: var(--muted); margin-bottom: 0.2rem;
+    }
+    .grade-card li::before {
+      content: ''; display: inline-block;
+      width: 4px; height: 4px; border-radius: 50%;
+      margin-right: 6px; vertical-align: middle;
+    }
+    .grade-card.a li::before { background: var(--green); }
+    .grade-card.b li::before { background: var(--amber); }
+    .grade-card.c li::before { background: var(--red); }
+
+    /* Exchange rate table */
+    .table-wrapper {
+      overflow-x: auto; margin: 1rem 0;
+      border-radius: 8px;
+      border: 1px solid var(--border);
+    }
+    table {
+      width: 100%; border-collapse: collapse;
+      font-size: 0.78rem;
+    }
+    thead { background: rgba(255,255,255,0.03); }
+    th {
+      text-align: left; padding: 0.8rem 1rem;
+      font-weight: 600; font-size: 0.7rem;
+      letter-spacing: 0.06em; text-transform: uppercase;
+      color: var(--accent); border-bottom: 1px solid var(--border);
+      white-space: nowrap;
+    }
+    td {
+      padding: 0.7rem 1rem;
+      border-bottom: 1px solid rgba(255,255,255,0.03);
+      color: var(--muted);
+    }
+    tr:last-child td { border-bottom: none; }
+    tr:hover td { background: rgba(224,175,104,0.03); }
+    td.value { color: var(--amber); font-weight: 600; }
+
+    /* Comparison cards */
+    .comparison-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 1rem; margin: 1rem 0;
+    }
+    .comparison-card {
+      background: rgba(0,0,0,0.3);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 1.2rem 1.4rem;
+    }
+    .comparison-card h4 {
+      font-size: 0.88rem; font-weight: 600;
+      margin-bottom: 0.5rem;
+    }
+    .comparison-card p {
+      font-size: 0.75rem; color: var(--muted); line-height: 1.6;
+    }
+    .comparison-card .verdict {
+      margin-top: 0.6rem; font-size: 0.7rem;
+      font-weight: 600; letter-spacing: 0.06em;
+    }
+
+    /* Historical sidebar */
+    .history-items {
+      display: grid; gap: 0.8rem;
+    }
+    .history-item {
+      display: flex; gap: 1rem; align-items: flex-start;
+    }
+    .history-era {
+      font-size: 0.65rem; font-weight: 600;
+      color: var(--accent); min-width: 80px;
+      text-align: right; padding-top: 2px;
+      white-space: nowrap;
+    }
+    .history-text {
+      font-size: 0.8rem; color: var(--muted);
+      line-height: 1.6; border-left: 2px solid rgba(224,175,104,0.2);
+      padding-left: 1rem;
+    }
+
+    footer {
+      text-align: center; padding: 2rem;
+      font-size: 0.65rem; color: var(--dim);
+      border-top: 1px solid var(--border);
+    }
+    footer a { color: var(--muted); text-decoration: none; }
+    footer a:hover { color: var(--accent); }
+
+    @media (max-width: 640px) {
+      .nav-links { display: none; }
+      main { padding: 4rem 1.2rem 4rem; }
+      .properties-grid { grid-template-columns: 1fr; }
+      .grade-cards { grid-template-columns: 1fr; }
+      .comparison-grid { grid-template-columns: 1fr; }
+    }
+  </style>
 </head>
 <body>
-<div class="login-card" id="loginCard">
-  <h1>Private Page</h1>
-  <p>Enter the password to view this page.</p>
-  <form id="loginForm" onsubmit="return handleSubmit(event)" autocomplete="on">
-    <input type="hidden" name="username" autocomplete="username" value="thorarinson-private">
-    <div class="input-group">
-      <input type="password" id="pwd" name="password" placeholder="Password" autofocus
-             autocomplete="current-password">
+
+<nav class="nav">
+  <a href="/r/food-trust/" class="nav-brand">Food Value Trust</a>
+  <ul class="nav-links">
+    <li><a href="index.html" >Overview</a></li>
+    <li><a href="trusts.html" >Trusts</a></li>
+    <li><a href="commodity.html" class="active">Commodity</a></li>
+    <li><a href="exchange.html" >Exchange</a></li>
+    <li><a href="governance_stack.html" >Governance</a></li>
+    <li><a href="cost_analysis.html" >Costs</a></li>
+    <li><a href="/" style="color:var(--dim);">Thorarinson</a></li>
+  </ul>
+</nav>
+
+<main>
+
+  <div class="page-header">
+    <span class="phase-tag">Phase 2 — Commodity Standard</span>
+    <h1><strong>Honey</strong> as Unit of Account</h1>
+    <p>Why honey is the ideal commodity currency for a decentralized agricultural exchange. Non-perishable, universally valued, testable, divisible, and anti-speculative.</p>
+  </div>
+
+  <!-- Why Honey -->
+  <div class="section">
+    <p class="section-label">Why Honey</p>
+
+    <div class="properties-grid">
+      <div class="property-card">
+        <span class="property-icon">&#8734;</span>
+        <h3>Non-Perishable</h3>
+        <p>Archaeological honey found in Egyptian tombs is still edible after 3,000+ years. Properly stored honey has an effectively infinite shelf life due to its low water activity, high acidity, and natural hydrogen peroxide production.</p>
+      </div>
+      <div class="property-card">
+        <span class="property-icon">&#9793;</span>
+        <h3>Universally Valued</h3>
+        <p>Every culture on earth recognizes honey as valuable. Used as food, medicine, preservative, and ceremonial offering across all continents and throughout recorded history. No cultural education needed to establish value.</p>
+      </div>
+      <div class="property-card">
+        <span class="property-icon">&#9670;</span>
+        <h3>Testable for Quality</h3>
+        <p>Objective quality metrics exist: moisture content (refractometer), pollen count (microscopy), HMF (hydroxymethylfurfural) levels, diastase activity, and color grading. Quality is measurable, not subjective.</p>
+      </div>
+      <div class="property-card">
+        <span class="property-icon">&#9881;</span>
+        <h3>Divisible by Weight</h3>
+        <p>Honey is continuously divisible by weight. One gram is as exchangeable as one kilogram. No minimum denomination problem. Standard weights (250g, 500g, 1kg) serve as natural denominations.</p>
+      </div>
+      <div class="property-card">
+        <span class="property-icon">&#9992;</span>
+        <h3>Portable</h3>
+        <p>High value-to-weight ratio relative to other agricultural commodities. A kilogram of premium honey holds more exchange value than a kilogram of most vegetables or grains. Easy to transport, store, and transfer.</p>
+      </div>
+      <div class="property-card">
+        <span class="property-icon">&#9733;</span>
+        <h3>Decentralized Production</h3>
+        <p>Bees, not factories. Honey production is inherently distributed — anyone with land and flowering plants can keep bees. No centralized supply chain, no corporate gatekeeping, no mining permits.</p>
+      </div>
+      <div class="property-card">
+        <span class="property-icon">&#9201;</span>
+        <h3>Anti-Speculative</h3>
+        <p>Production is slow and seasonal. You cannot print honey, mine it faster, or synthesize it at scale. Supply grows organically with the number of beekeepers and the health of local ecosystems. Speculation is self-limiting.</p>
+      </div>
+      <div class="property-card">
+        <span class="property-icon">&#127811;</span>
+        <h3>Ecological Benefit</h3>
+        <p>The production process itself benefits the ecosystem. Honeybees pollinate crops — approximately one-third of all food production depends on bee pollination. The currency production makes all other farming more productive.</p>
+      </div>
     </div>
-    <button type="submit" class="btn" id="submitBtn">Unlock</button>
-    <div class="error" id="error">Incorrect password. Please try again.</div>
-  </form>
-</div>
-<div class="loading" id="loading">Decrypting...</div>
+  </div>
 
-<script>
-const SALT = "CF3LlTopcBDyScfFnJJriQ==";
-const IV = "zgakAtEEiHpJcLzC";
-const CT = "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";
+  <!-- Grading System -->
+  <div class="section">
+    <p class="section-label">Grading System</p>
 
-function b64decode(s) {
-  const bin = atob(s);
-  const arr = new Uint8Array(bin.length);
-  for (let i = 0; i < bin.length; i++) arr[i] = bin.charCodeAt(i);
-  return arr;
-}
+    <div class="content-block">
+      <h2>Proposed Honey Quality Grades</h2>
+      <p>Quality grading is essential for a commodity currency. Each grade carries a different exchange value, determined by testable, objective criteria. The coherence quality score (D.72 framework) adds a multi-dimensional assessment layer on top of physical testing.</p>
 
-async function decrypt(password) {
-  const enc = new TextEncoder();
-  const keyMaterial = await crypto.subtle.importKey(
-    "raw", enc.encode(password), "PBKDF2", false, ["deriveKey"]
-  );
-  const key = await crypto.subtle.deriveKey(
-    { name: "PBKDF2", salt: b64decode(SALT), iterations: 100000, hash: "SHA-256" },
-    keyMaterial,
-    { name: "AES-GCM", length: 256 },
-    false,
-    ["decrypt"]
-  );
-  const ct = b64decode(CT);
-  const iv = b64decode(IV);
-  const decrypted = await crypto.subtle.decrypt({ name: "AES-GCM", iv }, key, ct);
-  return new TextDecoder().decode(decrypted);
-}
+      <div class="grade-cards">
+        <div class="grade-card a">
+          <h4>Grade A — Premium</h4>
+          <p>The highest-quality honey. Full exchange value.</p>
+          <ul>
+            <li>Raw, unfiltered, single-origin</li>
+            <li>Moisture content &lt; 18%</li>
+            <li>Lab-tested pollen profile</li>
+            <li>HMF &lt; 10 mg/kg (minimal heat exposure)</li>
+            <li>Diastase activity &gt; 8 DN</li>
+            <li>Coherence score &gt; 0.85</li>
+            <li>Traceable to specific apiary</li>
+          </ul>
+        </div>
+        <div class="grade-card b">
+          <h4>Grade B — Standard</h4>
+          <p>Good quality honey. 70-85% of Grade A exchange value.</p>
+          <ul>
+            <li>Raw, may be lightly filtered</li>
+            <li>Multi-origin or blended</li>
+            <li>Moisture content &lt; 20%</li>
+            <li>HMF &lt; 25 mg/kg</li>
+            <li>Diastase activity &gt; 5 DN</li>
+            <li>Coherence score 0.60 - 0.85</li>
+            <li>Source region documented</li>
+          </ul>
+        </div>
+        <div class="grade-card c">
+          <h4>Grade C — Processed</h4>
+          <p>Acceptable for exchange but at reduced value. 40-60% of Grade A.</p>
+          <ul>
+            <li>Processed or pasteurized</li>
+            <li>Blended, multi-source</li>
+            <li>Moisture content &lt; 21%</li>
+            <li>HMF &lt; 40 mg/kg</li>
+            <li>Diastase may be reduced</li>
+            <li>Coherence score &lt; 0.60</li>
+            <li>Bulk or commercial grade</li>
+          </ul>
+        </div>
+      </div>
 
-async function handleSubmit(e) {
-  e.preventDefault();
-  const pwd = document.getElementById("pwd").value;
-  if (!pwd) return false;
+      <h3>Coherence Quality Scoring</h3>
+      <p>Beyond physical testing, the D.72 framework measures coherence across multiple dimensions: sourcing integrity (is the producer's story consistent?), ecological alignment (does production benefit the local ecosystem?), nutritional density, and temporal stability (does quality hold over time?). This multi-dimensional score captures quality aspects that simple lab tests miss.</p>
+    </div>
+  </div>
 
-  const btn = document.getElementById("submitBtn");
-  const errEl = document.getElementById("error");
-  btn.disabled = true;
-  btn.textContent = "Decrypting...";
-  errEl.style.display = "none";
+  <!-- Exchange Rates -->
+  <div class="section">
+    <p class="section-label">Exchange Rate Model</p>
 
-  try {
-    const html = await decrypt(pwd);
-    // Store password in sessionStorage so other pages auto-unlock
-    try { sessionStorage.setItem("_cp", pwd); } catch(x) {}
-    // Trigger Chrome/1Password save prompt
-    try {
-      if (window.PasswordCredential) {
-        const cred = new PasswordCredential({ id: 'thorarinson-private', password: pwd });
-        navigator.credentials.store(cred);
-      }
-    } catch(x) {}
+    <div class="content-block">
+      <h2>Example Exchange Ratios</h2>
+      <p>These are baseline exchange ratios for Grade A honey against common agricultural commodities. Actual rates would fluctuate based on seasonal availability, regional production costs, and coherence quality scores.</p>
 
-    document.open();
-    document.write(html);
-    document.close();
-  } catch (e) {
-    errEl.style.display = "block";
-    btn.disabled = false;
-    btn.textContent = "Unlock";
-  }
-  return false;
-}
+      <div class="table-wrapper">
+        <table>
+          <thead>
+            <tr>
+              <th>Commodity</th>
+              <th>Per 1 kg Grade A Honey</th>
+              <th>Seasonal Adjustment</th>
+              <th>Notes</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td style="color:var(--text); font-weight:500;">Mixed vegetables</td>
+              <td class="value">8 - 12 kg</td>
+              <td>Peak season: 12 kg | Off-season: 8 kg</td>
+              <td>Tomatoes, peppers, squash, greens</td>
+            </tr>
+            <tr>
+              <td style="color:var(--text); font-weight:500;">Wheat / grain</td>
+              <td class="value">15 - 20 kg</td>
+              <td>Post-harvest: 20 kg | Pre-harvest: 15 kg</td>
+              <td>Whole grain, unprocessed</td>
+            </tr>
+            <tr>
+              <td style="color:var(--text); font-weight:500;">Eggs</td>
+              <td class="value">4 - 6 dozen</td>
+              <td>Spring surplus: 6 dz | Winter: 4 dz</td>
+              <td>Free-range, pasture-raised</td>
+            </tr>
+            <tr>
+              <td style="color:var(--text); font-weight:500;">Raw milk</td>
+              <td class="value">6 - 8 liters</td>
+              <td>Relatively stable year-round</td>
+              <td>Unpasteurized, from known source</td>
+            </tr>
+            <tr>
+              <td style="color:var(--text); font-weight:500;">Cheese (aged)</td>
+              <td class="value">0.8 - 1.2 kg</td>
+              <td>Artisanal premium: 0.8 kg</td>
+              <td>Handmade, 3+ month aging</td>
+            </tr>
+            <tr>
+              <td style="color:var(--text); font-weight:500;">Fruit (seasonal)</td>
+              <td class="value">6 - 10 kg</td>
+              <td>In-season: 10 kg | Stored: 6 kg</td>
+              <td>Apples, berries, stone fruit</td>
+            </tr>
+            <tr>
+              <td style="color:var(--text); font-weight:500;">Herbs (dried)</td>
+              <td class="value">0.3 - 0.5 kg</td>
+              <td>Harvest season: 0.5 kg</td>
+              <td>Medicinal or culinary grade</td>
+            </tr>
+            <tr>
+              <td style="color:var(--text); font-weight:500;">Firewood</td>
+              <td class="value">0.5 - 1.0 cord</td>
+              <td>Summer: 1.0 cord | Winter: 0.5 cord</td>
+              <td>Seasoned hardwood</td>
+            </tr>
+            <tr>
+              <td style="color:var(--text); font-weight:500;">Labor (skilled)</td>
+              <td class="value">2 - 3 hours</td>
+              <td>Based on regional cost of living</td>
+              <td>Farm work, carpentry, mechanical</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
 
-// Auto-unlock from sessionStorage (same session, no re-prompting)
-(async function() {
-  let saved = null;
-  try { saved = sessionStorage.getItem("_cp"); } catch(x) {}
-  if (saved) {
-    try {
-      const html = await decrypt(saved);
-      document.open();
-      document.write(html);
-      document.close();
-      return;
-    } catch(e) {
-      try { sessionStorage.removeItem("_cp"); } catch(x) {}
-    }
-  }
-})();
-</script>
+      <h3>Pricing Model Components</h3>
+      <ul>
+        <li><strong>Labor hours</strong> — Base cost of production measured in human hours. A beekeeper invests approximately 15-25 hours per hive per year for ~15-30 kg of honey.</li>
+        <li><strong>Land use</strong> — The ecological footprint. Bees require ~2 acres of diverse flowering plants per hive for optimal production.</li>
+        <li><strong>Seasonal scarcity</strong> — Multiplier applied based on time of year. Honey harvested in late summer commands baseline; winter reserves trade at premium.</li>
+        <li><strong>Coherence quality score</strong> — The D.72 multi-dimensional quality assessment modifies the base exchange rate. Higher coherence = higher value.</li>
+      </ul>
+    </div>
+  </div>
+
+  <!-- Historical Precedent -->
+  <div class="section">
+    <p class="section-label">Historical Precedent</p>
+
+    <div class="content-block">
+      <h2>Honey as Currency Through History</h2>
+      <p>Honey has served as a medium of exchange for millennia. Its use as currency is not a novel concept but a return to proven practice.</p>
+
+      <div class="history-items" style="margin-top:1.2rem;">
+        <div class="history-item">
+          <div class="history-era">3000 BCE</div>
+          <div class="history-text"><strong>Ancient Egypt</strong> — Honey was used to pay taxes, wages, and fines. Egyptian laborers building the pyramids were partially compensated in honey. Temple records show standardized honey jars as accounting units.</div>
+        </div>
+        <div class="history-item">
+          <div class="history-era">2000 BCE</div>
+          <div class="history-text"><strong>Hittite Empire</strong> — The Hittite law code (c. 1650 BCE) specified fines and penalties in quantities of honey and other commodities. Honey theft carried specific punishments, indicating its recognized monetary value.</div>
+        </div>
+        <div class="history-item">
+          <div class="history-era">600 BCE</div>
+          <div class="history-text"><strong>Ancient Greece</strong> — Solon's laws regulated beekeeping and honey trade. Honey was used in religious offerings and as a form of tribute. Athenian trade records show honey as a standard commodity in Mediterranean commerce.</div>
+        </div>
+        <div class="history-item">
+          <div class="history-era">500 CE</div>
+          <div class="history-text"><strong>Early Medieval Europe</strong> — Merovingian and Carolingian kings collected honey as tax (the "mead tax"). Monasteries maintained apiaries as a source of both income and liturgical supplies (beeswax candles).</div>
+        </div>
+        <div class="history-item">
+          <div class="history-era">900 - 1400</div>
+          <div class="history-text"><strong>Medieval Europe</strong> — Honey and beeswax were standard commodities in feudal rent payments. The Domesday Book (1086) records honey production as a taxable asset. German forest law (Zeidlerei) created hereditary beekeeping rights.</div>
+        </div>
+        <div class="history-item">
+          <div class="history-era">1500 - 1800</div>
+          <div class="history-text"><strong>Colonial Americas</strong> — European settlers introduced honeybees to the Americas. Native Americans called them "the white man's fly." Honey became a frontier trading commodity, exchanged for furs, tools, and services.</div>
+        </div>
+        <div class="history-item">
+          <div class="history-era">Present</div>
+          <div class="history-text"><strong>Modern Barter Networks</strong> — Honey remains one of the most commonly traded items in informal barter networks, farm-to-farm exchanges, and farmers' market trade. Its value is intuitively understood without price tags.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Comparison to Other Commodity Currencies -->
+  <div class="section">
+    <p class="section-label">Comparison to Other Commodity Currencies</p>
+
+    <div class="comparison-grid">
+      <div class="comparison-card">
+        <h4 style="color:var(--amber);">Gold</h4>
+        <p>Historically dominant commodity money. Non-perishable, divisible, recognizable. But: extraction causes environmental destruction (cyanide leaching, deforestation). Supply is geographically concentrated (South Africa, Russia, China, Australia). Requires specialized assaying. Cannot be produced by an individual farmer.</p>
+        <p class="verdict" style="color:var(--red);">Verdict: Too concentrated, extraction damages the earth, no utility beyond store of value.</p>
+      </div>
+      <div class="comparison-card">
+        <h4 style="color:var(--blue);">Bitcoin</h4>
+        <p>Digital scarcity, decentralized ledger, no physical backing. Solves the double-spending problem. But: no inherent utility — you cannot eat it, build with it, or heal with it. Energy-intensive proof-of-work. Price is pure speculation. Requires internet access and technical literacy.</p>
+        <p class="verdict" style="color:var(--red);">Verdict: No physical backing, energy-wasteful, speculative, excludes non-technical populations.</p>
+      </div>
+      <div class="comparison-card">
+        <h4 style="color:var(--green);">Silver</h4>
+        <p>Historical monetary metal with industrial utility. More abundant than gold. But: price heavily manipulated by futures markets (COMEX). Supply controlled by mining corporations. Tarnishes, requires assaying. Not producible by farmers.</p>
+        <p class="verdict" style="color:var(--amber);">Verdict: Better than gold for divisibility, but still extractive and corporately controlled.</p>
+      </div>
+      <div class="comparison-card">
+        <h4 style="color:var(--accent);">Honey</h4>
+        <p>Non-perishable, universally valued, testable, divisible, portable. Production is decentralized and ecological — bees pollinate crops as a byproduct. Anyone with land can produce it. Quality is objectively measurable. Anti-speculative due to slow, seasonal production.</p>
+        <p class="verdict" style="color:var(--green);">Verdict: Distributed production, ecological benefit, inherent utility, accessible to all producers.</p>
+      </div>
+    </div>
+
+    <div class="content-block" style="margin-top:1rem;">
+      <h2>The Key Differentiator</h2>
+      <p>Every other commodity currency requires <em>extraction</em> — taking something from the earth. Honey requires <em>cultivation</em> — working with living systems. The act of producing the currency (beekeeping) directly benefits the agricultural economy it serves (pollination). This is not an incidental feature; it is the fundamental reason honey is the correct choice for a food-value exchange.</p>
+      <p style="margin-top:0.8rem;">Gold mining destroys ecosystems. Bitcoin mining consumes electricity. Honey production creates ecosystems. The currency and the economy it serves are aligned rather than in tension.</p>
+    </div>
+  </div>
+
+</main>
+
+<footer>
+  <div style="display:flex; justify-content:center; gap:2rem; flex-wrap:wrap; margin-bottom:0.8rem;">
+    <a href="/">Thorarinson</a>
+    <a href="index.html">Overview</a>
+    <a href="trusts.html">Trusts</a>
+    <a href="commodity.html">Commodity</a>
+    <a href="exchange.html">Exchange</a>
+    <a href="governance_stack.html">Governance</a>
+    <a href="cost_analysis.html">Costs</a>
+  </div>
+  &copy; 2026 Food Value Trust
+</footer>
+
 </body>
 </html>
