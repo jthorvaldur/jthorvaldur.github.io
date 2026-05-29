@@ -1,0 +1,1108 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Δ.72 Field Node Profiles</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;0,700;1,300;1,400&family=JetBrains+Mono:wght@300;400;500&family=DM+Sans:wght@300;400;500;600&display=swap');
+
+:root {
+  --bg-deep: #0a0b0f;
+  --bg-card: #12141c;
+  --bg-elevated: #1a1d28;
+  --bg-hover: #222638;
+  --border: #2a2e3e;
+  --border-subtle: #1e2130;
+  --text-primary: #e8e6e3;
+  --text-secondary: #8b8d97;
+  --text-muted: #5a5c66;
+  --accent-blue: #4a9eff;
+  --accent-blue-dim: rgba(74, 158, 255, 0.15);
+  --accent-purple: #a87fff;
+  --accent-purple-dim: rgba(168, 127, 255, 0.15);
+  --accent-gold: #e6b44c;
+  --accent-gold-dim: rgba(230, 180, 76, 0.15);
+  --accent-green: #5cc98e;
+  --accent-green-dim: rgba(92, 201, 142, 0.15);
+  --accent-red: #e85d5d;
+  --font-display: 'Cormorant Garamond', Georgia, serif;
+  --font-body: 'DM Sans', system-ui, sans-serif;
+  --font-mono: 'JetBrains Mono', 'SF Mono', monospace;
+}
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+html { scroll-behavior: smooth; }
+
+body {
+  font-family: var(--font-body);
+  background: var(--bg-deep);
+  color: var(--text-primary);
+  line-height: 1.6;
+  min-height: 100vh;
+  -webkit-font-smoothing: antialiased;
+}
+
+.noise-overlay {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 9999;
+  opacity: 0.025;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+}
+
+.container {
+  max-width: 1280px;
+  margin: 0 auto;
+  padding: 0 24px;
+}
+
+/* ===== HERO ===== */
+.hero {
+  padding: 80px 0 60px;
+  text-align: center;
+  position: relative;
+  overflow: hidden;
+}
+
+.hero::before {
+  content: '';
+  position: absolute;
+  top: -200px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 800px;
+  height: 800px;
+  background: radial-gradient(circle, rgba(74, 158, 255, 0.06) 0%, transparent 70%);
+  pointer-events: none;
+}
+
+.hero-delta {
+  font-family: var(--font-display);
+  font-size: 5rem;
+  font-weight: 300;
+  letter-spacing: 0.15em;
+  color: var(--text-primary);
+  margin-bottom: 8px;
+  opacity: 0;
+  animation: fadeUp 1s ease-out 0.2s forwards;
+}
+
+.hero-delta span {
+  font-weight: 700;
+  background: linear-gradient(135deg, var(--accent-blue), var(--accent-purple));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.hero-subtitle {
+  font-family: var(--font-mono);
+  font-size: 0.75rem;
+  letter-spacing: 0.3em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  margin-bottom: 32px;
+  opacity: 0;
+  animation: fadeUp 1s ease-out 0.4s forwards;
+}
+
+.hero-line {
+  width: 120px;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, var(--border), transparent);
+  margin: 0 auto;
+  opacity: 0;
+  animation: fadeUp 1s ease-out 0.6s forwards;
+}
+
+@keyframes fadeUp {
+  from { opacity: 0; transform: translateY(20px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* ===== SECTION ===== */
+section {
+  padding: 60px 0;
+  border-top: 1px solid var(--border-subtle);
+}
+
+.section-label {
+  font-family: var(--font-mono);
+  font-size: 0.65rem;
+  letter-spacing: 0.35em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  margin-bottom: 8px;
+}
+
+.section-title {
+  font-family: var(--font-display);
+  font-size: 2.2rem;
+  font-weight: 300;
+  color: var(--text-primary);
+  margin-bottom: 12px;
+  letter-spacing: 0.02em;
+}
+
+.section-desc {
+  font-size: 0.9rem;
+  color: var(--text-secondary);
+  max-width: 640px;
+  margin-bottom: 40px;
+  line-height: 1.7;
+}
+
+/* ===== GRID CARDS ===== */
+.card-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 16px;
+}
+
+.card {
+  background: var(--bg-card);
+  border: 1px solid var(--border-subtle);
+  border-radius: 12px;
+  padding: 28px;
+  transition: border-color 0.3s, transform 0.3s;
+}
+
+.card:hover {
+  border-color: var(--border);
+  transform: translateY(-2px);
+}
+
+.card-icon {
+  font-size: 1.8rem;
+  margin-bottom: 12px;
+}
+
+.card-name {
+  font-family: var(--font-display);
+  font-size: 1.3rem;
+  font-weight: 600;
+  margin-bottom: 4px;
+}
+
+.card-tag {
+  font-family: var(--font-mono);
+  font-size: 0.65rem;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  padding: 3px 8px;
+  border-radius: 4px;
+  display: inline-block;
+  margin-bottom: 12px;
+}
+
+.card p, .card li {
+  font-size: 0.82rem;
+  color: var(--text-secondary);
+  line-height: 1.65;
+}
+
+.card ul { list-style: none; padding: 0; }
+.card li { padding: 3px 0; }
+.card li::before { content: '·'; margin-right: 8px; color: var(--text-muted); }
+
+/* ===== NUMBER GRID ===== */
+.number-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(110px, 1fr));
+  gap: 10px;
+}
+
+.num-cell {
+  background: var(--bg-card);
+  border: 1px solid var(--border-subtle);
+  border-radius: 10px;
+  padding: 16px 12px;
+  text-align: center;
+  transition: border-color 0.3s, background 0.3s;
+}
+
+.num-cell:hover {
+  border-color: var(--border);
+  background: var(--bg-elevated);
+}
+
+.num-cell.master {
+  border-color: var(--accent-purple);
+  background: var(--accent-purple-dim);
+}
+
+.num-value {
+  font-family: var(--font-display);
+  font-size: 2rem;
+  font-weight: 700;
+  line-height: 1;
+  margin-bottom: 6px;
+}
+
+.num-meaning {
+  font-size: 0.68rem;
+  color: var(--text-secondary);
+  line-height: 1.35;
+}
+
+.num-cell.master .num-meaning {
+  color: var(--accent-purple);
+}
+
+/* ===== CLASSIFICATION ===== */
+.class-row {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin-bottom: 24px;
+}
+
+.class-pill {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: var(--bg-card);
+  border: 1px solid var(--border-subtle);
+  border-radius: 10px;
+  padding: 14px 20px;
+  flex: 1 1 200px;
+  min-width: 200px;
+}
+
+.class-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.class-dot.power { background: #4ae8a0; box-shadow: 0 0 8px rgba(74,232,160,0.4); }
+.class-dot.stable { background: var(--accent-blue); box-shadow: 0 0 8px rgba(74,158,255,0.3); }
+.class-dot.distortion { background: var(--accent-red); box-shadow: 0 0 8px rgba(232,93,93,0.3); }
+.class-dot.transitional { background: var(--accent-gold); box-shadow: 0 0 8px rgba(230,180,76,0.3); }
+.class-dot.dormant { background: var(--text-muted); }
+
+.class-info { flex: 1; }
+.class-info strong { font-size: 0.85rem; display: block; margin-bottom: 2px; }
+.class-info span { font-size: 0.72rem; color: var(--text-secondary); }
+
+/* ===== LAYERS ===== */
+.layer-stack {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 12px;
+}
+
+.layer-item {
+  background: var(--bg-card);
+  border: 1px solid var(--border-subtle);
+  border-radius: 10px;
+  padding: 20px 16px;
+  text-align: center;
+}
+
+.layer-letter {
+  font-family: var(--font-display);
+  font-size: 2.4rem;
+  font-weight: 700;
+  line-height: 1;
+  margin-bottom: 6px;
+  background: linear-gradient(135deg, var(--accent-blue), var(--accent-purple));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.layer-name {
+  font-size: 0.78rem;
+  font-weight: 600;
+  margin-bottom: 6px;
+}
+
+.layer-desc {
+  font-size: 0.68rem;
+  color: var(--text-secondary);
+  line-height: 1.45;
+}
+
+/* ===== PROFILE CARDS ===== */
+.profile-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border-subtle);
+  border-radius: 16px;
+  padding: 36px;
+  margin-bottom: 24px;
+  position: relative;
+  overflow: hidden;
+}
+
+.profile-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 3px;
+}
+
+.profile-card.joel::before { background: linear-gradient(90deg, var(--accent-blue), transparent); }
+.profile-card.allison::before { background: linear-gradient(90deg, var(--accent-purple), transparent); }
+.profile-card.veronica::before { background: linear-gradient(90deg, var(--accent-gold), transparent); }
+.profile-card.magnus::before { background: linear-gradient(90deg, var(--accent-green), transparent); }
+
+.profile-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  flex-wrap: wrap;
+  gap: 16px;
+  margin-bottom: 28px;
+}
+
+.profile-name {
+  font-family: var(--font-display);
+  font-size: 1.8rem;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+}
+
+.profile-meta {
+  font-size: 0.78rem;
+  color: var(--text-secondary);
+  margin-top: 4px;
+}
+
+.profile-badge {
+  font-family: var(--font-mono);
+  font-size: 0.7rem;
+  letter-spacing: 0.1em;
+  padding: 6px 14px;
+  border-radius: 6px;
+  border: 1px solid;
+  white-space: nowrap;
+}
+
+.joel .profile-badge { color: var(--accent-blue); border-color: var(--accent-blue); background: var(--accent-blue-dim); }
+.allison .profile-badge { color: var(--accent-purple); border-color: var(--accent-purple); background: var(--accent-purple-dim); }
+.veronica .profile-badge { color: var(--accent-gold); border-color: var(--accent-gold); background: var(--accent-gold-dim); }
+.magnus .profile-badge { color: var(--accent-green); border-color: var(--accent-green); background: var(--accent-green-dim); }
+
+.profile-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr 280px;
+  gap: 24px;
+}
+
+.profile-section h4 {
+  font-family: var(--font-mono);
+  font-size: 0.6rem;
+  letter-spacing: 0.3em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  margin-bottom: 12px;
+  padding-bottom: 6px;
+  border-bottom: 1px solid var(--border-subtle);
+}
+
+.data-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  padding: 4px 0;
+  font-size: 0.78rem;
+}
+
+.data-row .label { color: var(--text-secondary); }
+.data-row .value { font-family: var(--font-mono); font-size: 0.75rem; color: var(--text-primary); }
+.data-row .value.master { color: var(--accent-purple); font-weight: 500; }
+.data-row .value.highlight { font-weight: 500; }
+
+.joel .data-row .value.highlight { color: var(--accent-blue); }
+.allison .data-row .value.highlight { color: var(--accent-purple); }
+.veronica .data-row .value.highlight { color: var(--accent-gold); }
+.magnus .data-row .value.highlight { color: var(--accent-green); }
+
+/* Radar Chart */
+.radar-wrap {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.radar-wrap svg {
+  width: 260px;
+  height: 260px;
+}
+
+.radar-ring { fill: none; stroke: var(--border-subtle); stroke-width: 0.5; }
+.radar-spoke { stroke: var(--border-subtle); stroke-width: 0.3; }
+.radar-label { font-family: var(--font-mono); font-size: 5.5px; fill: var(--text-muted); text-anchor: middle; }
+
+.radar-area { fill-opacity: 0.15; stroke-width: 1.5; }
+.radar-point { stroke-width: 1; }
+
+.joel .radar-area { fill: var(--accent-blue); stroke: var(--accent-blue); }
+.joel .radar-point { fill: var(--accent-blue); stroke: var(--bg-card); }
+.allison .radar-area { fill: var(--accent-purple); stroke: var(--accent-purple); }
+.allison .radar-point { fill: var(--accent-purple); stroke: var(--bg-card); }
+.veronica .radar-area { fill: var(--accent-gold); stroke: var(--accent-gold); }
+.veronica .radar-point { fill: var(--accent-gold); stroke: var(--bg-card); }
+.magnus .radar-area { fill: var(--accent-green); stroke: var(--accent-green); }
+.magnus .radar-point { fill: var(--accent-green); stroke: var(--bg-card); }
+
+/* Bar chart */
+.bar-group { margin-top: 10px; }
+.bar-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 5px;
+}
+.bar-label {
+  font-family: var(--font-mono);
+  font-size: 0.6rem;
+  color: var(--text-muted);
+  width: 65px;
+  text-align: right;
+  flex-shrink: 0;
+}
+.bar-track {
+  flex: 1;
+  height: 6px;
+  background: var(--bg-deep);
+  border-radius: 3px;
+  overflow: hidden;
+}
+.bar-fill {
+  height: 100%;
+  border-radius: 3px;
+  transition: width 1s ease-out;
+}
+.bar-val {
+  font-family: var(--font-mono);
+  font-size: 0.6rem;
+  color: var(--text-secondary);
+  width: 35px;
+  flex-shrink: 0;
+}
+
+.joel .bar-fill { background: var(--accent-blue); }
+.allison .bar-fill { background: var(--accent-purple); }
+.veronica .bar-fill { background: var(--accent-gold); }
+.magnus .bar-fill { background: var(--accent-green); }
+
+/* Ley line mini */
+.ley-item {
+  font-size: 0.72rem;
+  color: var(--text-secondary);
+  padding: 4px 0;
+  display: flex;
+  justify-content: space-between;
+}
+.ley-item .dist { font-family: var(--font-mono); font-size: 0.65rem; color: var(--text-muted); }
+
+/* Etymology box */
+.etymology {
+  background: var(--bg-elevated);
+  border-radius: 8px;
+  padding: 14px 18px;
+  margin-top: 16px;
+  font-size: 0.8rem;
+  font-style: italic;
+  color: var(--text-secondary);
+  border-left: 2px solid var(--border);
+}
+
+.joel .etymology { border-left-color: var(--accent-blue); }
+.allison .etymology { border-left-color: var(--accent-purple); }
+.veronica .etymology { border-left-color: var(--accent-gold); }
+.magnus .etymology { border-left-color: var(--accent-green); }
+
+/* Chesed callout */
+.chesed-callout {
+  background: var(--bg-elevated);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 24px 28px;
+  margin: 32px 0;
+  display: flex;
+  gap: 20px;
+  align-items: center;
+}
+
+.chesed-hebrew {
+  font-size: 3rem;
+  line-height: 1;
+  flex-shrink: 0;
+}
+
+.chesed-text {
+  font-size: 0.82rem;
+  color: var(--text-secondary);
+  line-height: 1.65;
+}
+
+.chesed-text strong { color: var(--text-primary); }
+
+/* Footer */
+footer {
+  padding: 48px 0;
+  text-align: center;
+  border-top: 1px solid var(--border-subtle);
+}
+
+footer p {
+  font-family: var(--font-mono);
+  font-size: 0.65rem;
+  color: var(--text-muted);
+  letter-spacing: 0.15em;
+}
+
+/* Responsive */
+@media (max-width: 900px) {
+  .profile-grid { grid-template-columns: 1fr; }
+  .layer-stack { grid-template-columns: repeat(3, 1fr); }
+  .hero-delta { font-size: 3rem; }
+}
+
+@media (max-width: 600px) {
+  .layer-stack { grid-template-columns: 1fr 1fr; }
+  .number-grid { grid-template-columns: repeat(4, 1fr); }
+  .profile-card { padding: 20px; }
+}
+</style>
+</head>
+<body>
+<div class="noise-overlay"></div>
+
+<!-- HERO -->
+<header class="hero">
+  <div class="container">
+    <h1 class="hero-delta"><span>Δ</span>.72</h1>
+    <p class="hero-subtitle">Field Node Measurement Profiles</p>
+    <div class="hero-line"></div>
+  </div>
+</header>
+
+<main class="container">
+
+<!-- ===== THE FIVE LAYERS ===== -->
+<section>
+  <div class="section-label">Architecture</div>
+  <h2 class="section-title">The Five Measurement Layers</h2>
+  <p class="section-desc">A field node is a measurable intersection point where multiple signal layers converge. The model measures five layers and computes coherence across them.</p>
+
+  <div class="layer-stack">
+    <div class="layer-item">
+      <div class="layer-letter">N</div>
+      <div class="layer-name">Numerology</div>
+      <div class="layer-desc">Identity code from birth date and full name. Life Path, Expression, Soul Urge, Personality, Birthday Number, Maturity.</div>
+    </div>
+    <div class="layer-item">
+      <div class="layer-letter">A</div>
+      <div class="layer-name">Astrology</div>
+      <div class="layer-desc">Planetary geometry at birth. Sun, Moon, Ascendant, Midheaven, and all major planets positioned on the ecliptic.</div>
+    </div>
+    <div class="layer-item">
+      <div class="layer-letter">M</div>
+      <div class="layer-name">Moon</div>
+      <div class="layer-desc">Lunar phase, illumination, and sign at birth. Gate points (new, quarter, full) are treated as high-activation moments.</div>
+    </div>
+    <div class="layer-item">
+      <div class="layer-letter">G</div>
+      <div class="layer-name">Geography</div>
+      <div class="layer-desc">Proximity to ley lines, earth grid points, and astrocartography lines. Distance-decay function with 300km half-life.</div>
+    </div>
+    <div class="layer-item">
+      <div class="layer-letter">T</div>
+      <div class="layer-name">Timing</div>
+      <div class="layer-desc">Current personal year and month cycles, planetary transits, and lunar activation windows.</div>
+    </div>
+  </div>
+</section>
+
+<!-- ===== CLASSIFICATION ===== -->
+<section>
+  <div class="section-label">Classification</div>
+  <h2 class="section-title">Node States</h2>
+  <p class="section-desc">The Δ.72 threshold determines node classification. When layers agree above 0.72 coherence, the system is in a stable or active state.</p>
+
+  <div class="chesed-callout">
+    <div class="chesed-hebrew">חסד</div>
+    <div class="chesed-text">
+      <strong>Chesed</strong> (lovingkindness, mercy) equals <strong>72</strong> in Hebrew standard gematria: Chet (8) + Samekh (60) + Dalet (4). The coherence threshold is set at this value — a system is coherent when its layers agree above the frequency of mercy.
+    </div>
+  </div>
+
+  <div class="class-row">
+    <div class="class-pill">
+      <div class="class-dot power"></div>
+      <div class="class-info">
+        <strong>Power Node</strong>
+        <span>Coherence ≥ 0.72 AND Intensity ≥ 0.72. All systems aligned and firing.</span>
+      </div>
+    </div>
+    <div class="class-pill">
+      <div class="class-dot stable"></div>
+      <div class="class-info">
+        <strong>Stable Node</strong>
+        <span>Coherence ≥ 0.72, Intensity &lt; 0.72. Pattern holds but energy is latent.</span>
+      </div>
+    </div>
+    <div class="class-pill">
+      <div class="class-dot distortion"></div>
+      <div class="class-info">
+        <strong>Distortion Node</strong>
+        <span>Coherence &lt; 0.72, Intensity ≥ 0.72. High energy but misaligned.</span>
+      </div>
+    </div>
+    <div class="class-pill">
+      <div class="class-dot transitional"></div>
+      <div class="class-info">
+        <strong>Transitional</strong>
+        <span>Mixed signals — between states, in flux.</span>
+      </div>
+    </div>
+    <div class="class-pill">
+      <div class="class-dot dormant"></div>
+      <div class="class-info">
+        <strong>Dormant Node</strong>
+        <span>Low activation and strength. Latent potential.</span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ===== NUMEROLOGY NUMBERS ===== -->
+<section>
+  <div class="section-label">Numbers</div>
+  <h2 class="section-title">Numerology Key</h2>
+  <p class="section-desc">Each core number (1–9) carries a distinct vibrational meaning. Master numbers (11, 22, 33) are not reduced — they operate at a higher octave.</p>
+
+  <div class="number-grid">
+    <div class="num-cell"><div class="num-value">1</div><div class="num-meaning">Leader Pioneer Initiator</div></div>
+    <div class="num-cell"><div class="num-value">2</div><div class="num-meaning">Diplomat Peacemaker Mediator</div></div>
+    <div class="num-cell"><div class="num-value">3</div><div class="num-meaning">Creative Communicator Artist</div></div>
+    <div class="num-cell"><div class="num-value">4</div><div class="num-meaning">Builder Organizer Foundation</div></div>
+    <div class="num-cell"><div class="num-value">5</div><div class="num-meaning">Adventurer Freedom Catalyst</div></div>
+    <div class="num-cell"><div class="num-value">6</div><div class="num-meaning">Nurturer Caretaker Protector</div></div>
+    <div class="num-cell"><div class="num-value">7</div><div class="num-meaning">Seeker Thinker Truth-finder</div></div>
+    <div class="num-cell"><div class="num-value">8</div><div class="num-meaning">Achiever Powerhouse Authority</div></div>
+    <div class="num-cell"><div class="num-value">9</div><div class="num-meaning">Humanitarian Visionary Universal</div></div>
+    <div class="num-cell master"><div class="num-value">11</div><div class="num-meaning">Intuitive Illuminator ★ Master</div></div>
+    <div class="num-cell master"><div class="num-value">22</div><div class="num-meaning">Master Builder ★ Architect</div></div>
+    <div class="num-cell master"><div class="num-value">33</div><div class="num-meaning">Master Teacher ★ Compassion</div></div>
+  </div>
+</section>
+
+<!-- ===== ARCHETYPES ===== -->
+<section>
+  <div class="section-label">Signal Classification</div>
+  <h2 class="section-title">Archetypes</h2>
+  <p class="section-desc">The 12-axis signal signature is compared against reference archetype profiles using cosine similarity. Each archetype represents a distinct operating pattern.</p>
+
+  <div class="card-grid">
+    <div class="card">
+      <div class="card-icon">🏗</div>
+      <div class="card-name">Builder</div>
+      <div class="card-tag" style="color:var(--accent-blue);background:var(--accent-blue-dim);">JOEL · VERONICA · ALLISON</div>
+      <p>Sees the whole system. Builds enduring structures through patience and deep understanding. Thinks before acting.</p>
+      <ul>
+        <li>Peak: systems_thinking, pattern_recognition, first_principles</li>
+        <li>Valley: speed_of_decision, narrative_instinct</li>
+        <li>Mode: deliberate, thorough, architecturally sound</li>
+      </ul>
+    </div>
+    <div class="card">
+      <div class="card-icon">📈</div>
+      <div class="card-name">VC</div>
+      <div class="card-tag" style="color:var(--accent-green);background:var(--accent-green-dim);">MAGNUS</div>
+      <p>Fast pattern matching. Commercial acumen. Deploys capital and resources decisively. Spots opportunity before others finish analyzing.</p>
+      <ul>
+        <li>Peak: commercial_orientation, speed_of_decision, deployment_instinct</li>
+        <li>Valley: iteration_depth, domain_synthesis</li>
+        <li>Mode: fast, decisive, commercially oriented</li>
+      </ul>
+    </div>
+    <div class="card">
+      <div class="card-icon">🔬</div>
+      <div class="card-name">Scientist</div>
+      <div class="card-tag" style="color:var(--text-muted);background:var(--bg-elevated);">REFERENCE</div>
+      <p>Rigorous and deep. Can sit with uncertainty until the answer crystallizes. Pursues truth over utility.</p>
+      <ul>
+        <li>Peak: first_principles, abstraction_level, iteration_depth</li>
+        <li>Valley: deployment_instinct, commercial_orientation</li>
+        <li>Mode: methodical, precise, truth-seeking</li>
+      </ul>
+    </div>
+    <div class="card">
+      <div class="card-icon">🚀</div>
+      <div class="card-name">Founder</div>
+      <div class="card-tag" style="color:var(--text-muted);background:var(--bg-elevated);">REFERENCE</div>
+      <p>Combines domains creatively. Moves fast and tells compelling stories. Synthesizes disparate ideas into action.</p>
+      <ul>
+        <li>Peak: domain_synthesis, deployment_instinct, narrative_instinct</li>
+        <li>Valley: drift_sensitivity, iteration_depth</li>
+        <li>Mode: synthetic, fast-moving, narrative-driven</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<!-- ===== PROFILES ===== -->
+<section>
+  <div class="section-label">Profiles</div>
+  <h2 class="section-title">Field Node Measurements</h2>
+  <p class="section-desc">Full 5-layer analysis using birth data, planetary positions, lunar phase, and geographic proximity to ley lines.</p>
+
+  <!-- JOEL -->
+  <div class="profile-card joel">
+    <div class="profile-header">
+      <div>
+        <div class="profile-name">Subject Alpha</div>
+        <div class="profile-meta">April 23, 1979 · 17:00 · North America · Taurus ♉ Earth</div>
+      </div>
+      <div class="profile-badge">BUILDER · 0.94</div>
+    </div>
+    <div class="profile-grid">
+      <div class="profile-section">
+        <h4>Numerology</h4>
+        <div class="data-row"><span class="label">Life Path</span><span class="value highlight">8 Achiever</span></div>
+        <div class="data-row"><span class="label">Expression</span><span class="value highlight">8 Achiever</span></div>
+        <div class="data-row"><span class="label">Soul Urge</span><span class="value master">11 ★ Illuminator</span></div>
+        <div class="data-row"><span class="label">Personality</span><span class="value">6 Nurturer</span></div>
+        <div class="data-row"><span class="label">Birthday</span><span class="value">5 Adventurer</span></div>
+        <div class="data-row"><span class="label">Personal Year</span><span class="value">1 Pioneer</span></div>
+        <div class="data-row"><span class="label">Maturity</span><span class="value">7 Seeker</span></div>
+        <h4 style="margin-top:16px">Astrology</h4>
+        <div class="data-row"><span class="label">Sun</span><span class="value">Taurus 33.2°</span></div>
+        <div class="data-row"><span class="label">Moon</span><span class="value">Pisces 355.6°</span></div>
+        <div class="data-row"><span class="label">Ascendant</span><span class="value">Cancer 110.3°</span></div>
+        <div class="data-row"><span class="label">Midheaven</span><span class="value">Pisces 352.1°</span></div>
+        <div class="data-row"><span class="label">Moon Phase</span><span class="value">322.4° · 10.4%</span></div>
+      </div>
+      <div class="profile-section">
+        <h4>Field Node</h4>
+        <div class="data-row"><span class="label">Classification</span><span class="value highlight">Stable Node</span></div>
+        <div class="data-row"><span class="label">Coherence Δ</span><span class="value">0.845</span></div>
+        <div class="data-row"><span class="label">Intensity</span><span class="value">0.396</span></div>
+        <div class="data-row"><span class="label">Activation</span><span class="value">0.312</span></div>
+        <div class="data-row"><span class="label">Node Strength</span><span class="value">0.104</span></div>
+        <div class="data-row"><span class="label">Identity Score</span><span class="value">0.789</span></div>
+        <h4 style="margin-top:16px">Hebrew Gematria</h4>
+        <div class="data-row"><span class="label">Full Name</span><span class="value">1823 → 5</span></div>
+        <div class="data-row"><span class="label">Alpha</span><span class="value">108 → 9</span></div>
+        <div class="data-row"><span class="label">Surname</span><span class="value highlight">1111 → 4</span></div>
+        <div class="data-row"><span class="label">Chet ח=8</span><span class="value">2× (LP, Expr)</span></div>
+        <div class="data-row"><span class="label">YAHUAH →</span><span class="value highlight">LP + Expr</span></div>
+        <h4 style="margin-top:16px">Ley Lines</h4>
+        <div class="ley-item"><span>Banff / Rockies Node</span><span class="dist">105.7 km</span></div>
+        <div class="ley-item"><span>Head-Smashed-In</span><span class="dist">147.8 km</span></div>
+      </div>
+      <div class="profile-section">
+        <h4>12-Axis Signature</h4>
+        <div class="radar-wrap" id="radar-joel"></div>
+        <div class="bar-group">
+          <div class="bar-row"><span class="bar-label">1st princ.</span><div class="bar-track"><div class="bar-fill" style="width:87.5%"></div></div><span class="bar-val">.875</span></div>
+          <div class="bar-row"><span class="bar-label">pattern</span><div class="bar-track"><div class="bar-fill" style="width:97%"></div></div><span class="bar-val">.970</span></div>
+          <div class="bar-row"><span class="bar-label">domain</span><div class="bar-track"><div class="bar-fill" style="width:37.5%"></div></div><span class="bar-val">.375</span></div>
+          <div class="bar-row"><span class="bar-label">iteration</span><div class="bar-track"><div class="bar-fill" style="width:50%"></div></div><span class="bar-val">.500</span></div>
+          <div class="bar-row"><span class="bar-label">speed</span><div class="bar-track"><div class="bar-fill" style="width:0%"></div></div><span class="bar-val">.000</span></div>
+          <div class="bar-row"><span class="bar-label">abstract.</span><div class="bar-track"><div class="bar-fill" style="width:70%"></div></div><span class="bar-val">.700</span></div>
+          <div class="bar-row"><span class="bar-label">deploy</span><div class="bar-track"><div class="bar-fill" style="width:62.5%"></div></div><span class="bar-val">.625</span></div>
+          <div class="bar-row"><span class="bar-label">drift</span><div class="bar-track"><div class="bar-fill" style="width:87.6%"></div></div><span class="bar-val">.876</span></div>
+          <div class="bar-row"><span class="bar-label">narrative</span><div class="bar-track"><div class="bar-fill" style="width:39.9%"></div></div><span class="bar-val">.399</span></div>
+          <div class="bar-row"><span class="bar-label">nonlinear</span><div class="bar-track"><div class="bar-fill" style="width:55%"></div></div><span class="bar-val">.550</span></div>
+          <div class="bar-row"><span class="bar-label">commerc.</span><div class="bar-track"><div class="bar-fill" style="width:50%"></div></div><span class="bar-val">.500</span></div>
+          <div class="bar-row"><span class="bar-label">systems</span><div class="bar-track"><div class="bar-fill" style="width:96.8%"></div></div><span class="bar-val">.968</span></div>
+        </div>
+      </div>
+    </div>
+    <div class="etymology">"YAHUAH is God" (Yo + El) · Son of Thorarin — Thunder (Þórr) + Eagle (ari) · יואל = 47</div>
+  </div>
+
+  <!-- ALLISON -->
+  <div class="profile-card allison">
+    <div class="profile-header">
+      <div>
+        <div class="profile-name">Subject Beta</div>
+        <div class="profile-meta">May 10, 1985 · 8:38 AM · Eastern US · Taurus ♉ Earth</div>
+      </div>
+      <div class="profile-badge">BUILDER · 0.83</div>
+    </div>
+    <div class="profile-grid">
+      <div class="profile-section">
+        <h4>Numerology</h4>
+        <div class="data-row"><span class="label">Life Path</span><span class="value master">11 ★ Illuminator</span></div>
+        <div class="data-row"><span class="label">Expression</span><span class="value">1 Pioneer</span></div>
+        <div class="data-row"><span class="label">Soul Urge</span><span class="value">4 Builder</span></div>
+        <div class="data-row"><span class="label">Personality</span><span class="value">6 Nurturer</span></div>
+        <div class="data-row"><span class="label">Birthday</span><span class="value">1 Pioneer</span></div>
+        <div class="data-row"><span class="label">Personal Year</span><span class="value">7 Seeker</span></div>
+        <div class="data-row"><span class="label">Maturity</span><span class="value">3 Creative</span></div>
+        <h4 style="margin-top:16px">Astrology</h4>
+        <div class="data-row"><span class="label">Sun</span><span class="value">Taurus 49.8°</span></div>
+        <div class="data-row"><span class="label">Moon</span><span class="value">Aquarius 303.5°</span></div>
+        <div class="data-row"><span class="label">Ascendant</span><span class="value">Aries 13.7°</span></div>
+        <div class="data-row"><span class="label">Midheaven</span><span class="value">Capricorn 278.7°</span></div>
+        <div class="data-row"><span class="label">Moon Phase</span><span class="value">253.7° · 64.1%</span></div>
+      </div>
+      <div class="profile-section">
+        <h4>Field Node</h4>
+        <div class="data-row"><span class="label">Classification</span><span class="value highlight">Stable Node</span></div>
+        <div class="data-row"><span class="label">Coherence Δ</span><span class="value">0.842</span></div>
+        <div class="data-row"><span class="label">Intensity</span><span class="value">0.355</span></div>
+        <div class="data-row"><span class="label">Activation</span><span class="value">0.427</span></div>
+        <div class="data-row"><span class="label">Node Strength</span><span class="value">0.128</span></div>
+        <div class="data-row"><span class="label">Identity Score</span><span class="value">0.415</span></div>
+        <h4 style="margin-top:16px">Hebrew Gematria</h4>
+        <div class="data-row"><span class="label">Full Name</span><span class="value highlight">610 → 7</span></div>
+        <div class="data-row"><span class="label">Note</span><span class="value" style="font-size:0.65rem;color:var(--text-muted)">Torah = 611</span></div>
+        <div class="data-row"><span class="label">Beta</span><span class="value">251 → 8</span></div>
+        <div class="data-row"><span class="label">Chet ח=8</span><span class="value">0×</span></div>
+        <div class="data-row"><span class="label">YAHUSHA →</span><span class="value highlight">Soul Urge</span></div>
+        <h4 style="margin-top:16px">Ley Lines</h4>
+        <div class="ley-item"><span>Niagara Falls</span><span class="dist">813.7 km</span></div>
+        <div class="ley-item"><span>Cahokia Mounds</span><span class="dist">1060.0 km</span></div>
+      </div>
+      <div class="profile-section">
+        <h4>12-Axis Signature</h4>
+        <div class="radar-wrap" id="radar-allison"></div>
+        <div class="bar-group">
+          <div class="bar-row"><span class="bar-label">1st princ.</span><div class="bar-track"><div class="bar-fill" style="width:82%"></div></div><span class="bar-val">.820</span></div>
+          <div class="bar-row"><span class="bar-label">pattern</span><div class="bar-track"><div class="bar-fill" style="width:37.5%"></div></div><span class="bar-val">.375</span></div>
+          <div class="bar-row"><span class="bar-label">domain</span><div class="bar-track"><div class="bar-fill" style="width:0%"></div></div><span class="bar-val">.000</span></div>
+          <div class="bar-row"><span class="bar-label">iteration</span><div class="bar-track"><div class="bar-fill" style="width:0%"></div></div><span class="bar-val">.000</span></div>
+          <div class="bar-row"><span class="bar-label">speed</span><div class="bar-track"><div class="bar-fill" style="width:75%"></div></div><span class="bar-val">.750</span></div>
+          <div class="bar-row"><span class="bar-label">abstract.</span><div class="bar-track"><div class="bar-fill" style="width:48.5%"></div></div><span class="bar-val">.485</span></div>
+          <div class="bar-row"><span class="bar-label">deploy</span><div class="bar-track"><div class="bar-fill" style="width:31.2%"></div></div><span class="bar-val">.312</span></div>
+          <div class="bar-row"><span class="bar-label">drift</span><div class="bar-track"><div class="bar-fill" style="width:40%"></div></div><span class="bar-val">.400</span></div>
+          <div class="bar-row"><span class="bar-label">narrative</span><div class="bar-track"><div class="bar-fill" style="width:8%"></div></div><span class="bar-val">.080</span></div>
+          <div class="bar-row"><span class="bar-label">nonlinear</span><div class="bar-track"><div class="bar-fill" style="width:55%"></div></div><span class="bar-val">.550</span></div>
+          <div class="bar-row"><span class="bar-label">commerc.</span><div class="bar-track"><div class="bar-fill" style="width:43.8%"></div></div><span class="bar-val">.438</span></div>
+          <div class="bar-row"><span class="bar-label">systems</span><div class="bar-track"><div class="bar-fill" style="width:64.2%"></div></div><span class="bar-val">.642</span></div>
+        </div>
+      </div>
+    </div>
+    <div class="etymology">"Noble kind" (adal) · "Famous warrior" (hlud + wig) · "Home ruler's kin" (heinrich + gen) · Full gematria 610, one away from Torah (611)</div>
+  </div>
+
+  <!-- VERONICA -->
+  <div class="profile-card veronica">
+    <div class="profile-header">
+      <div>
+        <div class="profile-name">Subject Gamma</div>
+        <div class="profile-meta">April 3, 1972 · Midday · Western Europe · Aries ♈ Fire</div>
+      </div>
+      <div class="profile-badge">BUILDER · 0.93</div>
+    </div>
+    <div class="profile-grid">
+      <div class="profile-section">
+        <h4>Numerology</h4>
+        <div class="data-row"><span class="label">Life Path</span><span class="value highlight">8 Achiever</span></div>
+        <div class="data-row"><span class="label">Expression</span><span class="value">5 Adventurer</span></div>
+        <div class="data-row"><span class="label">Soul Urge</span><span class="value highlight">8 Achiever</span></div>
+        <div class="data-row"><span class="label">Personality</span><span class="value">6 Nurturer</span></div>
+        <div class="data-row"><span class="label">Birthday</span><span class="value">3 Creative</span></div>
+        <div class="data-row"><span class="label">Personal Year</span><span class="value highlight">8 Achiever</span></div>
+        <div class="data-row"><span class="label">Maturity</span><span class="value">4 Builder</span></div>
+        <h4 style="margin-top:16px">Astrology</h4>
+        <div class="data-row"><span class="label">Sun</span><span class="value">Aries 14.2°</span></div>
+        <div class="data-row"><span class="label">Moon</span><span class="value">Sagittarius 245.1°</span></div>
+        <div class="data-row"><span class="label">Ascendant</span><span class="value">Leo 128.6°</span></div>
+        <div class="data-row"><span class="label">Midheaven</span><span class="value">Aries 16.4°</span></div>
+        <div class="data-row"><span class="label">Moon Phase</span><span class="value">230.9° · 81.5%</span></div>
+      </div>
+      <div class="profile-section">
+        <h4>Field Node</h4>
+        <div class="data-row"><span class="label">Classification</span><span class="value highlight">Stable Node</span></div>
+        <div class="data-row"><span class="label">Coherence Δ</span><span class="value">0.908</span></div>
+        <div class="data-row"><span class="label">Intensity</span><span class="value">0.407</span></div>
+        <div class="data-row"><span class="label">Activation</span><span class="value">0.409</span></div>
+        <div class="data-row"><span class="label">Node Strength</span><span class="value">0.151</span></div>
+        <div class="data-row"><span class="label">Identity Score</span><span class="value">0.681</span></div>
+        <h4 style="margin-top:16px">Hebrew Gematria</h4>
+        <div class="data-row"><span class="label">Full Name</span><span class="value">1509 → 6</span></div>
+        <div class="data-row"><span class="label">Chet ח=8</span><span class="value highlight">3× HIGH</span></div>
+        <div class="data-row"><span class="label">Aspects</span><span class="value" style="font-size:0.65rem">LP + SU + PY</span></div>
+        <div class="data-row"><span class="label">YAHUAH →</span><span class="value highlight">Triple 8</span></div>
+        <div class="data-row"><span class="label">Christina</span><span class="value" style="font-size:0.65rem">משיח Mashiach 358</span></div>
+        <h4 style="margin-top:16px">Ley Lines</h4>
+        <div class="ley-item"><span>Hunebedden (Drenthe)</span><span class="dist">177.0 km</span></div>
+        <div class="ley-item"><span>Externsteine</span><span class="dist">304.6 km</span></div>
+        <div class="ley-item"><span>Avebury</span><span class="dist">439.6 km</span></div>
+      </div>
+      <div class="profile-section">
+        <h4>12-Axis Signature</h4>
+        <div class="radar-wrap" id="radar-veronica"></div>
+        <div class="bar-group">
+          <div class="bar-row"><span class="bar-label">1st princ.</span><div class="bar-track"><div class="bar-fill" style="width:87.5%"></div></div><span class="bar-val">.875</span></div>
+          <div class="bar-row"><span class="bar-label">pattern</span><div class="bar-track"><div class="bar-fill" style="width:87.5%"></div></div><span class="bar-val">.875</span></div>
+          <div class="bar-row"><span class="bar-label">domain</span><div class="bar-track"><div class="bar-fill" style="width:50%"></div></div><span class="bar-val">.500</span></div>
+          <div class="bar-row"><span class="bar-label">iteration</span><div class="bar-track"><div class="bar-fill" style="width:25%"></div></div><span class="bar-val">.250</span></div>
+          <div class="bar-row"><span class="bar-label">speed</span><div class="bar-track"><div class="bar-fill" style="width:87.5%"></div></div><span class="bar-val">.875</span></div>
+          <div class="bar-row"><span class="bar-label">abstract.</span><div class="bar-track"><div class="bar-fill" style="width:68.8%"></div></div><span class="bar-val">.688</span></div>
+          <div class="bar-row"><span class="bar-label">deploy</span><div class="bar-track"><div class="bar-fill" style="width:43.8%"></div></div><span class="bar-val">.438</span></div>
+          <div class="bar-row"><span class="bar-label">drift</span><div class="bar-track"><div class="bar-fill" style="width:80%"></div></div><span class="bar-val">.800</span></div>
+          <div class="bar-row"><span class="bar-label">narrative</span><div class="bar-track"><div class="bar-fill" style="width:50.5%"></div></div><span class="bar-val">.505</span></div>
+          <div class="bar-row"><span class="bar-label">nonlinear</span><div class="bar-track"><div class="bar-fill" style="width:40%"></div></div><span class="bar-val">.400</span></div>
+          <div class="bar-row"><span class="bar-label">commerc.</span><div class="bar-track"><div class="bar-fill" style="width:50%"></div></div><span class="bar-val">.500</span></div>
+          <div class="bar-row"><span class="bar-label">systems</span><div class="bar-track"><div class="bar-fill" style="width:87.5%"></div></div><span class="bar-val">.875</span></div>
+        </div>
+      </div>
+    </div>
+    <div class="etymology">"Resolute protector" (wil + helm) · "Anointed one" (christos = משיח) · "True image / Bearer of victory" (vera + icon) · "Hands of God" (manos / Emmanuel)</div>
+  </div>
+
+  <!-- MAGNUS -->
+  <div class="profile-card magnus">
+    <div class="profile-header">
+      <div>
+        <div class="profile-name">Subject Delta</div>
+        <div class="profile-meta">September 16, 1979 · 00:30 · Northern Europe · Virgo ♍ Earth</div>
+      </div>
+      <div class="profile-badge">VC · 0.94</div>
+    </div>
+    <div class="profile-grid">
+      <div class="profile-section">
+        <h4>Numerology</h4>
+        <div class="data-row"><span class="label">Life Path</span><span class="value">6 Nurturer</span></div>
+        <div class="data-row"><span class="label">Expression</span><span class="value">3 Creative</span></div>
+        <div class="data-row"><span class="label">Soul Urge</span><span class="value">4 Builder</span></div>
+        <div class="data-row"><span class="label">Personality</span><span class="value highlight">8 Achiever</span></div>
+        <div class="data-row"><span class="label">Birthday</span><span class="value">7 Seeker</span></div>
+        <div class="data-row"><span class="label">Personal Year</span><span class="value highlight">8 Achiever</span></div>
+        <div class="data-row"><span class="label">Maturity</span><span class="value">9 Humanitarian</span></div>
+        <h4 style="margin-top:16px">Astrology</h4>
+        <div class="data-row"><span class="label">Sun</span><span class="value">Virgo 172.8°</span></div>
+        <div class="data-row"><span class="label">Moon</span><span class="value">Cancer 114.3°</span></div>
+        <div class="data-row"><span class="label">Ascendant</span><span class="value">Leo 132.1°</span></div>
+        <div class="data-row"><span class="label">Midheaven</span><span class="value">Aries 15.9°</span></div>
+        <div class="data-row"><span class="label">Moon Phase</span><span class="value">301.5° · 23.9%</span></div>
+      </div>
+      <div class="profile-section">
+        <h4>Field Node</h4>
+        <div class="data-row"><span class="label">Classification</span><span class="value highlight">Stable Node</span></div>
+        <div class="data-row"><span class="label">Coherence Δ</span><span class="value">0.894</span></div>
+        <div class="data-row"><span class="label">Intensity</span><span class="value">0.354</span></div>
+        <div class="data-row"><span class="label">Activation</span><span class="value">0.344</span></div>
+        <div class="data-row"><span class="label">Node Strength</span><span class="value">0.109</span></div>
+        <div class="data-row"><span class="label">Identity Score</span><span class="value">0.531</span></div>
+        <h4 style="margin-top:16px">Hebrew Gematria</h4>
+        <div class="data-row"><span class="label">Subject Delta</span><span class="value">160 → 7</span></div>
+        <div class="data-row"><span class="label">Chet ח=8</span><span class="value">2× (PY, Pers)</span></div>
+        <div class="data-row"><span class="label">YAHUAH →</span><span class="value highlight">PY + Pers</span></div>
+        <div class="data-row"><span class="label">Resonance</span><span class="value">0.649</span></div>
+        <h4 style="margin-top:16px">Ley Lines</h4>
+        <div class="ley-item"><span>Ales Stenar</span><span class="dist">200.5 km</span></div>
+        <div class="ley-item"><span>Uppsala Temple</span><span class="dist">363.2 km</span></div>
+      </div>
+      <div class="profile-section">
+        <h4>12-Axis Signature</h4>
+        <div class="radar-wrap" id="radar-magnus"></div>
+        <div class="bar-group">
+          <div class="bar-row"><span class="bar-label">1st princ.</span><div class="bar-track"><div class="bar-fill" style="width:62.5%"></div></div><span class="bar-val">.625</span></div>
+          <div class="bar-row"><span class="bar-label">pattern</span><div class="bar-track"><div class="bar-fill" style="width:37.5%"></div></div><span class="bar-val">.375</span></div>
+          <div class="bar-row"><span class="bar-label">domain</span><div class="bar-track"><div class="bar-fill" style="width:25%"></div></div><span class="bar-val">.250</span></div>
+          <div class="bar-row"><span class="bar-label">iteration</span><div class="bar-track"><div class="bar-fill" style="width:75%"></div></div><span class="bar-val">.750</span></div>
+          <div class="bar-row"><span class="bar-label">speed</span><div class="bar-track"><div class="bar-fill" style="width:87.5%"></div></div><span class="bar-val">.875</span></div>
+          <div class="bar-row"><span class="bar-label">abstract.</span><div class="bar-track"><div class="bar-fill" style="width:43.8%"></div></div><span class="bar-val">.438</span></div>
+          <div class="bar-row"><span class="bar-label">deploy</span><div class="bar-track"><div class="bar-fill" style="width:81.3%"></div></div><span class="bar-val">.813</span></div>
+          <div class="bar-row"><span class="bar-label">drift</span><div class="bar-track"><div class="bar-fill" style="width:40%"></div></div><span class="bar-val">.400</span></div>
+          <div class="bar-row"><span class="bar-label">narrative</span><div class="bar-track"><div class="bar-fill" style="width:29.3%"></div></div><span class="bar-val">.293</span></div>
+          <div class="bar-row"><span class="bar-label">nonlinear</span><div class="bar-track"><div class="bar-fill" style="width:40%"></div></div><span class="bar-val">.400</span></div>
+          <div class="bar-row"><span class="bar-label">commerc.</span><div class="bar-track"><div class="bar-fill" style="width:93.8%"></div></div><span class="bar-val">.938</span></div>
+          <div class="bar-row"><span class="bar-label">systems</span><div class="bar-track"><div class="bar-fill" style="width:50%"></div></div><span class="bar-val">.500</span></div>
+        </div>
+      </div>
+    </div>
+    <div class="etymology">"Great" — from Latin magnus. Virgo earth, born at midnight in the Swedish forest. The VC who harmonizes and protects.</div>
+  </div>
+</section>
+
+</main>
+
+<footer>
+  <div class="container">
+    <p>Δ.72 FIELD NODE ENGINE — ALGORITHM BY A.L.H., IMPLEMENTATION BY J.T.</p>
+    <p style="margin-top:8px;opacity:0.5">חסד = 72 · Node(x,t) = Coherence(N,A,M,G,T) × Intensity × Activation</p>
+  </div>
+</footer>
+
+<script>
+// Radar chart generator
+function createRadar(containerId, data, color) {
+  const axes = [
+    '1st Princ.','Pattern','Domain','Iteration','Speed',
+    'Abstract.','Deploy','Drift','Narrative','Nonlinear','Commerc.','Systems'
+  ];
+  const n = axes.length;
+  const cx = 130, cy = 130, maxR = 100;
+  const angleStep = (2 * Math.PI) / n;
+
+  let svg = `<svg viewBox="0 0 260 260" xmlns="http://www.w3.org/2000/svg">`;
+
+  // Rings
+  for (let r = 0.25; r <= 1; r += 0.25) {
+    let ring = '';
+    for (let i = 0; i <= n; i++) {
+      const a = -Math.PI / 2 + i * angleStep;
+      const x = cx + Math.cos(a) * maxR * r;
+      const y = cy + Math.sin(a) * maxR * r;
+      ring += (i === 0 ? 'M' : 'L') + x.toFixed(1) + ',' + y.toFixed(1);
+    }
+    svg += `<path d="${ring}Z" class="radar-ring"/>`;
+  }
+
+  // Spokes + labels
+  for (let i = 0; i < n; i++) {
+    const a = -Math.PI / 2 + i * angleStep;
+    const x1 = cx + Math.cos(a) * maxR;
+    const y1 = cy + Math.sin(a) * maxR;
+    svg += `<line x1="${cx}" y1="${cy}" x2="${x1.toFixed(1)}" y2="${y1.toFixed(1)}" class="radar-spoke"/>`;
+    const lx = cx + Math.cos(a) * (maxR + 16);
+    const ly = cy + Math.sin(a) * (maxR + 16);
+    svg += `<text x="${lx.toFixed(1)}" y="${(ly + 2).toFixed(1)}" class="radar-label">${axes[i]}</text>`;
+  }
+
+  // Data polygon
+  let poly = '';
+  let points = [];
+  for (let i = 0; i < n; i++) {
+    const a = -Math.PI / 2 + i * angleStep;
+    const r = data[i] * maxR;
+    const x = cx + Math.cos(a) * r;
+    const y = cy + Math.sin(a) * r;
+    poly += (i === 0 ? 'M' : 'L') + x.toFixed(1) + ',' + y.toFixed(1);
+    points.push([x, y]);
+  }
+  svg += `<path d="${poly}Z" class="radar-area"/>`;
+  for (const [px, py] of points) {
+    svg += `<circle cx="${px.toFixed(1)}" cy="${py.toFixed(1)}" r="2.5" class="radar-point"/>`;
+  }
+
+  svg += '</svg>';
+  document.getElementById(containerId).innerHTML = svg;
+}
+
+createRadar('radar-joel',
+  [0.875, 0.970, 0.375, 0.500, 0.000, 0.700, 0.625, 0.876, 0.399, 0.550, 0.500, 0.968],
+  '#4a9eff');
+
+createRadar('radar-allison',
+  [0.820, 0.375, 0.000, 0.000, 0.750, 0.485, 0.312, 0.400, 0.080, 0.550, 0.438, 0.642],
+  '#a87fff');
+
+createRadar('radar-veronica',
+  [0.875, 0.875, 0.500, 0.250, 0.875, 0.688, 0.438, 0.800, 0.505, 0.400, 0.500, 0.875],
+  '#e6b44c');
+
+createRadar('radar-magnus',
+  [0.625, 0.375, 0.250, 0.750, 0.875, 0.438, 0.813, 0.400, 0.293, 0.400, 0.938, 0.500],
+  '#5cc98e');
+</script>
+</body>
+</html>
