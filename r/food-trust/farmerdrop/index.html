@@ -1,0 +1,1327 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Magnus Farmerdrop — Physical-Backed Honey Token Analysis</title>
+  <meta name="description" content="Quantitative analysis of a physical-backed honey cryptocurrency token. Chain economics, storage physics, P2P transfer methods, and supply modeling.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@200;300;400;500;600;700&family=JetBrains+Mono:wght@300;400;500;600&display=swap" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg: #07070f;
+      --surface: rgba(255,255,255,0.035);
+      --surface-hover: rgba(122,162,247,0.07);
+      --border: rgba(255,255,255,0.07);
+      --border-hover: rgba(122,162,247,0.30);
+      --text: #e8e8f4;
+      --muted: rgba(232,232,244,0.45);
+      --dim: rgba(232,232,244,0.25);
+      --accent: #7aa2f7;
+      --accent2: #bb9af7;
+      --green: #9ece6a;
+      --amber: #e0af68;
+      --red: #f7768e;
+      --teal: #73daca;
+      --glow: rgba(122,162,247,0.10);
+    }
+
+    html { scroll-behavior: smooth; }
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: 'Outfit', sans-serif;
+      overflow-x: hidden;
+      -webkit-font-smoothing: antialiased;
+      min-height: 100vh;
+    }
+
+    /* ── Hex grid background ─────────────────────── */
+    .hex-bg {
+      position: fixed; inset: 0; z-index: 0; pointer-events: none;
+      opacity: 0.025;
+      background-image:
+        linear-gradient(30deg, var(--accent) 12%, transparent 12.5%, transparent 87%, var(--accent) 87.5%, var(--accent)),
+        linear-gradient(150deg, var(--accent) 12%, transparent 12.5%, transparent 87%, var(--accent) 87.5%, var(--accent)),
+        linear-gradient(30deg, var(--accent) 12%, transparent 12.5%, transparent 87%, var(--accent) 87.5%, var(--accent)),
+        linear-gradient(150deg, var(--accent) 12%, transparent 12.5%, transparent 87%, var(--accent) 87.5%, var(--accent)),
+        linear-gradient(60deg, var(--amber) 25%, transparent 25.5%, transparent 75%, var(--amber) 75%, var(--amber)),
+        linear-gradient(60deg, var(--amber) 25%, transparent 25.5%, transparent 75%, var(--amber) 75%, var(--amber));
+      background-size: 80px 140px;
+      background-position: 0 0, 0 0, 40px 70px, 40px 70px, 0 0, 40px 70px;
+    }
+
+    /* ── Nav ──────────────────────────────────────── */
+    .nav {
+      position: sticky; top: 0; z-index: 50;
+      padding: 0 2rem; height: 56px;
+      display: flex; align-items: center; justify-content: space-between;
+      background: rgba(7,7,15,0.85);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      border-bottom: 1px solid var(--border);
+    }
+    .nav-brand {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.72rem; font-weight: 600;
+      letter-spacing: 0.2em; text-transform: uppercase;
+      color: var(--accent); text-decoration: none;
+    }
+    .nav-title {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.65rem; font-weight: 400;
+      letter-spacing: 0.1em; color: var(--muted);
+    }
+    .nav-title span { color: var(--amber); }
+
+    /* ── Hero strip ──────────────────────────────── */
+    .hero {
+      position: relative; z-index: 2;
+      padding: 3.5rem 2rem 1rem;
+      text-align: center;
+    }
+    .hero-eyebrow {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.6rem; letter-spacing: 0.35em;
+      text-transform: uppercase; color: var(--amber);
+      margin-bottom: 1rem;
+      opacity: 0; animation: fadeUp 0.7s 0.1s ease forwards;
+    }
+    .hero h1 {
+      font-size: clamp(1.8rem, 4vw, 3rem);
+      font-weight: 200; letter-spacing: -0.01em;
+      line-height: 1.2; max-width: 700px; margin: 0 auto;
+      opacity: 0; animation: fadeUp 0.7s 0.25s ease forwards;
+    }
+    .hero h1 strong {
+      font-weight: 500;
+      background: linear-gradient(140deg, #fff 10%, var(--amber) 55%, var(--green));
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+    .hero-sub {
+      margin-top: 0.8rem; font-size: 0.88rem;
+      color: var(--muted); max-width: 520px;
+      line-height: 1.7; margin-left: auto; margin-right: auto;
+      opacity: 0; animation: fadeUp 0.7s 0.4s ease forwards;
+    }
+
+    /* ── Key numbers strip ───────────────────────── */
+    .key-numbers {
+      position: relative; z-index: 2;
+      display: flex; justify-content: center; flex-wrap: wrap;
+      gap: 0; padding: 1.5rem 1rem 2rem;
+      opacity: 0; animation: fadeUp 0.7s 0.55s ease forwards;
+    }
+    .key-num {
+      display: flex; align-items: center; gap: 8px;
+      padding: 0 1.2rem;
+      border-right: 1px solid var(--border);
+    }
+    .key-num:last-child { border-right: none; }
+    .key-num .val {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 1.1rem; font-weight: 600;
+    }
+    .key-num .label {
+      font-size: 0.7rem; color: var(--muted);
+      line-height: 1.3; max-width: 100px;
+    }
+
+    /* ── Main content ────────────────────────────── */
+    .content {
+      position: relative; z-index: 2;
+      max-width: 1100px; margin: 0 auto;
+      padding: 0 2rem 4rem;
+    }
+
+    /* ── Tabs ────────────────────────────────────── */
+    .tabs {
+      display: flex; gap: 2px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 4px;
+      margin-bottom: 2rem;
+      overflow-x: auto;
+    }
+    .tab-btn {
+      flex: 1;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.65rem; font-weight: 500;
+      letter-spacing: 0.08em; text-transform: uppercase;
+      color: var(--muted);
+      background: transparent;
+      border: 1px solid transparent;
+      border-radius: 7px;
+      padding: 10px 16px;
+      cursor: pointer;
+      transition: all 0.25s;
+      white-space: nowrap;
+    }
+    .tab-btn:hover {
+      color: var(--text);
+      background: rgba(255,255,255,0.02);
+    }
+    .tab-btn.active {
+      color: var(--text);
+      background: rgba(122,162,247,0.08);
+      border-color: var(--border-hover);
+      box-shadow: 0 0 20px rgba(122,162,247,0.06);
+    }
+    .tab-panel { display: none; }
+    .tab-panel.active {
+      display: block;
+      animation: fadeIn 0.35s ease;
+    }
+
+    /* ── Section label ───────────────────────────── */
+    .section-label {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.6rem; letter-spacing: 0.3em;
+      text-transform: uppercase; color: var(--accent);
+      margin-bottom: 1.2rem; margin-top: 2.5rem;
+      display: flex; align-items: center; gap: 0.8rem;
+    }
+    .section-label:first-child { margin-top: 0; }
+    .section-label::after {
+      content: ''; display: block; flex: 1;
+      height: 1px; background: var(--border);
+    }
+
+    /* ── Cards ────────────────────────────────────── */
+    .card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 1.4rem 1.6rem;
+      transition: background 0.25s, border-color 0.25s, transform 0.25s, box-shadow 0.25s;
+      position: relative;
+      overflow: hidden;
+    }
+    .card::before {
+      content: ''; position: absolute; inset: 0;
+      border-radius: inherit;
+      background: radial-gradient(ellipse at top left, var(--glow), transparent 60%);
+      opacity: 0; transition: opacity 0.3s;
+    }
+    .card:hover {
+      background: var(--surface-hover);
+      border-color: var(--border-hover);
+      transform: translateY(-1px);
+      box-shadow: 0 6px 24px rgba(0,0,0,0.3);
+    }
+    .card:hover::before { opacity: 1; }
+    .card-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 1rem;
+    }
+    .card-grid-3 {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 1rem;
+    }
+    .card h3 {
+      font-size: 0.9rem; font-weight: 600;
+      margin-bottom: 0.5rem; position: relative;
+    }
+    .card p, .card li {
+      font-size: 0.78rem; color: var(--muted);
+      line-height: 1.6;
+    }
+    .card ul {
+      list-style: none; padding: 0;
+    }
+    .card ul li::before {
+      content: ''; display: inline-block;
+      width: 4px; height: 4px; border-radius: 50%;
+      background: var(--accent); margin-right: 8px;
+      vertical-align: middle;
+    }
+    .card .badge {
+      display: inline-block;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.5rem; font-weight: 600;
+      letter-spacing: 0.08em; text-transform: uppercase;
+      padding: 2px 8px; border-radius: 4px;
+      margin-bottom: 8px;
+    }
+    .card .best-fit {
+      background: rgba(158,206,106,0.12); color: var(--green);
+    }
+    .card .ok-fit {
+      background: rgba(122,162,247,0.12); color: var(--accent);
+    }
+    .card .poor-fit {
+      background: rgba(247,118,142,0.12); color: var(--red);
+    }
+
+    /* ── Chart containers ────────────────────────── */
+    .chart-wrap {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 1.5rem;
+      margin-bottom: 1.5rem;
+      position: relative;
+    }
+    .chart-wrap h3 {
+      font-size: 0.82rem; font-weight: 600;
+      margin-bottom: 1rem;
+    }
+    .chart-wrap .chart-note {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.55rem; color: var(--dim);
+      margin-top: 0.6rem;
+    }
+    .chart-row {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+      gap: 1.5rem;
+    }
+
+    /* ── Tables ───────────────────────────────────── */
+    .data-table {
+      width: 100%; border-collapse: collapse;
+      font-size: 0.78rem;
+    }
+    .data-table th {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.6rem; font-weight: 600;
+      letter-spacing: 0.1em; text-transform: uppercase;
+      color: var(--accent); text-align: left;
+      padding: 8px 12px;
+      border-bottom: 1px solid var(--border);
+    }
+    .data-table td {
+      padding: 10px 12px;
+      border-bottom: 1px solid rgba(255,255,255,0.03);
+      color: var(--muted);
+    }
+    .data-table tr:hover td {
+      background: rgba(122,162,247,0.03);
+    }
+    .data-table .mono {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.72rem;
+    }
+    .data-table .highlight {
+      color: var(--text); font-weight: 500;
+    }
+    .winner { color: var(--green) !important; font-weight: 600 !important; }
+
+    /* ── Scenario cards ──────────────────────────── */
+    .scenario-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+      gap: 0.8rem;
+    }
+    .scenario-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 1rem 1.2rem;
+      transition: all 0.25s;
+    }
+    .scenario-card:hover {
+      border-color: var(--border-hover);
+      background: var(--surface-hover);
+    }
+    .scenario-icon {
+      font-size: 1.4rem; margin-bottom: 0.5rem;
+    }
+    .scenario-name {
+      font-weight: 600; font-size: 0.82rem;
+      margin-bottom: 0.4rem;
+    }
+    .scenario-rec {
+      font-size: 0.7rem; color: var(--muted);
+      line-height: 1.5;
+    }
+    .scenario-rec .primary {
+      color: var(--green);
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.62rem; font-weight: 500;
+    }
+    .scenario-rec .fallback {
+      color: var(--dim);
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.58rem;
+    }
+
+    /* ── Arbitrage bounds visual ──────────────────── */
+    .arb-visual {
+      position: relative;
+      height: 80px;
+      margin: 1.5rem 0 0.5rem;
+    }
+    .arb-track {
+      position: absolute; top: 34px; left: 10%; right: 10%;
+      height: 4px; background: var(--border);
+      border-radius: 2px;
+    }
+    .arb-range {
+      position: absolute; top: 32px; height: 8px;
+      background: rgba(158,206,106,0.2);
+      border: 1px solid rgba(158,206,106,0.3);
+      border-radius: 4px;
+    }
+    .arb-marker {
+      position: absolute; top: 20px;
+      width: 2px; height: 32px;
+      transform: translateX(-1px);
+    }
+    .arb-marker .dot {
+      width: 10px; height: 10px; border-radius: 50%;
+      position: absolute; top: -5px; left: -4px;
+    }
+    .arb-label {
+      position: absolute; top: 60px;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.62rem; font-weight: 500;
+      transform: translateX(-50%);
+      white-space: nowrap;
+    }
+    .arb-label-top {
+      position: absolute; top: 4px;
+      font-size: 0.55rem; color: var(--dim);
+      font-family: 'JetBrains Mono', monospace;
+      transform: translateX(-50%);
+      white-space: nowrap;
+    }
+
+    /* ── Price breakdown bar ──────────────────────── */
+    .price-bar-wrap {
+      margin: 1rem 0;
+    }
+    .price-bar {
+      display: flex; height: 36px;
+      border-radius: 8px; overflow: hidden;
+      border: 1px solid var(--border);
+    }
+    .price-seg {
+      display: flex; align-items: center; justify-content: center;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.6rem; font-weight: 500;
+      color: var(--bg);
+      transition: flex-basis 0.4s;
+    }
+    .price-legend {
+      display: flex; gap: 1.5rem; margin-top: 0.8rem;
+      flex-wrap: wrap;
+    }
+    .price-legend-item {
+      display: flex; align-items: center; gap: 6px;
+      font-size: 0.7rem; color: var(--muted);
+    }
+    .price-legend-dot {
+      width: 8px; height: 8px; border-radius: 3px;
+    }
+
+    /* ── Risk badges in tables ───────────────────── */
+    .risk-none { color: var(--green); }
+    .risk-low { color: var(--teal); }
+    .risk-medium { color: var(--amber); }
+    .risk-high { color: var(--red); }
+
+    /* ── Footer ──────────────────────────────────── */
+    footer {
+      position: relative; z-index: 2;
+      text-align: center; padding: 2rem;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.6rem; color: var(--dim);
+      border-top: 1px solid var(--border);
+    }
+    footer a { color: var(--muted); text-decoration: none; }
+    footer a:hover { color: var(--accent); }
+
+    /* ── Animations ──────────────────────────────── */
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateY(14px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+    @keyframes fadeIn {
+      from { opacity: 0; }
+      to   { opacity: 1; }
+    }
+
+    /* ── Responsive ──────────────────────────────── */
+    @media (max-width: 700px) {
+      .tabs { flex-direction: column; }
+      .tab-btn { text-align: left; }
+      .key-numbers { flex-direction: column; align-items: center; }
+      .key-num { border-right: none; border-bottom: 1px solid var(--border); padding: 0.6rem 0; }
+      .key-num:last-child { border-bottom: none; }
+      .chart-row { grid-template-columns: 1fr; }
+      .content { padding: 0 1rem 3rem; }
+      .hero { padding: 2.5rem 1rem 0.5rem; }
+    }
+  </style>
+</head>
+<body>
+
+<div class="hex-bg"></div>
+
+<nav class="nav">
+  <a href="https://jthorvaldur.github.io/" class="nav-brand">Thorarinson</a>
+  <div class="nav-title"><span>&#x2B21;</span> Magnus Farmerdrop</div>
+</nav>
+
+<div class="hero">
+  <p class="hero-eyebrow">Physical-Backed Commodity Token</p>
+  <h1><strong>Farmerdrop</strong> honey token analysis</h1>
+  <p class="hero-sub">Evaluating chain economics, storage physics, transfer methods, and supply dynamics for a 1:1 physical-backed honey cryptocurrency.</p>
+</div>
+
+<div class="key-numbers">
+  <div class="key-num">
+    <div class="val" style="color:var(--green);">$0.005</div>
+    <div class="label">Base L2 mint-burn cycle</div>
+  </div>
+  <div class="key-num">
+    <div class="val" style="color:var(--teal);">30&deg;C</div>
+    <div class="label">Max safe storage temp (Codex HMF)</div>
+  </div>
+  <div class="key-num">
+    <div class="val" style="color:var(--amber);">10.5 lbs</div>
+    <div class="label">Min viable redemption quantity</div>
+  </div>
+  <div class="key-num">
+    <div class="val" style="color:var(--accent2);">$4.09</div>
+    <div class="label">Modeled token price per lb</div>
+  </div>
+</div>
+
+<div class="content">
+
+  <div class="tabs">
+    <button class="tab-btn active" data-tab="economics">Token Economics</button>
+    <button class="tab-btn" data-tab="physical">Physical Backing</button>
+    <button class="tab-btn" data-tab="p2p">P2P Transfer</button>
+    <button class="tab-btn" data-tab="supply">Supply Model</button>
+  </div>
+
+  <!-- ═══════════════════════════════════════════════ -->
+  <!-- TAB 1: TOKEN ECONOMICS                         -->
+  <!-- ═══════════════════════════════════════════════ -->
+  <div class="tab-panel active" id="panel-economics">
+
+    <p class="section-label">Chain Comparison</p>
+    <div class="chart-wrap">
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th>Chain</th>
+            <th>Gas / tx</th>
+            <th>Block time</th>
+            <th>Finality</th>
+            <th>Security</th>
+            <th>Bridge risk</th>
+            <th>Full cycle</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td class="highlight">Ethereum L1</td>
+            <td class="mono">$5.000</td>
+            <td class="mono">12s</td>
+            <td class="mono">15min</td>
+            <td>L1</td>
+            <td class="risk-none">None</td>
+            <td class="mono">$25.000</td>
+          </tr>
+          <tr>
+            <td class="highlight">Polygon PoS</td>
+            <td class="mono">$0.010</td>
+            <td class="mono">2s</td>
+            <td class="mono">4min</td>
+            <td>Sidechain</td>
+            <td class="risk-medium">Medium</td>
+            <td class="mono">$0.050</td>
+          </tr>
+          <tr>
+            <td class="highlight winner">Base</td>
+            <td class="mono winner">$0.001</td>
+            <td class="mono">2s</td>
+            <td class="mono">60min</td>
+            <td>Optimistic Rollup</td>
+            <td class="risk-low">Low</td>
+            <td class="mono winner">$0.005</td>
+          </tr>
+          <tr>
+            <td class="highlight">Arbitrum One</td>
+            <td class="mono">$0.010</td>
+            <td class="mono">0.25s</td>
+            <td class="mono">60min</td>
+            <td>Optimistic Rollup</td>
+            <td class="risk-low">Low</td>
+            <td class="mono">$0.050</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="chart-row">
+      <div class="chart-wrap">
+        <h3>Annual Gas Costs by Volume</h3>
+        <canvas id="chart-gas-annual"></canvas>
+        <p class="chart-note">Ethereum L1 excluded from chart to preserve scale (1K txs = $5,000; 100K = $500,000)</p>
+      </div>
+      <div class="chart-wrap">
+        <h3>Mint-Transfer-Burn Cycle Cost</h3>
+        <canvas id="chart-cycle"></canvas>
+        <p class="chart-note">Full lifecycle cost: mint (storage writes) + transfer + burn (redeem)</p>
+      </div>
+    </div>
+
+    <p class="section-label">Token Standard Evaluation</p>
+    <div class="card-grid-3">
+      <div class="card">
+        <span class="badge ok-fit">Good fit</span>
+        <h3>ERC-20</h3>
+        <ul>
+          <li>Fully fungible (1 token = X g honey)</li>
+          <li>Universal exchange/wallet support</li>
+          <li>No per-token metadata</li>
+          <li>No batch transfers</li>
+          <li>Simple, proven standard</li>
+        </ul>
+      </div>
+      <div class="card" style="border-color: rgba(158,206,106,0.25);">
+        <span class="badge best-fit">Best fit</span>
+        <h3 style="color:var(--green);">ERC-1155</h3>
+        <ul>
+          <li>Fungible + non-fungible in one contract</li>
+          <li>Different token IDs per variety</li>
+          <li>Batch transfers (0.7x gas)</li>
+          <li>Metadata URI per token ID</li>
+          <li>Provenance: farm, harvest, variety</li>
+        </ul>
+      </div>
+      <div class="card">
+        <span class="badge poor-fit">Overkill</span>
+        <h3>ERC-721</h3>
+        <ul>
+          <li>Each token is unique (NFT)</li>
+          <li>Full metadata per token</li>
+          <li>1.2x gas vs ERC-20</li>
+          <li>No batch operations</li>
+          <li>Only for premium/rare lots</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════════ -->
+  <!-- TAB 2: PHYSICAL BACKING                        -->
+  <!-- ═══════════════════════════════════════════════ -->
+  <div class="tab-panel" id="panel-physical">
+
+    <p class="section-label">HMF Degradation Model</p>
+    <div class="chart-wrap">
+      <h3>Hydroxymethylfurfural Accumulation Over 24 Months</h3>
+      <canvas id="chart-hmf" height="90"></canvas>
+      <p class="chart-note">HMF(t) = 10 + k&middot;t where k = 0.5 &times; 2<sup>(T&minus;20)/10</sup> &mdash; Arrhenius-approximated first-order kinetics. Codex Alimentarius limit: 40 mg/kg.</p>
+    </div>
+
+    <div class="chart-row">
+      <div class="chart-wrap">
+        <h3>Annual Storage Cost Breakdown (1,000 lbs)</h3>
+        <canvas id="chart-storage-donut"></canvas>
+        <p class="chart-note">$2,860 total &mdash; audits dominate at $2,500/yr (quarterly third-party)</p>
+      </div>
+      <div class="chart-wrap">
+        <h3>Redemption: Shipping as % of Value</h3>
+        <canvas id="chart-redemption"></canvas>
+        <p class="chart-note">Viable redemption at 10.5 lbs where shipping drops below 25% of token value. Zone 5 shipping, $12/lb retail.</p>
+      </div>
+    </div>
+
+    <p class="section-label">Storage Parameters</p>
+    <div class="card-grid">
+      <div class="card">
+        <h3>Ideal Conditions</h3>
+        <ul>
+          <li>Temperature: 50&ndash;70&deg;F (10&ndash;21&deg;C)</li>
+          <li>Moisture: &lt; 18% at intake</li>
+          <li>Container: food-grade drums/IBC</li>
+          <li>No direct sunlight</li>
+          <li>Crystallization: natural, reversible</li>
+        </ul>
+      </div>
+      <div class="card">
+        <h3>Verification Chain</h3>
+        <ul>
+          <li>Intake: refractometer + Pfund color</li>
+          <li>Adulteration: C4 sugar + NMR</li>
+          <li>Custody: lot # + harvest + beekeeper ID</li>
+          <li>On-chain: auditor attestation hash</li>
+          <li>Quarterly proof-of-reserves audit</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════════ -->
+  <!-- TAB 3: P2P TRANSFER                            -->
+  <!-- ═══════════════════════════════════════════════ -->
+  <div class="tab-panel" id="panel-p2p">
+
+    <p class="section-label">Transfer Method Comparison</p>
+    <div class="chart-wrap">
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th>Method</th>
+            <th>Internet</th>
+            <th>Latency</th>
+            <th>Cost</th>
+            <th>Offline</th>
+            <th>Double-spend</th>
+            <th>Complexity</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td class="highlight">On-Chain</td>
+            <td>Required</td>
+            <td class="mono">2s</td>
+            <td class="mono">$0.01</td>
+            <td class="risk-high">No</td>
+            <td class="risk-none">None</td>
+            <td class="risk-none">Low</td>
+          </tr>
+          <tr>
+            <td class="highlight">State Channel</td>
+            <td>Required</td>
+            <td class="mono">0.1s</td>
+            <td class="mono winner">$0.00</td>
+            <td class="risk-high">No</td>
+            <td class="risk-none">None</td>
+            <td class="risk-high">High</td>
+          </tr>
+          <tr>
+            <td class="highlight">QR Signed Intent</td>
+            <td class="risk-none">No</td>
+            <td class="mono">5s</td>
+            <td class="mono">$0.01</td>
+            <td class="winner">Yes</td>
+            <td class="risk-medium">Medium</td>
+            <td class="risk-medium">Medium</td>
+          </tr>
+          <tr>
+            <td class="highlight">libp2p Coordinated</td>
+            <td>Required</td>
+            <td class="mono">1s</td>
+            <td class="mono">$0.01</td>
+            <td class="risk-high">No</td>
+            <td class="risk-none">None</td>
+            <td class="risk-high">High</td>
+          </tr>
+          <tr>
+            <td class="highlight">BLE Mesh Deferred</td>
+            <td class="risk-none">No</td>
+            <td class="mono">2s</td>
+            <td class="mono">$0.01</td>
+            <td class="winner">Yes</td>
+            <td class="risk-high">High</td>
+            <td class="risk-high">High</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="chart-row">
+      <div class="chart-wrap">
+        <h3>Method Profile Radar</h3>
+        <canvas id="chart-radar"></canvas>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:1rem;">
+        <p class="section-label" style="margin-top:0;">Scenario Recommendations</p>
+        <div class="scenario-grid">
+          <div class="scenario-card">
+            <div class="scenario-icon">&#x1F33D;</div>
+            <div class="scenario-name">Farmers Market</div>
+            <div class="scenario-rec">
+              <div class="primary">QR Signed Intent</div>
+              <div class="fallback">fallback: On-Chain</div>
+            </div>
+          </div>
+          <div class="scenario-card">
+            <div class="scenario-icon">&#x1F310;</div>
+            <div class="scenario-name">Online Trade</div>
+            <div class="scenario-rec">
+              <div class="primary">On-Chain</div>
+              <div class="fallback">enhanced: libp2p</div>
+            </div>
+          </div>
+          <div class="scenario-card">
+            <div class="scenario-icon">&#x1F33E;</div>
+            <div class="scenario-name">Rural Farm</div>
+            <div class="scenario-rec">
+              <div class="primary">BLE Mesh</div>
+              <div class="fallback">backup: QR Signed</div>
+            </div>
+          </div>
+          <div class="scenario-card">
+            <div class="scenario-icon">&#x1F69A;</div>
+            <div class="scenario-name">Distributor</div>
+            <div class="scenario-rec">
+              <div class="primary">State Channel</div>
+              <div class="fallback">settlement: On-Chain</div>
+            </div>
+          </div>
+          <div class="scenario-card">
+            <div class="scenario-icon">&#x1F381;</div>
+            <div class="scenario-name">Gift</div>
+            <div class="scenario-rec">
+              <div class="primary">On-Chain</div>
+              <div class="fallback">fun: QR Signed</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════════ -->
+  <!-- TAB 4: SUPPLY MODEL                            -->
+  <!-- ═══════════════════════════════════════════════ -->
+  <div class="tab-panel" id="panel-supply">
+
+    <p class="section-label">Seasonal Production by Region</p>
+    <div class="chart-wrap">
+      <h3>Monthly US Honey Production (4 Regions)</h3>
+      <canvas id="chart-seasonal" height="80"></canvas>
+      <p class="chart-note">Gaussian seasonal envelopes. Total ~28.8M lbs/yr from modeled regions (actual US total ~150M lbs/yr).</p>
+    </div>
+
+    <p class="section-label">Token Supply Simulation</p>
+    <div class="chart-wrap">
+      <h3>24-Month Inventory &amp; Token Supply</h3>
+      <canvas id="chart-supply-sim" height="80"></canvas>
+      <p class="chart-note">Starting inventory: 100K lbs. Scaled production: 500K lbs/yr. Monthly redemption rate: 3%.</p>
+    </div>
+
+    <p class="section-label">Token Price Model</p>
+    <div class="chart-row">
+      <div class="chart-wrap">
+        <h3>Price Composition</h3>
+        <div class="price-bar-wrap">
+          <div class="price-bar">
+            <div class="price-seg" style="flex-basis:85.6%;background:var(--amber);">$3.50</div>
+            <div class="price-seg" style="flex-basis:5.9%;background:var(--teal);">$0.24</div>
+            <div class="price-seg" style="flex-basis:8.5%;background:var(--accent2);">$0.35</div>
+          </div>
+          <div class="price-legend">
+            <div class="price-legend-item">
+              <div class="price-legend-dot" style="background:var(--amber);"></div>
+              Wholesale base $3.50/lb
+            </div>
+            <div class="price-legend-item">
+              <div class="price-legend-dot" style="background:var(--teal);"></div>
+              Storage (12mo) $0.24/lb
+            </div>
+            <div class="price-legend-item">
+              <div class="price-legend-dot" style="background:var(--accent2);"></div>
+              Overhead (10%) $0.35/lb
+            </div>
+          </div>
+        </div>
+        <p style="font-family:'JetBrains Mono',monospace;font-size:0.75rem;color:var(--text);margin-top:1rem;">
+          Token price: <span style="color:var(--green);font-weight:600;">$4.09/lb</span>
+          <span style="color:var(--muted);font-size:0.65rem;margin-left:8px;">17.0% premium over wholesale</span>
+        </p>
+      </div>
+      <div class="chart-wrap">
+        <h3>Arbitrage Bounds</h3>
+        <p style="font-size:0.75rem;color:var(--muted);margin-bottom:0.5rem;">Price stability maintained by physical arbitrage: buy-and-redeem vs deposit-and-sell.</p>
+        <div class="arb-visual">
+          <div class="arb-track"></div>
+          <!-- Range: 10% to 80% maps $0 to $6 -->
+          <!-- $2.00 = 10% + (2/6)*70% = 33.3% -->
+          <!-- $4.00 = 10% + (4/6)*70% = 56.7% -->
+          <!-- $4.09 = 10% + (4.09/6)*70% = 57.7% -->
+          <div class="arb-range" style="left:33.3%;right:calc(100% - 56.7%);"></div>
+
+          <div class="arb-marker" style="left:33.3%;">
+            <div class="dot" style="background:var(--red);"></div>
+            <div style="position:absolute;top:0;bottom:0;width:2px;background:var(--red);border-radius:1px;"></div>
+          </div>
+          <div class="arb-label" style="left:33.3%;color:var(--red);">$2.00</div>
+          <div class="arb-label-top" style="left:33.3%;">Lower bound</div>
+
+          <div class="arb-marker" style="left:56.7%;">
+            <div class="dot" style="background:var(--green);"></div>
+            <div style="position:absolute;top:0;bottom:0;width:2px;background:var(--green);border-radius:1px;"></div>
+          </div>
+          <div class="arb-label" style="left:56.7%;color:var(--green);">$4.00</div>
+          <div class="arb-label-top" style="left:56.7%;">Upper bound</div>
+
+          <div class="arb-marker" style="left:57.7%;">
+            <div class="dot" style="background:var(--amber);box-shadow:0 0 10px var(--amber);"></div>
+            <div style="position:absolute;top:0;bottom:0;width:2px;background:var(--amber);border-radius:1px;"></div>
+          </div>
+          <div class="arb-label" style="left:57.7%;color:var(--amber);font-weight:600;">$4.09</div>
+          <div class="arb-label-top" style="left:57.7%;color:var(--amber);">Token price</div>
+        </div>
+        <p class="chart-note" style="margin-top:2rem;">Token price ($4.09) sits just above the upper arbitrage bound ($4.00), suggesting the 10% overhead margin may need slight reduction to stay within the no-arbitrage window.</p>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<footer>
+  <p>Magnus Farmerdrop &mdash; research analysis &middot; <a href="https://jthorvaldur.github.io/">jthorvaldur.github.io</a></p>
+</footer>
+
+<script>
+// ── Tab switching ─────────────────────────────────
+document.querySelectorAll('.tab-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+    document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+    btn.classList.add('active');
+    document.getElementById('panel-' + btn.dataset.tab).classList.add('active');
+  });
+});
+
+// ── Chart.js defaults ─────────────────────────────
+Chart.defaults.color = 'rgba(232,232,244,0.45)';
+Chart.defaults.borderColor = 'rgba(255,255,255,0.07)';
+Chart.defaults.font.family = "'Outfit', sans-serif";
+Chart.defaults.font.size = 11;
+Chart.defaults.plugins.legend.labels.usePointStyle = true;
+Chart.defaults.plugins.legend.labels.pointStyleWidth = 8;
+Chart.defaults.plugins.legend.labels.padding = 16;
+Chart.defaults.plugins.tooltip.backgroundColor = 'rgba(7,7,15,0.92)';
+Chart.defaults.plugins.tooltip.borderColor = 'rgba(122,162,247,0.3)';
+Chart.defaults.plugins.tooltip.borderWidth = 1;
+Chart.defaults.plugins.tooltip.titleFont = { family: "'JetBrains Mono', monospace", size: 10, weight: 600 };
+Chart.defaults.plugins.tooltip.bodyFont = { family: "'JetBrains Mono', monospace", size: 10 };
+Chart.defaults.plugins.tooltip.padding = 10;
+Chart.defaults.plugins.tooltip.cornerRadius = 8;
+
+const ACCENT  = '#7aa2f7', ACCENT2 = '#bb9af7', GREEN = '#9ece6a',
+      AMBER   = '#e0af68', RED     = '#f7768e', TEAL  = '#73daca';
+
+// ── 1. Annual Gas Cost (excluding ETH L1) ─────────
+new Chart(document.getElementById('chart-gas-annual'), {
+  type: 'bar',
+  data: {
+    labels: ['Polygon', 'Base', 'Arbitrum'],
+    datasets: [
+      { label: '1K txs/yr',   data: [10, 1, 10],       backgroundColor: ACCENT + '99' },
+      { label: '10K txs/yr',  data: [100, 10, 100],     backgroundColor: TEAL + '99' },
+      { label: '100K txs/yr', data: [1000, 100, 1000],  backgroundColor: AMBER + '99' },
+    ]
+  },
+  options: {
+    responsive: true,
+    plugins: {
+      legend: { position: 'top' },
+      tooltip: {
+        callbacks: { label: ctx => `${ctx.dataset.label}: $${ctx.raw.toLocaleString()}` }
+      }
+    },
+    scales: {
+      y: {
+        title: { display: true, text: 'USD / year', font: { family: "'JetBrains Mono', monospace", size: 10 } },
+        grid: { color: 'rgba(255,255,255,0.04)' },
+        ticks: { callback: v => '$' + v }
+      },
+      x: { grid: { display: false } }
+    }
+  }
+});
+
+// ── 2. Mint-Burn Cycle ────────────────────────────
+new Chart(document.getElementById('chart-cycle'), {
+  type: 'bar',
+  data: {
+    labels: ['Ethereum L1', 'Polygon', 'Base', 'Arbitrum'],
+    datasets: [
+      { label: 'Mint (2.5x)',     data: [12.5, 0.025, 0.0025, 0.025], backgroundColor: ACCENT2 + 'cc' },
+      { label: 'Transfer (1x)',   data: [5, 0.01, 0.001, 0.01],       backgroundColor: ACCENT + 'cc' },
+      { label: 'Burn (1.5x)',     data: [7.5, 0.015, 0.0015, 0.015],  backgroundColor: RED + 'cc' },
+    ]
+  },
+  options: {
+    responsive: true,
+    plugins: {
+      legend: { position: 'top' },
+      tooltip: {
+        callbacks: { label: ctx => `${ctx.dataset.label}: $${ctx.raw.toFixed(4)}` }
+      }
+    },
+    scales: {
+      x: { stacked: true, grid: { display: false } },
+      y: {
+        stacked: true,
+        type: 'logarithmic',
+        title: { display: true, text: 'USD (log scale)', font: { family: "'JetBrains Mono', monospace", size: 10 } },
+        grid: { color: 'rgba(255,255,255,0.04)' },
+        ticks: { callback: v => '$' + v }
+      }
+    }
+  }
+});
+
+// ── 3. HMF Degradation ───────────────────────────
+(() => {
+  const months = Array.from({length: 25}, (_, i) => i);
+  const temps = [15, 20, 25, 30, 35];
+  const colors = [ACCENT, TEAL, GREEN, AMBER, RED];
+
+  const datasets = temps.map((t, i) => {
+    const k = 0.5 * Math.pow(2, (t - 20) / 10);
+    return {
+      label: `${t}°C`,
+      data: months.map(m => 10 + k * m),
+      borderColor: colors[i],
+      backgroundColor: colors[i] + '11',
+      borderWidth: 2,
+      pointRadius: 0,
+      pointHoverRadius: 4,
+      tension: 0.3,
+      fill: false
+    };
+  });
+
+  new Chart(document.getElementById('chart-hmf'), {
+    type: 'line',
+    data: { labels: months, datasets },
+    options: {
+      responsive: true,
+      plugins: {
+        legend: { position: 'top' },
+        annotation: undefined
+      },
+      scales: {
+        x: {
+          title: { display: true, text: 'Months', font: { family: "'JetBrains Mono', monospace", size: 10 } },
+          grid: { color: 'rgba(255,255,255,0.04)' }
+        },
+        y: {
+          title: { display: true, text: 'HMF (mg/kg)', font: { family: "'JetBrains Mono', monospace", size: 10 } },
+          grid: { color: 'rgba(255,255,255,0.04)' },
+          suggestedMax: 60
+        }
+      }
+    },
+    plugins: [{
+      id: 'codexLine',
+      afterDraw(chart) {
+        const yScale = chart.scales.y;
+        const y = yScale.getPixelForValue(40);
+        const ctx = chart.ctx;
+        ctx.save();
+        ctx.beginPath();
+        ctx.setLineDash([6, 4]);
+        ctx.strokeStyle = RED + 'aa';
+        ctx.lineWidth = 1.5;
+        ctx.moveTo(chart.chartArea.left, y);
+        ctx.lineTo(chart.chartArea.right, y);
+        ctx.stroke();
+        ctx.font = "500 10px 'JetBrains Mono', monospace";
+        ctx.fillStyle = RED;
+        ctx.fillText('Codex limit (40 mg/kg)', chart.chartArea.right - 160, y - 6);
+        ctx.restore();
+      }
+    }]
+  });
+})();
+
+// ── 4. Storage Donut ──────────────────────────────
+new Chart(document.getElementById('chart-storage-donut'), {
+  type: 'doughnut',
+  data: {
+    labels: ['Storage ($240)', 'Insurance ($120)', 'Audits ($2,500)'],
+    datasets: [{
+      data: [240, 120, 2500],
+      backgroundColor: [ACCENT + 'cc', TEAL + 'cc', AMBER + 'cc'],
+      borderColor: 'rgba(7,7,15,0.8)',
+      borderWidth: 2,
+      hoverOffset: 6
+    }]
+  },
+  options: {
+    responsive: true,
+    cutout: '60%',
+    plugins: {
+      legend: { position: 'bottom' },
+      tooltip: {
+        callbacks: {
+          label: ctx => {
+            const total = ctx.dataset.data.reduce((a, b) => a + b, 0);
+            return `${ctx.label}: ${(ctx.raw / total * 100).toFixed(1)}%`;
+          }
+        }
+      }
+    }
+  }
+});
+
+// ── 5. Redemption Economics ────────────────────────
+(() => {
+  const weights = [];
+  const pcts = [];
+  for (let lbs = 0.5; lbs <= 50; lbs += 0.5) {
+    weights.push(lbs);
+    const shipping = (8 + 0.8 * lbs) * 1.4 + 3 + 5;
+    const value = lbs * 12;
+    pcts.push((shipping / value) * 100);
+  }
+
+  new Chart(document.getElementById('chart-redemption'), {
+    type: 'line',
+    data: {
+      labels: weights,
+      datasets: [{
+        label: 'Shipping % of value',
+        data: pcts,
+        borderColor: AMBER,
+        backgroundColor: AMBER + '18',
+        borderWidth: 2,
+        pointRadius: 0,
+        pointHoverRadius: 4,
+        fill: true,
+        tension: 0.3
+      }]
+    },
+    options: {
+      responsive: true,
+      plugins: { legend: { display: false } },
+      scales: {
+        x: {
+          title: { display: true, text: 'Redemption weight (lbs)', font: { family: "'JetBrains Mono', monospace", size: 10 } },
+          grid: { color: 'rgba(255,255,255,0.04)' },
+          ticks: { callback: (v, i) => i % 10 === 0 ? weights[i] : '' }
+        },
+        y: {
+          title: { display: true, text: '% of value', font: { family: "'JetBrains Mono', monospace", size: 10 } },
+          grid: { color: 'rgba(255,255,255,0.04)' },
+          ticks: { callback: v => v + '%' },
+          suggestedMax: 120
+        }
+      }
+    },
+    plugins: [{
+      id: 'viableLine',
+      afterDraw(chart) {
+        const yScale = chart.scales.y;
+        const y = yScale.getPixelForValue(25);
+        const ctx = chart.ctx;
+        ctx.save();
+        ctx.beginPath();
+        ctx.setLineDash([6, 4]);
+        ctx.strokeStyle = GREEN + 'aa';
+        ctx.lineWidth = 1.5;
+        ctx.moveTo(chart.chartArea.left, y);
+        ctx.lineTo(chart.chartArea.right, y);
+        ctx.stroke();
+        ctx.font = "500 10px 'JetBrains Mono', monospace";
+        ctx.fillStyle = GREEN;
+        ctx.fillText('25% viable threshold', chart.chartArea.left + 8, y - 6);
+
+        // Mark 10.5 lbs
+        const xScale = chart.scales.x;
+        const xIdx = weights.indexOf(10.5);
+        if (xIdx >= 0) {
+          const x = xScale.getPixelForValue(xIdx);
+          ctx.beginPath();
+          ctx.setLineDash([3, 3]);
+          ctx.strokeStyle = TEAL + '88';
+          ctx.moveTo(x, chart.chartArea.top);
+          ctx.lineTo(x, chart.chartArea.bottom);
+          ctx.stroke();
+          ctx.fillStyle = TEAL;
+          ctx.fillText('10.5 lbs', x + 4, chart.chartArea.top + 14);
+        }
+        ctx.restore();
+      }
+    }]
+  });
+})();
+
+// ── 6. Radar Chart ────────────────────────────────
+new Chart(document.getElementById('chart-radar'), {
+  type: 'radar',
+  data: {
+    labels: ['Cost', 'Speed', 'Security', 'Offline', 'Simplicity'],
+    datasets: [
+      { label: 'On-Chain',      data: [8, 7, 10, 0, 10], borderColor: ACCENT,  backgroundColor: ACCENT + '18',  borderWidth: 2, pointRadius: 3 },
+      { label: 'State Channel', data: [10, 10, 10, 0, 2], borderColor: ACCENT2, backgroundColor: ACCENT2 + '18', borderWidth: 2, pointRadius: 3 },
+      { label: 'QR Signed',     data: [8, 5, 5, 9, 6],   borderColor: GREEN,   backgroundColor: GREEN + '18',   borderWidth: 2, pointRadius: 3 },
+      { label: 'libp2p',        data: [8, 8, 10, 0, 3],   borderColor: TEAL,    backgroundColor: TEAL + '18',    borderWidth: 2, pointRadius: 3 },
+      { label: 'BLE Mesh',      data: [8, 7, 3, 10, 2],   borderColor: AMBER,   backgroundColor: AMBER + '18',   borderWidth: 2, pointRadius: 3 },
+    ]
+  },
+  options: {
+    responsive: true,
+    plugins: { legend: { position: 'bottom' } },
+    scales: {
+      r: {
+        beginAtZero: true, max: 10,
+        grid: { color: 'rgba(255,255,255,0.06)' },
+        angleLines: { color: 'rgba(255,255,255,0.06)' },
+        pointLabels: {
+          font: { family: "'JetBrains Mono', monospace", size: 10, weight: 500 },
+          color: 'rgba(232,232,244,0.6)'
+        },
+        ticks: { display: false }
+      }
+    }
+  }
+});
+
+// ── 7. Seasonal Production ────────────────────────
+(() => {
+  const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  const regions = [
+    { name: 'Northern Plains', hives: 500000, yld: 50, peak: 8, w: 2.0, loss: 0.40, color: ACCENT },
+    { name: 'Southeast',       hives: 200000, yld: 40, peak: 6, w: 3.0, loss: 0.35, color: GREEN },
+    { name: 'California',      hives: 300000, yld: 35, peak: 7, w: 2.5, loss: 0.45, color: AMBER },
+    { name: 'Pacific NW',      hives: 100000, yld: 45, peak: 8, w: 2.0, loss: 0.38, color: TEAL },
+  ];
+
+  function gaussian(month, peak, width) {
+    return Math.exp(-0.5 * Math.pow((month - peak) / width, 2));
+  }
+
+  const datasets = regions.map(r => {
+    const annual = r.hives * r.yld * (1 - r.loss);
+    const raw = Array.from({length: 12}, (_, i) => gaussian(i + 1, r.peak, r.w));
+    const sum = raw.reduce((a, b) => a + b, 0);
+    const data = raw.map(v => v / sum * annual);
+    return {
+      label: r.name,
+      data,
+      borderColor: r.color,
+      backgroundColor: r.color + '44',
+      borderWidth: 1.5,
+      fill: true,
+      tension: 0.4,
+      pointRadius: 0
+    };
+  });
+
+  new Chart(document.getElementById('chart-seasonal'), {
+    type: 'line',
+    data: { labels: months, datasets },
+    options: {
+      responsive: true,
+      plugins: {
+        legend: { position: 'top' },
+        tooltip: {
+          callbacks: { label: ctx => `${ctx.dataset.label}: ${Math.round(ctx.raw).toLocaleString()} lbs` }
+        }
+      },
+      scales: {
+        x: { grid: { color: 'rgba(255,255,255,0.04)' } },
+        y: {
+          stacked: true,
+          title: { display: true, text: 'lbs / month', font: { family: "'JetBrains Mono', monospace", size: 10 } },
+          grid: { color: 'rgba(255,255,255,0.04)' },
+          ticks: { callback: v => (v / 1e6).toFixed(1) + 'M' }
+        }
+      }
+    }
+  });
+})();
+
+// ── 8. Supply Simulation ──────────────────────────
+(() => {
+  // Compute aggregate production curve
+  const regions = [
+    { hives: 500000, yld: 50, peak: 8, w: 2.0, loss: 0.40 },
+    { hives: 200000, yld: 40, peak: 6, w: 3.0, loss: 0.35 },
+    { hives: 300000, yld: 35, peak: 7, w: 2.5, loss: 0.45 },
+    { hives: 100000, yld: 45, peak: 8, w: 2.0, loss: 0.38 },
+  ];
+
+  function gaussian(m, p, w) { return Math.exp(-0.5 * ((m - p) / w) ** 2); }
+
+  const agg = new Array(12).fill(0);
+  regions.forEach(r => {
+    const annual = r.hives * r.yld * (1 - r.loss);
+    const raw = Array.from({length: 12}, (_, i) => gaussian(i + 1, r.peak, r.w));
+    const sum = raw.reduce((a, b) => a + b, 0);
+    raw.forEach((v, i) => { agg[i] += v / sum * annual; });
+  });
+
+  // Scale to 500K annual
+  const aggSum = agg.reduce((a, b) => a + b, 0);
+  const scaled = agg.map(v => v / aggSum * 500000);
+
+  // Simulate 24 months
+  const supply = [], minted = [], burned = [];
+  let current = 100000;
+  for (let m = 0; m < 24; m++) {
+    const produced = scaled[m % 12];
+    const redeemed = current * 0.03;
+    current = current + produced - redeemed;
+    supply.push(current);
+    minted.push((minted[m - 1] || 0) + produced);
+    burned.push((burned[m - 1] || 0) + redeemed);
+  }
+
+  const labels = Array.from({length: 24}, (_, i) => `M${i + 1}`);
+
+  new Chart(document.getElementById('chart-supply-sim'), {
+    type: 'line',
+    data: {
+      labels,
+      datasets: [
+        {
+          label: 'Token Supply (lbs)',
+          data: supply,
+          borderColor: ACCENT,
+          backgroundColor: ACCENT + '18',
+          borderWidth: 2, fill: true,
+          pointRadius: 0, tension: 0.3
+        },
+        {
+          label: 'Cumulative Minted',
+          data: minted,
+          borderColor: GREEN,
+          borderWidth: 2, borderDash: [4, 3],
+          pointRadius: 0, tension: 0.3, fill: false
+        },
+        {
+          label: 'Cumulative Burned',
+          data: burned,
+          borderColor: RED,
+          borderWidth: 2, borderDash: [4, 3],
+          pointRadius: 0, tension: 0.3, fill: false
+        }
+      ]
+    },
+    options: {
+      responsive: true,
+      plugins: {
+        legend: { position: 'top' },
+        tooltip: {
+          callbacks: { label: ctx => `${ctx.dataset.label}: ${Math.round(ctx.raw).toLocaleString()} lbs` }
+        }
+      },
+      scales: {
+        x: { grid: { color: 'rgba(255,255,255,0.04)' } },
+        y: {
+          title: { display: true, text: 'lbs', font: { family: "'JetBrains Mono', monospace", size: 10 } },
+          grid: { color: 'rgba(255,255,255,0.04)' },
+          ticks: { callback: v => (v / 1e3).toFixed(0) + 'K' }
+        }
+      }
+    }
+  });
+})();
+</script>
+
+</body>
+</html>
