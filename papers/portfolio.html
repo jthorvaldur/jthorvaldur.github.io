@@ -1,0 +1,750 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Publication Portfolio — 14 Papers</title>
+<script src="https://d3js.org/d3.v7.min.js"></script>
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body {
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  background: #1a1a2e;
+  color: #c8c8d8;
+  overflow: hidden;
+  height: 100vh;
+}
+.container {
+  display: grid;
+  grid-template-columns: 1fr 360px;
+  height: 100vh;
+}
+.graph-area {
+  position: relative;
+  overflow: hidden;
+}
+svg {
+  width: 100%;
+  height: 100%;
+}
+.header-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 10;
+  padding: 20px 24px 12px;
+  background: linear-gradient(180deg, rgba(26,26,46,0.95) 0%, rgba(26,26,46,0.5) 80%, transparent 100%);
+  pointer-events: none;
+}
+.header-overlay > * { pointer-events: auto; }
+h1 {
+  font-size: 20px;
+  font-weight: 600;
+  color: #e0e0f0;
+  letter-spacing: 0.02em;
+}
+.subtitle {
+  font-size: 12px;
+  color: #6a6a8a;
+  margin-top: 4px;
+}
+.legend {
+  display: flex;
+  gap: 18px;
+  margin-top: 12px;
+  flex-wrap: wrap;
+}
+.legend-item {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 11px;
+  color: #8888a8;
+  cursor: pointer;
+}
+.legend-item:hover { color: #c8c8d8; }
+.legend-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+}
+.sidebar {
+  background: #16162a;
+  border-left: 1px solid #252545;
+  overflow-y: auto;
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+.sidebar h2 {
+  font-size: 13px;
+  font-weight: 600;
+  color: #8888a8;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+.stats-row {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+}
+.mini-stat {
+  background: #1e1e38;
+  border: 1px solid #2a2a4a;
+  border-radius: 4px;
+  padding: 10px;
+  text-align: center;
+}
+.mini-stat .val {
+  font-size: 20px;
+  font-weight: 600;
+  color: #e0e0f0;
+}
+.mini-stat .lbl {
+  font-size: 9px;
+  color: #6a6a8a;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  margin-top: 2px;
+}
+.paper-detail {
+  display: none;
+}
+.paper-detail.visible {
+  display: block;
+}
+.detail-card {
+  background: #1e1e38;
+  border: 1px solid #2a2a4a;
+  border-radius: 6px;
+  padding: 16px;
+}
+.detail-num {
+  font-size: 11px;
+  color: #6a6a8a;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+.detail-title {
+  font-size: 16px;
+  font-weight: 600;
+  color: #e0e0f0;
+  margin: 6px 0 8px;
+  line-height: 1.3;
+}
+.detail-series {
+  display: inline-block;
+  font-size: 11px;
+  padding: 2px 8px;
+  border-radius: 3px;
+  margin-bottom: 10px;
+  font-weight: 500;
+}
+.detail-result {
+  font-size: 13px;
+  color: #9999b0;
+  line-height: 1.6;
+  margin-bottom: 12px;
+}
+.detail-meta {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 6px;
+  font-size: 12px;
+}
+.detail-meta dt {
+  color: #6a6a8a;
+}
+.detail-meta dd {
+  color: #c8c8d8;
+  font-weight: 500;
+  text-align: right;
+}
+.detail-citations {
+  margin-top: 12px;
+}
+.detail-citations h4 {
+  font-size: 11px;
+  color: #6a6a8a;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  margin-bottom: 6px;
+}
+.citation-link {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  color: #8888a8;
+  padding: 4px 0;
+  cursor: pointer;
+  transition: color 0.15s;
+}
+.citation-link:hover { color: #c8c8d8; }
+.citation-arrow {
+  color: #4a4a6a;
+  font-size: 10px;
+}
+.paper-list {
+  list-style: none;
+}
+.paper-list li {
+  padding: 8px 10px;
+  border-bottom: 1px solid #252545;
+  font-size: 12px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  border-radius: 4px;
+  transition: background 0.15s;
+}
+.paper-list li:hover {
+  background: #252545;
+}
+.paper-list li.active {
+  background: #252550;
+  border-color: #333365;
+}
+.paper-list .pip {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+.paper-list .pnum {
+  color: #6a6a8a;
+  font-variant-numeric: tabular-nums;
+  min-width: 18px;
+}
+.paper-list .ptitle {
+  color: #c8c8d8;
+  flex: 1;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.paper-list .ppages {
+  color: #6a6a8a;
+  font-variant-numeric: tabular-nums;
+  min-width: 30px;
+  text-align: right;
+}
+.thesis-card {
+  background: #1e1e38;
+  border: 1px solid #2a2a4a;
+  border-radius: 6px;
+  padding: 16px;
+}
+.thesis-card p {
+  font-size: 12px;
+  color: #8888a8;
+  line-height: 1.6;
+  font-style: italic;
+}
+.thesis-card p strong {
+  color: #e0e0f0;
+  font-style: normal;
+}
+@media (max-width: 900px) {
+  .container {
+    grid-template-columns: 1fr;
+    grid-template-rows: 60vh 40vh;
+  }
+  .sidebar {
+    border-left: none;
+    border-top: 1px solid #252545;
+  }
+}
+</style>
+</head>
+<body>
+<div class="container">
+  <div class="graph-area">
+    <div class="header-overlay">
+      <h1>Publication Portfolio</h1>
+      <div class="subtitle">14-paper academic portfolio — force-directed citation network</div>
+      <div class="legend">
+        <div class="legend-item" onclick="highlightSeries('embedding')">
+          <span class="legend-dot" style="background:#4a90d9"></span>
+          Embedding Series (1-5)
+        </div>
+        <div class="legend-item" onclick="highlightSeries('coherence')">
+          <span class="legend-dot" style="background:#34d399"></span>
+          Coherence Series (6-9)
+        </div>
+        <div class="legend-item" onclick="highlightSeries('application')">
+          <span class="legend-dot" style="background:#e8943a"></span>
+          Applications (10-12)
+        </div>
+        <div class="legend-item" onclick="highlightSeries('bridge')">
+          <span class="legend-dot" style="background:#a78bfa"></span>
+          Bridge Papers (13-14)
+        </div>
+      </div>
+    </div>
+    <svg id="graph"></svg>
+  </div>
+
+  <div class="sidebar">
+    <div class="stats-row">
+      <div class="mini-stat">
+        <div class="val">14</div>
+        <div class="lbl">Papers</div>
+      </div>
+      <div class="mini-stat">
+        <div class="val">215</div>
+        <div class="lbl">Pages</div>
+      </div>
+      <div class="mini-stat">
+        <div class="val">4</div>
+        <div class="lbl">Series</div>
+      </div>
+    </div>
+
+    <div class="paper-detail" id="detail-panel">
+      <h2>Selected Paper</h2>
+      <div class="detail-card">
+        <div class="detail-num" id="d-num"></div>
+        <div class="detail-title" id="d-title"></div>
+        <div class="detail-series" id="d-series"></div>
+        <div class="detail-result" id="d-result"></div>
+        <dl class="detail-meta">
+          <dt>Pages</dt><dd id="d-pages"></dd>
+          <dt>Directory</dt><dd id="d-dir"></dd>
+          <dt>Status</dt><dd id="d-status"></dd>
+        </dl>
+        <div class="detail-citations" id="d-citations"></div>
+      </div>
+    </div>
+
+    <div>
+      <h2>All Papers</h2>
+      <ul class="paper-list" id="paper-list"></ul>
+    </div>
+
+    <div class="thesis-card">
+      <p>
+        <strong>Unifying thesis:</strong> Information that matters for specialized tasks
+        lives in the parts of the representation that general-purpose methods discard.
+      </p>
+    </div>
+  </div>
+</div>
+
+<script>
+const SERIES_COLORS = {
+  embedding: '#4a90d9',
+  coherence: '#34d399',
+  application: '#e8943a',
+  bridge: '#a78bfa',
+};
+
+const SERIES_BG = {
+  embedding: 'rgba(74,144,217,0.15)',
+  coherence: 'rgba(52,211,153,0.15)',
+  application: 'rgba(232,148,58,0.15)',
+  bridge: 'rgba(167,139,250,0.15)',
+};
+
+const papers = [
+  {
+    id: 1, series: 'embedding',
+    title: 'The Dimensionality Illusion',
+    fullTitle: 'The Dimensionality Illusion: Why PCA Variance Does Not Equal Semantic Information in Text Embeddings',
+    result: 'PCA variance does not equal semantic information. Dictionary collapse proves intra-domain distinctions die at 16 dimensions while inter-domain boundaries survive. Introduces the DCRP metric.',
+    pages: 18, dir: 'embedding-dimensionality', status: 'arXiv-ready',
+    cites: [], citedBy: [2, 3, 4, 5],
+  },
+  {
+    id: 2, series: 'embedding',
+    title: 'The Geometry of Legal Language',
+    fullTitle: 'The Geometry of Legal Language: Embedding Structure Across Authoritative Dictionaries',
+    result: "Full Bouvier's (6,200 terms) + Webster's + cross-jurisdictional terms embedded. Definitional drift between dictionaries measured. Cross-dictionary embedding analysis at unprecedented scale.",
+    pages: 16, dir: 'dictionary-structure', status: 'Draft complete',
+    cites: [1], citedBy: [3, 5],
+  },
+  {
+    id: 3, series: 'embedding',
+    title: 'Structural Holes in Legal Embedding Spaces',
+    fullTitle: 'Structural Holes in Legal Embedding Spaces: How Missing Words Create Missing Protections',
+    result: 'Terms present in German/French/Swedish/Islamic law but absent from English create measurable gaps in embedding spaces. Sapir-Whorf hypothesis applied to vector spaces.',
+    pages: 13, dir: 'structural-holes', status: 'Draft complete',
+    cites: [1, 2], citedBy: [5, 13],
+  },
+  {
+    id: 4, series: 'embedding',
+    title: 'DCRP Benchmark',
+    fullTitle: 'DCRP: A Domain-Conditional Benchmark for Embedding Compression Evaluation',
+    result: 'Formalizes DCRP as a standalone benchmark. Releases legal term dataset, query sets, and evaluation framework. Positioned as complement to MTEB.',
+    pages: 12, dir: 'dcrp-benchmark', status: 'Draft complete',
+    cites: [1], citedBy: [5],
+  },
+  {
+    id: 5, series: 'embedding',
+    title: 'Sparse vs Dense Preservation',
+    fullTitle: 'Sparse Representations Preserve What Dense PCA Destroys',
+    result: 'SPLADE++ vs nomic-embed-text under compression. Sparse activations are the long-tail features that PCA discards. Measured on the same legal corpus.',
+    pages: 9, dir: 'sparse-vs-dense', status: 'Draft complete',
+    cites: [1, 2, 3, 4], citedBy: [],
+  },
+  {
+    id: 6, series: 'coherence',
+    title: 'Coherence Benchmarks',
+    fullTitle: 'Benchmarking Early Detection: Evaluation Infrastructure for Pre-Failure Structural Degradation',
+    result: 'Establishes evaluation infrastructure and benchmark datasets for coherence-based early detection. Defines the PARDN sub-component framework.',
+    pages: 12, dir: 'coherence-benchmarks', status: 'Draft complete',
+    cites: [], citedBy: [7, 8, 9, 10, 11, 12],
+  },
+  {
+    id: 7, series: 'coherence',
+    title: 'Coherence Drift Detection',
+    fullTitle: 'From Prediction to Discoverative Intelligence: A Coherence-Based AI Framework for Detecting System Drift Before Failure',
+    result: 'Coherence operators detect system drift 23 timesteps before variance-based methods. Introduces the composite Delta metric for cross-component correlation monitoring.',
+    pages: 18, dir: 'coherence-drift', status: 'Draft complete',
+    cites: [6], citedBy: [8, 9, 13],
+  },
+  {
+    id: 8, series: 'coherence',
+    title: 'Biological Recovery Signatures',
+    fullTitle: 'Recovery Is Not Return to Baseline: Coherence Operators for Measuring Biological Recovery Signatures',
+    result: 'Recovery follows coherence restoration patterns distinct from simple metric return-to-baseline. Cardiac, respiratory, and neural recovery signatures characterized.',
+    pages: 18, dir: 'coherence-biology', status: 'Draft complete',
+    cites: [6, 7], citedBy: [10, 14],
+  },
+  {
+    id: 9, series: 'coherence',
+    title: 'Coherent Novelty',
+    fullTitle: 'Coherent Novelty: Extending Perplexity-Based Creativity Metrics with Coherence Operators',
+    result: 'Novelty without coherence is noise; coherence without novelty is repetition. Extends perplexity metrics to distinguish genuine creative output from random generation.',
+    pages: 15, dir: 'coherence-novelty', status: 'Draft complete',
+    cites: [6, 7], citedBy: [14],
+  },
+  {
+    id: 10, series: 'application',
+    title: 'Bio-Integrated Infrastructure',
+    fullTitle: 'Bio-Integrated Autonomous Infrastructure: A Coherence-Based Architecture for Living Scaffolds',
+    result: 'Applies coherence monitoring to biological infrastructure systems. Living scaffolds with embedded sensors enable structural and ecological monitoring through coherence metrics.',
+    pages: 18, dir: 'coherence-bioinfra', status: 'Draft complete',
+    cites: [6, 8], citedBy: [],
+  },
+  {
+    id: 11, series: 'application',
+    title: 'Blockchain Coherence Monitoring',
+    fullTitle: 'Continuous Coherence Monitoring for Blockchain Security: Detecting Pre-Failure Degradation in DeFi Systems',
+    result: 'Coherence operators applied to DeFi protocol monitoring. Detects liquidity pool degradation, oracle manipulation, and smart contract drift before exploit conditions form.',
+    pages: 13, dir: 'coherence-blockchain', status: 'Draft complete',
+    cites: [6], citedBy: [],
+  },
+  {
+    id: 12, series: 'application',
+    title: 'Governance Coherence',
+    fullTitle: 'The Restoration Matrix: Six Falsifiable Operators for Governance Coherence',
+    result: 'Six falsifiable operators for measuring governance health. Applied to institutional decision-making, regulatory compliance, and organizational resilience assessment.',
+    pages: 20, dir: 'coherence-governance', status: 'Draft complete',
+    cites: [6], citedBy: [14],
+  },
+  {
+    id: 13, series: 'bridge',
+    title: 'Scientific Discovery Architecture',
+    fullTitle: 'From Literature Synthesis to Experimental Hypothesis: A Coherence-Guided Architecture for Scientific Discovery',
+    result: 'Bridges the embedding series (document retrieval) with coherence series (quality assessment). Uses coherence operators to guide hypothesis generation from literature embeddings.',
+    pages: 18, dir: 'coherence-discovery', status: 'Draft complete',
+    cites: [3, 7], citedBy: [],
+  },
+  {
+    id: 14, series: 'bridge',
+    title: 'Neurodivergence as Coherence Variation',
+    fullTitle: 'Neurodivergence as Coherence Variation: Oscillatory, Symbolic, and Environmental Sensitivity Parameters for ADHD, Dyslexia, and Autism',
+    result: 'Reframes neurodivergence as variation in coherence parameters rather than deficit. Bridges biological recovery (Paper 8) with creative novelty (Paper 9) through individual variation.',
+    pages: 15, dir: 'coherence-neurodivergence', status: 'Draft complete',
+    cites: [8, 9, 12], citedBy: [],
+  },
+];
+
+// Build citation edges
+const links = [];
+const linkSet = new Set();
+for (const p of papers) {
+  for (const cId of p.cites) {
+    const key = `${cId}-${p.id}`;
+    if (!linkSet.has(key)) {
+      links.push({ source: cId, target: p.id });
+      linkSet.add(key);
+    }
+  }
+}
+
+// --- D3 Force Graph ---
+const svg = d3.select('#graph');
+const width = () => svg.node().getBoundingClientRect().width;
+const height = () => svg.node().getBoundingClientRect().height;
+
+// Arrow marker
+svg.append('defs').append('marker')
+  .attr('id', 'arrowhead')
+  .attr('viewBox', '0 -5 10 10')
+  .attr('refX', 20)
+  .attr('refY', 0)
+  .attr('markerWidth', 6)
+  .attr('markerHeight', 6)
+  .attr('orient', 'auto')
+  .append('path')
+  .attr('d', 'M0,-4L8,0L0,4')
+  .attr('fill', '#4a4a6a');
+
+const g = svg.append('g');
+
+// Zoom
+const zoom = d3.zoom()
+  .scaleExtent([0.3, 4])
+  .on('zoom', e => g.attr('transform', e.transform));
+svg.call(zoom);
+
+const simulation = d3.forceSimulation(papers)
+  .force('link', d3.forceLink(links).id(d => d.id).distance(120).strength(0.4))
+  .force('charge', d3.forceManyBody().strength(-400))
+  .force('center', d3.forceCenter(width() / 2, height() / 2))
+  .force('collision', d3.forceCollide().radius(d => 20 + d.pages * 0.8))
+  .force('x', d3.forceX(d => {
+    // Cluster by series
+    const seriesX = { embedding: -150, coherence: 0, application: 150, bridge: 75 };
+    return width() / 2 + (seriesX[d.series] || 0);
+  }).strength(0.05))
+  .force('y', d3.forceY(d => {
+    const seriesY = { embedding: -80, coherence: -40, application: 60, bridge: 120 };
+    return height() / 2 + (seriesY[d.series] || 0);
+  }).strength(0.05));
+
+// Links
+const link = g.append('g')
+  .selectAll('line')
+  .data(links)
+  .join('line')
+  .attr('stroke', '#3a3a5a')
+  .attr('stroke-width', 1.5)
+  .attr('stroke-opacity', 0.6)
+  .attr('marker-end', 'url(#arrowhead)');
+
+// Node groups
+const node = g.append('g')
+  .selectAll('g')
+  .data(papers)
+  .join('g')
+  .attr('cursor', 'pointer')
+  .call(d3.drag()
+    .on('start', dragstarted)
+    .on('drag', dragged)
+    .on('end', dragended))
+  .on('click', (e, d) => selectPaper(d.id));
+
+// Glow filter
+const defs = svg.select('defs');
+const filter = defs.append('filter').attr('id', 'glow');
+filter.append('feGaussianBlur').attr('stdDeviation', '3').attr('result', 'coloredBlur');
+const feMerge = filter.append('feMerge');
+feMerge.append('feMergeNode').attr('in', 'coloredBlur');
+feMerge.append('feMergeNode').attr('in', 'SourceGraphic');
+
+// Circles
+node.append('circle')
+  .attr('r', d => 12 + d.pages * 0.6)
+  .attr('fill', d => SERIES_COLORS[d.series])
+  .attr('fill-opacity', 0.2)
+  .attr('stroke', d => SERIES_COLORS[d.series])
+  .attr('stroke-width', 2)
+  .attr('stroke-opacity', 0.8)
+  .attr('filter', 'url(#glow)');
+
+// Inner circle
+node.append('circle')
+  .attr('r', d => 6 + d.pages * 0.25)
+  .attr('fill', d => SERIES_COLORS[d.series])
+  .attr('fill-opacity', 0.6);
+
+// Labels
+node.append('text')
+  .text(d => d.id)
+  .attr('text-anchor', 'middle')
+  .attr('dy', '0.35em')
+  .attr('font-size', '11px')
+  .attr('font-weight', '700')
+  .attr('fill', '#e0e0f0')
+  .attr('pointer-events', 'none');
+
+// Title labels (below node)
+node.append('text')
+  .text(d => d.title.length > 22 ? d.title.substring(0, 20) + '...' : d.title)
+  .attr('text-anchor', 'middle')
+  .attr('dy', d => (16 + d.pages * 0.6) + 14)
+  .attr('font-size', '9px')
+  .attr('fill', '#6a6a8a')
+  .attr('pointer-events', 'none');
+
+// Hover
+node.on('mouseenter', (e, d) => {
+  // Highlight connected
+  const connected = new Set();
+  connected.add(d.id);
+  links.forEach(l => {
+    const s = typeof l.source === 'object' ? l.source.id : l.source;
+    const t = typeof l.target === 'object' ? l.target.id : l.target;
+    if (s === d.id) connected.add(t);
+    if (t === d.id) connected.add(s);
+  });
+
+  node.select('circle:first-child')
+    .attr('stroke-opacity', n => connected.has(n.id) ? 1 : 0.2)
+    .attr('fill-opacity', n => connected.has(n.id) ? 0.35 : 0.05);
+  node.select('circle:nth-child(2)')
+    .attr('fill-opacity', n => connected.has(n.id) ? 0.8 : 0.15);
+  node.selectAll('text')
+    .attr('fill-opacity', n => connected.has(n.id) ? 1 : 0.2);
+
+  link.attr('stroke-opacity', l => {
+    const s = typeof l.source === 'object' ? l.source.id : l.source;
+    const t = typeof l.target === 'object' ? l.target.id : l.target;
+    return (s === d.id || t === d.id) ? 0.9 : 0.1;
+  }).attr('stroke', l => {
+    const s = typeof l.source === 'object' ? l.source.id : l.source;
+    const t = typeof l.target === 'object' ? l.target.id : l.target;
+    return (s === d.id || t === d.id) ? SERIES_COLORS[d.series] : '#3a3a5a';
+  });
+}).on('mouseleave', () => {
+  node.select('circle:first-child')
+    .attr('stroke-opacity', 0.8)
+    .attr('fill-opacity', 0.2);
+  node.select('circle:nth-child(2)')
+    .attr('fill-opacity', 0.6);
+  node.selectAll('text')
+    .attr('fill-opacity', 1);
+  link.attr('stroke-opacity', 0.6).attr('stroke', '#3a3a5a');
+});
+
+simulation.on('tick', () => {
+  link
+    .attr('x1', d => d.source.x)
+    .attr('y1', d => d.source.y)
+    .attr('x2', d => d.target.x)
+    .attr('y2', d => d.target.y);
+
+  node.attr('transform', d => `translate(${d.x},${d.y})`);
+});
+
+function dragstarted(event, d) {
+  if (!event.active) simulation.alphaTarget(0.3).restart();
+  d.fx = d.x;
+  d.fy = d.y;
+}
+function dragged(event, d) {
+  d.fx = event.x;
+  d.fy = event.y;
+}
+function dragended(event, d) {
+  if (!event.active) simulation.alphaTarget(0);
+  d.fx = null;
+  d.fy = null;
+}
+
+// --- Sidebar ---
+const listEl = document.getElementById('paper-list');
+for (const p of papers) {
+  const li = document.createElement('li');
+  li.id = `paper-li-${p.id}`;
+  li.innerHTML = `
+    <span class="pip" style="background:${SERIES_COLORS[p.series]}"></span>
+    <span class="pnum">${p.id}</span>
+    <span class="ptitle">${p.title}</span>
+    <span class="ppages">${p.pages}pp</span>
+  `;
+  li.onclick = () => selectPaper(p.id);
+  listEl.appendChild(li);
+}
+
+function selectPaper(id) {
+  const p = papers.find(x => x.id === id);
+  if (!p) return;
+
+  const panel = document.getElementById('detail-panel');
+  panel.classList.add('visible');
+
+  const seriesNames = {
+    embedding: 'Embedding Series',
+    coherence: 'Coherence Series',
+    application: 'Application',
+    bridge: 'Bridge Paper',
+  };
+
+  document.getElementById('d-num').textContent = `Paper ${p.id}`;
+  document.getElementById('d-title').textContent = p.fullTitle;
+  const seriesEl = document.getElementById('d-series');
+  seriesEl.textContent = seriesNames[p.series];
+  seriesEl.style.background = SERIES_BG[p.series];
+  seriesEl.style.color = SERIES_COLORS[p.series];
+  document.getElementById('d-result').textContent = p.result;
+  document.getElementById('d-pages').textContent = `${p.pages} pages`;
+  document.getElementById('d-dir').textContent = p.dir;
+  document.getElementById('d-status').textContent = p.status;
+
+  // Citations
+  const citDiv = document.getElementById('d-citations');
+  citDiv.innerHTML = '';
+  if (p.cites.length > 0) {
+    citDiv.innerHTML += '<h4>Cites</h4>';
+    for (const cId of p.cites) {
+      const cp = papers.find(x => x.id === cId);
+      const el = document.createElement('div');
+      el.className = 'citation-link';
+      el.innerHTML = `<span class="citation-arrow">&larr;</span> Paper ${cId}: ${cp.title}`;
+      el.onclick = () => selectPaper(cId);
+      citDiv.appendChild(el);
+    }
+  }
+  if (p.citedBy.length > 0) {
+    citDiv.innerHTML += '<h4 style="margin-top:8px">Cited By</h4>';
+    for (const cId of p.citedBy) {
+      const cp = papers.find(x => x.id === cId);
+      const el = document.createElement('div');
+      el.className = 'citation-link';
+      el.innerHTML = `<span class="citation-arrow">&rarr;</span> Paper ${cId}: ${cp.title}`;
+      el.onclick = () => selectPaper(cId);
+      citDiv.appendChild(el);
+    }
+  }
+
+  // Highlight list item
+  document.querySelectorAll('.paper-list li').forEach(li => li.classList.remove('active'));
+  const li = document.getElementById(`paper-li-${p.id}`);
+  if (li) { li.classList.add('active'); li.scrollIntoView({ block: 'nearest' }); }
+}
+
+function highlightSeries(series) {
+  node.select('circle:first-child')
+    .transition().duration(300)
+    .attr('stroke-opacity', d => d.series === series ? 1 : 0.15)
+    .attr('fill-opacity', d => d.series === series ? 0.4 : 0.05);
+  node.select('circle:nth-child(2)')
+    .transition().duration(300)
+    .attr('fill-opacity', d => d.series === series ? 0.9 : 0.1);
+
+  setTimeout(() => {
+    node.select('circle:first-child')
+      .transition().duration(600)
+      .attr('stroke-opacity', 0.8)
+      .attr('fill-opacity', 0.2);
+    node.select('circle:nth-child(2)')
+      .transition().duration(600)
+      .attr('fill-opacity', 0.6);
+  }, 2000);
+}
+
+// Handle resize
+window.addEventListener('resize', () => {
+  simulation.force('center', d3.forceCenter(width() / 2, height() / 2));
+  simulation.alpha(0.3).restart();
+});
+</script>
+</body>
+</html>
