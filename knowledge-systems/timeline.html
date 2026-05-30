@@ -1,0 +1,1194 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Knowledge Traditions Timeline — 3000 BCE to 2026 CE</title>
+<meta name="description" content="Interactive timeline of knowledge traditions and their convergence points across 5000 years of human history.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@200;300;400;500;600;700&family=JetBrains+Mono:wght@300;400;500;600&display=swap" rel="stylesheet">
+<script src="https://d3js.org/d3.v7.min.js"></script>
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --bg: #07070f;
+  --surface: rgba(255,255,255,0.035);
+  --surface-hover: rgba(122,162,247,0.07);
+  --border: rgba(255,255,255,0.07);
+  --border-hover: rgba(122,162,247,0.30);
+  --text: #e8e8f4;
+  --muted: rgba(232,232,244,0.45);
+  --dim: rgba(232,232,244,0.25);
+  --accent: #7aa2f7;
+  --accent2: #bb9af7;
+  --green: #9ece6a;
+  --amber: #e0af68;
+  --red: #f7768e;
+  --teal: #73daca;
+  --glow: rgba(122,162,247,0.10);
+}
+
+html { scroll-behavior: smooth; }
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: 'Outfit', sans-serif;
+  overflow-x: hidden;
+  -webkit-font-smoothing: antialiased;
+  min-height: 100vh;
+}
+
+/* ── Nav ──────────────────────────────────────── */
+.nav {
+  position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+  padding: 0 2rem; height: 56px;
+  display: flex; align-items: center; justify-content: space-between;
+  background: rgba(7,7,15,0.85);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border-bottom: 1px solid var(--border);
+}
+.nav-brand {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.72rem; font-weight: 600;
+  letter-spacing: 0.2em; text-transform: uppercase;
+  color: var(--accent);
+  text-decoration: none;
+}
+.nav-links {
+  display: flex; gap: 1.5rem; list-style: none;
+}
+.nav-links a {
+  font-size: 0.78rem; font-weight: 400;
+  color: var(--muted); text-decoration: none;
+  transition: color 0.2s;
+}
+.nav-links a:hover { color: var(--text); }
+
+/* ── Controls bar ────────────────────────────── */
+.controls {
+  position: fixed; top: 56px; left: 0; right: 0; z-index: 90;
+  padding: 10px 2rem;
+  background: rgba(7,7,15,0.9);
+  backdrop-filter: blur(12px);
+  border-bottom: 1px solid var(--border);
+  display: flex; align-items: center; gap: 16px;
+  flex-wrap: wrap;
+}
+.controls-label {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.6rem; letter-spacing: 0.2em;
+  text-transform: uppercase; color: var(--accent);
+  white-space: nowrap;
+}
+.filter-btn {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 4px 10px;
+  font-family: 'Outfit', sans-serif;
+  font-size: 0.72rem;
+  color: var(--muted);
+  cursor: pointer;
+  transition: all 0.2s;
+  white-space: nowrap;
+}
+.filter-btn:hover {
+  background: var(--surface-hover);
+  border-color: var(--border-hover);
+  color: var(--text);
+}
+.filter-btn.active {
+  border-color: var(--border-hover);
+  color: var(--text);
+  background: rgba(122,162,247,0.12);
+}
+.filter-btn .dot {
+  display: inline-block;
+  width: 8px; height: 8px;
+  border-radius: 50%;
+  margin-right: 5px;
+  vertical-align: middle;
+}
+.zoom-controls {
+  margin-left: auto;
+  display: flex; gap: 6px;
+}
+.zoom-btn {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  width: 32px; height: 28px;
+  display: flex; align-items: center; justify-content: center;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.85rem;
+  color: var(--muted);
+  cursor: pointer;
+  transition: all 0.2s;
+}
+.zoom-btn:hover {
+  background: var(--surface-hover);
+  border-color: var(--border-hover);
+  color: var(--text);
+}
+.era-btn {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 4px 10px;
+  font-family: 'Outfit', sans-serif;
+  font-size: 0.68rem;
+  color: var(--dim);
+  cursor: pointer;
+  transition: all 0.2s;
+  white-space: nowrap;
+}
+.era-btn:hover {
+  background: var(--surface-hover);
+  border-color: var(--border-hover);
+  color: var(--text);
+}
+
+/* ── Timeline container ─────────────────────── */
+#timeline-container {
+  position: relative;
+  top: 0;
+  width: 100%;
+  height: calc(100vh - 56px - 44px);
+  margin-top: calc(56px + 44px);
+  overflow: hidden;
+}
+
+#timeline-svg {
+  width: 100%;
+  height: 100%;
+  cursor: grab;
+}
+#timeline-svg:active { cursor: grabbing; }
+
+/* ── Tooltip ─────────────────────────────────── */
+.tooltip {
+  position: fixed;
+  pointer-events: none;
+  z-index: 200;
+  background: rgba(12, 12, 24, 0.96);
+  border: 1px solid rgba(122,162,247,0.3);
+  border-radius: 10px;
+  padding: 14px 18px;
+  max-width: 380px;
+  backdrop-filter: blur(12px);
+  box-shadow: 0 8px 32px rgba(0,0,0,0.6);
+  opacity: 0;
+  transition: opacity 0.15s;
+}
+.tooltip.visible { opacity: 1; }
+.tooltip-title {
+  font-weight: 600;
+  font-size: 0.88rem;
+  color: var(--text);
+  margin-bottom: 6px;
+}
+.tooltip-date {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.65rem;
+  color: var(--accent);
+  letter-spacing: 0.1em;
+  margin-bottom: 8px;
+}
+.tooltip-body {
+  font-size: 0.78rem;
+  line-height: 1.55;
+  color: var(--muted);
+}
+.tooltip-tradition {
+  display: inline-block;
+  padding: 2px 8px;
+  border-radius: 4px;
+  font-size: 0.62rem;
+  font-weight: 500;
+  margin-top: 8px;
+  letter-spacing: 0.05em;
+}
+
+/* ── Convergence detail panel ────────────────── */
+.detail-panel {
+  position: fixed;
+  right: -420px;
+  top: 100px;
+  width: 400px;
+  max-height: calc(100vh - 140px);
+  background: rgba(12, 12, 24, 0.97);
+  border: 1px solid rgba(122,162,247,0.25);
+  border-radius: 12px;
+  padding: 24px;
+  z-index: 150;
+  transition: right 0.3s ease;
+  overflow-y: auto;
+  box-shadow: -8px 0 32px rgba(0,0,0,0.5);
+}
+.detail-panel.open { right: 20px; }
+.detail-close {
+  position: absolute;
+  top: 12px; right: 14px;
+  background: none; border: none;
+  color: var(--muted);
+  font-size: 1.2rem;
+  cursor: pointer;
+  transition: color 0.2s;
+}
+.detail-close:hover { color: var(--text); }
+.detail-title {
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: var(--text);
+  margin-bottom: 6px;
+  padding-right: 30px;
+}
+.detail-date {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.7rem;
+  color: var(--accent);
+  letter-spacing: 0.1em;
+  margin-bottom: 14px;
+}
+.detail-body {
+  font-size: 0.82rem;
+  line-height: 1.7;
+  color: rgba(232,232,244,0.7);
+  margin-bottom: 16px;
+}
+.detail-traditions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+.detail-tradition-tag {
+  padding: 3px 10px;
+  border-radius: 5px;
+  font-size: 0.65rem;
+  font-weight: 500;
+  letter-spacing: 0.05em;
+}
+.detail-section-title {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.6rem;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--accent);
+  margin: 16px 0 8px;
+}
+
+/* ── Legend ───────────────────────────────────── */
+.legend-stripe {
+  position: fixed;
+  left: 0;
+  bottom: 0;
+  right: 0;
+  z-index: 80;
+  padding: 8px 2rem;
+  background: rgba(7,7,15,0.9);
+  backdrop-filter: blur(12px);
+  border-top: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  overflow-x: auto;
+}
+.legend-item {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  white-space: nowrap;
+  font-size: 0.62rem;
+  color: var(--dim);
+}
+.legend-dot {
+  width: 6px; height: 6px;
+  border-radius: 50%;
+}
+.legend-convergence {
+  width: 16px; height: 2px;
+  background: linear-gradient(90deg, var(--accent), var(--accent2));
+  border-radius: 1px;
+}
+
+/* ── Scrollbar ───────────────────────────────── */
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: rgba(255,255,255,0.2); }
+
+/* ── Timeline text styles ────────────────────── */
+.tradition-label {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: 0.08em;
+  fill: var(--muted);
+}
+.event-label {
+  font-family: 'Outfit', sans-serif;
+  font-size: 10px;
+  fill: var(--muted);
+  pointer-events: none;
+}
+.era-label {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 9px;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  fill: var(--dim);
+}
+.axis-tick {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 10px;
+  fill: var(--dim);
+}
+</style>
+</head>
+<body>
+
+<nav class="nav">
+  <a href="/" class="nav-brand">Thorarinson</a>
+  <ul class="nav-links">
+    <li><a href="/">Home</a></li>
+    <li><a href="/knowledge-systems/">Knowledge Systems</a></li>
+    <li><a href="/papers/">Papers</a></li>
+  </ul>
+</nav>
+
+<div class="controls" id="controls">
+  <span class="controls-label">Filter</span>
+  <div id="filter-buttons"></div>
+  <div style="display:flex;gap:6px;margin-left:8px;">
+    <button class="era-btn" data-era="ancient" title="3000 BCE - 500 CE">Ancient</button>
+    <button class="era-btn" data-era="medieval" title="500 - 1500 CE">Medieval</button>
+    <button class="era-btn" data-era="early-modern" title="1500 - 1800 CE">Early Modern</button>
+    <button class="era-btn" data-era="modern" title="1800 - 2026 CE">Modern</button>
+    <button class="era-btn" data-era="all" title="Full timeline">All</button>
+  </div>
+  <div class="zoom-controls">
+    <button class="zoom-btn" id="zoom-in" title="Zoom in">+</button>
+    <button class="zoom-btn" id="zoom-out" title="Zoom out">&minus;</button>
+    <button class="zoom-btn" id="zoom-reset" title="Reset view" style="font-size:0.65rem;">R</button>
+  </div>
+</div>
+
+<div id="timeline-container">
+  <svg id="timeline-svg"></svg>
+</div>
+
+<div class="tooltip" id="tooltip">
+  <div class="tooltip-title" id="tooltip-title"></div>
+  <div class="tooltip-date" id="tooltip-date"></div>
+  <div class="tooltip-body" id="tooltip-body"></div>
+</div>
+
+<div class="detail-panel" id="detail-panel">
+  <button class="detail-close" id="detail-close">&times;</button>
+  <div class="detail-title" id="detail-title"></div>
+  <div class="detail-date" id="detail-date"></div>
+  <div class="detail-body" id="detail-body"></div>
+  <div class="detail-section-title">Traditions Connected</div>
+  <div class="detail-traditions" id="detail-traditions"></div>
+</div>
+
+<div class="legend-stripe" id="legend"></div>
+
+<script>
+// ============================================================
+// DATA
+// ============================================================
+
+const TRADITIONS = [
+  { id: "egyptian",    name: "Egyptian",           color: "#e0af68", startYear: -3000, endYear: 300 },
+  { id: "chinese",     name: "Chinese",            color: "#f7768e", startYear: -2600, endYear: 2026 },
+  { id: "indian",      name: "Indian",             color: "#ff9e64", startYear: -1500, endYear: 2026 },
+  { id: "greek",       name: "Greek",              color: "#73daca", startYear: -600,  endYear: 400 },
+  { id: "jewish",      name: "Jewish / Kabbalistic", color: "#bb9af7", startYear: -200, endYear: 2026 },
+  { id: "gnostic",     name: "Gnostic / Hermetic", color: "#c0caf5", startYear: -200,  endYear: 400 },
+  { id: "islamic",     name: "Islamic",            color: "#9ece6a", startYear: 600,   endYear: 2026 },
+  { id: "tibetan",     name: "Tibetan",            color: "#2ac3de", startYear: 700,   endYear: 2026 },
+  { id: "japanese",    name: "Japanese",           color: "#e0af68", startYear: 800,   endYear: 2026 },
+  { id: "european",    name: "European Esoteric",  color: "#7aa2f7", startYear: 1100,  endYear: 1900 },
+  { id: "korean",      name: "Korean",             color: "#db4b4b", startYear: 1400,  endYear: 2026 },
+  { id: "african",     name: "African",            color: "#ff9e64", startYear: -3000, endYear: 2026 },
+  { id: "indigenous",  name: "Indigenous",         color: "#9ece6a", startYear: -3000, endYear: 2026 },
+  { id: "western",     name: "Western Science",    color: "#7dcfff", startYear: 1550,  endYear: 2026 },
+  { id: "modern",      name: "Modern Bridge",      color: "#c0caf5", startYear: 1990,  endYear: 2026 },
+];
+
+// Assign unique saturation variants to avoid duplicate colors
+const TRADITION_COLORS = {
+  egyptian:   "#e0af68",
+  chinese:    "#f7768e",
+  indian:     "#ff9e64",
+  greek:      "#73daca",
+  jewish:     "#bb9af7",
+  gnostic:    "#9aa5ce",
+  islamic:    "#9ece6a",
+  tibetan:    "#2ac3de",
+  japanese:   "#d5a468",
+  european:   "#7aa2f7",
+  korean:     "#db4b4b",
+  african:    "#c49a6c",
+  indigenous: "#68b87a",
+  western:    "#7dcfff",
+  modern:     "#ddd6fe",
+};
+
+// Override colors from the map
+TRADITIONS.forEach(t => { t.color = TRADITION_COLORS[t.id]; });
+
+const EVENTS = [
+  // Egyptian
+  { year: -2600, tradition: "egyptian", title: "Edwin Smith Papyrus", desc: "Earliest known surgical treatise. 48 cases of trauma surgery with rational diagnosis, prognosis, and treatment. No magical incantations for the first 45 cases — pure empirical medicine." },
+  { year: -1550, tradition: "egyptian", title: "Ebers Papyrus", desc: "Most comprehensive ancient Egyptian medical text. 700+ remedies spanning pharmacology, ophthalmology, dermatology, and dentistry. Documents knowledge of the circulatory system." },
+  { year: -1250, tradition: "egyptian", title: "Book of the Dead", desc: "Collection of funerary spells and instructions for navigating the afterlife. Encodes Egyptian cosmology and the concept of Ma'at — cosmic order and balance." },
+  { year: -300,  tradition: "egyptian", title: "Temple of Edfu Texts", desc: "Inscriptions preserving ancient Egyptian knowledge of astronomy, ritual, and the builder-god Ptah's creative word — logos before logos." },
+
+  // Chinese
+  { year: -2600, tradition: "chinese", title: "Huangdi Neijing (attributed)", desc: "The Yellow Emperor's Classic of Internal Medicine. Foundation of Chinese medical theory: qi, yin-yang, five elements, meridians, acupuncture. Compiled over centuries but attributed to ~2600 BCE." },
+  { year: -1000, tradition: "chinese", title: "I Ching (Zhou Yi)", desc: "Book of Changes. Binary system of 64 hexagrams encoding transformation patterns in nature. Leibniz later recognized it as a binary number system. Foundation of Chinese cosmology." },
+  { year: -400,  tradition: "chinese", title: "Tao Te Ching", desc: "Laozi's 81 verses on the Way. 'The Tao that can be told is not the eternal Tao.' Foundational text of Daoism — non-action, emptiness, the uncarved block." },
+  { year: -200,  tradition: "chinese", title: "Shennong Bencao Jing", desc: "The Divine Farmer's Materia Medica. 365 medicines classified into three categories. Foundation of Chinese pharmacology, attributed to Shennong." },
+  { year: 200,   tradition: "chinese", title: "Shanghan Lun", desc: "Zhang Zhongjing's Treatise on Cold Damage Disorders. Systematic diagnosis and herbal treatment protocols still used in modern TCM." },
+  { year: 650,   tradition: "chinese", title: "Sun Simiao — Qianjin Yaofang", desc: "Prescriptions Worth a Thousand Gold. Integrates Daoist, Buddhist, and Confucian medical practices. First Chinese text to include Indian medical concepts." },
+  { year: 1578,  tradition: "chinese", title: "Li Shizhen — Bencao Gangmu", desc: "Compendium of Materia Medica. 1,892 substances, 11,096 prescriptions. Encyclopedic systematization of 2000 years of Chinese pharmacological knowledge." },
+
+  // Indian
+  { year: -1200, tradition: "indian", title: "Atharvaveda", desc: "Fourth Veda. Contains hymns, spells, and incantations for healing. Earliest Indian medical knowledge: herbs, anatomy, disease etiology rooted in cosmic imbalance." },
+  { year: -600,  tradition: "indian", title: "Charaka Samhita", desc: "Foundational text of Ayurveda. Systematic classification of diseases, diagnostic methods, treatments, and the tridosha theory (vata, pitta, kapha) that maps the body to cosmic principles." },
+  { year: -500,  tradition: "indian", title: "Sushruta Samhita", desc: "Surgical Ayurvedic text. Describes 300+ surgical procedures including rhinoplasty, cataract surgery, and lithotomy. Classifies 1,120 diseases and 700 medicinal plants." },
+  { year: -200,  tradition: "indian", title: "Yoga Sutras (Patanjali)", desc: "196 aphorisms systematizing yoga practice. Eight limbs from ethical conduct to samadhi. Framework for consciousness exploration that parallels contemplative traditions worldwide." },
+  { year: 600,   tradition: "indian", title: "Vagbhata — Ashtanga Hridaya", desc: "Heart of Medicine. Synthesis of Charaka and Sushruta traditions into a unified Ayurvedic framework. Widely translated into Tibetan, Arabic, and Chinese." },
+  { year: 1400,  tradition: "indian", title: "Hatha Yoga Pradipika", desc: "Svatmarama's manual of hatha yoga. Asanas, pranayama, mudras, and nadis (energy channels). Describes kundalini and the subtle body — bioelectric framework avant la lettre." },
+
+  // Greek
+  { year: -500,  tradition: "greek", title: "Hippocratic Corpus", desc: "~60 texts establishing Western rational medicine. 'First, do no harm.' Rejects supernatural disease causes. Humoralism: blood, phlegm, yellow bile, black bile. Disease as imbalance." },
+  { year: -450,  tradition: "greek", title: "Empedocles — Four Elements", desc: "Earth, water, air, fire as fundamental constituents. Love and strife as forces of combination and separation. Structural parallel to Chinese five elements and Indian pancha bhuta." },
+  { year: -384,  tradition: "greek", title: "Aristotle — Natural Philosophy", desc: "Systematic classification of nature. Empirical observation combined with metaphysical framework. Influenced Islamic and European science for 2000 years." },
+  { year: -300,  tradition: "greek", title: "Theophrastus — Historia Plantarum", desc: "First systematic botany. 500+ plants classified by form and habit. Companion pharmacological text describes medicinal properties. Foundation of Western herbalism." },
+  { year: 50,    tradition: "greek", title: "Dioscorides — De Materia Medica", desc: "600 plants, 35 animal products, 90 minerals catalogued with medicinal uses. Standard pharmacological reference for 1500 years. Translated into Arabic, Latin, and every European language." },
+  { year: 170,   tradition: "greek", title: "Galen of Pergamon", desc: "Synthesized Hippocratic and Aristotelian medicine. 400+ treatises. His model of anatomy and physiology dominated Western and Islamic medicine until Vesalius (1543)." },
+
+  // Jewish/Kabbalistic
+  { year: -200,  tradition: "jewish", title: "Sefer Yetzirah", desc: "Book of Formation. 22 Hebrew letters as creative forces, 10 sefirot as emanations. The universe created through combinations of language — information theory in theological form." },
+  { year: 200,   tradition: "jewish", title: "Talmud — Medical Passages", desc: "Tractates Gittin, Shabbat, and others contain detailed medical knowledge: anatomy, pharmacology, surgery, and public health. Empirical observation embedded in legal discussion." },
+  { year: 1280,  tradition: "jewish", title: "Zohar", desc: "Book of Splendor. Core Kabbalistic text attributed to Shimon bar Yochai. Maps divine emanation through 10 sefirot and 22 paths. The human body as microcosm of divine structure." },
+  { year: 1570,  tradition: "jewish", title: "Isaac Luria — Lurianic Kabbalah", desc: "Tzimtzum (contraction), shevirat ha-kelim (shattering of vessels), tikkun (repair). Cosmogony as a healing process. Parallel to modern concepts of symmetry breaking and emergence." },
+
+  // Gnostic/Hermetic
+  { year: -100,  tradition: "gnostic", title: "Corpus Hermeticum (earliest texts)", desc: "Attributed to Hermes Trismegistus. 'As above, so below.' Microcosm-macrocosm principle. The universe as a living, intelligent organism. Major influence on alchemy and Renaissance thought." },
+  { year: 150,   tradition: "gnostic", title: "Valentinian Gnosis", desc: "Elaborate cosmology of aeons, the pleroma, and the fall of Sophia. Knowledge (gnosis) as the path to salvation. The body as a prison of light — or a vehicle for its recovery." },
+  { year: 200,   tradition: "gnostic", title: "Nag Hammadi Library (composed)", desc: "52 texts discovered in 1945 but composed ~200 CE. Gospel of Thomas, Apocryphon of John, Gospel of Philip. Alternative Christianity preserving pre-orthodox mystical traditions." },
+  { year: 250,   tradition: "gnostic", title: "Pistis Sophia", desc: "Gnostic text depicting Jesus teaching disciples about light, repentance, and cosmic hierarchy. Sophia's fall and redemption as metaphor for consciousness navigating material reality." },
+
+  // Islamic
+  { year: 830,   tradition: "islamic", title: "Al-Kindi — De Radiis", desc: "Theory of stellar rays. Every substance emits rays that influence its surroundings. Early field theory connecting astrology, optics, and pharmacology." },
+  { year: 900,   tradition: "islamic", title: "Al-Razi (Rhazes) — Al-Hawi", desc: "The Comprehensive Book. Largest medical encyclopedia of the medieval world. Clinical case histories, pharmacology, and the first distinction between smallpox and measles." },
+  { year: 1025,  tradition: "islamic", title: "Avicenna — Canon of Medicine", desc: "Five-book synthesis of Greek, Indian, and Islamic medicine. Standard medical textbook in Europe and the Islamic world for 600 years. Systematic clinical trials and pharmacology." },
+  { year: 1242,  tradition: "islamic", title: "Ibn al-Nafis — Pulmonary Circulation", desc: "First correct description of blood flow through the lungs, 300 years before William Harvey. Challenged Galen's anatomy from within the Islamic medical tradition." },
+  { year: 1248,  tradition: "islamic", title: "Ibn al-Baytar — Compendium", desc: "Kitab al-Jami. 1,400 plants, drugs, and foods. Synthesized Dioscorides, Galen, and original fieldwork from Spain to Syria. Largest medieval pharmacopoeia." },
+
+  // Tibetan
+  { year: 800,   tradition: "tibetan", title: "Gyud Bzhi (Four Tantras)", desc: "Foundation of Tibetan medicine. Synthesizes Indian Ayurveda, Chinese medicine, and local Bon tradition. Three humors: wind (rLung), bile (mKhris-pa), phlegm (Bad-kan)." },
+  { year: 1200,  tradition: "tibetan", title: "Blue Beryl Commentary", desc: "Sangye Gyamtso's commentary on the Four Tantras. Includes the famous medical thangka paintings — 77 illustrations encoding diagnostic and treatment knowledge." },
+  { year: 1700,  tradition: "tibetan", title: "Desi Sangye Gyatso — Medical Atlas", desc: "Systematic atlas of Tibetan medicine with detailed anatomical illustrations. Documents pulse diagnosis, urine analysis, and the pharmacological use of minerals and metals." },
+
+  // Japanese
+  { year: 984,   tradition: "japanese", title: "Ishinpo (Tamba Yasuyori)", desc: "Oldest surviving Japanese medical text. 30 volumes synthesizing Chinese medical classics. Preserves many Chinese texts now lost in China itself." },
+  { year: 1550,  tradition: "japanese", title: "Kampo Systematization", desc: "Japanese adaptation of Chinese herbal medicine. Emphasis on abdominal diagnosis (fukushin) absent in Chinese practice. Modified formulas for Japanese constitution and climate." },
+  { year: 1774,  tradition: "japanese", title: "Sugita Genpaku — Kaitai Shinsho", desc: "New Book of Anatomy. Translation of Dutch anatomical text. Triggered rangaku (Dutch learning) movement — Western science entering Japan through medicine." },
+
+  // European Esoteric
+  { year: 1150,  tradition: "european", title: "Hildegard of Bingen", desc: "Physica and Causae et Curae. Viriditas (greening force) as life energy. Systematic herbal medicine combined with mystical cosmology. First European to describe the circulation of blood." },
+  { year: 1250,  tradition: "european", title: "Albertus Magnus — De Mineralibus", desc: "Natural philosophy integrating Aristotle with direct observation. Medicinal properties of stones and metals. Teacher of Thomas Aquinas. Patron saint of natural scientists." },
+  { year: 1530,  tradition: "european", title: "Paracelsus", desc: "Rejected Galenic medicine. 'The dose makes the poison.' Iatrochemistry: medicine through chemistry, not humors. Introduced laudanum, zinc, and the concept of specific disease causes." },
+  { year: 1533,  tradition: "european", title: "Agrippa — De Occulta Philosophia", desc: "Three Books of Occult Philosophy. Systematic synthesis of natural magic, celestial magic, and ceremonial magic. Maps correspondences between plants, planets, and body parts." },
+  { year: 1564,  tradition: "european", title: "John Dee — Monas Hieroglyphica", desc: "Single glyph encoding all of alchemy, astronomy, and Kabbalah. Mathematical mysticism — the universe as geometric information. Influenced Rosicrucianism and Freemasonry." },
+  { year: 1779,  tradition: "european", title: "Franz Mesmer — Animal Magnetism", desc: "Proposed a universal vital fluid ('animal magnetism') flowing through all living things. First Western biofield claim. Debunked but catalyzed hypnosis, psychosomatic medicine, and later biofield research." },
+  { year: 1810,  tradition: "european", title: "Samuel Hahnemann — Organon", desc: "Foundation of homeopathy. 'Like cures like' and the law of minimum dose. Whatever its mechanism, introduced systematic provings and individualized treatment protocols." },
+
+  // Korean
+  { year: 1433,  tradition: "korean", title: "Hyangyak Jipseongbang", desc: "Compilation of Native Korean Prescriptions. 10,706 prescriptions using locally available herbs. Assertion of medical independence from Chinese tradition." },
+  { year: 1613,  tradition: "korean", title: "Heo Jun — Dongui Bogam", desc: "Principles and Practice of Eastern Medicine. UNESCO Memory of the World. Synthesizes Chinese, Korean, and original medical knowledge. Organized by internal, external, and miscellaneous medicine." },
+  { year: 1894,  tradition: "korean", title: "Lee Je-ma — Sasang Medicine", desc: "Constitutional medicine classifying humans into four body types (Tae-Yang, Tae-Eum, So-Yang, So-Eum) based on organ function and temperament. Individualized treatment based on constitution." },
+
+  // African
+  { year: -3000, tradition: "african", title: "Ifa Corpus (oral origins)", desc: "Yoruba divination system. 256 odu (chapters) containing poetry, history, pharmacology, and ethics. Oral tradition encoding thousands of years of accumulated knowledge. Written transcription begins ~1800." },
+  { year: -1000, tradition: "african", title: "Khoi-San Healing Traditions", desc: "Trance healing dances activating n/om (vital energy). Healers enter altered states through rhythmic movement and hyperventilation. Oldest continuous healing tradition on Earth." },
+  { year: 400,   tradition: "african", title: "Ethiopian Medical Manuscripts", desc: "Ge'ez texts documenting herbal medicine, surgical techniques, and the dejjazmatch system of master healers. Integration of Christian, Jewish, and indigenous healing practices." },
+  { year: 1200,  tradition: "african", title: "West African Herbalism", desc: "Systematic plant pharmacology transmitted through apprenticeship. Bark, root, and leaf preparations for malaria, parasites, inflammation. Source of quinine, physostigmine, and other modern drugs." },
+
+  // Indigenous
+  { year: -3000, tradition: "indigenous", title: "Ayahuasca Traditions (origins)", desc: "Amazonian plant medicine combining MAO inhibitors (Banisteriopsis caapi) with DMT sources (Psychotria viridis). Sophisticated pharmacology requiring knowledge of enzyme inhibition — discovered empirically." },
+  { year: -2000, tradition: "indigenous", title: "Mesoamerican Plant Medicine", desc: "Teonanacatl (psilocybin mushrooms), ololiuqui (LSA-containing morning glory), peyote. Ritual use for healing and divination. Codified in post-contact Aztec herbal texts." },
+  { year: -1000, tradition: "indigenous", title: "Aboriginal Australian Medicine", desc: "50,000+ year tradition. Bush medicine using tea tree, eucalyptus, emu bush. Smoke ceremonies for purification. Songlines encoding ecological and medicinal knowledge across the landscape." },
+  { year: 1500,  tradition: "indigenous", title: "Ethnobotanical Exchange", desc: "Post-contact transfer: cinchona bark (quinine), coca, curare, ipecac flow from indigenous knowledge to European pharmacopoeia. Rarely credited until 20th century." },
+
+  // Western Science
+  { year: 1620,  tradition: "western", title: "Francis Bacon — Novum Organum", desc: "New method of scientific inquiry. Inductive reasoning from observation. 'Knowledge is power.' Breaks from Aristotelian deduction. Foundation of the experimental method." },
+  { year: 1628,  tradition: "western", title: "William Harvey — De Motu Cordis", desc: "Demonstrated blood circulation through the body. Overthrew Galen's model after 1400 years. Empirical measurement applied to anatomy for the first time." },
+  { year: 1687,  tradition: "western", title: "Newton — Principia Mathematica", desc: "Laws of motion and universal gravitation. Mathematical description of natural forces. Created the framework within which all subsequent Western science operates." },
+  { year: 1791,  tradition: "western", title: "Galvani — Animal Electricity", desc: "Discovered electrical stimulation of frog legs. Founded bioelectricity. Demonstrated that living tissue generates and responds to electrical signals — first empirical biofield measurement." },
+  { year: 1905,  tradition: "western", title: "Einstein — Photoelectric Effect", desc: "Light as quantized packets (photons). Opened the door to quantum mechanics. Eventually enables understanding of biophoton emission from living systems." },
+  { year: 1944,  tradition: "western", title: "Schrodinger — What Is Life?", desc: "Proposed that life maintains order by feeding on negative entropy. 'Aperiodic crystal' prediction of DNA structure. Bridged physics and biology." },
+  { year: 1962,  tradition: "western", title: "Becker — DC Currents in Salamanders", desc: "Robert O. Becker measured direct current electrical fields along salamander bodies that control regeneration. Currents follow paths corresponding to acupuncture meridians. First modern bioelectric mapping." },
+  { year: 1970,  tradition: "western", title: "Popp — Biophoton Discovery", desc: "Fritz-Albert Popp demonstrated that all living cells emit ultraweak photon radiation. Coherent light emission from biological systems. Connected to DNA as a photon source." },
+  { year: 1992,  tradition: "western", title: "Penrose & Hameroff — Orch-OR", desc: "Orchestrated objective reduction. Quantum coherence in microtubules as basis of consciousness. Controversial but generated productive research program on quantum biology." },
+  { year: 2007,  tradition: "western", title: "Engel et al. — Quantum Coherence in Photosynthesis", desc: "Demonstrated long-lived quantum coherence in photosynthetic complexes at physiological temperatures. Published in Nature. Proved quantum effects operate in warm, wet biological systems." },
+  { year: 2012,  tradition: "western", title: "Michael Levin — Bioelectric Morphogenesis", desc: "Demonstrated that bioelectric signals (voltage gradients across cell membranes) control pattern formation, regeneration, and cancer suppression. Bioelectricity as an information layer above genetics." },
+  { year: 2017,  tradition: "western", title: "Cifra — Electric Field of Cells", desc: "Measured electric fields generated by living cells at nanometer resolution. Showed cells maintain complex electromagnetic environments that influence neighboring cells." },
+  { year: 2021,  tradition: "western", title: "Benfatto et al. — Biophoton Coherence", desc: "Measured spatiotemporal coherence of biophoton emission from germinating seeds. Demonstrated that biophoton fields carry structured information, not just random thermal noise." },
+
+  // Modern Bridge
+  { year: 2000,  tradition: "modern", title: "NIH NCCAM Established", desc: "National Center for Complementary and Alternative Medicine (now NCCIH). Federal funding for rigorous investigation of acupuncture, meditation, herbal medicine. Institutional bridge-building." },
+  { year: 2005,  tradition: "modern", title: "Biofield Science Emerges", desc: "Rubik, Muehsam, and others formalize 'biofield' as a scientific concept. Endogenous electromagnetic fields of the body proposed as integrative physiological signaling system." },
+  { year: 2010,  tradition: "modern", title: "Mindfulness-Based Interventions", desc: "MBSR and MBCT accumulate clinical evidence. Meditation practices from Buddhist and yogic traditions validated through neuroimaging and RCTs. East-West bridge in clinical practice." },
+  { year: 2015,  tradition: "modern", title: "Quantum Biology Consolidation", desc: "Convergence of evidence for quantum effects in avian navigation (radical pair), olfaction (tunneling), enzyme catalysis, and photosynthesis. Quantum biology becomes a recognized field." },
+  { year: 2020,  tradition: "modern", title: "Biofield Measurement Revolution", desc: "SQUID magnetometers, biophoton cameras, and high-density EEG map the body's electromagnetic emissions with unprecedented resolution. What traditions called 'qi' or 'prana' becomes measurable." },
+  { year: 2024,  tradition: "modern", title: "Coherence Operators Framework", desc: "Our papers: mathematical formalism unifying bioelectric, biophotonic, and quantum coherence measurements. Operator algebra mapping traditional concepts to measurable quantities." },
+  { year: 2025,  tradition: "modern", title: "Dimensionality Illusion Paper", desc: "Demonstrates that PCA reduction to low dimensions discards the very coherence signatures that distinguish living from non-living systems. Full-rank analysis recovers the signal." },
+  { year: 2026,  tradition: "modern", title: "Tradition-Measurement Bridge Papers", desc: "Systematic mapping: meridian = bioelectric gradient path, chakra = high-voltage-gradient region, qi/prana = measurable ion current. 5000 years of observation, formalized in operator algebra." },
+];
+
+const CONVERGENCES = [
+  {
+    year: -500,
+    title: "Vital Breath — Universal Life Force",
+    traditions: ["chinese", "indian", "greek"],
+    desc: "Three traditions independently converge on the same concept: a vital breath or life force that animates the body, flows through channels, and can be cultivated. Qi (Chinese, ~2600 BCE) describes the vital energy flowing through meridians. Prana (Indian, ~1200 BCE) is the life breath flowing through nadis. Pneuma (Greek, ~500 BCE) is the vital spirit carried by blood and air. All three traditions developed detailed maps of how this force circulates, where it concentrates, and how its disruption causes disease. The probability of independent invention of the same concept with the same structural features approaches zero."
+  },
+  {
+    year: 200,
+    title: "Energy Channel Systems",
+    traditions: ["chinese", "indian", "gnostic"],
+    desc: "By 200 CE, multiple traditions have developed detailed maps of invisible channels through which life force flows. Chinese meridians (jing-luo): 12 primary channels mapped by acupuncture. Indian nadis: 72,000 channels, with three primary (ida, pingala, sushumna). Hermetic channels: the 'veins of the cosmos' described in the Corpus Hermeticum. Each system identifies convergence points (acupoints, chakras, hermetic centers) where energy concentrates and can be manipulated for healing."
+  },
+  {
+    year: 1025,
+    title: "Avicenna's Grand Synthesis",
+    traditions: ["islamic", "greek", "indian"],
+    desc: "Avicenna's Canon of Medicine achieves the first deliberate synthesis of Greek humoral medicine, Indian Ayurvedic concepts (transmitted via Sushruta), and Islamic clinical practice. He systematized drug testing (mujarrabat) with seven rules resembling modern clinical trial methodology. The Canon demonstrates that knowledge traditions are not isolated — they flow along trade routes and through translation movements, converging in centers like Baghdad's House of Wisdom."
+  },
+  {
+    year: 1530,
+    title: "Paracelsus Bridges Alchemy and Medicine",
+    traditions: ["european", "islamic", "greek"],
+    desc: "Paracelsus publicly burned Avicenna's Canon and Galen's works, then built a new medical system combining alchemical transformation (Islamic/Hermetic), direct observation (Greek empiricism), and folk medicine (Germanic/Celtic). His three principles (sulfur, mercury, salt) mapped onto the three doshas and three humors. Iatrochemistry introduced the idea that specific chemical agents treat specific diseases — breaking from humoralism."
+  },
+  {
+    year: 1779,
+    title: "First Western Biofield Claim",
+    traditions: ["european", "western", "chinese"],
+    desc: "Franz Mesmer proposes 'animal magnetism' — a universal vital fluid flowing through all living things that can be channeled for healing. Though debunked by a Franklin-led commission, Mesmer had independently described something structurally identical to qi: a pervading force, flowing through channels, manipulable by a skilled practitioner. The commission disproved Mesmer's specific magnetic theory but confirmed the therapeutic effects — attributing them to 'imagination.'"
+  },
+  {
+    year: 1962,
+    title: "Becker Measures Meridian Currents",
+    traditions: ["western", "chinese", "indian"],
+    desc: "Robert O. Becker measured DC electrical potentials along the body surface of salamanders and humans. The current paths corresponded closely to traditional acupuncture meridians. He showed these currents control regeneration: reversing the current prevents limb regrowth. For the first time, what Chinese medicine had mapped as qi flow became a measurable electrical phenomenon. The meridian system was not metaphor — it was bioelectricity."
+  },
+  {
+    year: 2007,
+    title: "Quantum Coherence in Biology",
+    traditions: ["western", "indian", "chinese"],
+    desc: "Engel et al. demonstrate quantum coherence in the FMO photosynthetic complex at 277K. Published in Nature. This shatters the assumption that quantum effects are irrelevant at biological temperatures. Indian traditions described prana as wavelike. Chinese medicine spoke of qi resonance. Western science now measures coherent energy transfer in living systems — the physical basis for what traditions observed as vitality."
+  },
+  {
+    year: 2012,
+    title: "Bioelectric Morphogenesis",
+    traditions: ["western", "chinese", "indian", "tibetan"],
+    desc: "Michael Levin demonstrates that voltage gradients across cell membranes encode positional information and control body patterning. He induces eye formation in frog gut tissue by manipulating bioelectric signals. This is precisely what traditional systems described: life force flowing in patterns that determine form. Meridians, nadis, and rLung channels are bioelectric gradient paths. The 'subtle body' is the voltage map."
+  },
+  {
+    year: 2021,
+    title: "Biophoton Coherence Measured",
+    traditions: ["western", "chinese", "indian", "gnostic"],
+    desc: "Benfatto et al. measure spatiotemporal coherence of biophoton emission from germinating seeds. The photon field is not random noise — it carries structured information. Chinese medicine described 'shen' (spirit-light) emanating from healthy tissue. Indian traditions spoke of 'tejas' (inner radiance). The Hermetic tradition described the human body as emitting light. All of these are now measurable as coherent biophoton fields."
+  },
+  {
+    year: 2026,
+    title: "Coherence Operators Unify Measurement",
+    traditions: ["modern", "western", "chinese", "indian", "tibetan", "islamic", "jewish"],
+    desc: "Our papers provide the mathematical formalism that maps traditional healing concepts to measurable physical quantities. Meridian = bioelectric gradient path (measurable by surface electrode arrays). Chakra = high-voltage-gradient region (measurable by SQUID magnetometry). Qi/Prana = ion current density (measurable by patch clamp). Kundalini = bioelectric cascade along the spinal DC system. The operator algebra preserves the relational structure of traditional systems while grounding each concept in measurement. 5000 years of observation, formalized."
+  },
+];
+
+// ============================================================
+// RENDERING
+// ============================================================
+
+const container = document.getElementById("timeline-container");
+const svg = d3.select("#timeline-svg");
+const tooltip = document.getElementById("tooltip");
+const detailPanel = document.getElementById("detail-panel");
+
+const margin = { top: 60, right: 40, bottom: 60, left: 200 };
+
+let width, height;
+function updateDimensions() {
+  width = container.clientWidth;
+  height = container.clientHeight;
+}
+updateDimensions();
+
+// Scale: year -> x
+const yearMin = -3100;
+const yearMax = 2040;
+const xScale = d3.scaleLinear()
+  .domain([yearMin, yearMax])
+  .range([margin.left, Math.max(width * 3, 4000)]);
+
+// Y scale: tradition index -> y
+const laneHeight = 46;
+const yScale = (i) => margin.top + i * laneHeight;
+const totalHeight = margin.top + TRADITIONS.length * laneHeight + margin.bottom;
+
+// Main group for zoom/pan
+const g = svg.append("g").attr("class", "main-group");
+
+// Background
+g.append("rect")
+  .attr("width", xScale(yearMax) + 200)
+  .attr("height", totalHeight)
+  .attr("fill", "var(--bg)");
+
+// Era background bands
+const eras = [
+  { name: "Ancient", start: -3100, end: 500,  color: "rgba(224,175,104,0.03)" },
+  { name: "Medieval", start: 500,  end: 1500, color: "rgba(187,154,247,0.03)" },
+  { name: "Early Modern", start: 1500, end: 1800, color: "rgba(122,162,247,0.03)" },
+  { name: "Modern", start: 1800, end: 2040, color: "rgba(156,206,106,0.03)" },
+];
+
+const eraGroup = g.append("g").attr("class", "eras");
+eras.forEach(era => {
+  eraGroup.append("rect")
+    .attr("x", xScale(era.start))
+    .attr("y", 0)
+    .attr("width", xScale(era.end) - xScale(era.start))
+    .attr("height", totalHeight)
+    .attr("fill", era.color);
+
+  eraGroup.append("text")
+    .attr("class", "era-label")
+    .attr("x", (xScale(era.start) + xScale(era.end)) / 2)
+    .attr("y", 20)
+    .attr("text-anchor", "middle")
+    .text(era.name);
+});
+
+// Grid lines for centuries
+const gridGroup = g.append("g").attr("class", "grid");
+for (let year = -3000; year <= 2000; year += 100) {
+  const x = xScale(year);
+  gridGroup.append("line")
+    .attr("x1", x).attr("y1", margin.top - 10)
+    .attr("x2", x).attr("y2", totalHeight - margin.bottom + 10)
+    .attr("stroke", "rgba(255,255,255,0.03)")
+    .attr("stroke-width", year % 500 === 0 ? 1 : 0.5);
+}
+
+// Axis labels
+const axisGroup = g.append("g").attr("class", "axis");
+for (let year = -3000; year <= 2000; year += 500) {
+  const label = year < 0 ? `${Math.abs(year)} BCE` : year === 0 ? "0" : `${year} CE`;
+  axisGroup.append("text")
+    .attr("class", "axis-tick")
+    .attr("x", xScale(year))
+    .attr("y", totalHeight - margin.bottom + 30)
+    .attr("text-anchor", "middle")
+    .text(label);
+}
+// Finer ticks for modern era
+for (let year = 1900; year <= 2030; year += 10) {
+  axisGroup.append("text")
+    .attr("class", "axis-tick")
+    .attr("x", xScale(year))
+    .attr("y", totalHeight - margin.bottom + 45)
+    .attr("text-anchor", "middle")
+    .attr("font-size", "8px")
+    .attr("fill", "rgba(232,232,244,0.15)")
+    .text(year);
+}
+
+// Tradition swim lanes
+const laneGroup = g.append("g").attr("class", "lanes");
+const activeFilters = new Set(TRADITIONS.map(t => t.id));
+
+TRADITIONS.forEach((t, i) => {
+  const y = yScale(i);
+
+  // Lane background
+  laneGroup.append("rect")
+    .attr("class", `lane lane-${t.id}`)
+    .attr("x", margin.left)
+    .attr("y", y - laneHeight / 2 + 6)
+    .attr("width", xScale(yearMax) - margin.left)
+    .attr("height", laneHeight - 12)
+    .attr("fill", "transparent")
+    .attr("rx", 3);
+
+  // Tradition timeline bar
+  const barStart = xScale(Math.max(t.startYear, yearMin));
+  const barEnd = xScale(Math.min(t.endYear, yearMax));
+
+  // For oral traditions, use dashed line
+  const isOral = t.id === "african" || t.id === "indigenous";
+
+  laneGroup.append("line")
+    .attr("class", `tradition-bar bar-${t.id}`)
+    .attr("x1", barStart)
+    .attr("y1", y)
+    .attr("x2", barEnd)
+    .attr("y2", y)
+    .attr("stroke", t.color)
+    .attr("stroke-width", isOral ? 2 : 3)
+    .attr("stroke-opacity", 0.3)
+    .attr("stroke-dasharray", isOral ? "6,4" : "none")
+    .attr("stroke-linecap", "round");
+
+  // Tradition label (fixed left)
+  laneGroup.append("text")
+    .attr("class", `tradition-label label-${t.id}`)
+    .attr("x", margin.left - 12)
+    .attr("y", y + 4)
+    .attr("text-anchor", "end")
+    .attr("fill", t.color)
+    .text(t.name);
+});
+
+// Event dots
+const eventGroup = g.append("g").attr("class", "events");
+
+EVENTS.forEach((evt) => {
+  const tradition = TRADITIONS.find(t => t.id === evt.tradition);
+  if (!tradition) return;
+  const i = TRADITIONS.indexOf(tradition);
+  const x = xScale(evt.year);
+  const y = yScale(i);
+
+  const evtG = eventGroup.append("g")
+    .attr("class", `event event-${evt.tradition}`)
+    .attr("transform", `translate(${x}, ${y})`)
+    .style("cursor", "pointer");
+
+  // Glow
+  evtG.append("circle")
+    .attr("r", 8)
+    .attr("fill", tradition.color)
+    .attr("opacity", 0.1);
+
+  // Dot
+  evtG.append("circle")
+    .attr("r", 4)
+    .attr("fill", tradition.color)
+    .attr("stroke", tradition.color)
+    .attr("stroke-width", 1)
+    .attr("stroke-opacity", 0.5)
+    .attr("opacity", 0.85);
+
+  // Label (show only on zoom or hover)
+  evtG.append("text")
+    .attr("class", "event-label")
+    .attr("x", 0)
+    .attr("y", -10)
+    .attr("text-anchor", "middle")
+    .attr("fill", tradition.color)
+    .attr("opacity", 0)
+    .text(evt.title);
+
+  // Interactions
+  evtG.on("mouseenter", function(event) {
+    d3.select(this).select("circle:nth-child(2)")
+      .transition().duration(150)
+      .attr("r", 6)
+      .attr("opacity", 1);
+    d3.select(this).select("circle:first-child")
+      .transition().duration(150)
+      .attr("r", 14)
+      .attr("opacity", 0.2);
+    d3.select(this).select(".event-label")
+      .transition().duration(150)
+      .attr("opacity", 1);
+
+    showTooltip(event, evt, tradition);
+  });
+
+  evtG.on("mousemove", function(event) {
+    positionTooltip(event);
+  });
+
+  evtG.on("mouseleave", function() {
+    d3.select(this).select("circle:nth-child(2)")
+      .transition().duration(200)
+      .attr("r", 4)
+      .attr("opacity", 0.85);
+    d3.select(this).select("circle:first-child")
+      .transition().duration(200)
+      .attr("r", 8)
+      .attr("opacity", 0.1);
+    d3.select(this).select(".event-label")
+      .transition().duration(200)
+      .attr("opacity", 0);
+
+    hideTooltip();
+  });
+});
+
+// Convergence lines
+const convergenceGroup = g.append("g").attr("class", "convergences");
+
+CONVERGENCES.forEach((conv) => {
+  const x = xScale(conv.year);
+  const tradIndices = conv.traditions
+    .map(id => TRADITIONS.findIndex(t => t.id === id))
+    .filter(i => i >= 0)
+    .sort((a, b) => a - b);
+
+  if (tradIndices.length < 2) return;
+
+  const yTop = yScale(tradIndices[0]);
+  const yBottom = yScale(tradIndices[tradIndices.length - 1]);
+
+  const convG = convergenceGroup.append("g")
+    .attr("class", "convergence-group")
+    .style("cursor", "pointer");
+
+  // Gradient definition
+  const gradId = `conv-grad-${conv.year}`;
+  const defs = svg.select("defs").empty() ? svg.append("defs") : svg.select("defs");
+  const gradient = defs.append("linearGradient")
+    .attr("id", gradId)
+    .attr("x1", "0%").attr("y1", "0%")
+    .attr("x2", "0%").attr("y2", "100%");
+  gradient.append("stop").attr("offset", "0%").attr("stop-color", "#7aa2f7").attr("stop-opacity", 0.6);
+  gradient.append("stop").attr("offset", "50%").attr("stop-color", "#bb9af7").attr("stop-opacity", 0.8);
+  gradient.append("stop").attr("offset", "100%").attr("stop-color", "#7aa2f7").attr("stop-opacity", 0.6);
+
+  // Glow line (wider, dimmer)
+  convG.append("line")
+    .attr("x1", x).attr("y1", yTop)
+    .attr("x2", x).attr("y2", yBottom)
+    .attr("stroke", `url(#${gradId})`)
+    .attr("stroke-width", 8)
+    .attr("stroke-opacity", 0.08)
+    .attr("stroke-linecap", "round");
+
+  // Main convergence line
+  convG.append("line")
+    .attr("class", "conv-line")
+    .attr("x1", x).attr("y1", yTop)
+    .attr("x2", x).attr("y2", yBottom)
+    .attr("stroke", `url(#${gradId})`)
+    .attr("stroke-width", 2)
+    .attr("stroke-opacity", 0.5)
+    .attr("stroke-dasharray", "4,3")
+    .attr("stroke-linecap", "round");
+
+  // Connection dots at each tradition
+  tradIndices.forEach(ti => {
+    convG.append("circle")
+      .attr("cx", x)
+      .attr("cy", yScale(ti))
+      .attr("r", 5)
+      .attr("fill", "none")
+      .attr("stroke", "#bb9af7")
+      .attr("stroke-width", 1.5)
+      .attr("stroke-opacity", 0.5);
+  });
+
+  // Convergence label
+  convG.append("text")
+    .attr("class", "era-label")
+    .attr("x", x)
+    .attr("y", yTop - 16)
+    .attr("text-anchor", "middle")
+    .attr("fill", "#bb9af7")
+    .attr("font-size", "8px")
+    .attr("opacity", 0.5)
+    .text(conv.title.split(" — ")[0] || conv.title.substring(0, 24));
+
+  // Hover interactions
+  convG.on("mouseenter", function(event) {
+    d3.select(this).selectAll(".conv-line")
+      .transition().duration(150)
+      .attr("stroke-width", 3)
+      .attr("stroke-opacity", 0.9);
+    d3.select(this).selectAll("circle")
+      .transition().duration(150)
+      .attr("r", 7)
+      .attr("stroke-opacity", 0.9)
+      .attr("fill", "rgba(187,154,247,0.15)");
+
+    showConvergenceTooltip(event, conv);
+  });
+
+  convG.on("mousemove", function(event) {
+    positionTooltip(event);
+  });
+
+  convG.on("mouseleave", function() {
+    d3.select(this).selectAll(".conv-line")
+      .transition().duration(200)
+      .attr("stroke-width", 2)
+      .attr("stroke-opacity", 0.5);
+    d3.select(this).selectAll("circle")
+      .transition().duration(200)
+      .attr("r", 5)
+      .attr("stroke-opacity", 0.5)
+      .attr("fill", "none");
+
+    hideTooltip();
+  });
+
+  // Click for detail panel
+  convG.on("click", function() {
+    showDetailPanel(conv);
+  });
+});
+
+// ============================================================
+// ZOOM & PAN
+// ============================================================
+
+const zoom = d3.zoom()
+  .scaleExtent([0.15, 8])
+  .on("zoom", (event) => {
+    g.attr("transform", event.transform);
+
+    // Update label visibility based on zoom level
+    const k = event.transform.k;
+    g.selectAll(".event-label")
+      .attr("opacity", k > 2 ? 0.7 : 0);
+
+    // Update tradition labels to stay in view
+    updateFixedLabels(event.transform);
+  });
+
+svg.call(zoom);
+
+// Set initial view — fit to content
+function resetView() {
+  const t = d3.zoomIdentity
+    .translate(width * 0.02, 0)
+    .scale(width / (xScale(yearMax) - xScale(yearMin) + margin.left + margin.right));
+  svg.transition().duration(750).call(zoom.transform, t);
+}
+
+function zoomToEra(start, end) {
+  const x0 = xScale(start);
+  const x1 = xScale(end);
+  const scale = (width - 40) / (x1 - x0);
+  const t = d3.zoomIdentity
+    .translate(-x0 * scale + 20, 0)
+    .scale(scale);
+  svg.transition().duration(750).call(zoom.transform, t);
+}
+
+// Fixed tradition labels that stay visible during pan
+function updateFixedLabels(transform) {
+  const leftEdge = -transform.x / transform.k;
+  g.selectAll("[class^='label-']").each(function() {
+    const el = d3.select(this);
+    const newX = leftEdge + 188 / transform.k;
+    el.attr("x", newX);
+    el.attr("font-size", Math.min(11, 11 / transform.k) + "px");
+  });
+}
+
+// Initial fit
+setTimeout(resetView, 100);
+
+// ============================================================
+// CONTROLS
+// ============================================================
+
+// Filter buttons
+const filterContainer = document.getElementById("filter-buttons");
+TRADITIONS.forEach(t => {
+  const btn = document.createElement("button");
+  btn.className = "filter-btn active";
+  btn.dataset.tradition = t.id;
+  btn.innerHTML = `<span class="dot" style="background:${t.color}"></span>${t.name}`;
+  btn.addEventListener("click", () => toggleFilter(t.id, btn));
+  filterContainer.appendChild(btn);
+});
+
+function toggleFilter(id, btn) {
+  if (activeFilters.has(id)) {
+    activeFilters.delete(id);
+    btn.classList.remove("active");
+  } else {
+    activeFilters.add(id);
+    btn.classList.add("active");
+  }
+  applyFilters();
+}
+
+function applyFilters() {
+  TRADITIONS.forEach(t => {
+    const visible = activeFilters.has(t.id);
+    const opacity = visible ? 1 : 0.06;
+    g.selectAll(`.lane-${t.id}`).transition().duration(300).attr("opacity", opacity);
+    g.selectAll(`.bar-${t.id}`).transition().duration(300).attr("stroke-opacity", visible ? 0.3 : 0.03);
+    g.selectAll(`.event-${t.id}`).transition().duration(300).attr("opacity", opacity);
+    g.selectAll(`.label-${t.id}`).transition().duration(300).attr("opacity", visible ? 1 : 0.1);
+  });
+
+  // Update convergence visibility
+  g.selectAll(".convergence-group").each(function(d, i) {
+    const conv = CONVERGENCES[i];
+    if (!conv) return;
+    const anyVisible = conv.traditions.some(id => activeFilters.has(id));
+    d3.select(this).transition().duration(300).attr("opacity", anyVisible ? 1 : 0.06);
+  });
+}
+
+// Zoom buttons
+document.getElementById("zoom-in").addEventListener("click", () => {
+  svg.transition().duration(300).call(zoom.scaleBy, 1.5);
+});
+document.getElementById("zoom-out").addEventListener("click", () => {
+  svg.transition().duration(300).call(zoom.scaleBy, 0.67);
+});
+document.getElementById("zoom-reset").addEventListener("click", resetView);
+
+// Era navigation
+document.querySelectorAll(".era-btn").forEach(btn => {
+  btn.addEventListener("click", () => {
+    const era = btn.dataset.era;
+    switch (era) {
+      case "ancient": zoomToEra(-3100, 500); break;
+      case "medieval": zoomToEra(400, 1550); break;
+      case "early-modern": zoomToEra(1450, 1850); break;
+      case "modern": zoomToEra(1750, 2040); break;
+      case "all": resetView(); break;
+    }
+  });
+});
+
+// Detail panel close
+document.getElementById("detail-close").addEventListener("click", () => {
+  detailPanel.classList.remove("open");
+});
+document.addEventListener("keydown", (e) => {
+  if (e.key === "Escape") detailPanel.classList.remove("open");
+});
+
+// ============================================================
+// TOOLTIP
+// ============================================================
+
+function formatYear(year) {
+  if (year < 0) return `${Math.abs(year)} BCE`;
+  if (year === 0) return "1 CE";
+  return `${year} CE`;
+}
+
+function showTooltip(event, evt, tradition) {
+  document.getElementById("tooltip-title").textContent = evt.title;
+  document.getElementById("tooltip-date").textContent = formatYear(evt.year);
+  document.getElementById("tooltip-body").innerHTML = `
+    ${evt.desc}
+    <div class="tooltip-tradition" style="background:${tradition.color}22;color:${tradition.color};border:1px solid ${tradition.color}44;">${tradition.name}</div>
+  `;
+  tooltip.classList.add("visible");
+  positionTooltip(event);
+}
+
+function showConvergenceTooltip(event, conv) {
+  document.getElementById("tooltip-title").textContent = conv.title;
+  document.getElementById("tooltip-date").textContent = formatYear(conv.year) + " — CONVERGENCE";
+  const tradTags = conv.traditions.map(id => {
+    const t = TRADITIONS.find(tr => tr.id === id);
+    return t ? `<span class="tooltip-tradition" style="background:${t.color}22;color:${t.color};border:1px solid ${t.color}44;margin-right:4px;">${t.name}</span>` : "";
+  }).join("");
+  document.getElementById("tooltip-body").innerHTML = `
+    ${conv.desc.substring(0, 200)}...
+    <div style="margin-top:8px">${tradTags}</div>
+    <div style="margin-top:8px;font-size:0.65rem;color:var(--accent);font-family:'JetBrains Mono',monospace;">CLICK FOR DETAILS</div>
+  `;
+  tooltip.classList.add("visible");
+  positionTooltip(event);
+}
+
+function positionTooltip(event) {
+  const pad = 16;
+  let x = event.clientX + pad;
+  let y = event.clientY + pad;
+
+  const tw = 380;
+  const th = tooltip.offsetHeight || 200;
+
+  if (x + tw > window.innerWidth - 10) x = event.clientX - tw - pad;
+  if (y + th > window.innerHeight - 10) y = event.clientY - th - pad;
+  if (x < 10) x = 10;
+  if (y < 10) y = 10;
+
+  tooltip.style.left = x + "px";
+  tooltip.style.top = y + "px";
+}
+
+function hideTooltip() {
+  tooltip.classList.remove("visible");
+}
+
+// ============================================================
+// DETAIL PANEL
+// ============================================================
+
+function showDetailPanel(conv) {
+  document.getElementById("detail-title").textContent = conv.title;
+  document.getElementById("detail-date").textContent = formatYear(conv.year) + " — Convergence Event";
+  document.getElementById("detail-body").textContent = conv.desc;
+
+  const tradContainer = document.getElementById("detail-traditions");
+  tradContainer.innerHTML = "";
+  conv.traditions.forEach(id => {
+    const t = TRADITIONS.find(tr => tr.id === id);
+    if (!t) return;
+    const tag = document.createElement("span");
+    tag.className = "detail-tradition-tag";
+    tag.style.background = t.color + "22";
+    tag.style.color = t.color;
+    tag.style.border = `1px solid ${t.color}44`;
+    tag.textContent = t.name;
+    tradContainer.appendChild(tag);
+  });
+
+  detailPanel.classList.add("open");
+  hideTooltip();
+}
+
+// ============================================================
+// LEGEND
+// ============================================================
+
+const legend = document.getElementById("legend");
+TRADITIONS.forEach(t => {
+  const item = document.createElement("span");
+  item.className = "legend-item";
+  item.innerHTML = `<span class="legend-dot" style="background:${t.color}"></span>${t.name}`;
+  legend.appendChild(item);
+});
+// Convergence legend
+const convItem = document.createElement("span");
+convItem.className = "legend-item";
+convItem.innerHTML = `<span class="legend-convergence"></span>Convergence`;
+legend.appendChild(convItem);
+
+// ============================================================
+// RESIZE
+// ============================================================
+
+window.addEventListener("resize", () => {
+  updateDimensions();
+});
+</script>
+
+</body>
+</html>
