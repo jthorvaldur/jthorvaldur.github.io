@@ -5,58 +5,76 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Governance Stack — Sovereignty + Enterprise Architecture</title>
 <style>
-:root { --bg: #0a0a0f; --card: #12121a; --border: #1e1e2e; --text: #e0e0e8; --dim: #888; --accent: #4fc3f7; --ok: #66bb6a; --warn: #ff9800; --purple: #b39ddb; --teal: #26a69a; }
+:root {
+  --bg: #07070f; --surface: rgba(255,255,255,0.035); --surface-hover: rgba(224,175,104,0.07);
+  --border: rgba(255,255,255,0.07); --border-hover: rgba(224,175,104,0.30);
+  --text: #e8e8f4; --muted: rgba(232,232,244,0.45); --dim: rgba(232,232,244,0.25);
+  --accent: #e0af68; --accent2: #d4956b; --green: #9ece6a; --amber: #e0af68;
+  --red: #f7768e; --teal: #73daca; --blue: #7aa2f7; --glow: rgba(224,175,104,0.10);
+  --ok: #9ece6a; --warn: #e0af68; --purple: #bb9af7;
+}
 * { margin: 0; padding: 0; box-sizing: border-box; }
-body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, sans-serif; background: var(--bg); color: var(--text); line-height: 1.7; padding: 20px; }
-.container { max-width: 900px; margin: 0 auto; }
+body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; background: var(--bg); color: var(--text); -webkit-font-smoothing: antialiased; line-height: 1.7; }
+.container { max-width: 960px; margin: 0 auto; padding: 5rem 2rem 4rem; }
 h1 { font-size: 1.6em; color: var(--accent); margin-bottom: 5px; }
 h2 { font-size: 1.25em; color: var(--purple); margin: 30px 0 12px; border-bottom: 1px solid var(--border); padding-bottom: 6px; }
 h3 { font-size: 1.05em; color: var(--accent); margin: 20px 0 8px; }
-.subtitle { color: var(--dim); font-size: 0.85em; margin-bottom: 30px; }
-.card { background: var(--card); border: 1px solid var(--border); border-radius: 10px; padding: 20px; margin: 15px 0; }
-.card.highlight { border-left: 3px solid var(--accent); }
+.subtitle { color: var(--muted); font-size: 0.85em; margin-bottom: 30px; }
+.card { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 20px; margin: 15px 0; transition: background 0.25s, border-color 0.25s; }
+.card:hover { background: var(--surface-hover); border-color: var(--border-hover); }
+.card.highlight { border-left: 3px solid var(--blue); }
 .card.action { border-left: 3px solid var(--ok); }
 .card.note { border-left: 3px solid var(--warn); }
-.nav { margin-bottom: 25px; font-size: 0.85em; }
-.nav a { color: var(--accent); text-decoration: none; margin-right: 15px; }
-.nav a:hover { text-decoration: underline; }
+.nav {
+  position: fixed; top: 0; left: 0; right: 0; z-index: 50;
+  padding: 0 2rem; height: 56px;
+  display: flex; align-items: center; justify-content: space-between;
+  background: rgba(7,7,15,0.85); backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px);
+  border-bottom: 1px solid var(--border);
+}
+.nav-brand { font-size: 0.72rem; font-weight: 600; letter-spacing: 0.2em; text-transform: uppercase; color: var(--accent); text-decoration: none; }
+.nav-links { display: flex; gap: 1.5rem; list-style: none; }
+.nav-links a { font-size: 0.78rem; font-weight: 400; color: var(--muted); text-decoration: none; transition: color 0.2s; }
+.nav-links a:hover { color: var(--text); }
+.nav-links a.active { color: var(--accent); }
 
 /* Stack diagram */
 .stack { display: flex; flex-direction: column; gap: 0; margin: 20px 0; }
-.layer { background: var(--card); border: 1px solid var(--border); padding: 16px 20px; position: relative; }
+.layer { background: var(--surface); border: 1px solid var(--border); padding: 16px 20px; position: relative; }
 .layer:first-child { border-radius: 10px 10px 0 0; }
 .layer:last-child { border-radius: 0 0 10px 10px; }
 .layer .tag { position: absolute; top: 8px; right: 12px; font-size: 0.65em; padding: 2px 8px; border-radius: 3px; }
-.layer .tag.done { background: rgba(102,187,106,0.15); color: var(--ok); }
-.layer .tag.build { background: rgba(79,195,247,0.15); color: var(--accent); }
-.layer .tag.plan { background: rgba(255,152,0,0.15); color: var(--warn); }
+.layer .tag.done { background: rgba(158,206,106,0.15); color: var(--ok); }
+.layer .tag.build { background: rgba(122,162,247,0.15); color: var(--blue); }
+.layer .tag.plan { background: rgba(224,175,104,0.15); color: var(--warn); }
 .layer .num { color: var(--teal); font-weight: bold; font-size: 0.8em; }
-.layer .name { color: var(--accent); font-weight: bold; font-size: 1.05em; }
-.layer .desc { color: var(--dim); font-size: 0.85em; margin-top: 4px; }
+.layer .name { color: var(--blue); font-weight: bold; font-size: 1.05em; }
+.layer .desc { color: var(--muted); font-size: 0.85em; margin-top: 4px; }
 .connector { text-align: center; color: var(--border); font-size: 1.2em; line-height: 1; padding: 2px 0; }
 
 /* Flow */
 .flow { display: grid; grid-template-columns: 1fr auto 1fr; gap: 5px; align-items: center; margin: 10px 0; font-size: 0.85em; }
-.flow .left { text-align: right; color: var(--dim); }
+.flow .left { text-align: right; color: var(--muted); }
 .flow .arrow { color: var(--accent); font-weight: bold; }
 .flow .right { color: var(--text); }
 
 /* Table */
 table { width: 100%; border-collapse: collapse; margin: 10px 0; font-size: 0.85em; }
-th { text-align: left; color: var(--accent); padding: 8px 12px; border-bottom: 2px solid var(--border); }
-td { padding: 8px 12px; border-bottom: 1px solid var(--border); }
+th { text-align: left; color: var(--blue); padding: 8px 12px; border-bottom: 2px solid var(--border); font-size: 0.85em; letter-spacing: 0.03em; }
+td { padding: 8px 12px; border-bottom: 1px solid rgba(255,255,255,0.04); color: var(--muted); }
 
 /* Timeline */
 .timeline { margin: 15px 0; }
 .timeline-item { display: flex; gap: 15px; padding: 8px 0; border-left: 2px solid var(--border); margin-left: 10px; padding-left: 15px; }
-.timeline-item .week { min-width: 60px; color: var(--teal); font-weight: bold; font-size: 0.85em; }
+.timeline-item .week { min-width: 60px; color: var(--green); font-weight: bold; font-size: 0.85em; }
 .timeline-item .task { font-size: 0.85em; }
 
-ul { margin: 8px 0 0 20px; font-size: 0.9em; color: var(--dim); }
+ul { margin: 8px 0 0 20px; font-size: 0.9em; color: var(--muted); }
 li { margin: 4px 0; }
 p { margin: 8px 0; font-size: 0.9em; }
 strong { color: var(--text); }
-em { color: var(--warn); font-style: normal; }
+em { color: var(--amber); font-style: normal; }
+@media (max-width: 640px) { .container { padding: 4rem 1.2rem 3rem; } .nav-links { display: none; } }
 </style>
 </head>
 <body>
@@ -269,7 +287,7 @@ Response to the combined PMA/Trust/HoldCo/LandCo/OpCo proposal (Signal, Feb 2026
 <div class="card">
 <h3>Proposed Unit of Account</h3>
 <p>Based on Volkmar's pricing research, the exchange unit should be:</p>
-<div style="background: #1a1a28; padding: 15px; border-radius: 6px; margin: 10px 0; text-align: center;">
+<div style="background: rgba(255,255,255,0.03); padding: 15px; border-radius: 8px; margin: 10px 0; text-align: center; border: 1px solid var(--border);">
   <span style="font-size: 1.4em; color: var(--accent); font-weight: bold;">1 HVC (Honey Value Credit) = 1 oz commodity-grade raw honey</span><br>
   <span style="color: var(--dim); font-size: 0.85em;">Base price: $0.25/oz (midpoint of $0.20-$0.35 range)</span><br>
   <span style="color: var(--dim); font-size: 0.85em;">Quality premium: up to 1.5x for lab-verified, sealed, single-source</span><br>
@@ -288,8 +306,8 @@ Response to the combined PMA/Trust/HoldCo/LandCo/OpCo proposal (Signal, Feb 2026
 </ol>
 </div>
 
-<p style="color: var(--dim); font-size: 0.75em; margin-top: 40px; text-align: center;">
-  Generated 2026-04-26 | <a href="../d72/index.html" style="color: var(--accent);">Δ.72 Framework</a> | <a href="../contacts/index.html" style="color: var(--accent);">Contact Manager</a>
+<p style="color: var(--dim); font-size: 0.75em; margin-top: 40px; text-align: center; border-top: 1px solid var(--border); padding-top: 1.5rem;">
+  Generated 2026-04-26 | <a href="/r/food-trust/" style="color: var(--accent);">Food Value Trust</a> | <a href="/" style="color: var(--muted);">Thorarinson</a>
 </p>
 
 </div>
