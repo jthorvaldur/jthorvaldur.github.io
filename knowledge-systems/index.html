@@ -1,0 +1,1013 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Knowledge Systems Map — Thorarinson</title>
+  <meta name="description" content="Interactive force-directed graph mapping traditional knowledge systems through modern science into a 21-paper research portfolio.">
+  <meta property="og:title" content="Knowledge Systems Map — Thorarinson">
+  <meta property="og:description" content="How concepts flow from ancient traditions through modern biophysics into testable research. Interactive D3.js visualization.">
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="https://jthorvaldur.github.io/knowledge-systems/">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@200;300;400;500;600;700&family=JetBrains+Mono:wght@300;400;500;600&display=swap" rel="stylesheet">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/d3/7.9.0/d3.min.js"></script>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg: #07070f;
+      --surface: rgba(255,255,255,0.035);
+      --surface-hover: rgba(122,162,247,0.07);
+      --border: rgba(255,255,255,0.07);
+      --border-hover: rgba(122,162,247,0.30);
+      --text: #e8e8f4;
+      --muted: rgba(232,232,244,0.45);
+      --dim: rgba(232,232,244,0.25);
+      --accent: #7aa2f7;
+      --accent2: #bb9af7;
+      --green: #9ece6a;
+      --amber: #e0af68;
+      --red: #f7768e;
+      --teal: #73daca;
+      --glow: rgba(122,162,247,0.10);
+      --gold: #d4a843;
+      --purple: #bb9af7;
+    }
+
+    html { scroll-behavior: smooth; }
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: 'Outfit', sans-serif;
+      overflow-x: hidden;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    /* -- Nav -- */
+    .nav {
+      position: fixed; top: 0; left: 0; right: 0; z-index: 50;
+      padding: 0 2rem; height: 56px;
+      display: flex; align-items: center; justify-content: space-between;
+      background: rgba(7,7,15,0.7);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      border-bottom: 1px solid var(--border);
+    }
+    .nav-brand {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.72rem; font-weight: 600;
+      letter-spacing: 0.2em; text-transform: uppercase;
+      color: var(--accent);
+      text-decoration: none;
+    }
+    .nav-links {
+      display: flex; gap: 1.5rem; list-style: none;
+    }
+    .nav-links a {
+      font-size: 0.78rem; font-weight: 400;
+      color: var(--muted); text-decoration: none;
+      transition: color 0.2s;
+    }
+    .nav-links a:hover { color: var(--text); }
+    .nav-links a.active { color: var(--accent); }
+
+    /* -- Header -- */
+    .page-header {
+      padding: 7rem 2rem 2rem;
+      max-width: 1000px; margin: 0 auto;
+      text-align: center;
+    }
+    .page-eyebrow {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.65rem; letter-spacing: 0.3em;
+      text-transform: uppercase; color: var(--accent);
+      margin-bottom: 1.5rem;
+    }
+    .page-title {
+      font-size: clamp(2rem, 5vw, 3.4rem);
+      font-weight: 200; letter-spacing: -0.01em;
+      line-height: 1.15; margin-bottom: 1rem;
+    }
+    .page-title strong {
+      font-weight: 500;
+      background: linear-gradient(140deg, #ffffff 20%, var(--gold) 60%, var(--accent2));
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+    .page-sub {
+      font-size: 0.92rem; color: var(--muted);
+      max-width: 640px; margin: 0 auto;
+      line-height: 1.7;
+    }
+
+    /* -- Controls -- */
+    .controls {
+      max-width: 1200px; margin: 1.5rem auto 0;
+      padding: 0 2rem;
+      display: flex; flex-wrap: wrap; gap: 0.75rem;
+      align-items: center; justify-content: center;
+    }
+    .search-box {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 0.5rem 1rem;
+      color: var(--text);
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.75rem;
+      width: 220px;
+      outline: none;
+      transition: border-color 0.2s;
+    }
+    .search-box::placeholder { color: var(--dim); }
+    .search-box:focus { border-color: var(--accent); }
+
+    .filter-btn {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      padding: 0.4rem 0.8rem;
+      color: var(--muted);
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.6rem;
+      letter-spacing: 0.06em;
+      cursor: pointer;
+      transition: all 0.2s;
+      text-transform: uppercase;
+    }
+    .filter-btn:hover {
+      background: var(--surface-hover);
+      border-color: var(--border-hover);
+      color: var(--text);
+    }
+    .filter-btn.active {
+      border-color: var(--border-hover);
+      color: var(--text);
+    }
+    .filter-btn.active[data-group="tradition"] {
+      background: rgba(212,168,67,0.15);
+      border-color: rgba(212,168,67,0.4);
+      color: var(--gold);
+    }
+    .filter-btn.active[data-group="science"] {
+      background: rgba(122,162,247,0.12);
+      border-color: rgba(122,162,247,0.4);
+      color: var(--accent);
+    }
+    .filter-btn.active[data-group="paper"] {
+      background: rgba(158,206,106,0.12);
+      border-color: rgba(158,206,106,0.4);
+      color: var(--green);
+    }
+    .filter-btn.active[data-group="koplik"] {
+      background: rgba(187,154,247,0.12);
+      border-color: rgba(187,154,247,0.4);
+      color: var(--purple);
+    }
+
+    .filter-sep {
+      width: 1px; height: 20px;
+      background: var(--border);
+    }
+
+    /* -- Graph container -- */
+    .graph-container {
+      position: relative;
+      max-width: 1200px;
+      margin: 1.5rem auto 0;
+      padding: 0 1rem;
+    }
+    #graph-svg {
+      width: 100%;
+      height: 680px;
+      background: rgba(7,7,15,0.5);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      cursor: grab;
+    }
+    #graph-svg:active { cursor: grabbing; }
+
+    /* -- Detail panel -- */
+    .detail-panel {
+      position: absolute;
+      top: 1rem; right: 2rem;
+      width: 320px;
+      background: rgba(7,7,15,0.92);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 1.4rem 1.6rem;
+      display: none;
+      z-index: 10;
+      max-height: 640px;
+      overflow-y: auto;
+    }
+    .detail-panel.visible { display: block; }
+    .detail-close {
+      position: absolute; top: 0.8rem; right: 0.8rem;
+      background: none; border: none;
+      color: var(--dim); cursor: pointer;
+      font-size: 1.1rem;
+      transition: color 0.2s;
+    }
+    .detail-close:hover { color: var(--text); }
+    .detail-type {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.55rem; font-weight: 600;
+      letter-spacing: 0.1em; text-transform: uppercase;
+      padding: 2px 8px; border-radius: 4px;
+      display: inline-block; margin-bottom: 0.6rem;
+    }
+    .detail-name {
+      font-weight: 600; font-size: 1.05rem;
+      margin-bottom: 0.5rem;
+    }
+    .detail-desc {
+      font-size: 0.82rem; color: var(--muted);
+      line-height: 1.65; margin-bottom: 1rem;
+    }
+    .detail-connections {
+      border-top: 1px solid var(--border);
+      padding-top: 0.8rem;
+    }
+    .detail-conn-label {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.55rem; letter-spacing: 0.1em;
+      text-transform: uppercase; color: var(--dim);
+      margin-bottom: 0.5rem;
+    }
+    .detail-conn-item {
+      font-size: 0.78rem; color: var(--muted);
+      padding: 0.3rem 0;
+      cursor: pointer;
+      transition: color 0.2s;
+    }
+    .detail-conn-item:hover { color: var(--text); }
+    .detail-conn-dot {
+      display: inline-block; width: 8px; height: 8px;
+      border-radius: 50%; margin-right: 6px;
+      vertical-align: middle;
+    }
+
+    /* -- Legend -- */
+    .legend {
+      max-width: 1200px; margin: 1.5rem auto 0;
+      padding: 0 2rem;
+      display: flex; flex-wrap: wrap; gap: 1.5rem;
+      justify-content: center;
+    }
+    .legend-item {
+      display: flex; align-items: center; gap: 6px;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.6rem; color: var(--dim);
+      letter-spacing: 0.06em;
+    }
+    .legend-dot {
+      width: 10px; height: 10px; border-radius: 50%;
+    }
+    .legend-line {
+      width: 24px; height: 2px; border-radius: 1px;
+    }
+
+    /* -- Footer -- */
+    footer {
+      position: relative; z-index: 2;
+      text-align: center; padding: 2rem;
+      margin-top: 4rem;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.65rem; color: var(--dim);
+      border-top: 1px solid var(--border);
+    }
+    footer a { color: var(--muted); text-decoration: none; }
+    footer a:hover { color: var(--accent); }
+
+    /* -- Responsive -- */
+    @media (max-width: 768px) {
+      .nav-links { display: none; }
+      .detail-panel {
+        position: fixed;
+        top: auto; bottom: 0; left: 0; right: 0;
+        width: 100%;
+        border-radius: 12px 12px 0 0;
+        max-height: 50vh;
+      }
+      #graph-svg { height: 500px; }
+      .controls { padding: 0 1rem; }
+      .search-box { width: 100%; }
+    }
+
+    /* -- Scrollbar -- */
+    .detail-panel::-webkit-scrollbar { width: 4px; }
+    .detail-panel::-webkit-scrollbar-track { background: transparent; }
+    .detail-panel::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+  </style>
+</head>
+<body>
+
+<nav class="nav">
+  <a href="/" class="nav-brand">Thorarinson</a>
+  <ul class="nav-links">
+    <li><a href="/#projects">Projects</a></li>
+    <li><a href="/papers/">Papers</a></li>
+    <li><a href="/knowledge-systems/" class="active">Knowledge Systems</a></li>
+    <li><a href="/knowledge-systems/traditions.html">Traditions</a></li>
+    <li><a href="/#research">Research</a></li>
+  </ul>
+</nav>
+
+<header class="page-header">
+  <p class="page-eyebrow">Traditional Knowledge to Testable Science</p>
+  <h1 class="page-title"><strong>Knowledge Systems</strong> Map</h1>
+  <p class="page-sub">
+    How concepts flow from ancient healing traditions through modern biophysics into a 21-paper research portfolio. Click any node to explore its connections.
+  </p>
+</header>
+
+<div class="controls">
+  <input type="text" class="search-box" id="search" placeholder="Search nodes...">
+  <div class="filter-sep"></div>
+  <button class="filter-btn active" data-group="all" onclick="filterGraph('all', this)">All</button>
+  <button class="filter-btn" data-group="tradition" onclick="filterGraph('tradition', this)">Traditions</button>
+  <button class="filter-btn" data-group="science" onclick="filterGraph('science', this)">Science</button>
+  <button class="filter-btn" data-group="paper" onclick="filterGraph('paper', this)">Core Papers</button>
+  <button class="filter-btn" data-group="koplik" onclick="filterGraph('koplik', this)">Bridge Papers</button>
+</div>
+
+<div class="graph-container">
+  <svg id="graph-svg"></svg>
+  <div class="detail-panel" id="detail-panel">
+    <button class="detail-close" onclick="closePanel()">&times;</button>
+    <div id="detail-content"></div>
+  </div>
+</div>
+
+<div class="legend">
+  <div class="legend-item"><div class="legend-dot" style="background:#d4a843;"></div>Traditional System</div>
+  <div class="legend-item"><div class="legend-dot" style="background:#7aa2f7;"></div>Modern Science Bridge</div>
+  <div class="legend-item"><div class="legend-dot" style="background:#9ece6a;"></div>Core Paper (P1-P14)</div>
+  <div class="legend-item"><div class="legend-dot" style="background:#bb9af7;"></div>Koplik Bridge Paper (K1-K7)</div>
+  <div class="legend-item"><div class="legend-line" style="background: linear-gradient(90deg, #d4a843, #7aa2f7);"></div>Tradition to Science</div>
+  <div class="legend-item"><div class="legend-line" style="background: linear-gradient(90deg, #7aa2f7, #9ece6a);"></div>Science to Paper</div>
+  <div class="legend-item"><div class="legend-line" style="background: linear-gradient(90deg, #d4a843, #bb9af7);"></div>Tradition to Bridge Paper</div>
+</div>
+
+<footer>
+  <div style="display:flex; justify-content:center; gap:2rem; margin-bottom:0.8rem;">
+    <a href="/">Home</a>
+    <a href="/papers/">Papers</a>
+    <a href="/knowledge-systems/traditions.html">Traditions</a>
+    <a href="https://github.com/jthorvaldur">GitHub</a>
+  </div>
+  &copy; 2026 Thorarinson
+</footer>
+
+<script>
+// ========================================================================
+// KNOWLEDGE SYSTEMS GRAPH DATA
+// ========================================================================
+
+const nodes = [
+  // --- TRADITIONAL SYSTEMS (gold) ---
+  { id: "tcm", label: "Chinese Medicine (TCM)", group: "tradition", region: "China",
+    desc: "2,500+ year tradition rooted in the Huangdi Neijing. Qi as bioelectric potential, meridians as fascial conductance paths, Five Elements as dynamical phase relationships. The world's most internally consistent pre-scientific model of physiological coherence.",
+    concepts: ["Qi", "Meridians", "Five Elements", "Yin-Yang", "Jing-Luo"],
+    dateRange: "~500 BCE - present" },
+  { id: "ayurveda", label: "Ayurveda", group: "tradition", region: "India",
+    desc: "3,000+ year system from the Charaka and Sushruta Samhitas. Prana as autonomic function, Prakriti as constitutional genomics, Chakras as bioelectric nodes at neural plexus points. Largest pharmacopeia of any traditional system.",
+    concepts: ["Prana", "Prakriti", "Doshas", "Chakras", "Rasayana"],
+    dateRange: "~1500 BCE - present" },
+  { id: "kampo", label: "Japanese Kampo", group: "tradition", region: "Japan",
+    desc: "Adapted from Chinese medicine, refined through sho-based pattern diagnosis. Ki as biofield, integrated into Japan's national health insurance since 1976. 148 standardized formulations with modern pharmacological validation.",
+    concepts: ["Ki", "Sho diagnosis", "Kanpo formulations"],
+    dateRange: "~600 CE - present" },
+  { id: "greek", label: "Hippocratic / Galenic", group: "tradition", region: "Greece/Rome",
+    desc: "The humoral model: blood, phlegm, yellow bile, black bile as homeostatic variables. Galen's pneuma maps directly to metabolomics. 'First, do no harm' is still the deepest coherence principle in medicine.",
+    concepts: ["Four Humors", "Pneuma", "Temperaments", "Physis"],
+    dateRange: "~400 BCE - 1800 CE" },
+  { id: "tibb", label: "Islamic Tibb / Unani", group: "tradition", region: "Middle East / South Asia",
+    desc: "Mizaj (temperament) as constitutional medicine, foreshadowing pharmacogenomics. Avicenna's Canon synthesized Greek, Indian, and Persian medicine into a system that dominated 600 years. Temperament-drug matching is modern precision medicine.",
+    concepts: ["Mizaj", "Akhlat", "Arkan", "Quwwat"],
+    dateRange: "~800 CE - present" },
+  { id: "tibetan", label: "Tibetan Sowa Rigpa", group: "tradition", region: "Tibet / Mongolia",
+    desc: "rLung (wind) maps to autonomic balance and HRV. Three Nyepas (humors) parallel Ayurvedic doshas but with distinct pulse-diagnosis refinement. The rGyud-bzhi is the most systematic pre-modern text on mind-body coherence.",
+    concepts: ["rLung", "mKhris-pa", "Bad-kan", "Pulse diagnosis"],
+    dateRange: "~800 CE - present" },
+  { id: "african", label: "African Healing Systems", group: "tradition", region: "Sub-Saharan Africa",
+    desc: "Ubuntu philosophy: 'I am because we are.' Collective coherence measured through group HRV synchrony. Ngoma drumming ceremonies as entrainment protocols. Sangoma diagnostic frameworks as pattern recognition across relational fields.",
+    concepts: ["Ubuntu", "Ngoma", "Umoya", "Collective healing"],
+    dateRange: "~2000 BCE - present" },
+  { id: "indigenous", label: "Indigenous / Shamanic", group: "tradition", region: "Americas / Oceania",
+    desc: "Plant intelligence networks, animist coherence frameworks, ayahuasca as neurochemical reset protocol. Ethnobotanical knowledge validated by modern network pharmacology. The original systems biology.",
+    concepts: ["Plant teachers", "Dreamtime", "Spirit world", "Entheogens"],
+    dateRange: "~40,000 BCE - present" },
+  { id: "esoteric", label: "European Esoteric", group: "tradition", region: "Europe",
+    desc: "Paracelsus' doctrine of signatures, Mesmer's animal magnetism (precursor to bioelectricity), Hahnemann's potentization (EZ water?). Rudolf Steiner's biodynamics. The rejected tradition that keeps producing testable hypotheses.",
+    concepts: ["Signatures", "Magnetism", "Vital force", "Anthroposophy"],
+    dateRange: "~1500 CE - present" },
+
+  // --- MODERN SCIENCE BRIDGES (blue) ---
+  { id: "bioelec", label: "Bioelectricity", group: "science",
+    desc: "Michael Levin's work on bioelectric signaling in morphogenesis. Cells use membrane voltage patterns (Vmem) to store and communicate developmental information. Non-neural bioelectricity is the scientific successor to qi, prana, and vital force.",
+    measurement: "Membrane potential (mV), ion channel currents, voltage reporter dyes",
+    keyResearchers: ["Michael Levin", "Harold Burr", "Robert Becker"] },
+  { id: "biophoton", label: "Biophotonics", group: "science",
+    desc: "Ultra-weak photon emission from living systems (Fritz-Albert Popp). Coherent biophoton emission correlates with organism health. GDV/EPI (Korotkov) measures biofield through gas discharge visualization. Connects ki, aura, and biofield claims to measurable photon statistics.",
+    measurement: "Photomultiplier tubes, delayed luminescence, GDV imaging",
+    keyResearchers: ["Fritz-Albert Popp", "Konstantin Korotkov", "Masaki Kobayashi"] },
+  { id: "quantbio", label: "Quantum Biology", group: "science",
+    desc: "Quantum coherence in photosynthesis (Fleming, 2007), magnetoreception (cryptochrome radical pairs), enzyme tunneling, olfactory vibration theory (Turin). Biological systems exploit quantum effects at physiological temperatures.",
+    measurement: "2D electronic spectroscopy, isotope effects, coherence lifetimes",
+    keyResearchers: ["Graham Fleming", "Jim Al-Khalili", "Luca Turin"] },
+  { id: "complexity", label: "Complexity Science", group: "science",
+    desc: "Self-organization, emergence, criticality. Living systems operate at the edge of chaos. Dynamical systems theory provides the mathematical framework for Five Elements, humoral balance, and dosha interactions as phase relationships.",
+    measurement: "Lyapunov exponents, power-law distributions, mutual information",
+    keyResearchers: ["Stuart Kauffman", "Per Bak", "Ilya Prigogine"] },
+  { id: "netpharm", label: "Network Pharmacology", group: "science",
+    desc: "Multi-target drug action modeled as network perturbation. Validates traditional polyherbal formulations that work on 30+ targets simultaneously. TCM and Ayurvedic formulas are network pharmacology, not reductionist single-target drugs.",
+    measurement: "Protein-protein interaction networks, pathway enrichment, polypharmacology indices",
+    keyResearchers: ["Andrew Hopkins", "Albert-Laszlo Barabasi"] },
+  { id: "neurosci", label: "Neuroscience", group: "science",
+    desc: "HRV as autonomic coherence metric. EEG/fMRI for meditation research. Default mode network deactivation maps to 'ego dissolution' across traditions. Polyvagal theory connects breath work (pranayama, qigong) to vagal tone.",
+    measurement: "HRV (RMSSD, HF power), EEG coherence, fMRI connectivity",
+    keyResearchers: ["Stephen Porges", "Judson Brewer", "Andrew Huberman"] },
+  { id: "waterphys", label: "Water Physics", group: "science",
+    desc: "Gerald Pollack's exclusion zone (EZ) water: a fourth phase with distinct properties (charge separation, infrared absorption, ordered structure). Potential bridge between homeopathic potentization claims and measurable physical chemistry.",
+    measurement: "UV-Vis spectroscopy at 270nm, microsphere exclusion, infrared thermography",
+    keyResearchers: ["Gerald Pollack", "Emilio Del Giudice", "Mae-Wan Ho"] },
+
+  // --- CORE PAPERS (green) ---
+  { id: "p1", label: "P1: Dimensionality Illusion", group: "paper", series: 1,
+    desc: "PCA variance is not semantic information. 2M+ vectors, DCRP metric. Domain-specific structure lives in dimensions that variance-based methods discard.",
+    pages: 18, refs: 40, status: "arXiv-ready" },
+  { id: "p2", label: "P2: Geometry of Legal Language", group: "paper", series: 1,
+    desc: "Legal concepts form non-convex manifolds in embedding space. Cross-jurisdictional structural holes reveal where language fails to encode legal protections.",
+    pages: 16, refs: 33, status: "arXiv-ready" },
+  { id: "p3", label: "P3: Structural Holes", group: "paper", series: 1,
+    desc: "Void detection in embedding spaces. The absence of a concept in vector space maps to the absence of a legal protection in the jurisdiction.",
+    pages: 13, refs: 25, status: "arXiv-ready" },
+  { id: "p4", label: "P4: DCRP Benchmark", group: "paper", series: 1,
+    desc: "Domain-Conditional Retrieval Precision. The metric that catches what MTEB misses: domain-specific retrieval failures masked by aggregate scores.",
+    pages: 12, refs: 35, status: "Near-ready" },
+  { id: "p5", label: "P5: Sparse vs Dense", group: "paper", series: 1,
+    desc: "Sparse representations (SPLADE++) preserve domain structure that dense PCA projections destroy. The mathematical proof that compression is lossy in ways that matter.",
+    pages: 9, refs: 24, status: "Near-ready" },
+  { id: "p6", label: "P6: Discoverative Intelligence", group: "paper", series: 2,
+    desc: "From prediction to discovery. Coherence drift detection as a fundamentally different mode of intelligence: seeing what is becoming incoherent before it fails.",
+    pages: 18, refs: 52, status: "arXiv-ready" },
+  { id: "p7", label: "P7: Benchmarking Early Detection", group: "paper", series: 2,
+    desc: "1,000-trial Monte Carlo validation. 100% detection rate vs 3.2% for variance methods. 406-step mean lead time. The empirical foundation for coherence monitoring.",
+    pages: 12, refs: 33, status: "arXiv-ready" },
+  { id: "p8", label: "P8: Recovery Is Not Baseline", group: "paper", series: 2,
+    desc: "Biological systems recover to new coherence states, not original baselines. Levin's bioelectric morphogenesis meets allostatic load theory. The paper that bridges biology and engineering.",
+    pages: 17, refs: 39, status: "arXiv-ready" },
+  { id: "p9", label: "P9: Literature to Hypothesis", group: "paper", series: 2,
+    desc: "Using coherence analysis on scientific literature to generate experimental hypotheses. From reading papers to finding what the field has not yet asked.",
+    pages: 14, refs: 25, status: "arXiv-ready" },
+  { id: "p10", label: "P10: Neurodivergence as Variation", group: "paper", series: 3,
+    desc: "ADHD, autism, dyslexia as coherence pattern variations, not deficits. Different phase relationships, not broken phase relationships. Reframes pathology as topology.",
+    pages: 13, refs: 45, status: "arXiv-ready" },
+  { id: "p11", label: "P11: Blockchain Coherence", group: "paper", series: 3,
+    desc: "Continuous coherence monitoring for smart contract security. Detecting protocol degradation before exploits through multi-dimensional order parameter tracking.",
+    pages: 10, refs: 23, status: "arXiv-ready" },
+  { id: "p12", label: "P12: Governance Coherence", group: "paper", series: 3,
+    desc: "Six falsifiable operators for measuring governance health. When institutions lose coherence, it is measurable before it is visible. Applied to corporate, municipal, and national governance.",
+    pages: 17, refs: 38, status: "arXiv-ready" },
+  { id: "p13", label: "P13: Bio-Integrated Infrastructure", group: "paper", series: 3,
+    desc: "Infrastructure that heals rather than degrades. Biomimetic self-repair, coherence-monitored bridges, and the economics of systems that improve with age.",
+    pages: 16, refs: 27, status: "arXiv-ready" },
+  { id: "p14", label: "P14: Coherent Novelty", group: "paper", series: 3,
+    desc: "How genuine novelty differs from noise. Coherent innovation maintains systemic integrity while introducing new structure. The mathematical signature of real creativity.",
+    pages: 11, refs: 31, status: "arXiv-ready" },
+
+  // --- KOPLIK BRIDGE PAPERS (purple) ---
+  { id: "k1", label: "K1: Biofield to Bioelectric", group: "koplik",
+    desc: "Formalizing biofield claims using Levin's bioelectric framework. Maps qi, prana, ki, and vital force to measurable membrane potentials and ion current patterns.",
+    pages: 12, refs: 38, status: "In Progress" },
+  { id: "k2", label: "K2: EZ Water Coherence", group: "koplik",
+    desc: "Pollack's exclusion zone water as potential mechanism for potentization, structuring, and water memory claims. Separating reproducible findings from vitalist overreach.",
+    pages: 16, refs: 47, status: "In Progress" },
+  { id: "k3", label: "K3: Resonance Claims", group: "koplik",
+    desc: "Testing frequency, vibration, and resonance claims from esoteric traditions against acoustic physics, cymatics, and coupled oscillator theory.",
+    status: "In Progress" },
+  { id: "k4", label: "K4: Plant Biophotonics", group: "koplik",
+    desc: "Biophotonic signatures of plant vitality. Can delayed luminescence discriminate 'organic' from 'conventional'? Popp's coherence hypothesis applied to food quality.",
+    status: "In Progress" },
+  { id: "k5", label: "K5: Cross-Cultural Convergence", group: "koplik",
+    desc: "Structural convergence across esoteric traditions. When TCM, Ayurveda, Tibetan, and Western esoteric systems independently arrive at the same architecture, it constitutes evidence.",
+    pages: 14, refs: 15, status: "In Progress" },
+  { id: "k6", label: "K6: Edge of Testability", group: "koplik",
+    desc: "Where do traditional claims stop being testable? The demarcation problem applied to biofield, consciousness, and subtle energy. A honest map of what science can and cannot reach.",
+    status: "In Progress" },
+  { id: "k7", label: "K7: Food Coherence", group: "koplik",
+    desc: "Ayurvedic rasa theory, TCM food energetics, and biodynamic agriculture tested through biophotonic emission, nutrient density, and coherence-based quality metrics.",
+    status: "In Progress" }
+];
+
+const edges = [
+  // --- TRADITION to SCIENCE ---
+  { source: "tcm", target: "bioelec", label: "Qi → bioelectric measurement", type: "trad-sci" },
+  { source: "tcm", target: "complexity", label: "Five Elements → dynamical systems", type: "trad-sci" },
+  { source: "tcm", target: "netpharm", label: "Herbal formulas → network pharmacology", type: "trad-sci" },
+  { source: "ayurveda", target: "neurosci", label: "Prana → HRV / autonomic function", type: "trad-sci" },
+  { source: "ayurveda", target: "netpharm", label: "Rasayana → multi-target pharmacology", type: "trad-sci" },
+  { source: "ayurveda", target: "bioelec", label: "Chakras → bioelectric plexus nodes", type: "trad-sci" },
+  { source: "kampo", target: "biophoton", label: "Ki → biophoton emission / GDV", type: "trad-sci" },
+  { source: "kampo", target: "netpharm", label: "148 formulas → validated pharmacology", type: "trad-sci" },
+  { source: "greek", target: "complexity", label: "Humors → homeostatic dynamics", type: "trad-sci" },
+  { source: "tibb", target: "netpharm", label: "Mizaj → pharmacogenomics", type: "trad-sci" },
+  { source: "tibetan", target: "neurosci", label: "rLung → HRV / respiratory sinus arrhythmia", type: "trad-sci" },
+  { source: "african", target: "neurosci", label: "Ubuntu → group HRV synchrony", type: "trad-sci" },
+  { source: "indigenous", target: "netpharm", label: "Plant medicine → ethnopharmacology", type: "trad-sci" },
+  { source: "indigenous", target: "quantbio", label: "Entheogens → receptor quantum effects", type: "trad-sci" },
+  { source: "esoteric", target: "bioelec", label: "Animal magnetism → bioelectricity", type: "trad-sci" },
+  { source: "esoteric", target: "waterphys", label: "Potentization → EZ water physics", type: "trad-sci" },
+  { source: "esoteric", target: "biophoton", label: "Aura → biophoton imaging", type: "trad-sci" },
+
+  // --- SCIENCE to CORE PAPERS ---
+  { source: "bioelec", target: "p8", label: "Levin bioelectric → recovery biology", type: "sci-paper" },
+  { source: "bioelec", target: "p6", label: "Vmem patterns → coherence detection", type: "sci-paper" },
+  { source: "biophoton", target: "p7", label: "Photon statistics → benchmarking", type: "sci-paper" },
+  { source: "complexity", target: "p6", label: "Edge of chaos → discoverative intelligence", type: "sci-paper" },
+  { source: "complexity", target: "p14", label: "Self-organization → coherent novelty", type: "sci-paper" },
+  { source: "complexity", target: "p12", label: "Criticality → governance coherence", type: "sci-paper" },
+  { source: "neurosci", target: "p10", label: "Neural coherence → neurodivergence", type: "sci-paper" },
+  { source: "neurosci", target: "p8", label: "Allostatic load → recovery ≠ baseline", type: "sci-paper" },
+  { source: "netpharm", target: "p9", label: "Network analysis → literature discovery", type: "sci-paper" },
+  { source: "waterphys", target: "p13", label: "EZ water → bio-integrated infrastructure", type: "sci-paper" },
+  { source: "quantbio", target: "p14", label: "Quantum coherence → novelty signatures", type: "sci-paper" },
+  { source: "complexity", target: "p1", label: "Information geometry → dimensionality", type: "sci-paper" },
+  { source: "complexity", target: "p5", label: "Sparse coding → sparse vs dense", type: "sci-paper" },
+  { source: "neurosci", target: "p2", label: "Linguistic processing → legal geometry", type: "sci-paper" },
+  { source: "bioelec", target: "p13", label: "Bioelectric repair → bio-infrastructure", type: "sci-paper" },
+  { source: "complexity", target: "p11", label: "Phase transitions → blockchain security", type: "sci-paper" },
+
+  // --- TRADITION to KOPLIK BRIDGE PAPERS ---
+  { source: "tcm", target: "k1", label: "Qi formalization", type: "trad-koplik" },
+  { source: "ayurveda", target: "k1", label: "Prana formalization", type: "trad-koplik" },
+  { source: "kampo", target: "k1", label: "Ki formalization", type: "trad-koplik" },
+  { source: "esoteric", target: "k2", label: "Potentization → EZ water", type: "trad-koplik" },
+  { source: "esoteric", target: "k3", label: "Vibration claims → resonance testing", type: "trad-koplik" },
+  { source: "tcm", target: "k5", label: "TCM architecture convergence", type: "trad-koplik" },
+  { source: "ayurveda", target: "k5", label: "Ayurvedic architecture convergence", type: "trad-koplik" },
+  { source: "tibetan", target: "k5", label: "Tibetan architecture convergence", type: "trad-koplik" },
+  { source: "esoteric", target: "k5", label: "Western esoteric convergence", type: "trad-koplik" },
+  { source: "ayurveda", target: "k7", label: "Rasa theory → food coherence", type: "trad-koplik" },
+  { source: "tcm", target: "k7", label: "Food energetics → food coherence", type: "trad-koplik" },
+  { source: "indigenous", target: "k4", label: "Plant vitality → biophotonics", type: "trad-koplik" },
+  { source: "esoteric", target: "k4", label: "Biodynamics → plant photons", type: "trad-koplik" },
+  { source: "tcm", target: "k6", label: "Where qi stops being testable", type: "trad-koplik" },
+  { source: "ayurveda", target: "k6", label: "Where prana stops being testable", type: "trad-koplik" },
+  { source: "african", target: "k5", label: "Ubuntu collective convergence", type: "trad-koplik" },
+
+  // --- SCIENCE to KOPLIK ---
+  { source: "bioelec", target: "k1", label: "Bioelectric framework", type: "sci-koplik" },
+  { source: "waterphys", target: "k2", label: "Pollack EZ water", type: "sci-koplik" },
+  { source: "biophoton", target: "k4", label: "Popp biophoton method", type: "sci-koplik" },
+  { source: "complexity", target: "k3", label: "Coupled oscillators", type: "sci-koplik" },
+  { source: "biophoton", target: "k7", label: "Delayed luminescence", type: "sci-koplik" },
+  { source: "quantbio", target: "k6", label: "Testability boundary", type: "sci-koplik" },
+
+  // --- INTER-PAPER ---
+  { source: "p1", target: "p2", label: "Dimensionality → legal geometry", type: "inter-paper" },
+  { source: "p1", target: "p4", label: "Illusion → DCRP metric", type: "inter-paper" },
+  { source: "p2", target: "p3", label: "Geometry → structural holes", type: "inter-paper" },
+  { source: "p6", target: "p7", label: "Theory → benchmarks", type: "inter-paper" },
+  { source: "p8", target: "p10", label: "Biology → neurodivergence", type: "inter-paper" },
+  { source: "k1", target: "k5", label: "Biofield → convergence", type: "inter-paper" },
+  { source: "k4", target: "k7", label: "Plant → food coherence", type: "inter-paper" },
+];
+
+
+// ========================================================================
+// D3 FORCE GRAPH
+// ========================================================================
+
+const svg = d3.select('#graph-svg');
+const width = svg.node().getBoundingClientRect().width;
+const height = svg.node().getBoundingClientRect().height;
+
+const colorMap = {
+  tradition: '#d4a843',
+  science: '#7aa2f7',
+  paper: '#9ece6a',
+  koplik: '#bb9af7'
+};
+
+const edgeColorMap = {
+  'trad-sci': { stroke: '#7a6a3a', opacity: 0.35 },
+  'sci-paper': { stroke: '#4a6a8a', opacity: 0.3 },
+  'trad-koplik': { stroke: '#8a6a9a', opacity: 0.3 },
+  'sci-koplik': { stroke: '#5a6a9a', opacity: 0.25 },
+  'inter-paper': { stroke: '#5a8a5a', opacity: 0.25 }
+};
+
+const radiusMap = {
+  tradition: 16,
+  science: 13,
+  paper: 10,
+  koplik: 10
+};
+
+// Create zoom container
+const g = svg.append('g');
+
+const zoom = d3.zoom()
+  .scaleExtent([0.3, 4])
+  .on('zoom', (event) => {
+    g.attr('transform', event.transform);
+  });
+svg.call(zoom);
+
+// Edge gradient defs
+const defs = svg.append('defs');
+
+// Arrow markers
+['trad-sci', 'sci-paper', 'trad-koplik', 'sci-koplik', 'inter-paper'].forEach(type => {
+  const c = edgeColorMap[type];
+  defs.append('marker')
+    .attr('id', `arrow-${type}`)
+    .attr('viewBox', '0 -4 8 8')
+    .attr('refX', 20)
+    .attr('refY', 0)
+    .attr('markerWidth', 6)
+    .attr('markerHeight', 6)
+    .attr('orient', 'auto')
+    .append('path')
+    .attr('d', 'M0,-3L7,0L0,3')
+    .attr('fill', c.stroke)
+    .attr('opacity', c.opacity + 0.2);
+});
+
+// Force simulation
+const simulation = d3.forceSimulation(nodes)
+  .force('link', d3.forceLink(edges).id(d => d.id).distance(d => {
+    if (d.type === 'inter-paper') return 60;
+    if (d.type === 'trad-sci') return 140;
+    return 100;
+  }).strength(0.3))
+  .force('charge', d3.forceManyBody().strength(-280))
+  .force('center', d3.forceCenter(width / 2, height / 2))
+  .force('collision', d3.forceCollide().radius(d => radiusMap[d.group] + 8))
+  .force('x', d3.forceX(d => {
+    if (d.group === 'tradition') return width * 0.18;
+    if (d.group === 'science') return width * 0.45;
+    if (d.group === 'paper') return width * 0.75;
+    if (d.group === 'koplik') return width * 0.60;
+    return width / 2;
+  }).strength(0.12))
+  .force('y', d3.forceY(height / 2).strength(0.05));
+
+// Draw edges
+const link = g.append('g')
+  .selectAll('line')
+  .data(edges)
+  .join('line')
+  .attr('stroke', d => edgeColorMap[d.type].stroke)
+  .attr('stroke-opacity', d => edgeColorMap[d.type].opacity)
+  .attr('stroke-width', 1)
+  .attr('marker-end', d => `url(#arrow-${d.type})`);
+
+// Draw edge labels (hidden by default, shown on hover)
+const edgeLabel = g.append('g')
+  .selectAll('text')
+  .data(edges)
+  .join('text')
+  .attr('font-family', 'JetBrains Mono, monospace')
+  .attr('font-size', '7px')
+  .attr('fill', 'rgba(232,232,244,0.35)')
+  .attr('text-anchor', 'middle')
+  .attr('dy', -4)
+  .attr('opacity', 0)
+  .text(d => d.label);
+
+// Draw nodes
+const node = g.append('g')
+  .selectAll('g')
+  .data(nodes)
+  .join('g')
+  .attr('cursor', 'pointer')
+  .call(d3.drag()
+    .on('start', dragStarted)
+    .on('drag', dragged)
+    .on('end', dragEnded));
+
+// Node circles
+node.append('circle')
+  .attr('r', d => radiusMap[d.group])
+  .attr('fill', d => colorMap[d.group])
+  .attr('fill-opacity', 0.15)
+  .attr('stroke', d => colorMap[d.group])
+  .attr('stroke-width', 1.5)
+  .attr('stroke-opacity', 0.5);
+
+// Node labels
+node.append('text')
+  .attr('font-family', 'Outfit, sans-serif')
+  .attr('font-size', d => d.group === 'tradition' ? '9px' : '7.5px')
+  .attr('font-weight', d => d.group === 'tradition' ? 500 : 400)
+  .attr('fill', d => colorMap[d.group])
+  .attr('fill-opacity', 0.8)
+  .attr('text-anchor', 'middle')
+  .attr('dy', d => radiusMap[d.group] + 12)
+  .text(d => d.label.length > 28 ? d.label.substring(0, 26) + '...' : d.label);
+
+// Node inner text (short code)
+node.append('text')
+  .attr('font-family', 'JetBrains Mono, monospace')
+  .attr('font-size', d => d.group === 'tradition' ? '7px' : '6px')
+  .attr('font-weight', 600)
+  .attr('fill', d => colorMap[d.group])
+  .attr('fill-opacity', 0.7)
+  .attr('text-anchor', 'middle')
+  .attr('dy', '0.35em')
+  .text(d => {
+    if (d.group === 'paper') return d.id.toUpperCase();
+    if (d.group === 'koplik') return d.id.toUpperCase();
+    return '';
+  });
+
+// Hover effects
+node.on('mouseover', function(event, d) {
+  highlightConnections(d);
+}).on('mouseout', function() {
+  resetHighlights();
+}).on('click', function(event, d) {
+  event.stopPropagation();
+  showDetail(d);
+});
+
+svg.on('click', function() {
+  closePanel();
+  resetHighlights();
+});
+
+function highlightConnections(d) {
+  const connected = new Set();
+  connected.add(d.id);
+  edges.forEach(e => {
+    const sid = typeof e.source === 'object' ? e.source.id : e.source;
+    const tid = typeof e.target === 'object' ? e.target.id : e.target;
+    if (sid === d.id) connected.add(tid);
+    if (tid === d.id) connected.add(sid);
+  });
+
+  node.select('circle')
+    .attr('fill-opacity', n => connected.has(n.id) ? 0.35 : 0.05)
+    .attr('stroke-opacity', n => connected.has(n.id) ? 0.9 : 0.15);
+  node.selectAll('text')
+    .attr('fill-opacity', n => connected.has(n.id) ? 1 : 0.15);
+
+  link
+    .attr('stroke-opacity', e => {
+      const sid = typeof e.source === 'object' ? e.source.id : e.source;
+      const tid = typeof e.target === 'object' ? e.target.id : e.target;
+      return (sid === d.id || tid === d.id) ? 0.7 : 0.03;
+    })
+    .attr('stroke-width', e => {
+      const sid = typeof e.source === 'object' ? e.source.id : e.source;
+      const tid = typeof e.target === 'object' ? e.target.id : e.target;
+      return (sid === d.id || tid === d.id) ? 2 : 0.5;
+    });
+
+  edgeLabel
+    .attr('opacity', e => {
+      const sid = typeof e.source === 'object' ? e.source.id : e.source;
+      const tid = typeof e.target === 'object' ? e.target.id : e.target;
+      return (sid === d.id || tid === d.id) ? 0.8 : 0;
+    });
+}
+
+function resetHighlights() {
+  node.select('circle')
+    .attr('fill-opacity', 0.15)
+    .attr('stroke-opacity', 0.5);
+  node.selectAll('text')
+    .attr('fill-opacity', d => d.group === 'tradition' ? 0.8 : 0.8);
+  link
+    .attr('stroke-opacity', d => edgeColorMap[d.type].opacity)
+    .attr('stroke-width', 1);
+  edgeLabel.attr('opacity', 0);
+}
+
+function showDetail(d) {
+  const panel = document.getElementById('detail-panel');
+  const content = document.getElementById('detail-content');
+
+  const groupLabels = {
+    tradition: 'Traditional System',
+    science: 'Science Bridge',
+    paper: 'Core Paper',
+    koplik: 'Koplik Bridge Paper'
+  };
+  const groupColors = {
+    tradition: 'background:rgba(212,168,67,0.15); color:#d4a843;',
+    science: 'background:rgba(122,162,247,0.12); color:#7aa2f7;',
+    paper: 'background:rgba(158,206,106,0.12); color:#9ece6a;',
+    koplik: 'background:rgba(187,154,247,0.12); color:#bb9af7;'
+  };
+
+  let html = `<div class="detail-type" style="${groupColors[d.group]}">${groupLabels[d.group]}</div>`;
+  html += `<div class="detail-name">${d.label}</div>`;
+
+  if (d.region) html += `<div style="font-family:'JetBrains Mono',monospace; font-size:0.6rem; color:var(--dim); margin-bottom:0.5rem;">${d.region}${d.dateRange ? ' &middot; ' + d.dateRange : ''}</div>`;
+  if (d.pages) html += `<div style="font-family:'JetBrains Mono',monospace; font-size:0.6rem; color:var(--dim); margin-bottom:0.5rem;">${d.pages} pages${d.refs ? ' &middot; ' + d.refs + ' refs' : ''}${d.status ? ' &middot; ' + d.status : ''}</div>`;
+
+  html += `<div class="detail-desc">${d.desc}</div>`;
+
+  if (d.concepts) {
+    html += `<div style="margin-bottom:1rem;"><div style="font-family:'JetBrains Mono',monospace; font-size:0.55rem; color:var(--dim); letter-spacing:0.1em; text-transform:uppercase; margin-bottom:0.4rem;">Key concepts</div>`;
+    html += d.concepts.map(c => `<span style="display:inline-block; font-size:0.72rem; color:var(--muted); background:rgba(255,255,255,0.04); border:1px solid rgba(255,255,255,0.06); border-radius:4px; padding:2px 7px; margin:2px 3px; font-family:'JetBrains Mono',monospace;">${c}</span>`).join('');
+    html += `</div>`;
+  }
+
+  if (d.measurement) {
+    html += `<div style="margin-bottom:1rem;"><div style="font-family:'JetBrains Mono',monospace; font-size:0.55rem; color:var(--dim); letter-spacing:0.1em; text-transform:uppercase; margin-bottom:0.4rem;">Measurement</div>`;
+    html += `<div style="font-size:0.78rem; color:var(--muted); line-height:1.6;">${d.measurement}</div></div>`;
+  }
+
+  if (d.keyResearchers) {
+    html += `<div style="margin-bottom:1rem;"><div style="font-family:'JetBrains Mono',monospace; font-size:0.55rem; color:var(--dim); letter-spacing:0.1em; text-transform:uppercase; margin-bottom:0.4rem;">Key researchers</div>`;
+    html += `<div style="font-size:0.78rem; color:var(--muted);">${d.keyResearchers.join(', ')}</div></div>`;
+  }
+
+  // Find connections
+  const connections = [];
+  edges.forEach(e => {
+    const sid = typeof e.source === 'object' ? e.source.id : e.source;
+    const tid = typeof e.target === 'object' ? e.target.id : e.target;
+    if (sid === d.id) {
+      const target = nodes.find(n => n.id === tid);
+      if (target) connections.push({ node: target, label: e.label, direction: 'out' });
+    }
+    if (tid === d.id) {
+      const source = nodes.find(n => n.id === sid);
+      if (source) connections.push({ node: source, label: e.label, direction: 'in' });
+    }
+  });
+
+  if (connections.length) {
+    html += `<div class="detail-connections">`;
+    html += `<div class="detail-conn-label">Connections (${connections.length})</div>`;
+    connections.forEach(c => {
+      html += `<div class="detail-conn-item" onclick="focusNode('${c.node.id}')">`;
+      html += `<span class="detail-conn-dot" style="background:${colorMap[c.node.group]};"></span>`;
+      html += `${c.node.label}`;
+      html += `<div style="font-family:'JetBrains Mono',monospace; font-size:0.55rem; color:var(--dim); margin-left:14px; margin-top:1px;">${c.label}</div>`;
+      html += `</div>`;
+    });
+    html += `</div>`;
+  }
+
+  content.innerHTML = html;
+  panel.classList.add('visible');
+  highlightConnections(d);
+}
+
+function closePanel() {
+  document.getElementById('detail-panel').classList.remove('visible');
+}
+
+function focusNode(id) {
+  const d = nodes.find(n => n.id === id);
+  if (d) {
+    showDetail(d);
+    // Pan to node
+    const transform = d3.zoomTransform(svg.node());
+    const x = width / 2 - d.x * transform.k;
+    const y = height / 2 - d.y * transform.k;
+    svg.transition().duration(500).call(zoom.transform, d3.zoomIdentity.translate(x, y).scale(transform.k));
+  }
+}
+
+// Tick
+simulation.on('tick', () => {
+  link
+    .attr('x1', d => d.source.x)
+    .attr('y1', d => d.source.y)
+    .attr('x2', d => d.target.x)
+    .attr('y2', d => d.target.y);
+
+  edgeLabel
+    .attr('x', d => (d.source.x + d.target.x) / 2)
+    .attr('y', d => (d.source.y + d.target.y) / 2);
+
+  node.attr('transform', d => `translate(${d.x},${d.y})`);
+});
+
+// Drag
+function dragStarted(event, d) {
+  if (!event.active) simulation.alphaTarget(0.3).restart();
+  d.fx = d.x; d.fy = d.y;
+}
+function dragged(event, d) {
+  d.fx = event.x; d.fy = event.y;
+}
+function dragEnded(event, d) {
+  if (!event.active) simulation.alphaTarget(0);
+  d.fx = null; d.fy = null;
+}
+
+// ========================================================================
+// FILTERS
+// ========================================================================
+
+let activeFilter = 'all';
+
+function filterGraph(group, btn) {
+  activeFilter = group;
+  document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+
+  if (group === 'all') {
+    node.attr('display', 'block');
+    link.attr('display', 'block');
+    resetHighlights();
+    return;
+  }
+
+  const visible = new Set();
+  nodes.forEach(n => {
+    if (n.group === group) visible.add(n.id);
+  });
+  // Also show connected nodes
+  edges.forEach(e => {
+    const sid = typeof e.source === 'object' ? e.source.id : e.source;
+    const tid = typeof e.target === 'object' ? e.target.id : e.target;
+    if (visible.has(sid)) visible.add(tid);
+    if (visible.has(tid)) visible.add(sid);
+  });
+
+  node.attr('display', d => visible.has(d.id) ? 'block' : 'none');
+  node.select('circle')
+    .attr('fill-opacity', d => d.group === group ? 0.35 : 0.08)
+    .attr('stroke-opacity', d => d.group === group ? 0.9 : 0.2);
+  node.selectAll('text')
+    .attr('fill-opacity', d => d.group === group ? 1 : 0.3);
+
+  link.attr('display', e => {
+    const sid = typeof e.source === 'object' ? e.source.id : e.source;
+    const tid = typeof e.target === 'object' ? e.target.id : e.target;
+    return (visible.has(sid) && visible.has(tid)) ? 'block' : 'none';
+  });
+}
+
+// ========================================================================
+// SEARCH
+// ========================================================================
+
+document.getElementById('search').addEventListener('input', function(e) {
+  const q = e.target.value.toLowerCase().trim();
+  if (!q) {
+    node.attr('display', 'block');
+    link.attr('display', 'block');
+    resetHighlights();
+    return;
+  }
+
+  const matches = new Set();
+  nodes.forEach(n => {
+    const searchable = [
+      n.label, n.desc || '',
+      (n.concepts || []).join(' '),
+      (n.keyResearchers || []).join(' '),
+      n.measurement || '',
+      n.region || ''
+    ].join(' ').toLowerCase();
+    if (searchable.includes(q)) matches.add(n.id);
+  });
+
+  // Show matched + connected
+  const visible = new Set(matches);
+  edges.forEach(e => {
+    const sid = typeof e.source === 'object' ? e.source.id : e.source;
+    const tid = typeof e.target === 'object' ? e.target.id : e.target;
+    if (matches.has(sid)) visible.add(tid);
+    if (matches.has(tid)) visible.add(sid);
+  });
+
+  node.attr('display', d => visible.has(d.id) ? 'block' : 'none');
+  node.select('circle')
+    .attr('fill-opacity', d => matches.has(d.id) ? 0.4 : 0.08)
+    .attr('stroke-opacity', d => matches.has(d.id) ? 1 : 0.2);
+  node.selectAll('text')
+    .attr('fill-opacity', d => matches.has(d.id) ? 1 : 0.3);
+
+  link.attr('display', e => {
+    const sid = typeof e.source === 'object' ? e.source.id : e.source;
+    const tid = typeof e.target === 'object' ? e.target.id : e.target;
+    return (visible.has(sid) && visible.has(tid)) ? 'block' : 'none';
+  });
+});
+
+// Initial zoom fit
+svg.call(zoom.transform, d3.zoomIdentity.translate(0, 0).scale(0.9));
+</script>
+
+<!-- GoatCounter analytics -->
+<script data-goatcounter="https://jthorvaldur.goatcounter.com/count"
+        async src="//gc.zgo.at/count.js"></script>
+
+</body>
+</html>
