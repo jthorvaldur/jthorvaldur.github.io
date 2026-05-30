@@ -1,0 +1,1530 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Translation Gaps &amp; Structural Holes — Thorarinson</title>
+  <meta name="description" content="Interactive map of translation gaps between languages and the structural holes they create in English-language scientific knowledge.">
+  <meta property="og:title" content="Translation Gaps & Structural Holes — Thorarinson">
+  <meta property="og:description" content="The absence of a word in English correlates with the absence of the concept in Western science.">
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="https://jthorvaldur.github.io/knowledge-systems/translation-gaps.html">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@200;300;400;500;600;700&family=JetBrains+Mono:wght@300;400;500;600&family=Noto+Sans+SC:wght@400;500&family=Noto+Sans+Devanagari:wght@400;500&family=Noto+Sans+Arabic:wght@400;500&family=Noto+Sans+Tibetan:wght@400;500&family=Noto+Sans+JP:wght@400;500&family=Noto+Sans+KR:wght@400;500&family=Noto+Sans+Hebrew:wght@400;500&display=swap" rel="stylesheet">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/d3/7.9.0/d3.min.js"></script>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg: #07070f;
+      --surface: rgba(255,255,255,0.035);
+      --surface-hover: rgba(122,162,247,0.07);
+      --border: rgba(255,255,255,0.07);
+      --border-hover: rgba(122,162,247,0.30);
+      --text: #e8e8f4;
+      --muted: rgba(232,232,244,0.45);
+      --dim: rgba(232,232,244,0.25);
+      --accent: #7aa2f7;
+      --accent2: #bb9af7;
+      --green: #9ece6a;
+      --amber: #e0af68;
+      --red: #f7768e;
+      --teal: #73daca;
+      --glow: rgba(122,162,247,0.10);
+      --gold: #d4a843;
+      --purple: #bb9af7;
+
+      --gap-absolute: #f7768e;
+      --gap-partial: #e0af68;
+      --gap-conceptual: #e8d44d;
+      --gap-filled: #9ece6a;
+    }
+
+    html { scroll-behavior: smooth; }
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: 'Outfit', sans-serif;
+      overflow-x: hidden;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    /* -- Nav -- */
+    .nav {
+      position: fixed; top: 0; left: 0; right: 0; z-index: 50;
+      padding: 0 2rem; height: 56px;
+      display: flex; align-items: center; justify-content: space-between;
+      background: rgba(7,7,15,0.7);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      border-bottom: 1px solid var(--border);
+    }
+    .nav-brand {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.72rem; font-weight: 600;
+      letter-spacing: 0.2em; text-transform: uppercase;
+      color: var(--accent);
+      text-decoration: none;
+    }
+    .nav-links {
+      display: flex; gap: 1.5rem; list-style: none;
+    }
+    .nav-links a {
+      font-size: 0.78rem; font-weight: 400;
+      color: var(--muted); text-decoration: none;
+      transition: color 0.2s;
+    }
+    .nav-links a:hover { color: var(--text); }
+    .nav-links a.active { color: var(--accent); }
+
+    /* -- Header -- */
+    .page-header {
+      padding: 7rem 2rem 2rem;
+      max-width: 1000px; margin: 0 auto;
+      text-align: center;
+    }
+    .page-eyebrow {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.65rem; letter-spacing: 0.3em;
+      text-transform: uppercase; color: var(--accent);
+      margin-bottom: 1.5rem;
+    }
+    .page-title {
+      font-size: clamp(2rem, 5vw, 3.4rem);
+      font-weight: 200; letter-spacing: -0.01em;
+      line-height: 1.15; margin-bottom: 1rem;
+    }
+    .page-title strong {
+      font-weight: 500;
+      background: linear-gradient(140deg, var(--red) 0%, var(--amber) 40%, var(--green) 100%);
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+    .page-sub {
+      font-size: 0.92rem; color: var(--muted);
+      max-width: 700px; margin: 0 auto;
+      line-height: 1.7;
+    }
+
+    /* -- Section headers -- */
+    .section-header {
+      max-width: 1200px; margin: 0 auto;
+      padding: 4rem 2rem 1.5rem;
+    }
+    .section-eyebrow {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.6rem; letter-spacing: 0.25em;
+      text-transform: uppercase; color: var(--accent);
+      margin-bottom: 0.8rem;
+    }
+    .section-title {
+      font-size: 1.6rem; font-weight: 300;
+      margin-bottom: 0.5rem;
+    }
+    .section-desc {
+      font-size: 0.85rem; color: var(--muted);
+      max-width: 600px; line-height: 1.7;
+    }
+
+    /* -- Controls -- */
+    .controls {
+      max-width: 1200px; margin: 1.5rem auto 0;
+      padding: 0 2rem;
+      display: flex; flex-wrap: wrap; gap: 0.6rem;
+      align-items: center; justify-content: center;
+    }
+    .search-box {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 0.5rem 1rem;
+      color: var(--text);
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.75rem;
+      width: 240px;
+      outline: none;
+      transition: border-color 0.2s;
+    }
+    .search-box::placeholder { color: var(--dim); }
+    .search-box:focus { border-color: var(--accent); }
+
+    .filter-btn {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      padding: 0.4rem 0.8rem;
+      color: var(--muted);
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.58rem;
+      letter-spacing: 0.06em;
+      cursor: pointer;
+      transition: all 0.2s;
+      text-transform: uppercase;
+    }
+    .filter-btn:hover {
+      background: var(--surface-hover);
+      border-color: var(--border-hover);
+      color: var(--text);
+    }
+    .filter-btn.active {
+      border-color: var(--border-hover);
+      color: var(--text);
+    }
+    .filter-btn.active[data-filter="absolute"] {
+      background: rgba(247,118,142,0.15);
+      border-color: rgba(247,118,142,0.4);
+      color: var(--red);
+    }
+    .filter-btn.active[data-filter="partial"] {
+      background: rgba(224,175,104,0.15);
+      border-color: rgba(224,175,104,0.4);
+      color: var(--amber);
+    }
+    .filter-btn.active[data-filter="conceptual"] {
+      background: rgba(232,212,77,0.15);
+      border-color: rgba(232,212,77,0.4);
+      color: var(--gap-conceptual);
+    }
+    .filter-btn.active[data-filter="filled"] {
+      background: rgba(158,206,106,0.15);
+      border-color: rgba(158,206,106,0.4);
+      color: var(--green);
+    }
+    .filter-btn.active[data-filter="medical"] {
+      background: rgba(115,218,202,0.15);
+      border-color: rgba(115,218,202,0.4);
+      color: var(--teal);
+    }
+    .filter-btn.active[data-filter="philosophical"] {
+      background: rgba(187,154,247,0.15);
+      border-color: rgba(187,154,247,0.4);
+      color: var(--purple);
+    }
+    .filter-btn.active[data-filter="social"] {
+      background: rgba(212,168,67,0.15);
+      border-color: rgba(212,168,67,0.4);
+      color: var(--gold);
+    }
+    .filter-btn.active[data-filter="scientific"] {
+      background: rgba(122,162,247,0.15);
+      border-color: rgba(122,162,247,0.4);
+      color: var(--accent);
+    }
+    .filter-sep {
+      width: 1px; height: 20px;
+      background: var(--border);
+    }
+
+    /* -- Radial graph -- */
+    .graph-container {
+      position: relative;
+      max-width: 1200px;
+      margin: 1.5rem auto 0;
+      padding: 0 1rem;
+    }
+    #radial-svg {
+      width: 100%;
+      height: 740px;
+      background: rgba(7,7,15,0.5);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+    }
+
+    /* -- Legend -- */
+    .legend {
+      max-width: 1200px; margin: 1rem auto 0;
+      padding: 0 2rem;
+      display: flex; flex-wrap: wrap; gap: 1.5rem;
+      justify-content: center;
+    }
+    .legend-item {
+      display: flex; align-items: center; gap: 0.5rem;
+      font-size: 0.72rem; color: var(--muted);
+      font-family: 'JetBrains Mono', monospace;
+    }
+    .legend-swatch {
+      width: 24px; height: 3px; border-radius: 2px;
+    }
+
+    /* -- Tooltip -- */
+    .tooltip {
+      position: fixed;
+      pointer-events: none;
+      background: rgba(7,7,15,0.95);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 1rem 1.2rem;
+      max-width: 380px;
+      z-index: 100;
+      opacity: 0;
+      transition: opacity 0.15s;
+      font-size: 0.82rem;
+    }
+    .tooltip.visible { opacity: 1; }
+    .tooltip-script {
+      font-size: 1.5rem;
+      margin-bottom: 0.3rem;
+      line-height: 1.3;
+    }
+    .tooltip-name {
+      font-weight: 600; font-size: 0.95rem;
+      margin-bottom: 0.2rem;
+    }
+    .tooltip-romanization {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.72rem; color: var(--dim);
+      margin-bottom: 0.5rem;
+    }
+    .tooltip-gap-type {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.55rem; font-weight: 600;
+      letter-spacing: 0.1em; text-transform: uppercase;
+      padding: 2px 8px; border-radius: 4px;
+      display: inline-block; margin-bottom: 0.5rem;
+    }
+    .tooltip-approx {
+      font-size: 0.78rem; color: var(--muted);
+      line-height: 1.6; margin-bottom: 0.4rem;
+    }
+    .tooltip-blind {
+      font-size: 0.78rem; color: var(--text);
+      line-height: 1.6;
+      border-top: 1px solid var(--border);
+      padding-top: 0.5rem;
+      margin-top: 0.3rem;
+    }
+    .tooltip-blind-label {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.52rem; color: var(--red);
+      letter-spacing: 0.1em; text-transform: uppercase;
+      margin-bottom: 0.2rem;
+    }
+
+    /* -- Detail panel (click) -- */
+    .detail-panel {
+      position: fixed;
+      top: 50%; left: 50%;
+      transform: translate(-50%, -50%);
+      width: 520px; max-width: 92vw;
+      max-height: 80vh;
+      background: rgba(7,7,15,0.96);
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 2rem 2.2rem;
+      display: none;
+      z-index: 60;
+      overflow-y: auto;
+    }
+    .detail-panel.visible { display: block; }
+    .detail-overlay {
+      position: fixed;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background: rgba(0,0,0,0.5);
+      z-index: 55;
+      display: none;
+    }
+    .detail-overlay.visible { display: block; }
+    .detail-close {
+      position: absolute; top: 1rem; right: 1rem;
+      background: none; border: none;
+      color: var(--dim); cursor: pointer;
+      font-size: 1.3rem;
+      transition: color 0.2s;
+    }
+    .detail-close:hover { color: var(--text); }
+    .detail-script {
+      font-size: 2.5rem; margin-bottom: 0.3rem;
+    }
+    .detail-concept-name {
+      font-weight: 600; font-size: 1.3rem;
+      margin-bottom: 0.15rem;
+    }
+    .detail-romanization {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.78rem; color: var(--dim);
+      margin-bottom: 0.8rem;
+    }
+    .detail-gap-badge {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.58rem; font-weight: 600;
+      letter-spacing: 0.1em; text-transform: uppercase;
+      padding: 3px 10px; border-radius: 5px;
+      display: inline-block; margin-bottom: 1rem;
+    }
+    .detail-section-label {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.55rem; letter-spacing: 0.15em;
+      text-transform: uppercase; color: var(--dim);
+      margin-bottom: 0.4rem; margin-top: 1rem;
+    }
+    .detail-text {
+      font-size: 0.85rem; color: var(--muted);
+      line-height: 1.7;
+    }
+    .detail-blind-spot {
+      font-size: 0.85rem; color: var(--text);
+      line-height: 1.7;
+      background: rgba(247,118,142,0.06);
+      border-left: 2px solid var(--red);
+      padding: 0.6rem 1rem;
+      border-radius: 0 6px 6px 0;
+      margin-top: 0.3rem;
+    }
+    .detail-paper-link {
+      display: inline-block;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.68rem;
+      color: var(--accent);
+      text-decoration: none;
+      padding: 3px 10px;
+      background: rgba(122,162,247,0.08);
+      border: 1px solid rgba(122,162,247,0.2);
+      border-radius: 5px;
+      margin: 0.2rem 0.3rem 0.2rem 0;
+      transition: all 0.2s;
+    }
+    .detail-paper-link:hover {
+      background: rgba(122,162,247,0.15);
+      border-color: rgba(122,162,247,0.4);
+    }
+    .detail-peer-count {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.72rem; color: var(--muted);
+      margin-top: 0.5rem;
+    }
+    .detail-peer-count strong {
+      color: var(--text); font-weight: 600;
+    }
+
+    /* -- Evidence table -- */
+    .table-container {
+      max-width: 1200px; margin: 0 auto;
+      padding: 0 2rem 2rem;
+      overflow-x: auto;
+    }
+    .evidence-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.8rem;
+    }
+    .evidence-table thead th {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.58rem;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--dim);
+      padding: 0.8rem 0.7rem;
+      text-align: left;
+      border-bottom: 1px solid var(--border);
+      position: sticky; top: 0;
+      background: var(--bg);
+      white-space: nowrap;
+    }
+    .evidence-table tbody td {
+      padding: 0.7rem;
+      border-bottom: 1px solid rgba(255,255,255,0.03);
+      color: var(--muted);
+      vertical-align: top;
+    }
+    .evidence-table tbody tr {
+      transition: background 0.15s;
+      cursor: pointer;
+    }
+    .evidence-table tbody tr:hover {
+      background: var(--surface-hover);
+    }
+    .evidence-table tbody tr.hidden-row {
+      display: none;
+    }
+    .table-concept {
+      font-weight: 500; color: var(--text);
+      white-space: nowrap;
+    }
+    .table-script {
+      font-size: 1.05rem;
+      display: block;
+      margin-bottom: 0.15rem;
+    }
+    .table-roman {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.68rem; color: var(--dim);
+    }
+    .gap-badge {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.52rem; font-weight: 600;
+      letter-spacing: 0.08em; text-transform: uppercase;
+      padding: 2px 7px; border-radius: 4px;
+      white-space: nowrap;
+    }
+    .gap-absolute { background: rgba(247,118,142,0.15); color: var(--red); }
+    .gap-partial { background: rgba(224,175,104,0.15); color: var(--amber); }
+    .gap-conceptual { background: rgba(232,212,77,0.15); color: var(--gap-conceptual); }
+    .gap-filled { background: rgba(158,206,106,0.15); color: var(--green); }
+
+    .domain-badge {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.5rem; font-weight: 500;
+      letter-spacing: 0.06em; text-transform: uppercase;
+      padding: 2px 6px; border-radius: 3px;
+      white-space: nowrap;
+    }
+    .domain-medical { background: rgba(115,218,202,0.12); color: var(--teal); }
+    .domain-philosophical { background: rgba(187,154,247,0.12); color: var(--purple); }
+    .domain-social { background: rgba(212,168,67,0.12); color: var(--gold); }
+    .domain-scientific { background: rgba(122,162,247,0.12); color: var(--accent); }
+
+    .table-papers {
+      display: flex; flex-wrap: wrap; gap: 0.2rem;
+    }
+    .table-paper-tag {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.55rem; color: var(--accent);
+      background: rgba(122,162,247,0.08);
+      border: 1px solid rgba(122,162,247,0.15);
+      padding: 1px 6px; border-radius: 3px;
+      text-decoration: none;
+      transition: all 0.15s;
+    }
+    .table-paper-tag:hover {
+      background: rgba(122,162,247,0.15);
+      border-color: rgba(122,162,247,0.35);
+    }
+
+    /* -- Feedback loop diagram -- */
+    .feedback-container {
+      max-width: 1000px; margin: 0 auto;
+      padding: 0 2rem 4rem;
+    }
+    #feedback-svg {
+      width: 100%;
+      height: 300px;
+    }
+
+    /* -- Stats bar -- */
+    .stats-bar {
+      max-width: 1200px; margin: 0 auto;
+      padding: 1rem 2rem;
+      display: flex; flex-wrap: wrap; gap: 2rem;
+      justify-content: center;
+    }
+    .stat-item {
+      text-align: center;
+    }
+    .stat-value {
+      font-size: 1.8rem; font-weight: 200;
+      color: var(--text);
+    }
+    .stat-label {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.55rem; letter-spacing: 0.15em;
+      text-transform: uppercase; color: var(--dim);
+      margin-top: 0.2rem;
+    }
+
+    /* -- Footer -- */
+    .page-footer {
+      max-width: 1200px; margin: 0 auto;
+      padding: 3rem 2rem;
+      border-top: 1px solid var(--border);
+      text-align: center;
+    }
+    .footer-text {
+      font-size: 0.75rem; color: var(--dim);
+      line-height: 1.8;
+    }
+    .footer-text a {
+      color: var(--accent); text-decoration: none;
+    }
+    .footer-text a:hover { text-decoration: underline; }
+
+    /* -- Responsive -- */
+    @media (max-width: 768px) {
+      .nav { padding: 0 1rem; }
+      .nav-links { gap: 0.8rem; }
+      .page-header { padding: 6rem 1.2rem 1.5rem; }
+      .controls { padding: 0 1rem; }
+      .section-header { padding: 3rem 1.2rem 1rem; }
+      .table-container { padding: 0 1rem 2rem; }
+      #radial-svg { height: 500px; }
+      .detail-panel { width: 95vw; padding: 1.2rem; }
+      .legend { gap: 0.8rem; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Nav -->
+  <nav class="nav">
+    <a href="/knowledge-systems/" class="nav-brand">Knowledge Systems</a>
+    <ul class="nav-links">
+      <li><a href="/knowledge-systems/">Map</a></li>
+      <li><a href="/knowledge-systems/translation-gaps.html" class="active">Translation Gaps</a></li>
+      <li><a href="/papers/">Papers</a></li>
+      <li><a href="/">Home</a></li>
+    </ul>
+  </nav>
+
+  <!-- Header -->
+  <header class="page-header">
+    <div class="page-eyebrow">Paper 3 &middot; Structural Epistemology</div>
+    <h1 class="page-title">The words that <strong>don't exist</strong> shape<br>the science that <strong>can't emerge</strong></h1>
+    <p class="page-sub">
+      When a concept has no English word, it creates a structural hole in the embedding space.
+      That hole propagates through retrieval systems, citation networks, and funding decisions
+      until the concept becomes invisible to Western science. This page maps those gaps.
+    </p>
+  </header>
+
+  <!-- Stats -->
+  <div class="stats-bar">
+    <div class="stat-item">
+      <div class="stat-value" id="stat-total">0</div>
+      <div class="stat-label">Concepts Mapped</div>
+    </div>
+    <div class="stat-item">
+      <div class="stat-value" id="stat-absolute" style="color:var(--red)">0</div>
+      <div class="stat-label">Absolute Gaps</div>
+    </div>
+    <div class="stat-item">
+      <div class="stat-value" id="stat-languages">0</div>
+      <div class="stat-label">Source Languages</div>
+    </div>
+    <div class="stat-item">
+      <div class="stat-value" id="stat-blindspots">0</div>
+      <div class="stat-label">Blind Spots Identified</div>
+    </div>
+  </div>
+
+  <!-- Section 1: Gap Map -->
+  <div class="section-header">
+    <div class="section-eyebrow">Section 1</div>
+    <h2 class="section-title">The Gap Map</h2>
+    <p class="section-desc">
+      English at center. Source languages around the ring. Each line is a concept
+      that crosses the translation boundary — colored by how much survives the crossing.
+    </p>
+  </div>
+
+  <div class="controls" id="controls">
+    <input type="text" class="search-box" id="search" placeholder="Search concepts...">
+    <div class="filter-sep"></div>
+    <button class="filter-btn active" data-filter="all">All</button>
+    <div class="filter-sep"></div>
+    <button class="filter-btn" data-filter="absolute">Absolute</button>
+    <button class="filter-btn" data-filter="partial">Partial</button>
+    <button class="filter-btn" data-filter="conceptual">Conceptual</button>
+    <button class="filter-btn" data-filter="filled">Filled</button>
+    <div class="filter-sep"></div>
+    <button class="filter-btn" data-filter="medical">Medical</button>
+    <button class="filter-btn" data-filter="philosophical">Philosophical</button>
+    <button class="filter-btn" data-filter="social">Social</button>
+    <button class="filter-btn" data-filter="scientific">Scientific</button>
+  </div>
+
+  <div class="graph-container">
+    <svg id="radial-svg"></svg>
+  </div>
+
+  <div class="legend">
+    <div class="legend-item"><div class="legend-swatch" style="background:var(--gap-absolute)"></div>Absolute gap</div>
+    <div class="legend-item"><div class="legend-swatch" style="background:var(--gap-partial)"></div>Partial gap</div>
+    <div class="legend-item"><div class="legend-swatch" style="background:var(--gap-conceptual)"></div>Conceptual gap</div>
+    <div class="legend-item"><div class="legend-swatch" style="background:var(--gap-filled)"></div>Filled gap</div>
+  </div>
+
+  <!-- Tooltip -->
+  <div class="tooltip" id="tooltip"></div>
+
+  <!-- Detail panel -->
+  <div class="detail-overlay" id="detail-overlay"></div>
+  <div class="detail-panel" id="detail-panel">
+    <button class="detail-close" id="detail-close">&times;</button>
+    <div id="detail-content"></div>
+  </div>
+
+  <!-- Section 2: Evidence Table -->
+  <div class="section-header">
+    <div class="section-eyebrow">Section 2</div>
+    <h2 class="section-title">The Evidence Table</h2>
+    <p class="section-desc">
+      Each row is a concept that exists in another language but creates a structural hole
+      in English-language science. Click any row for details.
+    </p>
+  </div>
+
+  <div class="table-container">
+    <table class="evidence-table" id="evidence-table">
+      <thead>
+        <tr>
+          <th>Concept</th>
+          <th>Language</th>
+          <th>Domain</th>
+          <th>Gap Type</th>
+          <th>English Approximation</th>
+          <th>Scientific Blind Spot</th>
+          <th>Papers</th>
+          <th>Peer-Reviewed</th>
+        </tr>
+      </thead>
+      <tbody id="evidence-tbody"></tbody>
+    </table>
+  </div>
+
+  <!-- Section 3: Feedback Loop -->
+  <div class="section-header">
+    <div class="section-eyebrow">Section 3</div>
+    <h2 class="section-title">The Feedback Loop</h2>
+    <p class="section-desc">
+      Translation gaps do not simply omit concepts. They create self-reinforcing cycles
+      that systematically exclude entire domains from scientific inquiry.
+    </p>
+  </div>
+
+  <div class="feedback-container">
+    <svg id="feedback-svg"></svg>
+  </div>
+
+  <!-- Footer -->
+  <footer class="page-footer">
+    <p class="footer-text">
+      Translation Gaps &amp; Structural Holes &middot; Part of the
+      <a href="/knowledge-systems/">Knowledge Systems</a> research portfolio<br>
+      J. Thorarinson &middot; 2026
+    </p>
+  </footer>
+
+<script>
+// ============================================================
+// DATA
+// ============================================================
+
+const LANGUAGES = [
+  { id: "chinese",   name: "Chinese",   nameNative: "中文",      font: "'Noto Sans SC'" },
+  { id: "sanskrit",  name: "Sanskrit",  nameNative: "संस्कृतम्",    font: "'Noto Sans Devanagari'" },
+  { id: "arabic",    name: "Arabic",    nameNative: "العربية",    font: "'Noto Sans Arabic'" },
+  { id: "japanese",  name: "Japanese",  nameNative: "日本語",     font: "'Noto Sans JP'" },
+  { id: "korean",    name: "Korean",    nameNative: "한국어",     font: "'Noto Sans KR'" },
+  { id: "tibetan",   name: "Tibetan",   nameNative: "བོད་སྐད་",      font: "'Noto Sans Tibetan'" },
+  { id: "greek",     name: "Greek",     nameNative: "Ελληνικά",  font: "'Outfit'" },
+  { id: "latin",     name: "Latin",     nameNative: "Latina",    font: "'Outfit'" },
+  { id: "hebrew",    name: "Hebrew",    nameNative: "עברית",     font: "'Noto Sans Hebrew'" },
+  { id: "yoruba",    name: "Yoruba / Bantu", nameNative: "Yorùbá", font: "'Outfit'" },
+  { id: "russian",   name: "Russian",   nameNative: "Русский",   font: "'Outfit'" },
+  { id: "german",    name: "German",    nameNative: "Deutsch",   font: "'Outfit'" },
+  { id: "persian",   name: "Persian",   nameNative: "فارسی",     font: "'Noto Sans Arabic'" },
+  { id: "tamil",     name: "Tamil",     nameNative: "தமிழ்",       font: "'Outfit'" },
+];
+
+const CONCEPTS = [
+  // === MEDICAL ===
+  {
+    id: "qi", script: "气", romanization: "qì", language: "chinese",
+    domain: "medical", gapType: "partial",
+    approx: "Vital energy / breath / life force",
+    blindSpot: "No unified framework for bioelectric vitality. Western medicine splits qi into dozens of separate mechanisms (ATP, mitochondrial membrane potential, vagal tone) without recognizing the integrative pattern.",
+    papers: ["Paper 3", "Paper 7"], peerReviewed: 2400,
+    detail: "Borrowed into English as 'chi' or 'qi' but stripped of its systemic meaning. In TCM, qi is simultaneously the substrate, the signal, and the regulatory principle. English forces a choice between energy, breath, and vitality — losing the unification."
+  },
+  {
+    id: "jingluo", script: "经络", romanization: "jīngluò", language: "chinese",
+    domain: "medical", gapType: "partial",
+    approx: "Meridians (mistranslation)",
+    blindSpot: "Connective tissue signaling pathways systematically understudied. The fascial network as an information system has no Western framework.",
+    papers: ["Paper 3", "Paper 7"], peerReviewed: 1800,
+    detail: "Translated as 'meridian' — a geographic term that implies fixed lines on a map. Jīngluò actually describes dynamic channels of flow and communication through tissue. The mistranslation flattened a biological signaling concept into a cartographic metaphor, making it dismissible."
+  },
+  {
+    id: "prana", script: "प्राण", romanization: "prāṇa", language: "sanskrit",
+    domain: "medical", gapType: "partial",
+    approx: "Breath + life force + energy (3 words for 1 concept)",
+    blindSpot: "Respiratory-autonomic coupling is undertheorized. The mechanistic link between breathing patterns and systemic physiological states lacks a unifying concept.",
+    papers: ["Paper 3", "Paper 7"], peerReviewed: 890,
+    detail: "English splits prāṇa into breath, life force, and vital energy. But prāṇa names the single phenomenon where respiratory rhythm directly modulates autonomic state. Modern polyvagal theory is rediscovering this, but without the integrative vocabulary."
+  },
+  {
+    id: "prakrti", script: "प्रकृति", romanization: "prakṛti", language: "sanskrit",
+    domain: "medical", gapType: "absolute",
+    approx: "Constitution / nature / innate disposition (no single term)",
+    blindSpot: "Constitutional medicine lacks a framework in Western practice. Pharmacogenomics is approaching this concept piecemeal, but without the holistic model that Ayurveda encoded millennia ago.",
+    papers: ["Paper 3"], peerReviewed: 340,
+    detail: "Prakṛti is your fundamental psychophysiological constitution — the baseline from which health and disease are measured. Western medicine has 'constitution' but it carries no theoretical weight. The absence means individual variation in drug response, disease susceptibility, and optimal diet is treated as noise rather than signal."
+  },
+  {
+    id: "mizaj", script: "مزاج", romanization: "mizāj", language: "arabic",
+    domain: "medical", gapType: "absolute",
+    approx: "Temperament / constitutional balance",
+    blindSpot: "Temperament-based pharmacology is ignored. Unani medicine's systematic approach to matching drug properties to patient temperament has no Western research program.",
+    papers: ["Paper 3"], peerReviewed: 210,
+    detail: "Mizāj is the unique balance of qualities (hot/cold, wet/dry) that defines an individual's physiological baseline. It determined drug selection in Islamic Golden Age medicine. Modern precision medicine is reinventing this logic through genomics, but the 1000-year head start in systematic clinical observation is invisible."
+  },
+  {
+    id: "rlung", script: "རླུང", romanization: "rlung", language: "tibetan",
+    domain: "medical", gapType: "absolute",
+    approx: "Wind-energy / vital wind (no equivalent)",
+    blindSpot: "Wind-energy physiology is unknown in Western biomedicine. The concept that physiological disturbances can be classified by movement patterns (ascending, descending, pervading) has no Western correlate.",
+    papers: ["Paper 3"], peerReviewed: 85,
+    detail: "Rlung describes one of the three fundamental physiological principles in Tibetan medicine. It governs movement, breathing, nervous system function, and mental activity. English has no word because the concept bundles neurology, respiratory physiology, and psychology into one dynamic — exactly the kind of cross-system integration Western medicine fragments."
+  },
+  {
+    id: "shanghuo", script: "上火", romanization: "shànghuǒ", language: "chinese",
+    domain: "medical", gapType: "absolute",
+    approx: "Internal heat / inflammation (approximate)",
+    blindSpot: "A common inflammatory-metabolic state affecting billions of people has no Western diagnostic category. Patients experience it; doctors cannot name it.",
+    papers: ["Paper 3", "Paper 7"], peerReviewed: 620,
+    detail: "Shànghuǒ ('rising fire') describes a specific constellation of symptoms: mouth ulcers, sore throat, acne, irritability, dark urine, constipation. Over a billion people use this concept daily. Western medicine would require separate diagnoses for each symptom, missing the pattern. Recent metabolomics research is finding the shared inflammatory signature — but the concept had to be imported from Chinese to even ask the question."
+  },
+  {
+    id: "ojas", script: "ओजस्", romanization: "ojas", language: "sanskrit",
+    domain: "medical", gapType: "absolute",
+    approx: "Vital essence / immune vigor (no equivalent)",
+    blindSpot: "The concept of a measurable vitality biomarker is absent from Western medicine. Resilience, immune competence, and constitutional robustness are measured separately with no integrating metric.",
+    papers: ["Paper 3"], peerReviewed: 180,
+    detail: "Ojas is described as the refined essence of all tissues — the substrate of immunity, luster, and mental clarity. It degrades with stress, poor diet, and disease. Western medicine has no single biomarker for 'overall vitality.' The closest approaches (allostatic load, biological age) are being developed now, 3000 years after Ayurveda named the concept."
+  },
+  {
+    id: "shen", script: "神", romanization: "shén", language: "chinese",
+    domain: "medical", gapType: "absolute",
+    approx: "Spirit / consciousness / mental vitality",
+    blindSpot: "The diagnostic category of 'disturbed shén' — visible in the eyes, complexion, and coherence of a patient — has no Western clinical equivalent. Mental status exams capture fragments.",
+    papers: ["Paper 3"], peerReviewed: 520,
+    detail: "In TCM, shén is observable: a practitioner can see it in a patient's eyes, hear it in their voice, feel it in their pulse. It integrates what Western medicine separates into psychiatry, neurology, and subjective well-being. The gap means Western doctors have no vocabulary for 'this patient looks wrong but all tests are normal.'"
+  },
+  {
+    id: "marma", script: "मर्म", romanization: "marma", language: "sanskrit",
+    domain: "medical", gapType: "absolute",
+    approx: "Vital junction point",
+    blindSpot: "Anatomical points where multiple tissue planes intersect and vulnerability concentrates are not mapped in Western anatomy as a system.",
+    papers: ["Paper 3"], peerReviewed: 150,
+    detail: "Marma points are specific anatomical locations where muscles, vessels, ligaments, bones, and joints converge. Injury to these points produces disproportionate systemic effects. Western anatomy describes individual structures but does not identify or classify these convergence points as a category. Trauma surgery reinvents this knowledge case by case."
+  },
+
+  // === PHILOSOPHICAL ===
+  {
+    id: "dao", script: "道", romanization: "dào", language: "chinese",
+    domain: "philosophical", gapType: "partial",
+    approx: "The Way / path / principle (borrowed but reduced)",
+    blindSpot: "Process ontology vs. substance ontology. Western metaphysics defaults to asking 'what things exist?' rather than 'what processes are occurring?' — a bias the absence of dào reinforces.",
+    papers: ["Paper 3", "Paper 1"], peerReviewed: 3200,
+    detail: "Dào is simultaneously a cosmological principle, an ethical guide, a natural pattern, and a method of living. English borrowed 'Tao/Dao' but treats it as an exotic philosophy rather than a competing ontology. The gap means Western science defaults to substance-based thinking (what are the parts?) rather than process-based thinking (what are the patterns?) — a limitation that shows up in systems biology, ecology, and complexity science."
+  },
+  {
+    id: "dharma", script: "धर्म", romanization: "dharma", language: "sanskrit",
+    domain: "philosophical", gapType: "absolute",
+    approx: "Duty + cosmic order + truth + law + nature (no single term)",
+    blindSpot: "The concept that ethical duty, natural law, and cosmic order are the same phenomenon has no Western framework. Ethics, physics, and theology are strictly separated.",
+    papers: ["Paper 3"], peerReviewed: 2100,
+    detail: "Dharma unifies what English separates into at least five domains: moral duty, cosmic order, natural law, religious truth, and individual purpose. The absence of this unification in English means Western thought structurally cannot ask certain questions — like whether the laws of physics and the principles of ethics share a common ground. This is not a mystical claim; it is a structural limitation of the available vocabulary."
+  },
+  {
+    id: "wabisabi", script: "侘寂", romanization: "wabi-sabi", language: "japanese",
+    domain: "philosophical", gapType: "absolute",
+    approx: "Beauty of imperfection and transience (no equivalent)",
+    blindSpot: "No Western aesthetic framework for imperfection. Design, engineering, and scientific modeling all optimize toward perfection — a bias that distorts fields from materials science to ecology.",
+    papers: ["Paper 3"], peerReviewed: 280,
+    detail: "Wabi-sabi is an entire aesthetic philosophy built on the beauty of impermanence, incompleteness, and imperfection. English has no word because Western aesthetics, since Plato, have been oriented toward ideal forms. This gap propagates into science: models that are 'messy' or 'incomplete' are treated as failures rather than as accurate representations of reality."
+  },
+  {
+    id: "han", script: "한", romanization: "han", language: "korean",
+    domain: "philosophical", gapType: "absolute",
+    approx: "Collective intergenerational grief / resentment (no equivalent)",
+    blindSpot: "Collective intergenerational trauma as a cultural-psychological phenomenon has no Western measurement framework. Epigenetic trauma research is approaching this without the concept.",
+    papers: ["Paper 3"], peerReviewed: 190,
+    detail: "Han is a distinctly Korean emotion: a deep, unresolved feeling of injustice, grief, and resentment that accumulates across generations. It is not depression, not PTSD, not grief — it is a collective emotional state with no DSM category. Western psychology has no diagnostic framework for communal emotional inheritance, which means intergenerational trauma in displaced and colonized populations is systematically misdiagnosed."
+  },
+  {
+    id: "li", script: "理", romanization: "lǐ", language: "chinese",
+    domain: "philosophical", gapType: "conceptual",
+    approx: "Principle / pattern / inherent order",
+    blindSpot: "The idea that matter has inherent organizational principles (not imposed by external laws but intrinsic to the material) challenges Western physics' law-based framework.",
+    papers: ["Paper 3", "Paper 1"], peerReviewed: 950,
+    detail: "Lǐ refers to the intrinsic pattern or principle within things — the grain of wood, the veins in jade, the natural order of phenomena. English has 'principle' and 'pattern' but treats them as descriptions we impose on nature, not properties nature possesses. This conceptual gap shapes the entire Western debate about whether mathematical laws are 'discovered' or 'invented.'"
+  },
+  {
+    id: "wu", script: "無", romanization: "wú", language: "chinese",
+    domain: "philosophical", gapType: "conceptual",
+    approx: "Nothingness / absence / non-being (with positive ontological status)",
+    blindSpot: "Western ontology treats absence as mere negation. The concept that emptiness has causal power and structural function remains foreign to most Western scientific thinking.",
+    papers: ["Paper 3", "Paper 1"], peerReviewed: 1100,
+    detail: "Wú is not mere absence — it is a generative emptiness, the space from which being emerges. English 'nothing' and 'void' are purely negative terms. This gap means Western science struggles with vacuum energy, dark energy, and the creative role of empty space — concepts quantum physics has discovered but lacks intuitive vocabulary for."
+  },
+
+  // === SOCIAL ===
+  {
+    id: "ubuntu", script: "Ubuntu", romanization: "ubuntu", language: "yoruba",
+    domain: "social", gapType: "absolute",
+    approx: "I am because we are (no equivalent)",
+    blindSpot: "Collective coherence as a measurable social-psychological phenomenon has no Western research framework. Social psychology measures individuals in groups, not the group as an emergent entity.",
+    papers: ["Paper 3"], peerReviewed: 340,
+    detail: "Ubuntu expresses the idea that individual identity is fundamentally constituted through community relationships. It is not collectivism (which still assumes individuals as primary units). Western social science lacks the concept of personhood as inherently relational — it can describe relationships between individuals but not identity that is constituted by relationship."
+  },
+  {
+    id: "tarab", script: "طرب", romanization: "ṭarab", language: "arabic",
+    domain: "social", gapType: "absolute",
+    approx: "Musical ecstasy / emotional transport through music",
+    blindSpot: "The specific psychophysiological state induced by modal music in communal settings has no Western research category. Music therapy operates without this framework.",
+    papers: ["Paper 3"], peerReviewed: 95,
+    detail: "Ṭarab describes a specific state of musical ecstasy achieved through Arabic maqam music — a collective emotional transport that is simultaneously aesthetic, spiritual, and physiological. Western music psychology studies 'chills' and 'flow' as individual responses. The communal, modal, and cumulative dimensions of ṭarab are invisible to current research paradigms."
+  },
+  {
+    id: "ikigai", script: "生き甲斐", romanization: "ikigai", language: "japanese",
+    domain: "social", gapType: "partial",
+    approx: "Reason for being / purpose (borrowed but diluted)",
+    blindSpot: "The specific health effects of having a daily reason to wake up — documented in Okinawan longevity research — were invisible until the Japanese concept was imported.",
+    papers: ["Paper 3"], peerReviewed: 420,
+    detail: "Ikigai was borrowed into English self-help culture as a Venn diagram of passion/mission/profession/vocation. The original concept is simpler and deeper: the small daily reason for living that sustains health. Western psychology had 'purpose in life' but it was too grand — ikigai can be as small as tending a garden. The nuance was lost in translation, and with it the clinical insight."
+  },
+  {
+    id: "hygge", script: "hygge", romanization: "hygge", language: "german",
+    domain: "social", gapType: "partial",
+    approx: "Cozy contentment / comfortable conviviality",
+    blindSpot: "The psychophysiology of ambient comfort as a health-relevant state is not studied systematically. Environmental psychology fragments this into lighting, temperature, and social factors.",
+    papers: [], peerReviewed: 65,
+    detail: "Danish/Norwegian concept (included under Germanic languages) describing a quality of cosiness and comfortable conviviality. English borrowed the word without developing the research implications — that ambient environment has measurable effects on cortisol, oxytocin, and immune function when experienced as a unified gestalt rather than separate variables."
+  },
+
+  // === SCIENTIFIC / EPISTEMOLOGICAL ===
+  {
+    id: "gestalt", script: "Gestalt", romanization: "Gestalt", language: "german",
+    domain: "scientific", gapType: "filled",
+    approx: "Form / shape / configuration (adopted into English)",
+    blindSpot: "Successfully adopted. Gestalt psychology created an entire Western research tradition. Demonstrates what happens when a gap IS filled.",
+    papers: ["Paper 3"], peerReviewed: 8500,
+    detail: "Gestalt is the success case. German had a word for 'unified perceptual whole that is more than the sum of its parts.' English adopted it, and an entire school of psychology emerged. This proves the thesis: when the word crosses the translation barrier, the science follows. When it does not, the science cannot form."
+  },
+  {
+    id: "algorithm", script: "الخوارزمية", romanization: "al-khwārizmiyya", language: "arabic",
+    domain: "scientific", gapType: "filled",
+    approx: "Systematic computational procedure (adopted)",
+    blindSpot: "Successfully adopted via Latin. Named after al-Khwārizmī. Demonstrates that Arabic mathematical concepts that were translated created entire fields.",
+    papers: ["Paper 3"], peerReviewed: 50000,
+    detail: "The word 'algorithm' entered English from Arabic through Latin. Once the concept had an English name, it became the foundation of computer science. The contrast with untranslated Arabic medical concepts (like mizāj) is instructive: translation is the gate through which knowledge passes into Western science."
+  },
+  {
+    id: "tsunami", script: "津波", romanization: "tsunami", language: "japanese",
+    domain: "scientific", gapType: "filled",
+    approx: "Harbor wave (adopted into English)",
+    blindSpot: "Successfully adopted. English previously had no precise term for this phenomenon, which limited scientific communication about it.",
+    papers: [], peerReviewed: 12000,
+    detail: "Before English borrowed 'tsunami' from Japanese, the phenomenon was described as 'tidal wave' — a misnomer that implied tidal causation. The Japanese word carried the correct causal model (harbor + wave) and enabled precise scientific communication. Adoption of the word literally improved the science."
+  },
+  {
+    id: "tikkun", script: "תיקון עולם", romanization: "tikkun olam", language: "hebrew",
+    domain: "philosophical", gapType: "absolute",
+    approx: "Repair of the world (theological + practical)",
+    blindSpot: "The concept that the world is structurally broken and humans have an obligation to repair it has no secular Western equivalent. Activism, charity, and justice are separate concepts.",
+    papers: ["Paper 3"], peerReviewed: 180,
+    detail: "Tikkun olam unifies theology, ethics, and practical action into a single imperative: the world is fractured and repair is both possible and obligatory. English has no secular equivalent that carries the same integrative force. Environmental activism, social justice, and charitable giving are treated as separate motivations rather than expressions of a single principle."
+  },
+  {
+    id: "toska", script: "тоска", romanization: "toská", language: "russian",
+    domain: "philosophical", gapType: "absolute",
+    approx: "Spiritual anguish / profound longing without object",
+    blindSpot: "A specific emotional-spiritual state with no DSM category. The distinction between depression (clinical) and toska (existential) is invisible to English-language psychiatry.",
+    papers: ["Paper 3"], peerReviewed: 45,
+    detail: "Nabokov wrote that no English word captures toska: it ranges from spiritual anguish to vague restlessness, a longing with nothing to long for. English-language psychiatry would diagnose this as depression, anxiety, or existential crisis — three different conditions. The Russian concept identifies a single phenomenon that Western nosology fragments and arguably mistreats."
+  },
+  {
+    id: "saudade", script: "saudade", romanization: "saudade", language: "latin",
+    domain: "philosophical", gapType: "absolute",
+    approx: "Melancholic longing for absent beloved (no equivalent)",
+    blindSpot: "Portuguese/Galician concept. The specific emotional state of longing for something loved and lost — with pleasure in the longing itself — has no psychological research framework.",
+    papers: [], peerReviewed: 35,
+    detail: "Saudade (Portuguese, included under Romance/Latin family) describes a deep emotional state of nostalgic longing for an absent something or someone that one loves, combined with the knowledge that the object of longing might never return. English 'nostalgia' was once a medical diagnosis but was stripped of clinical meaning. Saudade retains the specificity that enables recognition and study of this emotional state."
+  },
+  {
+    id: "maya", script: "माया", romanization: "māyā", language: "sanskrit",
+    domain: "philosophical", gapType: "partial",
+    approx: "Illusion / creative power / measured-out reality",
+    blindSpot: "The concept that perceived reality is a constructed measurement (not a passive observation) anticipates quantum measurement theory but has no foothold in Western physics vocabulary.",
+    papers: ["Paper 3", "Paper 1"], peerReviewed: 680,
+    detail: "Māyā is not simply 'illusion' — it is the creative power that constructs measurable reality from an underlying wholeness. The translation as 'illusion' made it dismissible. But the concept that observation creates the measured world is precisely what quantum mechanics discovered. The vocabulary gap meant Western physics arrived at this insight without 3000 years of philosophical preparation."
+  },
+  {
+    id: "asr", script: "عصر", romanization: "ʿaṣr", language: "arabic",
+    domain: "philosophical", gapType: "conceptual",
+    approx: "Time / era / epoch / afternoon (with compression meaning)",
+    blindSpot: "The concept that time compresses and squeezes — that epochs have pressure — has no Western temporal framework. Linear and cyclical time models both miss this.",
+    papers: ["Paper 3"], peerReviewed: 120,
+    detail: "ʿAṣr derives from a root meaning 'to press, to squeeze.' Time is not merely passing — it is pressing upon you. This concept of temporal pressure has no English equivalent. Western philosophy treats time as a dimension (physics) or a lived experience (phenomenology) but not as a force that compresses meaning. The gap limits how Western science thinks about temporal urgency, historical pressure, and the phenomenology of deadline-driven behavior."
+  },
+  {
+    id: "rasa", script: "रस", romanization: "rasa", language: "sanskrit",
+    domain: "philosophical", gapType: "absolute",
+    approx: "Aesthetic flavor / emotional essence of art",
+    blindSpot: "A systematic taxonomy of aesthetic-emotional states (9 rasas) with no Western equivalent. Western aesthetics has no comparable precision in classifying audience emotional responses.",
+    papers: ["Paper 3"], peerReviewed: 310,
+    detail: "Rasa theory classifies nine fundamental emotional essences that art can evoke: love, humor, fury, compassion, terror, heroism, disgust, wonder, and peace. This is not a list of emotions — it is a systematic framework for how artistic composition reliably produces specific psychophysiological states in audiences. Western aesthetics has nothing this precise. Affective neuroscience is beginning to validate the classifications, 2000 years later."
+  },
+  {
+    id: "kefi", script: "κέφι", romanization: "kéfi", language: "greek",
+    domain: "social", gapType: "absolute",
+    approx: "Spirit of joy / ecstatic communal enthusiasm",
+    blindSpot: "The specific group-level emotional state of shared exuberance has no Western psychological measure. 'Collective effervescence' (Durkheim) is academic jargon, not lived vocabulary.",
+    papers: [], peerReviewed: 25,
+    detail: "Kéfi describes the spirit of shared joy and enthusiasm that overtakes a group — at a dinner, a celebration, a musical performance. English has no word for this because English-language psychology studies individual emotions. Durkheim's 'collective effervescence' identifies the phenomenon but remains an academic term without clinical or practical application."
+  },
+  {
+    id: "jugaad", script: "जुगाड़", romanization: "jugāṛ", language: "sanskrit",
+    domain: "scientific", gapType: "absolute",
+    approx: "Frugal innovation / creative workaround (Hindi/Urdu)",
+    blindSpot: "Innovation under extreme resource constraint is not recognized as a distinct engineering methodology in Western frameworks. 'Hacking' carries negative connotations.",
+    papers: [], peerReviewed: 180,
+    detail: "Jugāṛ (Hindi-Urdu, from Sanskrit roots) names a specific type of innovation: creative problem-solving under severe resource constraints. Western innovation theory assumes access to capital, labs, and infrastructure. The absence of this concept means billions of innovations in the developing world are invisible to Western engineering literature — they have no category to be filed under."
+  },
+  {
+    id: "wei_qi", script: "卫气", romanization: "wèi qì", language: "chinese",
+    domain: "medical", gapType: "absolute",
+    approx: "Defensive qi / protective energy",
+    blindSpot: "The concept of a dynamic, circulating defensive energy that varies with circadian rhythm anticipated chronoimmunology but had no Western research parallel until the 2000s.",
+    papers: ["Paper 3", "Paper 7"], peerReviewed: 380,
+    detail: "Wèi qì describes a specific type of qi that circulates at the body's surface during the day and retreats inward at night, providing protection against external pathogens. Western immunology discovered circadian variation in immune function only recently. The concept existed in Chinese medicine for 2000 years but could not be studied in English because it had no name."
+  },
+  {
+    id: "entre", script: "Entremundos", romanization: "entre mundos", language: "latin",
+    domain: "social", gapType: "absolute",
+    approx: "Between worlds / liminal cultural identity (Spanish)",
+    blindSpot: "The psychosocial experience of inhabiting multiple cultural frameworks simultaneously has no clinical term. 'Bicultural' is descriptive, not experiential.",
+    papers: ["Paper 3"], peerReviewed: 90,
+    detail: "Entre mundos (Spanish, included under Romance/Latin family) describes the lived experience of existing between cultural worlds — not as a problem to be resolved but as a distinct mode of being. English 'bicultural' is an adjective, not a state of consciousness. The gap means immigration psychology and multicultural identity research lack vocabulary for the subjective experience of cultural liminality."
+  },
+  {
+    id: "ting", script: "聽", romanization: "tīng", language: "chinese",
+    domain: "philosophical", gapType: "conceptual",
+    approx: "Listening (with eyes, ears, heart, and undivided attention)",
+    blindSpot: "The traditional character for 'listen' contains ear, eyes, heart, and 'one/undivided.' Western communication theory separates these into 'active listening' skills rather than recognizing holistic attention as a single faculty.",
+    papers: ["Paper 3"], peerReviewed: 75,
+    detail: "The traditional Chinese character 聽 (tīng, to listen) is composed of radicals meaning ear (耳), eyes (目), heart (心), and king/ruler (王) — suggesting that true listening requires ears, eyes, heart, and sovereign attention. English 'listening' refers only to auditory processing. The entire Western communication skills industry reinvents what this single character encodes."
+  },
+];
+
+// Gap type metadata
+const GAP_TYPES = {
+  absolute:   { label: "Absolute Gap",   color: "var(--gap-absolute)",   desc: "No English word exists. Western science has no framework." },
+  partial:    { label: "Partial Gap",     color: "var(--gap-partial)",    desc: "English borrowed the word but lost critical nuance." },
+  conceptual: { label: "Conceptual Gap",  color: "var(--gap-conceptual)", desc: "English has words but no unified concept." },
+  filled:     { label: "Filled Gap",      color: "var(--gap-filled)",     desc: "English adopted and understood. Science followed." }
+};
+
+const DOMAIN_META = {
+  medical:       { label: "Medical",       color: "var(--teal)" },
+  philosophical: { label: "Philosophical", color: "var(--purple)" },
+  social:        { label: "Social",        color: "var(--gold)" },
+  scientific:    { label: "Scientific",    color: "var(--accent)" }
+};
+
+// ============================================================
+// STATS
+// ============================================================
+document.getElementById("stat-total").textContent = CONCEPTS.length;
+document.getElementById("stat-absolute").textContent = CONCEPTS.filter(c => c.gapType === "absolute").length;
+document.getElementById("stat-languages").textContent = new Set(CONCEPTS.map(c => c.language)).size;
+document.getElementById("stat-blindspots").textContent = CONCEPTS.filter(c => c.gapType !== "filled").length;
+
+// ============================================================
+// SECTION 1: RADIAL GAP MAP
+// ============================================================
+(function buildRadialMap() {
+  const svg = d3.select("#radial-svg");
+  const container = svg.node().parentElement;
+  let width = container.clientWidth;
+  let height = parseInt(svg.style("height"));
+
+  svg.attr("viewBox", `0 0 ${width} ${height}`);
+
+  const cx = width / 2;
+  const cy = height / 2;
+  const innerR = 52;
+  const outerR = Math.min(cx, cy) - 90;
+  const langR = outerR + 50;
+
+  const g = svg.append("g");
+
+  // Background circles
+  [0.33, 0.66, 1].forEach(f => {
+    g.append("circle")
+      .attr("cx", cx).attr("cy", cy)
+      .attr("r", outerR * f)
+      .attr("fill", "none")
+      .attr("stroke", "rgba(255,255,255,0.03)")
+      .attr("stroke-width", 1);
+  });
+
+  // Center: ENGLISH
+  g.append("circle")
+    .attr("cx", cx).attr("cy", cy).attr("r", innerR)
+    .attr("fill", "rgba(122,162,247,0.08)")
+    .attr("stroke", "rgba(122,162,247,0.3)")
+    .attr("stroke-width", 1.5);
+
+  g.append("text")
+    .attr("x", cx).attr("y", cy - 6)
+    .attr("text-anchor", "middle")
+    .attr("fill", "var(--accent)")
+    .attr("font-family", "'JetBrains Mono', monospace")
+    .attr("font-size", "0.65rem")
+    .attr("font-weight", 600)
+    .attr("letter-spacing", "0.15em")
+    .text("ENGLISH");
+
+  g.append("text")
+    .attr("x", cx).attr("y", cy + 12)
+    .attr("text-anchor", "middle")
+    .attr("fill", "var(--dim)")
+    .attr("font-family", "'JetBrains Mono', monospace")
+    .attr("font-size", "0.48rem")
+    .attr("letter-spacing", "0.1em")
+    .text("STRUCTURAL HOLES");
+
+  // Place languages around the ring
+  const usedLanguages = [...new Set(CONCEPTS.map(c => c.language))];
+  const langData = usedLanguages.map(id => LANGUAGES.find(l => l.id === id)).filter(Boolean);
+  const angleStep = (2 * Math.PI) / langData.length;
+
+  const langPositions = {};
+  langData.forEach((lang, i) => {
+    const angle = -Math.PI / 2 + i * angleStep;
+    const lx = cx + langR * Math.cos(angle);
+    const ly = cy + langR * Math.sin(angle);
+    langPositions[lang.id] = { x: lx, y: ly, angle };
+
+    // Language node
+    g.append("circle")
+      .attr("cx", lx).attr("cy", ly).attr("r", 28)
+      .attr("fill", "rgba(255,255,255,0.025)")
+      .attr("stroke", "rgba(255,255,255,0.08)")
+      .attr("stroke-width", 1);
+
+    // Native script
+    g.append("text")
+      .attr("x", lx).attr("y", ly - 4)
+      .attr("text-anchor", "middle")
+      .attr("fill", "var(--text)")
+      .attr("font-family", lang.font + ", 'Outfit', sans-serif")
+      .attr("font-size", "0.7rem")
+      .attr("font-weight", 500)
+      .text(lang.nameNative);
+
+    // Romanized name
+    g.append("text")
+      .attr("x", lx).attr("y", ly + 12)
+      .attr("text-anchor", "middle")
+      .attr("fill", "var(--dim)")
+      .attr("font-family", "'JetBrains Mono', monospace")
+      .attr("font-size", "0.45rem")
+      .attr("letter-spacing", "0.05em")
+      .text(lang.name.toUpperCase());
+  });
+
+  // Place concepts along the lines
+  const conceptsByLang = {};
+  CONCEPTS.forEach(c => {
+    if (!conceptsByLang[c.language]) conceptsByLang[c.language] = [];
+    conceptsByLang[c.language].push(c);
+  });
+
+  const conceptElements = [];
+
+  Object.entries(conceptsByLang).forEach(([langId, concepts]) => {
+    const lp = langPositions[langId];
+    if (!lp) return;
+
+    concepts.forEach((concept, idx) => {
+      const total = concepts.length;
+      // Distribute along the line from center to language
+      const t = 0.3 + (0.55 * (idx + 1)) / (total + 1);
+      const px = cx + (lp.x - cx) * t;
+      const py = cy + (lp.y - cy) * t;
+
+      const gapColor = GAP_TYPES[concept.gapType].color;
+
+      // Line from language to center, through concept
+      const line = g.append("line")
+        .attr("x1", cx).attr("y1", cy)
+        .attr("x2", lp.x).attr("y2", lp.y)
+        .attr("stroke", gapColor)
+        .attr("stroke-width", 1.2)
+        .attr("stroke-opacity", 0.2)
+        .attr("class", `concept-line`)
+        .attr("data-concept", concept.id);
+
+      // Concept dot
+      const dot = g.append("circle")
+        .attr("cx", px).attr("cy", py)
+        .attr("r", 5)
+        .attr("fill", gapColor)
+        .attr("stroke", gapColor)
+        .attr("stroke-width", 0)
+        .attr("stroke-opacity", 0.4)
+        .attr("class", "concept-dot")
+        .attr("data-concept", concept.id)
+        .style("cursor", "pointer")
+        .style("transition", "r 0.15s, stroke-width 0.15s");
+
+      // Concept label
+      const labelAngle = Math.atan2(py - cy, px - cx);
+      const labelOffset = 12;
+      const lbx = px + labelOffset * Math.cos(labelAngle);
+      const lby = py + labelOffset * Math.sin(labelAngle);
+      const anchor = Math.abs(labelAngle) > Math.PI / 2 ? "end" : "start";
+
+      const label = g.append("text")
+        .attr("x", lbx).attr("y", lby)
+        .attr("text-anchor", anchor)
+        .attr("dominant-baseline", "middle")
+        .attr("fill", "var(--muted)")
+        .attr("font-size", "0.62rem")
+        .attr("font-weight", 400)
+        .attr("class", "concept-label")
+        .attr("data-concept", concept.id)
+        .style("pointer-events", "none")
+        .text(concept.script);
+
+      conceptElements.push({ concept, dot, line, label, px, py });
+    });
+  });
+
+  // Interaction: hover
+  const tooltip = document.getElementById("tooltip");
+
+  conceptElements.forEach(({ concept, dot, line, label }) => {
+    dot.on("mouseenter", function(event) {
+      d3.select(this).attr("r", 8).attr("stroke-width", 3);
+      line.attr("stroke-opacity", 0.6).attr("stroke-width", 2);
+      label.attr("fill", "var(--text)").attr("font-weight", 600);
+
+      const gt = GAP_TYPES[concept.gapType];
+      tooltip.innerHTML = `
+        <div class="tooltip-script" style="font-family: ${LANGUAGES.find(l=>l.id===concept.language)?.font || 'Outfit'}, sans-serif">${concept.script}</div>
+        <div class="tooltip-name">${concept.romanization}</div>
+        <div class="tooltip-romanization">${LANGUAGES.find(l=>l.id===concept.language)?.name || concept.language} &middot; ${DOMAIN_META[concept.domain]?.label || concept.domain}</div>
+        <div class="tooltip-gap-type" style="background:${gt.color}22;color:${gt.color}">${gt.label}</div>
+        <div class="tooltip-approx"><strong>English approximation:</strong> ${concept.approx}</div>
+        <div class="tooltip-blind">
+          <div class="tooltip-blind-label">Scientific blind spot</div>
+          ${concept.blindSpot}
+        </div>
+      `;
+      tooltip.classList.add("visible");
+      positionTooltip(event);
+    })
+    .on("mousemove", positionTooltip)
+    .on("mouseleave", function() {
+      d3.select(this).attr("r", 5).attr("stroke-width", 0);
+      line.attr("stroke-opacity", 0.2).attr("stroke-width", 1.2);
+      label.attr("fill", "var(--muted)").attr("font-weight", 400);
+      tooltip.classList.remove("visible");
+    })
+    .on("click", function() {
+      showDetail(concept);
+    });
+  });
+
+  function positionTooltip(event) {
+    const pad = 16;
+    let x = event.clientX + pad;
+    let y = event.clientY + pad;
+    const rect = tooltip.getBoundingClientRect();
+    if (x + rect.width > window.innerWidth - pad) x = event.clientX - rect.width - pad;
+    if (y + rect.height > window.innerHeight - pad) y = event.clientY - rect.height - pad;
+    tooltip.style.left = x + "px";
+    tooltip.style.top = y + "px";
+  }
+
+  // Filtering
+  let activeFilter = "all";
+  const filterBtns = document.querySelectorAll(".filter-btn");
+  const searchBox = document.getElementById("search");
+
+  function applyFilters() {
+    const query = searchBox.value.toLowerCase().trim();
+    conceptElements.forEach(({ concept, dot, line, label }) => {
+      let show = true;
+      if (activeFilter !== "all") {
+        if (["absolute","partial","conceptual","filled"].includes(activeFilter)) {
+          show = concept.gapType === activeFilter;
+        } else {
+          show = concept.domain === activeFilter;
+        }
+      }
+      if (query) {
+        const haystack = (concept.script + " " + concept.romanization + " " + concept.approx + " " + concept.blindSpot + " " + (LANGUAGES.find(l=>l.id===concept.language)?.name||"")).toLowerCase();
+        show = show && haystack.includes(query);
+      }
+      const opacity = show ? 1 : 0.07;
+      dot.attr("opacity", opacity).style("pointer-events", show ? "all" : "none");
+      line.attr("stroke-opacity", show ? 0.2 : 0.03);
+      label.attr("opacity", opacity);
+    });
+    // Also filter table
+    filterTable(activeFilter, query);
+  }
+
+  filterBtns.forEach(btn => {
+    btn.addEventListener("click", () => {
+      filterBtns.forEach(b => b.classList.remove("active"));
+      btn.classList.add("active");
+      activeFilter = btn.dataset.filter;
+      applyFilters();
+    });
+  });
+
+  searchBox.addEventListener("input", applyFilters);
+
+  // Resize
+  window.addEventListener("resize", () => {
+    // Simple re-render on major resize not implemented for performance;
+    // viewBox handles scaling
+  });
+})();
+
+// ============================================================
+// SECTION 2: EVIDENCE TABLE
+// ============================================================
+(function buildTable() {
+  const tbody = document.getElementById("evidence-tbody");
+
+  // Sort: absolute first, then partial, then conceptual, then filled
+  const order = { absolute: 0, partial: 1, conceptual: 2, filled: 3 };
+  const sorted = [...CONCEPTS].sort((a, b) => order[a.gapType] - order[b.gapType]);
+
+  sorted.forEach(concept => {
+    const lang = LANGUAGES.find(l => l.id === concept.language);
+    const tr = document.createElement("tr");
+    tr.dataset.concept = concept.id;
+    tr.dataset.gapType = concept.gapType;
+    tr.dataset.domain = concept.domain;
+    tr.dataset.language = concept.language;
+
+    tr.innerHTML = `
+      <td class="table-concept">
+        <span class="table-script" style="font-family: ${lang?.font || 'Outfit'}, sans-serif">${concept.script}</span>
+        <span class="table-roman">${concept.romanization}</span>
+      </td>
+      <td>${lang?.name || concept.language}</td>
+      <td><span class="domain-badge domain-${concept.domain}">${DOMAIN_META[concept.domain]?.label || concept.domain}</span></td>
+      <td><span class="gap-badge gap-${concept.gapType}">${GAP_TYPES[concept.gapType].label}</span></td>
+      <td style="max-width:200px;font-size:0.75rem;line-height:1.5">${concept.approx}</td>
+      <td style="max-width:260px;font-size:0.75rem;line-height:1.5;color:var(--text)">${concept.blindSpot.split('.')[0]}.</td>
+      <td class="table-papers">${concept.papers.map(p => `<span class="table-paper-tag">${p}</span>`).join("")}</td>
+      <td style="font-family:'JetBrains Mono',monospace;font-size:0.72rem;text-align:right">${concept.peerReviewed.toLocaleString()}</td>
+    `;
+
+    tr.addEventListener("click", () => showDetail(concept));
+    tbody.appendChild(tr);
+  });
+})();
+
+function filterTable(filter, query) {
+  const rows = document.querySelectorAll("#evidence-tbody tr");
+  rows.forEach(row => {
+    let show = true;
+    if (filter !== "all") {
+      if (["absolute","partial","conceptual","filled"].includes(filter)) {
+        show = row.dataset.gapType === filter;
+      } else {
+        show = row.dataset.domain === filter;
+      }
+    }
+    if (query) {
+      show = show && row.textContent.toLowerCase().includes(query);
+    }
+    row.classList.toggle("hidden-row", !show);
+  });
+}
+
+// ============================================================
+// DETAIL PANEL
+// ============================================================
+function showDetail(concept) {
+  const panel = document.getElementById("detail-panel");
+  const overlay = document.getElementById("detail-overlay");
+  const content = document.getElementById("detail-content");
+  const lang = LANGUAGES.find(l => l.id === concept.language);
+  const gt = GAP_TYPES[concept.gapType];
+
+  content.innerHTML = `
+    <div class="detail-script" style="font-family: ${lang?.font || 'Outfit'}, sans-serif">${concept.script}</div>
+    <div class="detail-concept-name">${concept.romanization}</div>
+    <div class="detail-romanization">${lang?.name || concept.language} &middot; ${DOMAIN_META[concept.domain]?.label || concept.domain}</div>
+    <div class="detail-gap-badge" style="background:${gt.color}22;color:${gt.color}">${gt.label}</div>
+
+    <div class="detail-section-label">English Approximation</div>
+    <div class="detail-text">${concept.approx}</div>
+
+    <div class="detail-section-label">Translation Analysis</div>
+    <div class="detail-text">${concept.detail}</div>
+
+    <div class="detail-section-label">Scientific Blind Spot</div>
+    <div class="detail-blind-spot">${concept.blindSpot}</div>
+
+    ${concept.papers.length > 0 ? `
+    <div class="detail-section-label">Related Papers</div>
+    <div style="margin-top:0.3rem">
+      ${concept.papers.map(p => `<a href="/papers/" class="detail-paper-link">${p}</a>`).join("")}
+    </div>
+    ` : ""}
+
+    <div class="detail-peer-count">
+      <strong>${concept.peerReviewed.toLocaleString()}</strong> peer-reviewed papers reference this concept
+    </div>
+  `;
+
+  panel.classList.add("visible");
+  overlay.classList.add("visible");
+}
+
+document.getElementById("detail-close").addEventListener("click", closeDetail);
+document.getElementById("detail-overlay").addEventListener("click", closeDetail);
+document.addEventListener("keydown", e => { if (e.key === "Escape") closeDetail(); });
+
+function closeDetail() {
+  document.getElementById("detail-panel").classList.remove("visible");
+  document.getElementById("detail-overlay").classList.remove("visible");
+}
+
+// ============================================================
+// SECTION 3: FEEDBACK LOOP DIAGRAM
+// ============================================================
+(function buildFeedbackLoop() {
+  const svg = d3.select("#feedback-svg");
+  const container = svg.node().parentElement;
+  const width = container.clientWidth;
+  const height = 300;
+  svg.attr("viewBox", `0 0 ${width} ${height}`);
+
+  const steps = [
+    { label: "Translation\nGap", sub: "Word doesn't cross", color: "var(--red)" },
+    { label: "Embedding\nStructural Hole", sub: "No vector representation", color: "var(--amber)" },
+    { label: "Retrieval\nFailure", sub: "Search returns nothing", color: "var(--gap-conceptual)" },
+    { label: "Citation\nDesert", sub: "No papers to cite", color: "var(--purple)" },
+    { label: "Funding\nBlind Spot", sub: "No grants awarded", color: "var(--accent)" },
+    { label: "Scientific\nAbsence", sub: "Concept invisible", color: "var(--red)" },
+  ];
+
+  const padX = 80;
+  const stepW = (width - padX * 2) / (steps.length - 1);
+  const midY = height / 2;
+  const boxW = 110;
+  const boxH = 56;
+
+  const g = svg.append("g");
+
+  // Draw arrows between steps
+  steps.forEach((step, i) => {
+    if (i < steps.length - 1) {
+      const x1 = padX + i * stepW + boxW / 2;
+      const x2 = padX + (i + 1) * stepW - boxW / 2;
+      // Arrow line
+      g.append("line")
+        .attr("x1", x1).attr("y1", midY)
+        .attr("x2", x2 - 6).attr("y2", midY)
+        .attr("stroke", "rgba(255,255,255,0.15)")
+        .attr("stroke-width", 1.5);
+      // Arrow head
+      g.append("polygon")
+        .attr("points", `${x2-6},${midY-4} ${x2},${midY} ${x2-6},${midY+4}`)
+        .attr("fill", "rgba(255,255,255,0.15)");
+    }
+  });
+
+  // Feedback arrow (bottom, from last to first)
+  const fbY = midY + boxH / 2 + 35;
+  const fbX1 = padX + (steps.length - 1) * stepW;
+  const fbX2 = padX;
+  g.append("path")
+    .attr("d", `M${fbX1},${midY + boxH/2 + 4} L${fbX1},${fbY} L${fbX2},${fbY} L${fbX2},${midY + boxH/2 + 4}`)
+    .attr("fill", "none")
+    .attr("stroke", "var(--red)")
+    .attr("stroke-width", 1.5)
+    .attr("stroke-opacity", 0.3)
+    .attr("stroke-dasharray", "6,4");
+  // Arrowhead on feedback
+  g.append("polygon")
+    .attr("points", `${fbX2-4},${midY + boxH/2 + 4} ${fbX2},${midY + boxH/2 - 2} ${fbX2+4},${midY + boxH/2 + 4}`)
+    .attr("fill", "var(--red)")
+    .attr("fill-opacity", 0.4);
+  // Feedback label
+  g.append("text")
+    .attr("x", (fbX1 + fbX2) / 2).attr("y", fbY + 16)
+    .attr("text-anchor", "middle")
+    .attr("fill", "var(--red)")
+    .attr("fill-opacity", 0.5)
+    .attr("font-family", "'JetBrains Mono', monospace")
+    .attr("font-size", "0.55rem")
+    .attr("letter-spacing", "0.1em")
+    .text("SELF-REINFORCING CYCLE");
+
+  // Draw step boxes
+  steps.forEach((step, i) => {
+    const x = padX + i * stepW - boxW / 2;
+    const y = midY - boxH / 2;
+
+    g.append("rect")
+      .attr("x", x).attr("y", y)
+      .attr("width", boxW).attr("height", boxH)
+      .attr("rx", 8)
+      .attr("fill", "var(--surface)")
+      .attr("stroke", step.color)
+      .attr("stroke-width", 1)
+      .attr("stroke-opacity", 0.4);
+
+    // Step label (multiline)
+    const lines = step.label.split("\n");
+    lines.forEach((line, li) => {
+      g.append("text")
+        .attr("x", x + boxW / 2)
+        .attr("y", y + 18 + li * 15)
+        .attr("text-anchor", "middle")
+        .attr("fill", "var(--text)")
+        .attr("font-size", "0.68rem")
+        .attr("font-weight", li === 0 ? 500 : 300)
+        .text(line);
+    });
+
+    // Sub label
+    g.append("text")
+      .attr("x", x + boxW / 2)
+      .attr("y", y - 8)
+      .attr("text-anchor", "middle")
+      .attr("fill", "var(--dim)")
+      .attr("font-family", "'JetBrains Mono', monospace")
+      .attr("font-size", "0.45rem")
+      .attr("letter-spacing", "0.06em")
+      .text(step.sub);
+  });
+
+  // Paper 3 intervention marker
+  const p3x = padX + 2.5 * stepW;
+  const p3y = midY - boxH / 2 - 35;
+  g.append("line")
+    .attr("x1", p3x).attr("y1", p3y + 12)
+    .attr("x2", p3x).attr("y2", midY - boxH / 2 - 4)
+    .attr("stroke", "var(--green)")
+    .attr("stroke-width", 1.5)
+    .attr("stroke-dasharray", "4,3");
+  g.append("rect")
+    .attr("x", p3x - 45).attr("y", p3y - 12)
+    .attr("width", 90).attr("height", 24)
+    .attr("rx", 5)
+    .attr("fill", "rgba(158,206,106,0.1)")
+    .attr("stroke", "var(--green)")
+    .attr("stroke-width", 1)
+    .attr("stroke-opacity", 0.5);
+  g.append("text")
+    .attr("x", p3x).attr("y", p3y + 4)
+    .attr("text-anchor", "middle")
+    .attr("fill", "var(--green)")
+    .attr("font-family", "'JetBrains Mono', monospace")
+    .attr("font-size", "0.58rem")
+    .attr("font-weight", 600)
+    .text("PAPER 3");
+
+})();
+
+</script>
+</body>
+</html>
