@@ -1,0 +1,1183 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Concept Bridges — Traditional Knowledge to Modern Science</title>
+<script src="https://d3js.org/d3.v7.min.js"></script>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+body {
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  background: #1a1a2e;
+  color: #c8c8d8;
+  height: 100vh;
+  overflow: hidden;
+}
+
+.app {
+  display: grid;
+  grid-template-rows: auto 1fr;
+  height: 100vh;
+}
+
+.top-bar {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  padding: 14px 24px 10px;
+  background: #16162a;
+  border-bottom: 1px solid #252545;
+  gap: 12px;
+  flex-wrap: wrap;
+  z-index: 20;
+}
+
+.top-bar-left h1 {
+  font-size: 18px;
+  font-weight: 600;
+  color: #e0e0f0;
+  letter-spacing: 0.02em;
+}
+
+.top-bar-left .subtitle {
+  font-size: 11px;
+  color: #6a6a8a;
+  margin-top: 2px;
+}
+
+.controls {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.filter-btn {
+  font-family: inherit;
+  font-size: 10px;
+  font-weight: 500;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  padding: 5px 10px;
+  border-radius: 3px;
+  border: 1px solid #2a2a4a;
+  background: #1e1e38;
+  color: #8888a8;
+  cursor: pointer;
+  transition: all 0.2s;
+  white-space: nowrap;
+}
+
+.filter-btn:hover { border-color: #4a4a6a; color: #c8c8d8; }
+.filter-btn.active { background: #252550; border-color: #4a4a7a; color: #e0e0f0; }
+
+.search-box {
+  font-family: inherit;
+  font-size: 11px;
+  padding: 5px 10px;
+  border-radius: 3px;
+  border: 1px solid #2a2a4a;
+  background: #1e1e38;
+  color: #c8c8d8;
+  width: 150px;
+  outline: none;
+  transition: border-color 0.2s;
+}
+.search-box:focus { border-color: #4a90d9; }
+.search-box::placeholder { color: #4a4a6a; }
+
+.main-area {
+  display: grid;
+  grid-template-columns: 1fr 320px;
+  overflow: hidden;
+}
+
+.canvas-wrap {
+  position: relative;
+  overflow: hidden;
+}
+
+.canvas-wrap svg {
+  width: 100%;
+  height: 100%;
+}
+
+.col-headers {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  pointer-events: none;
+  z-index: 5;
+}
+
+.col-header {
+  position: absolute;
+  top: 8px;
+  font-size: 9px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: #4a4a6a;
+}
+
+/* Sidebar */
+.sidebar {
+  background: #16162a;
+  border-left: 1px solid #252545;
+  overflow-y: auto;
+  padding: 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.sidebar h2 {
+  font-size: 11px;
+  font-weight: 600;
+  color: #6a6a8a;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+.stats-row {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 5px;
+}
+
+.mini-stat {
+  background: #1e1e38;
+  border: 1px solid #2a2a4a;
+  border-radius: 4px;
+  padding: 7px 4px;
+  text-align: center;
+}
+
+.mini-stat .val {
+  font-size: 17px;
+  font-weight: 600;
+  color: #e0e0f0;
+}
+
+.mini-stat .lbl {
+  font-size: 8px;
+  color: #6a6a8a;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  margin-top: 1px;
+}
+
+.detail-panel { display: none; }
+.detail-panel.visible { display: block; }
+
+.detail-card {
+  background: #1e1e38;
+  border: 1px solid #2a2a4a;
+  border-radius: 6px;
+  padding: 12px;
+}
+
+.detail-label {
+  font-size: 9px;
+  color: #6a6a8a;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+.detail-name {
+  font-size: 14px;
+  font-weight: 600;
+  color: #e0e0f0;
+  margin: 3px 0 6px;
+  line-height: 1.3;
+}
+
+.detail-tag {
+  display: inline-block;
+  font-size: 10px;
+  padding: 2px 7px;
+  border-radius: 3px;
+  font-weight: 500;
+  margin-bottom: 6px;
+}
+
+.detail-desc {
+  font-size: 11px;
+  color: #9999b0;
+  line-height: 1.5;
+  margin-bottom: 8px;
+}
+
+.detail-connections { margin-top: 8px; }
+
+.detail-connections h4 {
+  font-size: 9px;
+  color: #6a6a8a;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  margin-bottom: 3px;
+}
+
+.conn-item {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 10px;
+  color: #8888a8;
+  padding: 2px 0;
+  cursor: pointer;
+  transition: color 0.15s;
+}
+.conn-item:hover { color: #c8c8d8; }
+
+.conn-dot {
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.conn-weight {
+  color: #4a4a6a;
+  font-variant-numeric: tabular-nums;
+  margin-left: auto;
+  font-size: 9px;
+}
+
+.legend-block {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.legend-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 10px;
+  color: #8888a8;
+  cursor: pointer;
+  padding: 2px 4px;
+  border-radius: 3px;
+  transition: background 0.15s;
+}
+.legend-row:hover { background: #252545; color: #c8c8d8; }
+
+.legend-swatch {
+  width: 7px;
+  height: 7px;
+  border-radius: 2px;
+  flex-shrink: 0;
+}
+
+.evidence-tag {
+  display: inline-block;
+  font-size: 9px;
+  padding: 1px 5px;
+  border-radius: 2px;
+  font-weight: 500;
+}
+
+.evidence-tag.confirmed { background: rgba(52,211,153,0.15); color: #34d399; }
+.evidence-tag.testable  { background: rgba(74,144,217,0.15); color: #4a90d9; }
+.evidence-tag.speculative { background: rgba(232,148,58,0.15); color: #e8943a; }
+
+.thesis-card {
+  background: #1e1e38;
+  border: 1px solid #2a2a4a;
+  border-radius: 6px;
+  padding: 12px;
+  margin-top: auto;
+}
+
+.thesis-card p {
+  font-size: 11px;
+  color: #8888a8;
+  line-height: 1.5;
+  font-style: italic;
+}
+.thesis-card p strong { color: #e0e0f0; font-style: normal; }
+
+.tooltip {
+  position: fixed;
+  pointer-events: none;
+  background: #16162a;
+  border: 1px solid #3a3a5a;
+  border-radius: 4px;
+  padding: 8px 11px;
+  font-size: 11px;
+  color: #c8c8d8;
+  z-index: 100;
+  max-width: 280px;
+  line-height: 1.4;
+  box-shadow: 0 4px 16px rgba(0,0,0,0.5);
+  display: none;
+}
+.tooltip .tt-name { font-weight: 600; color: #e0e0f0; margin-bottom: 2px; }
+.tooltip .tt-sub { font-size: 10px; color: #6a6a8a; }
+
+@media (max-width: 1000px) {
+  .main-area {
+    grid-template-columns: 1fr;
+    grid-template-rows: 55vh 45vh;
+  }
+  .sidebar { border-left: none; border-top: 1px solid #252545; }
+}
+</style>
+</head>
+<body>
+
+<div class="app">
+  <div class="top-bar">
+    <div class="top-bar-left">
+      <h1>Concept Bridges</h1>
+      <div class="subtitle">Traditional knowledge &rarr; modern science &rarr; research papers &mdash; 92 peer-reviewed connections across 10 traditions</div>
+    </div>
+    <div class="controls">
+      <button class="filter-btn active" data-filter="all" onclick="setFilter('all')">All</button>
+      <button class="filter-btn" data-filter="confirmed" onclick="setFilter('confirmed')">Confirmed</button>
+      <button class="filter-btn" data-filter="testable" onclick="setFilter('testable')">Testable</button>
+      <button class="filter-btn" data-filter="speculative" onclick="setFilter('speculative')">Speculative</button>
+      <input type="text" class="search-box" placeholder="Search concepts..." oninput="searchFilter(this.value)">
+    </div>
+  </div>
+
+  <div class="main-area">
+    <div class="canvas-wrap">
+      <div class="col-headers">
+        <span class="col-header" id="ch-left">Traditional Concepts</span>
+        <span class="col-header" id="ch-mid">Modern Science</span>
+        <span class="col-header" id="ch-right">Papers</span>
+      </div>
+      <svg id="sankey"></svg>
+    </div>
+
+    <div class="sidebar">
+      <div class="stats-row">
+        <div class="mini-stat"><div class="val">10</div><div class="lbl">Traditions</div></div>
+        <div class="mini-stat"><div class="val">10</div><div class="lbl">Bridges</div></div>
+        <div class="mini-stat"><div class="val">21</div><div class="lbl">Papers</div></div>
+        <div class="mini-stat"><div class="val">92</div><div class="lbl">Sources</div></div>
+      </div>
+
+      <div class="detail-panel" id="detail-panel">
+        <h2>Selected Node</h2>
+        <div class="detail-card">
+          <div class="detail-label" id="d-label"></div>
+          <div class="detail-name" id="d-name"></div>
+          <div id="d-tag-area"></div>
+          <div class="detail-desc" id="d-desc"></div>
+          <div class="detail-connections" id="d-connections"></div>
+        </div>
+      </div>
+
+      <div>
+        <h2>Traditions</h2>
+        <div class="legend-block" id="tradition-legend"></div>
+      </div>
+
+      <div>
+        <h2>Evidence Levels</h2>
+        <div style="display:flex;gap:5px;flex-wrap:wrap;margin-top:3px;">
+          <span class="evidence-tag confirmed">Confirmed</span>
+          <span class="evidence-tag testable">Testable</span>
+          <span class="evidence-tag speculative">Speculative</span>
+        </div>
+      </div>
+
+      <div class="thesis-card">
+        <p><strong>Cross-cultural convergence:</strong> Independent traditions on separate continents describe phenomena that converge under modern biophysical measurement. The convergence itself is evidence.</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="tooltip" id="tooltip"></div>
+
+<script>
+// ====================================================================
+//  COLORS
+// ====================================================================
+
+const TRADITION_COLORS = {
+  'Chinese':           '#d4915c',
+  'Indian':            '#c9784a',
+  'Greek':             '#b8a04e',
+  'Islamic':           '#c4a35a',
+  'Japanese':          '#d9a066',
+  'Korean':            '#cf8854',
+  'Tibetan':           '#b07848',
+  'African':           '#c47040',
+  'Russian':           '#a08050',
+  'Western Esoteric':  '#a89060',
+};
+
+const BRIDGE_COLOR = '#3d8ecf';
+const PAPER_COLORS = { P: '#34d399', K: '#a78bfa' };
+
+const EVIDENCE_COLORS = {
+  confirmed:   '#34d399',
+  testable:    '#4a90d9',
+  speculative: '#e8943a',
+};
+
+// ====================================================================
+//  DATA
+// ====================================================================
+
+const traditionNodes = [
+  { id: 'Qi',              tradition: 'Chinese',   desc: 'Vital energy / life force. Measurable correlates: adenosine release (24-fold), bioelectric potentials at acupoints, EEG theta/alpha shifts during qigong.' },
+  { id: 'Meridians',       tradition: 'Chinese',   desc: 'Channels of qi flow. >80% correspond to connective tissue planes (Langevin 2002). Lower electrical impedance along meridian paths (Ahn 2005).' },
+  { id: 'Five Elements',   tradition: 'Chinese',   desc: 'Wu Xing cycle. First mathematical formalization via complex-valued multi-agent network theory (Zhang 2025). Eigenstructure reveals inherent feedback.' },
+  { id: 'Yin/Yang',        tradition: 'Chinese',   desc: 'Complementary opposites. Left-right UPE asymmetries correlate with yin-yang diagnostics. Acupuncture reduces asymmetries (Van Wijk 2010).' },
+  { id: 'Jing',            tradition: 'Chinese',   desc: 'Essence / constitutional vitality. Modern correlates: telomere biology, stem cell reserves, mitochondrial biogenesis compounds.' },
+
+  { id: 'Prana',            tradition: 'Indian',    desc: 'Breath-energy. Pranayama increases RMSSD (vagal tone) p<0.01. Bhramari produces 15-fold nasal NO increase (Weitzberg 2002).' },
+  { id: 'Nadis',            tradition: 'Indian',    desc: 'Energy channels (72,000 traditionally). Distinct pulse waveform morphologies at Vata/Pitta/Kapha positions. Nadi Tarangini quantified (Joshi 2007).' },
+  { id: 'Chakras',          tradition: 'Indian',    desc: 'Energy centers. CCD imaging shows biophoton emission with anatomical distribution and circadian variation matching described locations (Kobayashi 2009).' },
+  { id: 'Prakriti',         tradition: 'Indian',    desc: 'Constitutional type. 251 differentially expressed genes between Vata/Pitta/Kapha (Prasher 2008, PNAS). EGLN1 links Kapha to oxygen-sensing.' },
+  { id: 'Agni',             tradition: 'Indian',    desc: 'Digestive fire. Extraoral taste receptors regulate glucose metabolism (gut) and bronchodilation (lungs). Validates rasa-pharmacology link.' },
+  { id: 'Ojas',             tradition: 'Indian',    desc: 'Vital essence. 12-week yoga: increased telomerase, BDNF, sirtuin-1; decreased ROS, cortisol, IL-6 (Tolahunase 2017, Oxid Med Cell Longev).' },
+
+  { id: 'Pneuma',           tradition: 'Greek',     desc: 'Vital breath. Respiratory vagal stimulation model (Gerritsen 2018) connects slow breathing to autonomic regulation via vagal afferents.' },
+  { id: 'Humors',           tradition: 'Greek',     desc: 'Four humors: blood, phlegm, yellow bile, black bile. Constitutional typology paralleling Prakriti and Sasang systems across continents.' },
+  { id: 'Physis',           tradition: 'Greek',     desc: 'Nature / innate healing power. Self-organizing biological recovery. Coherence restoration dynamics in complex adaptive systems.' },
+
+  { id: 'Mizaj',            tradition: 'Islamic',   desc: 'Temperament / constitutional balance. Unani Tibb integrates Greek, Arabic, and Indian medical traditions into a unified framework.' },
+  { id: 'Arkan',            tradition: 'Islamic',   desc: 'Elements framework. Nigella sativa validated across 500+ studies: NF-kB inhibition, COX-2/5-LOX suppression, thymoquinone mechanisms.' },
+
+  { id: 'Ki',               tradition: 'Japanese',  desc: 'Vital energy. Proposed as near-infrared radiation (Ohnishi 2009). Reduced cancer cell growth at distance. AMI device measures electrodermal response.' },
+  { id: 'Kampo',            tradition: 'Japanese',  desc: 'Pharmaceutical-grade herbal medicine integrated into Japanese healthcare. Maoto: 352 compounds, 113 newly detected metabolites (Watanabe 2017).' },
+
+  { id: 'Primo-vascular',   tradition: 'Korean',    desc: 'Bonghan channels: novel circulatory system. Ducts along meridians, nodes at acupoints. Proposed as optical waveguide for biophotons (Soh 2004).' },
+  { id: 'Sasang',           tradition: 'Korean',    desc: 'Four constitutional types (1894). GWAS: 341,998 loci, 1,222 subjects. Significant allele frequency differences. Heritability 40-55%.' },
+
+  { id: 'rLung',            tradition: 'Tibetan',   desc: 'Wind element. Governs movement, breath, nervous system. Parallels Vata (Ayurveda) and qi movement (TCM).' },
+  { id: 'mKhris-pa',        tradition: 'Tibetan',   desc: 'Bile element. Governs heat, digestion, metabolism. Parallels Pitta (Ayurveda) and fire phase (TCM).' },
+  { id: 'Bad-kan',          tradition: 'Tibetan',   desc: 'Phlegm element. Governs structure, fluids, stability. Parallels Kapha (Ayurveda) and earth/water phases (TCM).' },
+
+  { id: 'Ubuntu',           tradition: 'African',   desc: 'Collective interconnection. HeartMath + Ubuntu workshops produce measurable HRV coherence improvements. CBSH model: PTSD reduction (n=1,889).' },
+  { id: 'Vital force',      tradition: 'African',   desc: 'Life force across African traditions. 80% of populations rely on traditional medicine (WHO). Drumming entrains thalamo-cortical rhythms.' },
+
+  { id: 'Biopolye',         tradition: 'Russian',   desc: 'Biofield. GDV/EPI measurement. Connects to Popp biophoton research and Korotkov gas-discharge visualization methodology.' },
+  { id: 'Zhivaya voda',     tradition: 'Russian',   desc: 'Living water. Relates to Pollack EZ water research: 10^7 V/cm electric fields measured at aqueous microdroplet interfaces (Zare/Min 2020).' },
+
+  { id: 'Aether',           tradition: 'Western Esoteric', desc: 'Fifth element. Historical substrate for EM phenomena. Modern: vacuum energy, zero-point field, quantum vacuum fluctuations.' },
+  { id: 'Subtle bodies',    tradition: 'Western Esoteric', desc: 'Layered energy bodies. "Biofield" established as MeSH term at NLM (Rubik 2015). Endogenous EM field from biological processes.' },
+];
+
+const bridgeNodes = [
+  { id: 'Bioelectricity',       desc: 'Bioelectric potentials at acupoints, connective tissue conductance, fibroblast remodeling, mast cell degranulation cascades.', key_people: 'Levin, Becker, Ahn, Langevin', paper_count: 22 },
+  { id: 'Biophotonics',         desc: 'Ultra-weak photon emission. Popp delayed luminescence, Cifra EM interactions, Benfatto DEA on germinating seeds. Coherent photon states.', key_people: 'Popp, Benfatto, Cifra, Van Wijk', paper_count: 18 },
+  { id: 'HRV/Autonomic',        desc: 'Heart rate variability as biofield proxy. Respiratory vagal stimulation, parasympathetic dominance, HRV coherence in collective settings.', key_people: 'Shaffer, Gerritsen, Mason', paper_count: 12 },
+  { id: 'Genomics',             desc: 'Pharmacogenomics and constitutional genomics. Prakriti-genome (251 genes), EGLN1 adaptation, Sasang GWAS, CYP2C19 polymorphism.', key_people: 'Prasher, Aggarwal, Mukerji', paper_count: 10 },
+  { id: 'Network Pharm.',       desc: 'Multi-target drug action. TCMSP database (29,384 ingredients, 3,311 targets). Systems pharmacology validates traditional multi-herb formulations.', key_people: 'Hopkins, Li S, Ru', paper_count: 8 },
+  { id: 'Quantum Biology',      desc: 'Quantum coherence in living systems. Superradiance in microtubules, biophoton waveguides in axons, Fano factor analysis.', key_people: 'Engel, Kurian, Simon', paper_count: 7 },
+  { id: 'Water Physics',        desc: 'EZ water, interfacial electric fields. 10^7 V/cm at microdroplet surfaces. Aqueous interfaces as charge-separating structures.', key_people: 'Pollack, Zare, Min', paper_count: 3 },
+  { id: 'Complexity Sci.',      desc: 'Self-organized criticality, nonlinear dynamics. Five-element modeling, fractal biophoton analysis, Hurst exponent estimation.', key_people: 'Kauffman, Prigogine, Grigolini', paper_count: 8 },
+  { id: 'Neuroscience',         desc: 'fMRI acupuncture, EEG meditation, DMT neural correlates, thalamo-cortical entrainment. Default mode network modulation.', key_people: 'Lutz, Davidson, Hui, Timmermann', paper_count: 14 },
+  { id: 'Microbiome',           desc: 'Prakriti-specific microbial signatures. Vata: Paraprevotella. Kapha: Mogibacterium. Virechana alters gut flora composition.', key_people: 'Chauhan, Govindaraj', paper_count: 4 },
+];
+
+const paperNodes = [
+  { id: 'P1',  label: 'Dimensionality Illusion',     series: 'P', desc: 'PCA variance does not equal semantic information. DCRP metric.' },
+  { id: 'P2',  label: 'Legal Language Geometry',      series: 'P', desc: 'Cross-dictionary embedding analysis. Definitional drift.' },
+  { id: 'P3',  label: 'Structural Holes',             series: 'P', desc: 'Missing words create missing protections.' },
+  { id: 'P4',  label: 'DCRP Benchmark',               series: 'P', desc: 'Domain-conditional retrieval benchmark.' },
+  { id: 'P5',  label: 'Sparse vs Dense',              series: 'P', desc: 'SPLADE++ preserves what PCA destroys.' },
+  { id: 'P6',  label: 'Coherence Benchmarks',         series: 'P', desc: 'Evaluation infrastructure for pre-failure degradation.' },
+  { id: 'P7',  label: 'Discoverative Intelligence',   series: 'P', desc: 'Coherence drift detection. Delta metric.' },
+  { id: 'P8',  label: 'Biological Recovery',          series: 'P', desc: 'Coherence operators for biological recovery signatures.' },
+  { id: 'P9',  label: 'Coherent Novelty',             series: 'P', desc: 'Extends perplexity with coherence operators.' },
+  { id: 'P10', label: 'Bio-Integrated Infra',         series: 'P', desc: 'Living scaffolds with photonic waveguide infrastructure.' },
+  { id: 'P11', label: 'Blockchain Coherence',         series: 'P', desc: 'DeFi protocol monitoring via coherence.' },
+  { id: 'P12', label: 'Governance Coherence',         series: 'P', desc: 'Six falsifiable operators for governance health.' },
+  { id: 'P13', label: 'Scientific Discovery',         series: 'P', desc: 'Coherence-guided hypothesis generation.' },
+  { id: 'P14', label: 'Neurodivergence',              series: 'P', desc: 'Neurodivergence as coherence variation, not deficit.' },
+
+  { id: 'K1',  label: 'Biofield Formalization',       series: 'K', desc: 'Resonance claims vs biophysical evidence. 40 papers mapped.' },
+  { id: 'K2',  label: 'Bioelectric Coherence',        series: 'K', desc: 'Biofield-to-bioelectric: coherence operators.' },
+  { id: 'K3',  label: 'Plant Coherence',              series: 'K', desc: 'Biophotonic signatures of plant vitality.' },
+  { id: 'K4',  label: 'Food Coherence',               series: 'K', desc: 'Dietary prescriptions as multi-target interventions.' },
+  { id: 'K5',  label: 'EZ Water',                     series: 'K', desc: 'Exclusion zone water: empirical vs vitalist claims.' },
+  { id: 'K6',  label: 'Edge of Testability',          series: 'K', desc: 'Converting informal claims to hypotheses.' },
+  { id: 'K7',  label: 'Cross-Cultural Convergence',   series: 'K', desc: 'Independent traditions converge under measurement.' },
+];
+
+// Links: tradition -> bridge
+const linksTB = [
+  { s: 'Qi',            t: 'Bioelectricity',   w: 8,  e: 'confirmed' },
+  { s: 'Qi',            t: 'Biophotonics',     w: 4,  e: 'testable' },
+  { s: 'Qi',            t: 'Neuroscience',      w: 3,  e: 'confirmed' },
+  { s: 'Meridians',     t: 'Bioelectricity',   w: 7,  e: 'confirmed' },
+  { s: 'Meridians',     t: 'Biophotonics',     w: 3,  e: 'testable' },
+  { s: 'Five Elements', t: 'Complexity Sci.',   w: 2,  e: 'testable' },
+  { s: 'Five Elements', t: 'Network Pharm.',    w: 4,  e: 'confirmed' },
+  { s: 'Yin/Yang',      t: 'Biophotonics',     w: 3,  e: 'testable' },
+  { s: 'Yin/Yang',      t: 'HRV/Autonomic',    w: 2,  e: 'testable' },
+  { s: 'Jing',          t: 'Genomics',          w: 2,  e: 'speculative' },
+
+  { s: 'Prana',          t: 'HRV/Autonomic',    w: 5,  e: 'confirmed' },
+  { s: 'Prana',          t: 'Bioelectricity',   w: 3,  e: 'confirmed' },
+  { s: 'Nadis',          t: 'Bioelectricity',   w: 3,  e: 'testable' },
+  { s: 'Nadis',          t: 'Neuroscience',      w: 3,  e: 'testable' },
+  { s: 'Chakras',        t: 'Biophotonics',     w: 3,  e: 'testable' },
+  { s: 'Chakras',        t: 'Bioelectricity',   w: 2,  e: 'testable' },
+  { s: 'Prakriti',       t: 'Genomics',          w: 6,  e: 'confirmed' },
+  { s: 'Prakriti',       t: 'Microbiome',        w: 3,  e: 'confirmed' },
+  { s: 'Agni',           t: 'Network Pharm.',    w: 3,  e: 'testable' },
+  { s: 'Agni',           t: 'Microbiome',        w: 1,  e: 'testable' },
+  { s: 'Ojas',           t: 'HRV/Autonomic',    w: 2,  e: 'testable' },
+  { s: 'Ojas',           t: 'Genomics',          w: 2,  e: 'testable' },
+
+  { s: 'Pneuma',         t: 'HRV/Autonomic',    w: 2,  e: 'testable' },
+  { s: 'Pneuma',         t: 'Neuroscience',      w: 1,  e: 'testable' },
+  { s: 'Humors',         t: 'Genomics',          w: 1,  e: 'speculative' },
+  { s: 'Physis',         t: 'Complexity Sci.',   w: 2,  e: 'speculative' },
+
+  { s: 'Mizaj',          t: 'Genomics',          w: 1,  e: 'speculative' },
+  { s: 'Arkan',          t: 'Network Pharm.',    w: 3,  e: 'confirmed' },
+
+  { s: 'Ki',             t: 'Biophotonics',     w: 2,  e: 'testable' },
+  { s: 'Ki',             t: 'Bioelectricity',   w: 2,  e: 'testable' },
+  { s: 'Kampo',          t: 'Network Pharm.',    w: 3,  e: 'confirmed' },
+
+  { s: 'Primo-vascular', t: 'Bioelectricity',   w: 2,  e: 'testable' },
+  { s: 'Primo-vascular', t: 'Biophotonics',     w: 2,  e: 'testable' },
+  { s: 'Primo-vascular', t: 'Quantum Biology',  w: 1,  e: 'speculative' },
+  { s: 'Sasang',         t: 'Genomics',          w: 2,  e: 'confirmed' },
+
+  { s: 'rLung',          t: 'HRV/Autonomic',    w: 1,  e: 'speculative' },
+  { s: 'rLung',          t: 'Neuroscience',      w: 1,  e: 'speculative' },
+  { s: 'mKhris-pa',      t: 'Microbiome',        w: 1,  e: 'speculative' },
+  { s: 'Bad-kan',        t: 'Genomics',          w: 1,  e: 'speculative' },
+
+  { s: 'Ubuntu',         t: 'HRV/Autonomic',    w: 3,  e: 'confirmed' },
+  { s: 'Ubuntu',         t: 'Neuroscience',      w: 3,  e: 'testable' },
+  { s: 'Vital force',    t: 'Neuroscience',      w: 2,  e: 'testable' },
+  { s: 'Vital force',    t: 'Network Pharm.',    w: 1,  e: 'testable' },
+
+  { s: 'Biopolye',       t: 'Biophotonics',     w: 2,  e: 'testable' },
+  { s: 'Biopolye',       t: 'Bioelectricity',   w: 1,  e: 'testable' },
+  { s: 'Zhivaya voda',   t: 'Water Physics',    w: 2,  e: 'testable' },
+
+  { s: 'Aether',         t: 'Quantum Biology',  w: 1,  e: 'speculative' },
+  { s: 'Aether',         t: 'Water Physics',    w: 1,  e: 'speculative' },
+  { s: 'Subtle bodies',  t: 'Biophotonics',     w: 2,  e: 'testable' },
+  { s: 'Subtle bodies',  t: 'Bioelectricity',   w: 1,  e: 'testable' },
+];
+
+// Links: bridge -> paper
+const linksBP = [
+  { s: 'Bioelectricity',   t: 'K1', w: 6, e: 'confirmed' },
+  { s: 'Bioelectricity',   t: 'K2', w: 4, e: 'confirmed' },
+  { s: 'Bioelectricity',   t: 'K6', w: 5, e: 'confirmed' },
+  { s: 'Bioelectricity',   t: 'P8', w: 2, e: 'testable' },
+
+  { s: 'Biophotonics',     t: 'K1', w: 5, e: 'testable' },
+  { s: 'Biophotonics',     t: 'K3', w: 4, e: 'testable' },
+  { s: 'Biophotonics',     t: 'K7', w: 3, e: 'testable' },
+  { s: 'Biophotonics',     t: 'P8', w: 4, e: 'testable' },
+  { s: 'Biophotonics',     t: 'P10', w: 2, e: 'testable' },
+
+  { s: 'HRV/Autonomic',    t: 'K1', w: 3, e: 'confirmed' },
+  { s: 'HRV/Autonomic',    t: 'K2', w: 3, e: 'confirmed' },
+  { s: 'HRV/Autonomic',    t: 'K7', w: 2, e: 'confirmed' },
+  { s: 'HRV/Autonomic',    t: 'P8', w: 2, e: 'confirmed' },
+  { s: 'HRV/Autonomic',    t: 'P14', w: 1, e: 'testable' },
+
+  { s: 'Genomics',         t: 'K6', w: 4, e: 'confirmed' },
+  { s: 'Genomics',         t: 'K7', w: 4, e: 'confirmed' },
+
+  { s: 'Network Pharm.',   t: 'K4', w: 4, e: 'confirmed' },
+  { s: 'Network Pharm.',   t: 'K7', w: 3, e: 'confirmed' },
+  { s: 'Network Pharm.',   t: 'P13', w: 1, e: 'testable' },
+
+  { s: 'Quantum Biology',  t: 'K3', w: 3, e: 'testable' },
+  { s: 'Quantum Biology',  t: 'P10', w: 3, e: 'testable' },
+  { s: 'Quantum Biology',  t: 'P8', w: 2, e: 'testable' },
+
+  { s: 'Water Physics',    t: 'K5', w: 2, e: 'testable' },
+  { s: 'Water Physics',    t: 'P7', w: 1, e: 'speculative' },
+
+  { s: 'Complexity Sci.',  t: 'P6', w: 2, e: 'testable' },
+  { s: 'Complexity Sci.',  t: 'P7', w: 3, e: 'testable' },
+  { s: 'Complexity Sci.',  t: 'P8', w: 2, e: 'testable' },
+  { s: 'Complexity Sci.',  t: 'K6', w: 2, e: 'testable' },
+
+  { s: 'Neuroscience',     t: 'K1', w: 3, e: 'confirmed' },
+  { s: 'Neuroscience',     t: 'K6', w: 3, e: 'confirmed' },
+  { s: 'Neuroscience',     t: 'K7', w: 3, e: 'testable' },
+  { s: 'Neuroscience',     t: 'P14', w: 2, e: 'testable' },
+  { s: 'Neuroscience',     t: 'P10', w: 1, e: 'speculative' },
+
+  { s: 'Microbiome',       t: 'K6', w: 2, e: 'confirmed' },
+  { s: 'Microbiome',       t: 'K7', w: 2, e: 'confirmed' },
+  { s: 'Microbiome',       t: 'K4', w: 1, e: 'testable' },
+];
+
+const allLinks = [
+  ...linksTB.map(l => ({ source: l.s, target: l.t, weight: l.w, evidence: l.e })),
+  ...linksBP.map(l => ({ source: l.s, target: l.t, weight: l.w, evidence: l.e })),
+];
+
+// ====================================================================
+//  INDEX NODES
+// ====================================================================
+
+const nodeMap = {};
+const allNodes = [];
+
+function regNode(id, col, data) {
+  if (nodeMap[id] !== undefined) return;
+  nodeMap[id] = allNodes.length;
+  allNodes.push({ id, col, ...data });
+}
+
+traditionNodes.forEach(n => regNode(n.id, 0, n));
+bridgeNodes.forEach(n => regNode(n.id, 1, n));
+paperNodes.forEach(n => regNode(n.id, 2, n));
+
+function nodeColor(d) {
+  if (d.tradition) return TRADITION_COLORS[d.tradition];
+  if (d.series === 'P') return PAPER_COLORS.P;
+  if (d.series === 'K') return PAPER_COLORS.K;
+  return BRIDGE_COLOR;
+}
+
+// ====================================================================
+//  STATE
+// ====================================================================
+
+let currentFilter = 'all';
+let searchTerm = '';
+
+const svgEl = d3.select('#sankey');
+const tooltipEl = document.getElementById('tooltip');
+
+// ====================================================================
+//  HAND-ROLLED SANKEY LAYOUT
+// ====================================================================
+
+function computeLayout(W, H, filteredLinks) {
+  const pad = { top: 32, bottom: 16, left: 140, right: 100 };
+  const nodeW = 12;
+  const colX = [pad.left, pad.left + (W - pad.left - pad.right) * 0.42, W - pad.right - nodeW];
+
+  // Compute node values (sum of connected link weights)
+  const nodeValues = {};
+  allNodes.forEach((_, i) => nodeValues[i] = 0);
+  filteredLinks.forEach(l => {
+    const si = nodeMap[l.source], ti = nodeMap[l.target];
+    if (si !== undefined) nodeValues[si] += l.weight;
+    if (ti !== undefined) nodeValues[ti] += l.weight;
+  });
+
+  // For each column, collect active nodes
+  const cols = [[], [], []];
+  allNodes.forEach((n, i) => {
+    if (nodeValues[i] > 0) cols[n.col].push(i);
+  });
+
+  // Sort tradition column by tradition group order
+  const tradOrder = Object.keys(TRADITION_COLORS);
+  cols[0].sort((a, b) => {
+    const ta = tradOrder.indexOf(allNodes[a].tradition);
+    const tb = tradOrder.indexOf(allNodes[b].tradition);
+    return ta - tb;
+  });
+
+  // Sort bridge column by total value (biggest on top)
+  cols[1].sort((a, b) => nodeValues[b] - nodeValues[a]);
+
+  // Sort paper column: K papers first, then P papers
+  cols[2].sort((a, b) => {
+    const an = allNodes[a], bn = allNodes[b];
+    if (an.series !== bn.series) return an.series === 'K' ? -1 : 1;
+    return an.id.localeCompare(bn.id, undefined, { numeric: true });
+  });
+
+  // Lay out each column vertically
+  const minNodeH = 6;
+  const nodePad = 3;
+  const layoutNodes = {};
+
+  cols.forEach((col, ci) => {
+    const totalVal = col.reduce((s, i) => s + nodeValues[i], 0);
+    const availH = H - pad.top - pad.bottom - (col.length - 1) * nodePad;
+
+    let y = pad.top;
+    col.forEach(i => {
+      const h = Math.max(minNodeH, (nodeValues[i] / totalVal) * availH);
+      layoutNodes[i] = {
+        x: colX[ci],
+        y: y,
+        w: nodeW,
+        h: h,
+        node: allNodes[i],
+        idx: i,
+        value: nodeValues[i],
+      };
+      y += h + nodePad;
+    });
+  });
+
+  // Build layout links with y-positions
+  // For each node, track how much vertical space has been used for links on each side
+  const sourceOffsets = {};
+  const targetOffsets = {};
+  Object.keys(layoutNodes).forEach(k => {
+    sourceOffsets[k] = 0;
+    targetOffsets[k] = 0;
+  });
+
+  // Sort links by target y-position so they don't cross too much
+  const layoutLinks = filteredLinks
+    .map(l => {
+      const si = nodeMap[l.source], ti = nodeMap[l.target];
+      if (!layoutNodes[si] || !layoutNodes[ti]) return null;
+      return { ...l, si, ti };
+    })
+    .filter(Boolean)
+    .sort((a, b) => {
+      const ay = layoutNodes[a.ti].y;
+      const by = layoutNodes[b.ti].y;
+      return ay - by;
+    });
+
+  // Compute source/target total weights per node for proportional spacing
+  const nodeSrcTotal = {}, nodeTgtTotal = {};
+  layoutLinks.forEach(l => {
+    nodeSrcTotal[l.si] = (nodeSrcTotal[l.si] || 0) + l.weight;
+    nodeTgtTotal[l.ti] = (nodeTgtTotal[l.ti] || 0) + l.weight;
+  });
+
+  const finalLinks = layoutLinks.map(l => {
+    const sn = layoutNodes[l.si], tn = layoutNodes[l.ti];
+    const srcFrac = l.weight / (nodeSrcTotal[l.si] || 1);
+    const tgtFrac = l.weight / (nodeTgtTotal[l.ti] || 1);
+    const sw = srcFrac * sn.h;
+    const tw = tgtFrac * tn.h;
+    const thickness = Math.max(1.5, Math.min(sw, tw));
+
+    const sy = sn.y + sourceOffsets[l.si] + thickness / 2;
+    const ty = tn.y + targetOffsets[l.ti] + thickness / 2;
+
+    sourceOffsets[l.si] += thickness;
+    targetOffsets[l.ti] += thickness;
+
+    return {
+      ...l,
+      x0: sn.x + sn.w,
+      y0: sy,
+      x1: tn.x,
+      y1: ty,
+      thickness,
+    };
+  });
+
+  return { layoutNodes, layoutLinks: finalLinks, colX, nodeW, pad };
+}
+
+// ====================================================================
+//  RENDER
+// ====================================================================
+
+function render() {
+  svgEl.selectAll('*').remove();
+
+  const rect = svgEl.node().getBoundingClientRect();
+  const W = rect.width, H = rect.height;
+
+  // Filter links
+  let filtered = allLinks;
+  if (currentFilter !== 'all') {
+    filtered = allLinks.filter(l => l.evidence === currentFilter);
+  }
+
+  // Search highlight
+  let highlightSet = null;
+  if (searchTerm.length > 1) {
+    highlightSet = new Set();
+    const q = searchTerm.toLowerCase();
+    allNodes.forEach((n, i) => {
+      const txt = (n.id + ' ' + (n.label || '') + ' ' + (n.tradition || '') + ' ' + (n.desc || '')).toLowerCase();
+      if (txt.includes(q)) highlightSet.add(i);
+    });
+  }
+
+  const { layoutNodes, layoutLinks, colX, nodeW, pad } = computeLayout(W, H, filtered);
+
+  // Position column headers
+  document.getElementById('ch-left').style.left = (colX[0] - 100) + 'px';
+  document.getElementById('ch-mid').style.left = (colX[1] - 10) + 'px';
+  document.getElementById('ch-right').style.left = (colX[2] - 10) + 'px';
+
+  const defs = svgEl.append('defs');
+
+  // Glow filter
+  const glow = defs.append('filter').attr('id', 'glow').attr('x', '-50%').attr('y', '-50%').attr('width', '200%').attr('height', '200%');
+  glow.append('feGaussianBlur').attr('stdDeviation', '3').attr('result', 'b');
+  const fm = glow.append('feMerge');
+  fm.append('feMergeNode').attr('in', 'b');
+  fm.append('feMergeNode').attr('in', 'SourceGraphic');
+
+  // --- Links ---
+  const linkG = svgEl.append('g');
+
+  layoutLinks.forEach((l, i) => {
+    const sNode = allNodes[l.si], tNode = allNodes[l.ti];
+    const grad = defs.append('linearGradient')
+      .attr('id', `lg${i}`)
+      .attr('gradientUnits', 'userSpaceOnUse')
+      .attr('x1', l.x0).attr('x2', l.x1);
+    grad.append('stop').attr('offset', '0%').attr('stop-color', nodeColor(sNode)).attr('stop-opacity', 0.5);
+    grad.append('stop').attr('offset', '100%').attr('stop-color', nodeColor(tNode)).attr('stop-opacity', 0.5);
+  });
+
+  const linkPaths = linkG.selectAll('path')
+    .data(layoutLinks)
+    .join('path')
+    .attr('d', (d) => {
+      const cx = (d.x0 + d.x1) / 2;
+      return `M${d.x0},${d.y0} C${cx},${d.y0} ${cx},${d.y1} ${d.x1},${d.y1}`;
+    })
+    .attr('fill', 'none')
+    .attr('stroke', (d, i) => `url(#lg${i})`)
+    .attr('stroke-width', d => d.thickness)
+    .attr('stroke-opacity', d => {
+      if (highlightSet) {
+        return (highlightSet.has(d.si) || highlightSet.has(d.ti)) ? 0.7 : 0.06;
+      }
+      return 0.5;
+    })
+    .style('mix-blend-mode', 'screen')
+    .style('cursor', 'pointer')
+    .on('mouseenter', function(event, d) {
+      d3.select(this).attr('stroke-opacity', 0.9).attr('stroke-width', Math.max(3, d.thickness + 2));
+      showTooltip(event,
+        `<div class="tt-name">${d.source} &rarr; ${d.target}</div>` +
+        `<div class="tt-sub">${d.weight} peer-reviewed paper${d.weight > 1 ? 's' : ''}</div>` +
+        `<div style="margin-top:3px;"><span class="evidence-tag ${d.evidence}">${d.evidence}</span></div>`
+      );
+    })
+    .on('mousemove', moveTooltip)
+    .on('mouseleave', function(event, d) {
+      d3.select(this)
+        .attr('stroke-opacity', highlightSet ? ((highlightSet.has(d.si) || highlightSet.has(d.ti)) ? 0.7 : 0.06) : 0.5)
+        .attr('stroke-width', d.thickness);
+      hideTooltip();
+    });
+
+  // --- Nodes ---
+  const nodeG = svgEl.append('g');
+
+  const nodeEntries = Object.values(layoutNodes);
+
+  const nodeGroups = nodeG.selectAll('g')
+    .data(nodeEntries)
+    .join('g')
+    .attr('cursor', 'pointer')
+    .attr('opacity', d => {
+      if (highlightSet) return highlightSet.has(d.idx) ? 1 : 0.12;
+      return 1;
+    })
+    .on('mouseenter', function(event, d) {
+      // Highlight connected
+      const connected = new Set([d.idx]);
+      layoutLinks.forEach(l => {
+        if (l.si === d.idx) connected.add(l.ti);
+        if (l.ti === d.idx) connected.add(l.si);
+      });
+
+      nodeGroups.transition().duration(120)
+        .attr('opacity', n => connected.has(n.idx) ? 1 : 0.08);
+
+      linkPaths.transition().duration(120)
+        .attr('stroke-opacity', l => (l.si === d.idx || l.ti === d.idx) ? 0.85 : 0.03)
+        .attr('stroke-width', l => (l.si === d.idx || l.ti === d.idx) ? Math.max(3, l.thickness + 2) : l.thickness);
+
+      const n = d.node;
+      const extra = n.key_people ? `<div class="tt-sub" style="margin-top:2px;">Key: ${n.key_people}</div>` : '';
+      const pc = n.paper_count ? `<div class="tt-sub">${n.paper_count} supporting papers</div>` : '';
+      showTooltip(event,
+        `<div class="tt-name">${n.label || n.id}</div>` +
+        (n.tradition ? `<div class="tt-sub">${n.tradition} tradition</div>` : '') +
+        (n.series ? `<div class="tt-sub">${n.series === 'P' ? 'Core paper' : 'Koplik bridge paper'}</div>` : '') +
+        pc + extra
+      );
+    })
+    .on('mousemove', moveTooltip)
+    .on('mouseleave', function() {
+      nodeGroups.transition().duration(180)
+        .attr('opacity', d => {
+          if (highlightSet) return highlightSet.has(d.idx) ? 1 : 0.12;
+          return 1;
+        });
+
+      linkPaths.transition().duration(180)
+        .attr('stroke-opacity', d => {
+          if (highlightSet) return (highlightSet.has(d.si) || highlightSet.has(d.ti)) ? 0.7 : 0.06;
+          return 0.5;
+        })
+        .attr('stroke-width', d => d.thickness);
+
+      hideTooltip();
+    })
+    .on('click', function(event, d) {
+      selectNodeDetail(d.node);
+    });
+
+  // Background glow
+  nodeGroups.append('rect')
+    .attr('x', d => d.x - 2)
+    .attr('y', d => d.y - 1)
+    .attr('width', d => d.w + 4)
+    .attr('height', d => d.h + 2)
+    .attr('rx', 3)
+    .attr('fill', d => nodeColor(d.node))
+    .attr('fill-opacity', 0.12)
+    .attr('filter', 'url(#glow)');
+
+  // Main rect
+  nodeGroups.append('rect')
+    .attr('x', d => d.x)
+    .attr('y', d => d.y)
+    .attr('width', d => d.w)
+    .attr('height', d => d.h)
+    .attr('rx', 2)
+    .attr('fill', d => nodeColor(d.node))
+    .attr('fill-opacity', 0.75)
+    .attr('stroke', d => nodeColor(d.node))
+    .attr('stroke-width', 1)
+    .attr('stroke-opacity', 0.9);
+
+  // Labels
+  nodeGroups.append('text')
+    .attr('x', d => {
+      if (d.node.col === 0) return d.x - 6;
+      if (d.node.col === 2) return d.x + d.w + 6;
+      return d.x + d.w + 6;
+    })
+    .attr('y', d => d.y + d.h / 2)
+    .attr('dy', '0.35em')
+    .attr('text-anchor', d => d.node.col === 0 ? 'end' : 'start')
+    .attr('font-size', d => d.h < 12 ? '8px' : (d.h < 20 ? '9px' : '10px'))
+    .attr('font-weight', d => d.node.col === 1 ? '600' : '400')
+    .attr('fill', d => d.node.col === 1 ? '#e0e0f0' : '#c8c8d8')
+    .text(d => {
+      const name = d.node.label || d.node.id;
+      return name.length > 22 ? name.substring(0, 20) + '...' : name;
+    })
+    .attr('paint-order', 'stroke')
+    .attr('stroke', '#1a1a2e')
+    .attr('stroke-width', 3)
+    .attr('stroke-linejoin', 'round');
+
+  // Tradition group markers (vertical labels on far left)
+  const tradGroups = {};
+  nodeEntries.forEach(d => {
+    if (d.node.col === 0 && d.node.tradition) {
+      const t = d.node.tradition;
+      if (!tradGroups[t]) tradGroups[t] = { minY: d.y, maxY: d.y + d.h };
+      else {
+        tradGroups[t].minY = Math.min(tradGroups[t].minY, d.y);
+        tradGroups[t].maxY = Math.max(tradGroups[t].maxY, d.y + d.h);
+      }
+    }
+  });
+
+  const markerG = svgEl.append('g');
+  Object.entries(tradGroups).forEach(([trad, bounds]) => {
+    const midY = (bounds.minY + bounds.maxY) / 2;
+    markerG.append('line')
+      .attr('x1', 8).attr('x2', 8)
+      .attr('y1', bounds.minY).attr('y2', bounds.maxY)
+      .attr('stroke', TRADITION_COLORS[trad])
+      .attr('stroke-width', 2)
+      .attr('stroke-opacity', 0.3)
+      .attr('stroke-linecap', 'round');
+
+    markerG.append('text')
+      .attr('x', 12)
+      .attr('y', midY)
+      .attr('text-anchor', 'start')
+      .attr('dominant-baseline', 'middle')
+      .attr('font-size', '7px')
+      .attr('font-weight', '600')
+      .attr('fill', TRADITION_COLORS[trad])
+      .attr('fill-opacity', 0.5)
+      .attr('letter-spacing', '0.08em')
+      .attr('transform', `rotate(-90, 12, ${midY})`)
+      .text(trad.toUpperCase());
+  });
+}
+
+// ====================================================================
+//  TOOLTIP
+// ====================================================================
+
+function showTooltip(event, html) {
+  tooltipEl.innerHTML = html;
+  tooltipEl.style.display = 'block';
+  moveTooltip(event);
+}
+
+function moveTooltip(event) {
+  const x = Math.min(event.clientX + 14, window.innerWidth - 290);
+  const y = Math.min(event.clientY - 10, window.innerHeight - 100);
+  tooltipEl.style.left = x + 'px';
+  tooltipEl.style.top = y + 'px';
+}
+
+function hideTooltip() {
+  tooltipEl.style.display = 'none';
+}
+
+// ====================================================================
+//  DETAIL PANEL
+// ====================================================================
+
+function selectNodeDetail(n) {
+  const panel = document.getElementById('detail-panel');
+  panel.classList.add('visible');
+
+  let typeLabel = 'Science Bridge';
+  if (n.tradition) typeLabel = n.tradition + ' Tradition';
+  else if (n.series === 'P') typeLabel = 'Core Paper ' + n.id;
+  else if (n.series === 'K') typeLabel = 'Koplik Bridge ' + n.id;
+
+  document.getElementById('d-label').textContent = typeLabel;
+  document.getElementById('d-name').textContent = n.label || n.id;
+
+  const tagArea = document.getElementById('d-tag-area');
+  tagArea.innerHTML = '';
+  const tag = document.createElement('span');
+  tag.className = 'detail-tag';
+  const c = nodeColor(n);
+  tag.style.background = c + '22';
+  tag.style.color = c;
+  tag.textContent = n.tradition || (n.series === 'P' ? 'Core Paper' : (n.series === 'K' ? 'Koplik Bridge' : 'Science Bridge'));
+  tagArea.appendChild(tag);
+
+  document.getElementById('d-desc').textContent = n.desc || '';
+
+  const connDiv = document.getElementById('d-connections');
+  connDiv.innerHTML = '';
+
+  const inbound = allLinks.filter(l => l.target === n.id);
+  const outbound = allLinks.filter(l => l.source === n.id);
+
+  if (inbound.length > 0) {
+    const h4 = document.createElement('h4');
+    h4.textContent = 'Receives from';
+    connDiv.appendChild(h4);
+    inbound.sort((a, b) => b.weight - a.weight).forEach(l => {
+      const src = allNodes[nodeMap[l.source]];
+      const item = document.createElement('div');
+      item.className = 'conn-item';
+      item.innerHTML = `<span class="conn-dot" style="background:${nodeColor(src)}"></span>
+        <span>${src.label || src.id}</span>
+        <span class="evidence-tag ${l.evidence}" style="font-size:8px;padding:0 4px;">${l.evidence}</span>
+        <span class="conn-weight">${l.weight}</span>`;
+      item.onclick = () => selectNodeDetail(src);
+      connDiv.appendChild(item);
+    });
+  }
+
+  if (outbound.length > 0) {
+    const h4 = document.createElement('h4');
+    h4.textContent = 'Flows to';
+    if (inbound.length) h4.style.marginTop = '8px';
+    connDiv.appendChild(h4);
+    outbound.sort((a, b) => b.weight - a.weight).forEach(l => {
+      const tgt = allNodes[nodeMap[l.target]];
+      const item = document.createElement('div');
+      item.className = 'conn-item';
+      item.innerHTML = `<span class="conn-dot" style="background:${nodeColor(tgt)}"></span>
+        <span>${tgt.label || tgt.id}</span>
+        <span class="evidence-tag ${l.evidence}" style="font-size:8px;padding:0 4px;">${l.evidence}</span>
+        <span class="conn-weight">${l.weight}</span>`;
+      item.onclick = () => selectNodeDetail(tgt);
+      connDiv.appendChild(item);
+    });
+  }
+
+  if (n.key_people) {
+    const h4 = document.createElement('h4');
+    h4.textContent = 'Key Researchers';
+    h4.style.marginTop = '8px';
+    connDiv.appendChild(h4);
+    const p = document.createElement('div');
+    p.style.cssText = 'font-size:10px;color:#9999b0;padding:2px 0;';
+    p.textContent = n.key_people;
+    connDiv.appendChild(p);
+  }
+}
+
+// ====================================================================
+//  FILTERS
+// ====================================================================
+
+function setFilter(f) {
+  currentFilter = f;
+  document.querySelectorAll('.filter-btn').forEach(btn => {
+    btn.classList.toggle('active', btn.dataset.filter === f);
+  });
+  render();
+}
+
+function searchFilter(term) {
+  searchTerm = term.trim();
+  render();
+}
+
+// ====================================================================
+//  LEGEND
+// ====================================================================
+
+function buildLegend() {
+  const container = document.getElementById('tradition-legend');
+  Object.keys(TRADITION_COLORS).forEach(t => {
+    const row = document.createElement('div');
+    row.className = 'legend-row';
+    row.innerHTML = `<span class="legend-swatch" style="background:${TRADITION_COLORS[t]}"></span><span>${t}</span>`;
+    row.onclick = () => {
+      document.querySelector('.search-box').value = t;
+      searchFilter(t);
+    };
+    container.appendChild(row);
+  });
+
+  [
+    { label: 'Core Papers (P1-P14)', color: PAPER_COLORS.P },
+    { label: 'Koplik Bridge (K1-K7)', color: PAPER_COLORS.K },
+    { label: 'Science Bridges', color: BRIDGE_COLOR },
+  ].forEach(({ label, color }) => {
+    const row = document.createElement('div');
+    row.className = 'legend-row';
+    row.innerHTML = `<span class="legend-swatch" style="background:${color}"></span><span>${label}</span>`;
+    container.appendChild(row);
+  });
+}
+
+// ====================================================================
+//  INIT
+// ====================================================================
+
+buildLegend();
+render();
+
+let resizeTimer;
+window.addEventListener('resize', () => {
+  clearTimeout(resizeTimer);
+  resizeTimer = setTimeout(render, 100);
+});
+</script>
+</body>
+</html>
