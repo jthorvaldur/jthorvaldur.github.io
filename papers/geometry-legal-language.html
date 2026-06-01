@@ -1,0 +1,320 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>The Geometry of Legal Language — Thorarinson</title>
+  <meta name="description" content="Embedding 6,200 terms from Bouvier's Law Dictionary reveals definitional drift of up to 36.4% between legal and general dictionaries, and leverage-vulnerability correlation showing high-stakes legal terms are disproportionately destroyed by PCA compression.">
+  <meta name="keywords" content="legal NLP, dictionary embeddings, Bouvier's Law Dictionary, semantic drift, cross-jurisdictional, PCA compression, definitional drift, leverage words, embedding geometry">
+  <meta property="og:title" content="The Geometry of Legal Language: Embedding Structure Across Authoritative Dictionaries">
+  <meta property="og:description" content="The same legal term defined by different dictionaries maps to locations up to 36.4% apart in embedding space. Dictionary provenance and jurisdiction determine what retrieval systems can distinguish.">
+  <meta property="og:type" content="article">
+  <meta property="og:url" content="https://jthorvaldur.github.io/papers/geometry-legal-language.html">
+  <meta property="article:author" content="Joel Thorarinson">
+  <meta property="article:published_time" content="2026-05-01">
+  <link rel="canonical" href="https://jthorvaldur.github.io/papers/geometry-legal-language.html">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@200;300;400;500;600;700&family=JetBrains+Mono:wght@300;400;500;600&display=swap" rel="stylesheet">
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "ScholarlyArticle",
+    "name": "The Geometry of Legal Language: Embedding Structure Across Authoritative Dictionaries",
+    "author": [
+      {"@type": "Person", "name": "Joel Thorarinson", "identifier": "https://orcid.org/0000-0002-0553-842X"}
+    ],
+    "datePublished": "2026-05",
+    "description": "Embedding 6,200 terms from Bouvier's Law Dictionary reveals definitional drift, leverage-vulnerability correlation, and model-level variance floors.",
+    "keywords": ["legal NLP", "dictionary embeddings", "Bouvier's Law Dictionary", "semantic drift", "cross-jurisdictional", "PCA compression"],
+    "url": "https://jthorvaldur.github.io/papers/geometry-legal-language.html",
+    "isPartOf": {"@type": "CreativeWorkSeries", "name": "Embedding & Legal NLP (Series 1)"},
+    "pageStart": "1",
+    "pageEnd": "16",
+    "about": "Legal terms carry different meanings depending on which dictionary defines them and which jurisdiction applies them. This paper measures those differences geometrically."
+  }
+  </script>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --bg: #07070f; --surface: rgba(255,255,255,0.035); --surface-hover: rgba(122,162,247,0.07);
+      --border: rgba(255,255,255,0.07); --border-hover: rgba(122,162,247,0.30);
+      --text: #e8e8f4; --muted: rgba(232,232,244,0.45); --dim: rgba(232,232,244,0.25);
+      --accent: #7aa2f7; --accent2: #bb9af7; --green: #9ece6a; --amber: #e0af68;
+      --red: #f7768e; --teal: #73daca; --glow: rgba(122,162,247,0.10);
+    }
+    html { scroll-behavior: smooth; }
+    body { background: var(--bg); color: var(--text); font-family: 'Outfit', sans-serif; overflow-x: hidden; -webkit-font-smoothing: antialiased; }
+    .nav { position: fixed; top: 0; left: 0; right: 0; z-index: 50; padding: 0 2rem; height: 56px; display: flex; align-items: center; justify-content: space-between; background: rgba(7,7,15,0.7); backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px); border-bottom: 1px solid var(--border); }
+    .nav-brand { font-family: 'JetBrains Mono', monospace; font-size: 0.72rem; font-weight: 600; letter-spacing: 0.2em; text-transform: uppercase; color: var(--accent); text-decoration: none; }
+    .nav-links { display: flex; gap: 1.5rem; list-style: none; }
+    .nav-links a { font-size: 0.78rem; font-weight: 400; color: var(--muted); text-decoration: none; transition: color 0.2s; }
+    .nav-links a:hover { color: var(--text); }
+    .nav-links a.active { color: var(--accent); }
+    .article-header { padding: 7rem 2rem 2.5rem; max-width: 800px; margin: 0 auto; }
+    .article-series { font-family: 'JetBrains Mono', monospace; font-size: 0.6rem; letter-spacing: 0.3em; text-transform: uppercase; color: var(--accent); margin-bottom: 1rem; }
+    .article-title { font-size: clamp(1.6rem, 4vw, 2.4rem); font-weight: 300; line-height: 1.25; margin-bottom: 0.5rem; }
+    .article-title strong { font-weight: 600; background: linear-gradient(140deg, #ffffff 20%, var(--accent) 60%, var(--accent2)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
+    .article-subtitle { font-size: 1.05rem; color: var(--muted); font-weight: 300; line-height: 1.5; margin-bottom: 1.5rem; }
+    .article-meta { display: flex; flex-wrap: wrap; gap: 1.5rem; align-items: center; font-family: 'JetBrains Mono', monospace; font-size: 0.65rem; color: var(--dim); padding-bottom: 1.5rem; border-bottom: 1px solid var(--border); }
+    .article-meta a { color: var(--accent); text-decoration: none; }
+    .article-content { max-width: 800px; margin: 0 auto; padding: 2rem 2rem 4rem; }
+    .section-label { font-family: 'JetBrains Mono', monospace; font-size: 0.6rem; letter-spacing: 0.3em; text-transform: uppercase; color: var(--accent); margin-bottom: 1.2rem; margin-top: 3rem; display: flex; align-items: center; gap: 0.8rem; }
+    .section-label::after { content: ''; display: block; flex: 1; height: 1px; background: var(--border); }
+    .abstract { background: var(--surface); border: 1px solid var(--border); border-left: 3px solid var(--accent); border-radius: 8px; padding: 1.5rem 1.8rem; font-size: 0.88rem; color: var(--muted); line-height: 1.75; }
+    .findings-list { list-style: none; padding: 0; }
+    .findings-list li { position: relative; padding: 0.8rem 0 0.8rem 1.8rem; font-size: 0.88rem; line-height: 1.7; color: var(--text); border-bottom: 1px solid var(--border); }
+    .findings-list li::before { content: ''; position: absolute; left: 0; top: 1.1rem; width: 8px; height: 8px; border-radius: 50%; background: var(--accent); }
+    .findings-list li:last-child { border-bottom: none; }
+    .findings-list .metric { font-family: 'JetBrains Mono', monospace; font-size: 0.82rem; color: var(--teal); font-weight: 500; }
+    .figure-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 1.5rem; margin-top: 1rem; }
+    .figure-card { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; overflow: hidden; }
+    .figure-card img { width: 100%; display: block; background: #fff; padding: 0.8rem; cursor: pointer; transition: transform 0.2s; }
+    .figure-card img:hover { transform: scale(1.02); }
+    .figure-caption { padding: 0.8rem 1.2rem; font-size: 0.75rem; color: var(--muted); line-height: 1.6; }
+    .figure-caption strong { color: var(--text); font-weight: 600; }
+    .citation-block { background: var(--surface); border: 1px solid var(--border); border-radius: 8px; padding: 1.2rem 1.5rem; margin-top: 0.8rem; position: relative; }
+    .citation-block pre { font-family: 'JetBrains Mono', monospace; font-size: 0.68rem; color: var(--muted); line-height: 1.6; white-space: pre-wrap; word-break: break-all; }
+    .citation-label { font-family: 'JetBrains Mono', monospace; font-size: 0.58rem; font-weight: 600; letter-spacing: 0.1em; text-transform: uppercase; color: var(--accent); margin-bottom: 0.6rem; }
+    .copy-btn { position: absolute; top: 0.8rem; right: 0.8rem; background: rgba(122,162,247,0.15); border: 1px solid rgba(122,162,247,0.3); color: var(--accent); font-family: 'JetBrains Mono', monospace; font-size: 0.58rem; padding: 4px 10px; border-radius: 4px; cursor: pointer; transition: background 0.2s; }
+    .copy-btn:hover { background: rgba(122,162,247,0.3); }
+    .keywords { display: flex; flex-wrap: wrap; gap: 0.5rem; margin-top: 1rem; }
+    .keyword-tag { font-family: 'JetBrains Mono', monospace; font-size: 0.58rem; font-weight: 500; padding: 4px 10px; border-radius: 4px; background: rgba(122,162,247,0.08); border: 1px solid rgba(122,162,247,0.15); color: var(--accent); }
+    .author-card { display: flex; align-items: center; gap: 1rem; padding: 1rem 1.3rem; background: var(--surface); border: 1px solid var(--border); border-radius: 8px; margin-bottom: 0.6rem; }
+    .author-avatar { width: 44px; height: 44px; border-radius: 50%; background: linear-gradient(135deg, var(--accent), var(--accent2)); display: flex; align-items: center; justify-content: center; font-family: 'JetBrains Mono', monospace; font-size: 0.75rem; font-weight: 700; color: var(--bg); flex-shrink: 0; }
+    .author-name { font-weight: 600; font-size: 0.88rem; }
+    .author-detail { font-family: 'JetBrains Mono', monospace; font-size: 0.62rem; color: var(--muted); }
+    .author-detail a { color: var(--accent); text-decoration: none; }
+    .author-detail a:hover { text-decoration: underline; }
+    .related-grid { display: grid; grid-template-columns: 1fr; gap: 0.6rem; margin-top: 1rem; }
+    .related-card { display: flex; align-items: center; gap: 1rem; padding: 0.8rem 1.2rem; background: var(--surface); border: 1px solid var(--border); border-radius: 8px; text-decoration: none; color: var(--text); transition: background 0.25s, border-color 0.25s, transform 0.2s; }
+    .related-card:hover { background: var(--surface-hover); border-color: var(--border-hover); transform: translateX(3px); }
+    .related-number { font-family: 'JetBrains Mono', monospace; font-size: 0.7rem; font-weight: 600; color: var(--dim); min-width: 2rem; text-align: center; }
+    .related-title { font-size: 0.85rem; font-weight: 500; }
+    .related-desc { font-size: 0.7rem; color: var(--muted); margin-top: 0.15rem; }
+    .download-btn { display: inline-flex; align-items: center; gap: 0.5rem; padding: 0.6rem 1.4rem; background: rgba(122,162,247,0.12); border: 1px solid rgba(122,162,247,0.3); border-radius: 8px; color: var(--accent); font-family: 'JetBrains Mono', monospace; font-size: 0.72rem; font-weight: 600; text-decoration: none; transition: background 0.2s, transform 0.2s; }
+    .download-btn:hover { background: rgba(122,162,247,0.25); transform: translateY(-1px); }
+    .demo-btn { display: inline-flex; align-items: center; gap: 0.5rem; padding: 0.6rem 1.4rem; background: rgba(115,218,202,0.12); border: 1px solid rgba(115,218,202,0.3); border-radius: 8px; color: var(--teal); font-family: 'JetBrains Mono', monospace; font-size: 0.72rem; font-weight: 600; text-decoration: none; transition: background 0.2s, transform 0.2s; }
+    .demo-btn:hover { background: rgba(115,218,202,0.25); transform: translateY(-1px); }
+    .btn-row { display: flex; flex-wrap: wrap; gap: 0.8rem; margin-top: 1.5rem; }
+    .lightbox-overlay { display: none; position: fixed; inset: 0; z-index: 1000; background: rgba(0,0,0,0.92); cursor: pointer; justify-content: center; align-items: center; }
+    .lightbox-overlay.active { display: flex; }
+    .lightbox-overlay img { max-width: 90vw; max-height: 90vh; border-radius: 8px; box-shadow: 0 0 40px rgba(0,0,0,0.5); }
+    footer { position: relative; z-index: 2; text-align: center; padding: 2rem; font-family: 'JetBrains Mono', monospace; font-size: 0.65rem; color: var(--dim); border-top: 1px solid var(--border); }
+    footer a { color: var(--muted); text-decoration: none; }
+    footer a:hover { color: var(--accent); }
+    /* Highlight table */
+    .drift-table { width: 100%; border-collapse: collapse; margin-top: 1rem; font-size: 0.78rem; }
+    .drift-table th { font-family: 'JetBrains Mono', monospace; font-size: 0.6rem; text-transform: uppercase; letter-spacing: 0.1em; color: var(--accent); text-align: left; padding: 0.6rem 0.8rem; border-bottom: 1px solid var(--border); }
+    .drift-table td { padding: 0.5rem 0.8rem; border-bottom: 1px solid var(--border); color: var(--text); }
+    .drift-table td:nth-child(2), .drift-table td:nth-child(3) { font-family: 'JetBrains Mono', monospace; color: var(--teal); text-align: right; }
+    .drift-table tr:hover { background: var(--surface-hover); }
+    @media (max-width: 640px) {
+      .nav-links { display: none; }
+      .article-header { padding: 5rem 1.2rem 2rem; }
+      .article-content { padding: 1.5rem 1.2rem 3rem; }
+      .figure-grid { grid-template-columns: 1fr; }
+      .btn-row { flex-direction: column; }
+    }
+  </style>
+</head>
+<body>
+
+<nav class="nav">
+  <a href="/" class="nav-brand">Thorarinson</a>
+  <ul class="nav-links">
+    <li><a href="/#projects">Projects</a></li>
+    <li><a href="/papers/" class="active">Papers</a></li>
+    <li><a href="/knowledge-systems/">Knowledge Systems</a></li>
+    <li><a href="/#coherence">Coherence</a></li>
+    <li><a href="/#research">Research</a></li>
+  </ul>
+</nav>
+
+<header class="article-header">
+  <p class="article-series">Paper 2 &mdash; Series 1: Embedding &amp; Legal NLP</p>
+  <h1 class="article-title"><strong>The Geometry of Legal Language</strong></h1>
+  <p class="article-subtitle">Embedding Structure Across Authoritative Dictionaries</p>
+  <div class="article-meta">
+    <span>Joel Thorarinson</span>
+    <span>May 2026</span>
+    <span>16 pages</span>
+    <span>33 references</span>
+    <span style="color: var(--green);">arXiv-ready</span>
+  </div>
+</header>
+
+<div class="article-content">
+
+  <p class="section-label">Abstract</p>
+  <div class="abstract">
+    Legal terms carry different meanings depending on which dictionary defines them and which jurisdiction applies them. We embed 6,200 terms from Bouvier's Law Dictionary (1856), 46 from Webster's 1913 (general-language control), 19 cross-jurisdictional terms absent from English dictionaries, and 233 jurisdiction-scored leverage words spanning 27 jurisdictions. We report three findings. First, <em>definitional drift</em>: the same term defined by a legal dictionary and a general dictionary maps to measurably different embedding locations (mean drift 23.0% across 44 terms, up to 36.4% for &ldquo;attainder&rdquo;), and the same term across jurisdictions drifts up to 33.7% (&ldquo;material change,&rdquo; Nebraska vs. Alaska). Second, <em>leverage&ndash;vulnerability correlation</em>: legal leverage score correlates positively with PCA compression damage (r<sub>s</sub> = +0.22, p &lt; 0.01, 95% CI [0.09, 0.34]), so the terms that determine custody, imprisonment, and constitutional rights are disproportionately destroyed by dimensionality reduction. Third, <em>a model-level variance floor</em>: PCA at 16 dimensions captures only 33% of variance for legal terms and 30.5% for Wikipedia articles under nomic-embed-text, a gap of 2.8 percentage points that is too small to attribute to domain effects; the 50-point gap with E5-Mistral benchmarks is architectural. Together, these results show that dictionary provenance and jurisdictional context &mdash; not just dimensionality &mdash; determine what a retrieval system can and cannot distinguish.
+  </div>
+
+  <div class="btn-row">
+    <a href="pdfs/geometry-legal-language.pdf" class="download-btn" target="_blank">PDF Download</a>
+    <a href="/embedding-dim/dictionary-collapse.html" class="demo-btn" target="_blank">Dictionary Collapse Explorer</a>
+  </div>
+
+  <p class="section-label">Key Findings</p>
+  <ul class="findings-list">
+    <li>
+      <strong>Definitional drift:</strong> The same term defined by Bouvier's (legal) and Webster's (general) maps to locations up to <span class="metric">36.4%</span> apart in embedding space (&ldquo;attainder&rdquo;), with a mean drift of <span class="metric">23.0%</span> across 44 shared terms.
+    </li>
+    <li>
+      <strong>Cross-jurisdictional drift:</strong> The same legal term embedded with state-specific definitions differs by up to <span class="metric">33.7%</span> between jurisdictions (Nebraska vs. Alaska for &ldquo;material change&rdquo;), rising to <span class="metric">41.9%</span> in an expanded 141-jurisdiction dataset.
+    </li>
+    <li>
+      <strong>Leverage&ndash;vulnerability correlation:</strong> Legal importance correlates with PCA damage (<span class="metric">r<sub>s</sub> = +0.22, p &lt; 0.01</span>). Terms determining custody, imprisonment, and constitutional rights are disproportionately destroyed by compression.
+    </li>
+    <li>
+      <strong>Model-level variance floor:</strong> PCA at 16 dimensions captures only <span class="metric">33%</span> of variance for legal terms under nomic-embed-text. The 50pp gap with E5-Mistral benchmarks is architectural, not domain-specific.
+    </li>
+    <li>
+      <strong>DictEmbed dataset:</strong> 6,498 embedded term-definition pairs from Bouvier's (6,200), Webster's (46), cross-jurisdictional terms (19), and leverage words (233) across 27 jurisdictions.
+    </li>
+  </ul>
+
+  <p class="section-label">Top 5 Definitional Drift Terms</p>
+  <table class="drift-table">
+    <thead>
+      <tr><th>Term</th><th>Similarity</th><th>Drift</th></tr>
+    </thead>
+    <tbody>
+      <tr><td>attainder</td><td>0.636</td><td>36.4%</td></tr>
+      <tr><td>consideration</td><td>0.684</td><td>31.6%</td></tr>
+      <tr><td>covenant</td><td>0.698</td><td>30.2%</td></tr>
+      <tr><td>chattel</td><td>0.710</td><td>29.0%</td></tr>
+      <tr><td>escrow</td><td>0.717</td><td>28.3%</td></tr>
+    </tbody>
+  </table>
+
+  <p class="section-label">Figures</p>
+  <div class="figure-grid">
+    <div class="figure-card">
+      <img src="figures/p2_drift_heatmap.png" alt="Definitional drift heatmap across Bouvier's and Webster's legal terms" loading="lazy">
+      <div class="figure-caption">
+        <strong>Figure 3: Drift heatmap.</strong> Cosine similarity between Bouvier's (legal) and Webster's (general) definitions for shared terms. Darker cells indicate greater definitional drift.
+      </div>
+    </div>
+    <div class="figure-card">
+      <img src="figures/p2_tsne_dictionaries.png" alt="t-SNE visualization of Bouvier's vs Webster's embeddings" loading="lazy">
+      <div class="figure-caption">
+        <strong>Figure 4: t-SNE visualization.</strong> Bouvier's legal terms (blue) and Webster's general terms (orange) in 2D projection. Overlapping terms highlight where legal and general meanings diverge.
+      </div>
+    </div>
+    <div class="figure-card">
+      <img src="figures/p2_leverage_vulnerability.png" alt="Leverage score vs PCA compression damage correlation" loading="lazy">
+      <div class="figure-caption">
+        <strong>Figure 9: Leverage&ndash;vulnerability correlation.</strong> Legal leverage score vs. PCA compression damage for 233 terms. Higher-stakes terms (custody, contempt) suffer more compression damage (r<sub>s</sub> = +0.22).
+      </div>
+    </div>
+  </div>
+
+  <p class="section-label">Citation</p>
+  <div class="citation-block">
+    <div class="citation-label">BibTeX</div>
+    <button class="copy-btn" onclick="copyText(this)">Copy</button>
+    <pre>@article{thorarinson2026geometry,
+  title={The Geometry of Legal Language: Embedding Structure Across Authoritative Dictionaries},
+  author={Thorarinson, Joel},
+  year={2026},
+  month={May},
+  pages={1--16},
+  note={arXiv preprint (forthcoming)},
+  keywords={legal NLP, dictionary embeddings, Bouvier's Law Dictionary, semantic drift, cross-jurisdictional}
+}</pre>
+  </div>
+  <div class="citation-block" style="margin-top: 0.6rem;">
+    <div class="citation-label">APA</div>
+    <button class="copy-btn" onclick="copyText(this)">Copy</button>
+    <pre>Thorarinson, J. (2026). The Geometry of Legal Language: Embedding Structure Across Authoritative Dictionaries. arXiv preprint (forthcoming).</pre>
+  </div>
+
+  <p class="section-label">Authors</p>
+  <div class="author-card">
+    <div class="author-avatar">JT</div>
+    <div>
+      <div class="author-name">Joel Thorarinson</div>
+      <div class="author-detail">Coherence Research Group &middot; <a href="https://orcid.org/0000-0002-0553-842X" target="_blank">ORCID 0000-0002-0553-842X</a></div>
+    </div>
+  </div>
+
+  <p class="section-label">Keywords</p>
+  <div class="keywords">
+    <span class="keyword-tag">legal NLP</span>
+    <span class="keyword-tag">dictionary embeddings</span>
+    <span class="keyword-tag">Bouvier's Law Dictionary</span>
+    <span class="keyword-tag">definitional drift</span>
+    <span class="keyword-tag">cross-jurisdictional</span>
+    <span class="keyword-tag">PCA compression</span>
+    <span class="keyword-tag">leverage words</span>
+    <span class="keyword-tag">semantic drift</span>
+    <span class="keyword-tag">embedding geometry</span>
+  </div>
+
+  <p class="section-label">Related Papers</p>
+  <div class="related-grid">
+    <a href="dimensionality-illusion.html" class="related-card">
+      <div class="related-number">P1</div>
+      <div>
+        <div class="related-title">The Dimensionality Illusion</div>
+        <div class="related-desc">Predecessor paper establishing the PCA compression problem with a 62-term experiment</div>
+      </div>
+    </a>
+    <a href="structural-holes.html" class="related-card">
+      <div class="related-number">P3</div>
+      <div>
+        <div class="related-title">Structural Holes in Legal Embedding Spaces</div>
+        <div class="related-desc">Uses the cross-jurisdictional terms from this paper to demonstrate geometric isolation</div>
+      </div>
+    </a>
+    <a href="knowledge-holes.html" class="related-card">
+      <div class="related-number">P3b</div>
+      <div>
+        <div class="related-title">Structural Holes in Human Knowledge</div>
+        <div class="related-desc">Extends the structural-hole methodology from legal language to all of human knowledge</div>
+      </div>
+    </a>
+    <a href="pdfs/dcrp-benchmark.pdf" class="related-card" target="_blank">
+      <div class="related-number">P4</div>
+      <div>
+        <div class="related-title">DCRP: Domain-Conditional Retrieval Benchmark</div>
+        <div class="related-desc">Formalizes the domain-conditional evaluation methodology used here</div>
+      </div>
+    </a>
+  </div>
+
+</div>
+
+<footer>
+  <div style="display:flex; justify-content:center; gap:2rem; margin-bottom:0.8rem;">
+    <a href="/papers/">All Papers</a>
+    <a href="/">Home</a>
+    <a href="https://github.com/jthorvaldur">GitHub</a>
+    <a href="https://arxiv.org/a/thorarinson_j_1.html">arXiv</a>
+    <a href="https://conformalmaps.com">Conformal Maps</a>
+  </div>
+  &copy; 2026 Thorarinson
+</footer>
+
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+  const overlay = document.createElement('div');
+  overlay.className = 'lightbox-overlay';
+  const img = document.createElement('img');
+  overlay.appendChild(img);
+  document.body.appendChild(overlay);
+  document.querySelectorAll('.figure-card img').forEach(el => {
+    el.addEventListener('click', () => { img.src = el.src; overlay.classList.add('active'); });
+  });
+  overlay.addEventListener('click', () => overlay.classList.remove('active'));
+  document.addEventListener('keydown', e => { if (e.key === 'Escape') overlay.classList.remove('active'); });
+});
+function copyText(btn) {
+  const pre = btn.parentElement.querySelector('pre');
+  navigator.clipboard.writeText(pre.textContent).then(() => { btn.textContent = 'Copied'; setTimeout(() => btn.textContent = 'Copy', 2000); });
+}
+</script>
+<script data-goatcounter="https://jthorvaldur.goatcounter.com/count" async src="//gc.zgo.at/count.js"></script>
+</body>
+</html>

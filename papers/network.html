@@ -1,0 +1,1269 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Paper Network — Thorarinson</title>
+  <meta name="description" content="Interactive force-directed graph mapping 23 papers, authors, referenced researchers, and core concepts.">
+  <meta property="og:title" content="Paper Network — Thorarinson">
+  <meta property="og:description" content="Interactive D3.js visualization of the concept and author network across 23 research papers.">
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="https://jthorvaldur.github.io/papers/network.html">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@200;300;400;500;600;700&family=JetBrains+Mono:wght@300;400;500;600&display=swap" rel="stylesheet">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/d3/7.9.0/d3.min.js"></script>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg: #07070f;
+      --surface: rgba(255,255,255,0.035);
+      --surface-hover: rgba(122,162,247,0.07);
+      --border: rgba(255,255,255,0.07);
+      --border-hover: rgba(122,162,247,0.30);
+      --text: #e8e8f4;
+      --muted: rgba(232,232,244,0.45);
+      --dim: rgba(232,232,244,0.25);
+      --accent: #7aa2f7;
+      --accent2: #bb9af7;
+      --green: #9ece6a;
+      --amber: #e0af68;
+      --red: #f7768e;
+      --teal: #73daca;
+      --glow: rgba(122,162,247,0.10);
+      --gold: #d4a843;
+      --purple: #bb9af7;
+      --blue: #7aa2f7;
+      --orange: #e0af68;
+    }
+
+    html { scroll-behavior: smooth; }
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: 'Outfit', sans-serif;
+      overflow-x: hidden;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    /* -- Nav -- */
+    .nav {
+      position: fixed; top: 0; left: 0; right: 0; z-index: 50;
+      padding: 0 2rem; height: 56px;
+      display: flex; align-items: center; justify-content: space-between;
+      background: rgba(7,7,15,0.7);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      border-bottom: 1px solid var(--border);
+    }
+    .nav-brand {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.72rem; font-weight: 600;
+      letter-spacing: 0.2em; text-transform: uppercase;
+      color: var(--accent);
+      text-decoration: none;
+    }
+    .nav-links {
+      display: flex; gap: 1.5rem; list-style: none;
+    }
+    .nav-links a {
+      font-size: 0.78rem; font-weight: 400;
+      color: var(--muted); text-decoration: none;
+      transition: color 0.2s;
+    }
+    .nav-links a:hover { color: var(--text); }
+    .nav-links a.active { color: var(--accent); }
+
+    /* -- Header -- */
+    .page-header {
+      padding: 7rem 2rem 2rem;
+      max-width: 1000px; margin: 0 auto;
+      text-align: center;
+    }
+    .page-eyebrow {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.65rem; letter-spacing: 0.3em;
+      text-transform: uppercase; color: var(--accent);
+      margin-bottom: 1.5rem;
+    }
+    .page-title {
+      font-size: clamp(2rem, 5vw, 3.4rem);
+      font-weight: 200; letter-spacing: -0.01em;
+      line-height: 1.15; margin-bottom: 1rem;
+    }
+    .page-title strong {
+      font-weight: 500;
+      background: linear-gradient(140deg, #ffffff 20%, var(--accent) 60%, var(--accent2));
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+    .page-sub {
+      font-size: 0.92rem; color: var(--muted);
+      max-width: 640px; margin: 0 auto;
+      line-height: 1.7;
+    }
+
+    /* -- Controls -- */
+    .controls {
+      max-width: 1200px; margin: 1.5rem auto 0;
+      padding: 0 2rem;
+      display: flex; flex-wrap: wrap; gap: 0.75rem;
+      align-items: center; justify-content: center;
+    }
+    .search-box {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 0.5rem 1rem;
+      color: var(--text);
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.75rem;
+      width: 220px;
+      outline: none;
+      transition: border-color 0.2s;
+    }
+    .search-box::placeholder { color: var(--dim); }
+    .search-box:focus { border-color: var(--accent); }
+
+    .filter-btn {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      padding: 0.4rem 0.8rem;
+      color: var(--muted);
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.6rem;
+      letter-spacing: 0.06em;
+      cursor: pointer;
+      transition: all 0.2s;
+      text-transform: uppercase;
+    }
+    .filter-btn:hover {
+      background: var(--surface-hover);
+      border-color: var(--border-hover);
+      color: var(--text);
+    }
+    .filter-btn.active {
+      border-color: var(--border-hover);
+      color: var(--text);
+    }
+    .filter-btn.active[data-filter="all"] {
+      background: rgba(122,162,247,0.08);
+      border-color: rgba(122,162,247,0.3);
+      color: var(--accent);
+    }
+    .filter-btn.active[data-filter="embedding"] {
+      background: rgba(122,162,247,0.12);
+      border-color: rgba(122,162,247,0.4);
+      color: var(--accent);
+    }
+    .filter-btn.active[data-filter="coherence"] {
+      background: rgba(158,206,106,0.12);
+      border-color: rgba(158,206,106,0.4);
+      color: var(--green);
+    }
+    .filter-btn.active[data-filter="application"] {
+      background: rgba(224,175,104,0.12);
+      border-color: rgba(224,175,104,0.4);
+      color: var(--orange);
+    }
+    .filter-btn.active[data-filter="koplik"] {
+      background: rgba(187,154,247,0.12);
+      border-color: rgba(187,154,247,0.4);
+      color: var(--purple);
+    }
+    .filter-btn.active[data-filter="author"] {
+      background: rgba(115,218,202,0.12);
+      border-color: rgba(115,218,202,0.4);
+      color: var(--teal);
+    }
+    .filter-btn.active[data-filter="concept"] {
+      background: rgba(212,168,67,0.12);
+      border-color: rgba(212,168,67,0.4);
+      color: var(--gold);
+    }
+    .filter-btn.active[data-filter="reference"] {
+      background: rgba(247,118,142,0.12);
+      border-color: rgba(247,118,142,0.4);
+      color: var(--red);
+    }
+
+    .filter-sep {
+      width: 1px; height: 20px;
+      background: var(--border);
+    }
+
+    /* -- Graph container -- */
+    .graph-container {
+      position: relative;
+      max-width: 1400px;
+      margin: 1.5rem auto 0;
+      padding: 0 1rem;
+    }
+    #graph-svg {
+      width: 100%;
+      height: 720px;
+      background: rgba(7,7,15,0.5);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      cursor: grab;
+    }
+    #graph-svg:active { cursor: grabbing; }
+
+    /* -- Detail panel -- */
+    .detail-panel {
+      position: absolute;
+      top: 1rem; right: 2rem;
+      width: 340px;
+      background: rgba(7,7,15,0.92);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 1.4rem 1.6rem;
+      display: none;
+      z-index: 10;
+      max-height: 660px;
+      overflow-y: auto;
+    }
+    .detail-panel.visible { display: block; }
+    .detail-close {
+      position: absolute; top: 0.8rem; right: 0.8rem;
+      background: none; border: none;
+      color: var(--dim); cursor: pointer;
+      font-size: 1.1rem;
+      transition: color 0.2s;
+    }
+    .detail-close:hover { color: var(--text); }
+    .detail-type {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.55rem; font-weight: 600;
+      letter-spacing: 0.1em; text-transform: uppercase;
+      padding: 2px 8px; border-radius: 4px;
+      display: inline-block; margin-bottom: 0.6rem;
+    }
+    .detail-name {
+      font-weight: 600; font-size: 1.05rem;
+      margin-bottom: 0.5rem;
+    }
+    .detail-desc {
+      font-size: 0.82rem; color: var(--muted);
+      line-height: 1.65; margin-bottom: 1rem;
+    }
+    .detail-connections {
+      border-top: 1px solid var(--border);
+      padding-top: 0.8rem;
+    }
+    .detail-conn-label {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.55rem; letter-spacing: 0.1em;
+      text-transform: uppercase; color: var(--dim);
+      margin-bottom: 0.5rem;
+    }
+    .detail-conn-item {
+      font-size: 0.78rem; color: var(--muted);
+      padding: 0.3rem 0;
+      cursor: pointer;
+      transition: color 0.2s;
+    }
+    .detail-conn-item:hover { color: var(--text); }
+    .detail-conn-dot {
+      display: inline-block; width: 8px; height: 8px;
+      border-radius: 50%; margin-right: 6px;
+      vertical-align: middle;
+    }
+    .detail-link {
+      display: inline-block;
+      margin-top: 0.6rem;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.65rem;
+      color: var(--accent);
+      text-decoration: none;
+      transition: color 0.2s;
+    }
+    .detail-link:hover { color: var(--text); }
+
+    /* -- Legend -- */
+    .legend {
+      max-width: 1400px; margin: 1.5rem auto 0;
+      padding: 0 2rem;
+      display: flex; flex-wrap: wrap; gap: 1.5rem;
+      justify-content: center;
+    }
+    .legend-item {
+      display: flex; align-items: center; gap: 6px;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.6rem; color: var(--dim);
+      letter-spacing: 0.06em;
+    }
+    .legend-dot {
+      width: 10px; height: 10px; border-radius: 50%;
+    }
+    .legend-line {
+      width: 24px; height: 2px; border-radius: 1px;
+    }
+
+    /* -- Footer -- */
+    footer {
+      position: relative; z-index: 2;
+      text-align: center; padding: 2rem;
+      margin-top: 4rem;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.65rem; color: var(--dim);
+      border-top: 1px solid var(--border);
+    }
+    footer a { color: var(--muted); text-decoration: none; }
+    footer a:hover { color: var(--accent); }
+
+    /* -- Responsive -- */
+    @media (max-width: 768px) {
+      .nav-links { display: none; }
+      .detail-panel {
+        position: fixed;
+        top: auto; bottom: 0; left: 0; right: 0;
+        width: 100%;
+        border-radius: 12px 12px 0 0;
+        max-height: 50vh;
+      }
+      #graph-svg { height: 500px; }
+      .controls { padding: 0 1rem; }
+      .search-box { width: 100%; }
+    }
+
+    /* -- Scrollbar -- */
+    .detail-panel::-webkit-scrollbar { width: 4px; }
+    .detail-panel::-webkit-scrollbar-track { background: transparent; }
+    .detail-panel::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+  </style>
+</head>
+<body>
+
+<nav class="nav">
+  <a href="/" class="nav-brand">Thorarinson</a>
+  <ul class="nav-links">
+    <li><a href="/#projects">Projects</a></li>
+    <li><a href="/papers/">Papers</a></li>
+    <li><a href="/papers/network.html" class="active">Network</a></li>
+    <li><a href="/knowledge-systems/">Knowledge Systems</a></li>
+    <li><a href="/#research">Research</a></li>
+  </ul>
+</nav>
+
+<header class="page-header">
+  <p class="page-eyebrow">Concept &amp; Author Network</p>
+  <h1 class="page-title"><strong>Paper Network</strong></h1>
+  <p class="page-sub">
+    23 papers, 3 authors, 11 referenced researchers, and the concepts that bind them. Click any node to explore its connections across the research portfolio.
+  </p>
+</header>
+
+<div class="controls">
+  <input type="text" class="search-box" id="search" placeholder="Search nodes...">
+  <div class="filter-sep"></div>
+  <button class="filter-btn active" data-filter="all" onclick="filterGraph('all', this)">All</button>
+  <div class="filter-sep"></div>
+  <button class="filter-btn" data-filter="embedding" onclick="filterGraph('embedding', this)">Embedding</button>
+  <button class="filter-btn" data-filter="coherence" onclick="filterGraph('coherence', this)">Coherence</button>
+  <button class="filter-btn" data-filter="application" onclick="filterGraph('application', this)">Applications</button>
+  <button class="filter-btn" data-filter="koplik" onclick="filterGraph('koplik', this)">Koplik</button>
+  <div class="filter-sep"></div>
+  <button class="filter-btn" data-filter="author" onclick="filterGraph('author', this)">Authors</button>
+  <button class="filter-btn" data-filter="reference" onclick="filterGraph('reference', this)">References</button>
+  <button class="filter-btn" data-filter="concept" onclick="filterGraph('concept', this)">Concepts</button>
+</div>
+
+<div class="graph-container">
+  <svg id="graph-svg"></svg>
+  <div class="detail-panel" id="detail-panel">
+    <button class="detail-close" onclick="closePanel()">&times;</button>
+    <div id="detail-content"></div>
+  </div>
+</div>
+
+<div class="legend">
+  <div class="legend-item"><div class="legend-dot" style="background:#7aa2f7;"></div>Embedding (P1-P5)</div>
+  <div class="legend-item"><div class="legend-dot" style="background:#9ece6a;"></div>Coherence (P6-P9)</div>
+  <div class="legend-item"><div class="legend-dot" style="background:#e0af68;"></div>Applications (P10-P14)</div>
+  <div class="legend-item"><div class="legend-dot" style="background:#bb9af7;"></div>Koplik Bridge (K1-K8)</div>
+  <div class="legend-item"><div class="legend-dot" style="background:#f7768e;"></div>Paper 3b</div>
+  <div class="legend-item"><div class="legend-dot" style="background:#73daca;"></div>Authors</div>
+  <div class="legend-item"><div class="legend-dot" style="background:#f7768e; opacity:0.5;"></div>Referenced Authors</div>
+  <div class="legend-item"><div class="legend-dot" style="background:#d4a843;"></div>Concepts</div>
+</div>
+
+<footer>
+  <div style="display:flex; justify-content:center; gap:2rem; margin-bottom:0.8rem;">
+    <a href="/">Home</a>
+    <a href="/papers/">Papers</a>
+    <a href="/knowledge-systems/">Knowledge Systems</a>
+    <a href="https://github.com/jthorvaldur">GitHub</a>
+  </div>
+  &copy; 2026 Thorarinson
+</footer>
+
+<script>
+// ========================================================================
+// GRAPH DATA
+// ========================================================================
+
+const nodes = [
+  // --- PAPERS: Embedding Series (P1-P5) ---
+  { id: "p1", label: "P1: Dimensionality Illusion", group: "embedding", type: "paper",
+    desc: "PCA variance is not semantic information. 2M+ vectors, DCRP metric. Domain-specific structure lives in dimensions that variance-based methods discard.",
+    pages: 18, refs: 40, status: "arXiv-ready",
+    pdf: "pdfs/dimensionality-illusion.pdf" },
+  { id: "p2", label: "P2: Geometry of Legal Language", group: "embedding", type: "paper",
+    desc: "Legal concepts form non-convex manifolds in embedding space. Cross-jurisdictional structural holes reveal where language fails to encode legal protections.",
+    pages: 16, refs: 33, status: "arXiv-ready",
+    pdf: "pdfs/geometry-legal-language.pdf" },
+  { id: "p3", label: "P3: Structural Holes", group: "embedding", type: "paper",
+    desc: "Void detection in embedding spaces. The absence of a concept in vector space maps to the absence of a legal protection in the jurisdiction.",
+    pages: 13, refs: 25, status: "arXiv-ready",
+    pdf: "pdfs/structural-holes.pdf" },
+  { id: "p3b", label: "P3b: Knowledge Holes", group: "p3b", type: "paper",
+    desc: "Extending structural hole analysis from legal domains to general knowledge representation. Detecting what a model does not know by mapping void topology.",
+    status: "In Progress",
+    pdf: "pdfs/knowledge-holes.pdf" },
+  { id: "p4", label: "P4: DCRP Benchmark", group: "embedding", type: "paper",
+    desc: "Domain-Conditional Retrieval Precision. The metric that catches what MTEB misses: domain-specific retrieval failures masked by aggregate scores.",
+    pages: 12, refs: 35, status: "Near-ready",
+    pdf: "pdfs/dcrp-benchmark.pdf" },
+  { id: "p5", label: "P5: Sparse vs Dense", group: "embedding", type: "paper",
+    desc: "Sparse representations (SPLADE++) preserve domain structure that dense PCA projections destroy. The mathematical proof that compression is lossy in ways that matter.",
+    pages: 9, refs: 24, status: "Near-ready",
+    pdf: "pdfs/sparse-vs-dense.pdf" },
+
+  // --- PAPERS: Coherence Core (P6-P9) ---
+  { id: "p6", label: "P6: Discoverative Intelligence", group: "coherence", type: "paper",
+    desc: "From prediction to discovery. Coherence drift detection as a fundamentally different mode of intelligence: seeing what is becoming incoherent before it fails.",
+    pages: 18, refs: 52, status: "arXiv-ready",
+    pdf: "pdfs/coherence-drift.pdf" },
+  { id: "p7", label: "P7: Benchmarking Early Detection", group: "coherence", type: "paper",
+    desc: "1,000-trial Monte Carlo validation. 100% detection rate vs 3.2% for variance methods. 406-step mean lead time.",
+    pages: 12, refs: 33, status: "arXiv-ready",
+    pdf: "pdfs/coherence-benchmarks.pdf" },
+  { id: "p8", label: "P8: Recovery Is Not Baseline", group: "coherence", type: "paper",
+    desc: "Biological systems recover to new coherence states, not original baselines. Levin's bioelectric morphogenesis meets allostatic load theory.",
+    pages: 17, refs: 39, status: "arXiv-ready",
+    pdf: "pdfs/coherence-biology.pdf" },
+  { id: "p9", label: "P9: Literature to Hypothesis", group: "coherence", type: "paper",
+    desc: "Using coherence analysis on scientific literature to generate experimental hypotheses. From reading papers to finding what the field has not yet asked.",
+    pages: 14, refs: 25, status: "arXiv-ready",
+    pdf: "pdfs/coherence-discovery.pdf" },
+
+  // --- PAPERS: Applications (P10-P14) ---
+  { id: "p10", label: "P10: Neurodivergence as Variation", group: "application", type: "paper",
+    desc: "ADHD, autism, dyslexia as coherence pattern variations, not deficits. Different phase relationships, not broken phase relationships.",
+    pages: 13, refs: 45, status: "arXiv-ready",
+    pdf: "pdfs/coherence-neurodivergence.pdf" },
+  { id: "p11", label: "P11: Blockchain Coherence", group: "application", type: "paper",
+    desc: "Continuous coherence monitoring for smart contract security. Detecting protocol degradation before exploits.",
+    pages: 10, refs: 23, status: "arXiv-ready",
+    pdf: "pdfs/coherence-blockchain.pdf" },
+  { id: "p12", label: "P12: Governance Coherence", group: "application", type: "paper",
+    desc: "Six falsifiable operators for measuring governance health. When institutions lose coherence, it is measurable before it is visible.",
+    pages: 17, refs: 38, status: "arXiv-ready",
+    pdf: "pdfs/coherence-governance.pdf" },
+  { id: "p13", label: "P13: Bio-Integrated Infrastructure", group: "application", type: "paper",
+    desc: "Infrastructure that heals rather than degrades. Biomimetic self-repair, coherence-monitored bridges, and the economics of systems that improve with age.",
+    pages: 16, refs: 27, status: "arXiv-ready",
+    pdf: "pdfs/coherence-bioinfra.pdf" },
+  { id: "p14", label: "P14: Coherent Novelty", group: "application", type: "paper",
+    desc: "How genuine novelty differs from noise. Coherent innovation maintains systemic integrity while introducing new structure.",
+    pages: 11, refs: 31, status: "arXiv-ready",
+    pdf: "pdfs/coherence-novelty.pdf" },
+
+  // --- PAPERS: Koplik Bridge (K1-K8) ---
+  { id: "k1", label: "K1: Biofield to Bioelectric", group: "koplik", type: "paper",
+    desc: "Formalizing biofield claims using Levin's bioelectric framework. Maps qi, prana, ki to measurable membrane potentials.",
+    pages: 12, refs: 38, status: "In Progress",
+    pdf: "pdfs/biofield-formalization.pdf" },
+  { id: "k2", label: "K2: EZ Water Coherence", group: "koplik", type: "paper",
+    desc: "Pollack's exclusion zone water as potential mechanism for potentization and water memory claims. Separating reproducible findings from vitalist overreach.",
+    pages: 16, refs: 47, status: "In Progress",
+    pdf: "pdfs/ez-water-coherence.pdf" },
+  { id: "k3", label: "K3: Resonance Claims", group: "koplik", type: "paper",
+    desc: "Testing frequency, vibration, and resonance claims from esoteric traditions against acoustic physics and coupled oscillator theory.",
+    status: "In Progress",
+    pdf: "pdfs/resonance-claims.pdf" },
+  { id: "k4", label: "K4: Plant Biophotonics", group: "koplik", type: "paper",
+    desc: "Biophotonic signatures of plant vitality. Can delayed luminescence discriminate organic from conventional?",
+    status: "In Progress",
+    pdf: "pdfs/plant-coherence.pdf" },
+  { id: "k5", label: "K5: Cross-Cultural Convergence", group: "koplik", type: "paper",
+    desc: "When TCM, Ayurveda, Tibetan, and Western esoteric systems independently arrive at the same architecture, it constitutes evidence.",
+    pages: 14, refs: 15, status: "In Progress",
+    pdf: "pdfs/cross-cultural-convergence.pdf" },
+  { id: "k6", label: "K6: Edge of Testability", group: "koplik", type: "paper",
+    desc: "Where do traditional claims stop being testable? The demarcation problem applied to biofield, consciousness, and subtle energy.",
+    status: "In Progress",
+    pdf: "pdfs/edge-of-testability.pdf" },
+  { id: "k7", label: "K7: Food Coherence", group: "koplik", type: "paper",
+    desc: "Ayurvedic rasa theory and TCM food energetics tested through biophotonic emission and coherence-based quality metrics.",
+    status: "In Progress",
+    pdf: "pdfs/food-coherence.pdf" },
+  { id: "k8", label: "K8: Nonlocal Coherence", group: "koplik", type: "paper",
+    desc: "Testing nonlocal correlation claims through entanglement analogies, biophoton synchrony, and the boundary between quantum and classical coherence.",
+    status: "In Progress",
+    pdf: "pdfs/nonlocal-coherence.pdf" },
+
+  // --- AUTHORS (our team) ---
+  { id: "joel", label: "Joel Thorarinson", group: "author", type: "author",
+    desc: "Lead author on all 23 papers. PhD Physics. Embedding geometry, coherence theory, discoverative intelligence." },
+  { id: "allison", label: "Allison Hensgen", group: "author", type: "author",
+    desc: "Co-author. Coherence applications, neurodivergence, governance systems." },
+  { id: "iulia", label: "Iulia Koplik", group: "author", type: "author",
+    desc: "Co-author on the bridge paper series (K1-K8). Traditional knowledge systems, biofield formalization." },
+
+  // --- REFERENCED AUTHORS ---
+  { id: "ref_gleiser", label: "Marcelo Gleiser", group: "reference", type: "reference",
+    desc: "Oscillons, configurational entropy, information content of field configurations. Foundation for coherence measurement methodology." },
+  { id: "ref_walker", label: "Sara Walker", group: "reference", type: "reference",
+    desc: "Assembly theory. Measuring complexity through the minimum number of steps to construct an object. Framework for coherent novelty." },
+  { id: "ref_levin", label: "Michael Levin", group: "reference", type: "reference",
+    desc: "Bioelectric signaling in morphogenesis. Non-neural bioelectricity as developmental information. Bridge between biology and coherence theory." },
+  { id: "ref_benfatto", label: "Benfatto & Grigolini", group: "reference", type: "reference",
+    desc: "Biophoton diffusion entropy analysis (DEA). Statistical methods for ultra-weak photon emission from living systems." },
+  { id: "ref_coleman", label: "Sidney Coleman", group: "reference", type: "reference",
+    desc: "Symmetry breaking in quantum field theory. 'There are no Goldstone bosons in 1+1 dimensions.' Foundational for coherence phase transitions." },
+  { id: "ref_witten", label: "Edward Witten", group: "reference", type: "reference",
+    desc: "Topological quantum field theory (TQFT). Mathematical framework for topology-invariant observables. Structural foundation for embedding geometry." },
+  { id: "ref_frohlich", label: "Herbert Fröhlich", group: "reference", type: "reference",
+    desc: "Coherent excitations in biological systems. Predicted long-range quantum coherence in biomolecules decades before experimental confirmation." },
+  { id: "ref_scheffer", label: "Marten Scheffer", group: "reference", type: "reference",
+    desc: "Critical transitions and early warning signals. Regime shifts in complex systems. Theoretical basis for coherence drift detection." },
+  { id: "ref_kauffman", label: "Stuart Kauffman", group: "reference", type: "reference",
+    desc: "Self-organization and the origins of order. Edge-of-chaos dynamics. Boolean network models of biological regulation." },
+  { id: "ref_prigogine", label: "Ilya Prigogine", group: "reference", type: "reference",
+    desc: "Dissipative structures and irreversible thermodynamics. Order through fluctuations. Nobel Prize 1977. Foundation for non-equilibrium coherence." },
+  { id: "ref_yu", label: "Yuhua Yu", group: "reference", type: "reference",
+    desc: "Perplexity-creativity connection. Statistical measures of surprise and novelty in language models. Basis for coherent novelty detection." },
+
+  // --- CONCEPTS ---
+  { id: "c_fisher_rao", label: "Fisher-Rao Manifold", group: "concept", type: "concept",
+    desc: "The natural Riemannian metric on statistical manifolds. Measures information distance between probability distributions. The geometry that embedding analysis inherits." },
+  { id: "c_structural_holes", label: "Structural Holes", group: "concept", type: "concept",
+    desc: "Voids in embedding space where concepts should exist but do not. Maps to missing legal protections, knowledge gaps, and institutional blind spots." },
+  { id: "c_operators", label: "Coherence Operators", group: "concept", type: "concept",
+    desc: "Six operators that measure systemic coherence: Drift (Δ), Phase (P), Amplitude (A), Resonance (R), Dissipation (D), Novelty (N). The measurement framework across all applications." },
+  { id: "c_nnd", label: "NND Metric", group: "concept", type: "concept",
+    desc: "Nearest Neighbor Distortion. Measures how local neighborhood structure changes under dimensionality reduction. Catches what PCA explained-variance misses." },
+  { id: "c_dcrp", label: "DCRP Metric", group: "concept", type: "concept",
+    desc: "Domain-Conditional Retrieval Precision. Evaluates retrieval quality conditioned on domain, exposing failures hidden by aggregate benchmarks like MTEB." },
+  { id: "c_scl_cisa", label: "SCL / CISA", group: "concept", type: "concept",
+    desc: "Semantic Coherence Loss and Coherence-Informed Semantic Analysis. Paired metrics for detecting when meaning degrades in compressed representations." },
+  { id: "c_babel", label: "Babel / Translation Gaps", group: "concept", type: "concept",
+    desc: "Cross-domain translation failures where concepts from one field cannot be faithfully mapped to another. The structural reason interdisciplinary work is hard." },
+  { id: "c_discoverative", label: "Discoverative Intelligence", group: "concept", type: "concept",
+    desc: "A mode of intelligence oriented toward discovery rather than prediction. Detecting emergent incoherence before systems fail. The central thesis of Series 2." }
+];
+
+const edges = [
+  // --- AUTHORSHIP: Joel -> all papers ---
+  { source: "joel", target: "p1", type: "authorship" },
+  { source: "joel", target: "p2", type: "authorship" },
+  { source: "joel", target: "p3", type: "authorship" },
+  { source: "joel", target: "p3b", type: "authorship" },
+  { source: "joel", target: "p4", type: "authorship" },
+  { source: "joel", target: "p5", type: "authorship" },
+  { source: "joel", target: "p6", type: "authorship" },
+  { source: "joel", target: "p7", type: "authorship" },
+  { source: "joel", target: "p8", type: "authorship" },
+  { source: "joel", target: "p9", type: "authorship" },
+  { source: "joel", target: "p10", type: "authorship" },
+  { source: "joel", target: "p11", type: "authorship" },
+  { source: "joel", target: "p12", type: "authorship" },
+  { source: "joel", target: "p13", type: "authorship" },
+  { source: "joel", target: "p14", type: "authorship" },
+  { source: "joel", target: "k1", type: "authorship" },
+  { source: "joel", target: "k2", type: "authorship" },
+  { source: "joel", target: "k3", type: "authorship" },
+  { source: "joel", target: "k4", type: "authorship" },
+  { source: "joel", target: "k5", type: "authorship" },
+  { source: "joel", target: "k6", type: "authorship" },
+  { source: "joel", target: "k7", type: "authorship" },
+  { source: "joel", target: "k8", type: "authorship" },
+
+  // --- AUTHORSHIP: Allison ---
+  { source: "allison", target: "p6", type: "authorship" },
+  { source: "allison", target: "p7", type: "authorship" },
+  { source: "allison", target: "p8", type: "authorship" },
+  { source: "allison", target: "p10", type: "authorship" },
+  { source: "allison", target: "p12", type: "authorship" },
+  { source: "allison", target: "p14", type: "authorship" },
+
+  // --- AUTHORSHIP: Iulia ---
+  { source: "iulia", target: "k1", type: "authorship" },
+  { source: "iulia", target: "k2", type: "authorship" },
+  { source: "iulia", target: "k3", type: "authorship" },
+  { source: "iulia", target: "k4", type: "authorship" },
+  { source: "iulia", target: "k5", type: "authorship" },
+  { source: "iulia", target: "k6", type: "authorship" },
+  { source: "iulia", target: "k7", type: "authorship" },
+  { source: "iulia", target: "k8", type: "authorship" },
+
+  // --- INTER-PAPER CITATIONS ---
+  { source: "p1", target: "p2", label: "Dimensionality framework", type: "citation" },
+  { source: "p1", target: "p4", label: "DCRP metric origin", type: "citation" },
+  { source: "p1", target: "p5", label: "Dense vs sparse motivation", type: "citation" },
+  { source: "p2", target: "p3", label: "Geometry to voids", type: "citation" },
+  { source: "p3", target: "p3b", label: "Legal holes to knowledge holes", type: "citation" },
+  { source: "p4", target: "p5", label: "Benchmark to proof", type: "citation" },
+  { source: "p1", target: "p6", label: "Information geometry foundation", type: "citation" },
+  { source: "p5", target: "p6", label: "Sparse structure for coherence", type: "citation" },
+  { source: "p6", target: "p7", label: "Theory to benchmarks", type: "citation" },
+  { source: "p6", target: "p8", label: "Coherence to biology", type: "citation" },
+  { source: "p6", target: "p9", label: "Coherence to literature", type: "citation" },
+  { source: "p8", target: "p10", label: "Biology to neurodivergence", type: "citation" },
+  { source: "p6", target: "p11", label: "Drift detection to blockchain", type: "citation" },
+  { source: "p6", target: "p12", label: "Operators to governance", type: "citation" },
+  { source: "p8", target: "p13", label: "Bio-repair to infrastructure", type: "citation" },
+  { source: "p6", target: "p14", label: "Coherence to novelty", type: "citation" },
+  { source: "p6", target: "k1", label: "Coherence operators for biofield", type: "citation" },
+  { source: "k1", target: "k5", label: "Biofield to convergence", type: "citation" },
+  { source: "k4", target: "k7", label: "Plant to food coherence", type: "citation" },
+  { source: "k3", target: "k8", label: "Resonance to nonlocal", type: "citation" },
+  { source: "k6", target: "k8", label: "Testability boundary", type: "citation" },
+
+  // --- PAPER -> CONCEPT ---
+  { source: "p1", target: "c_fisher_rao", label: "Information geometry", type: "uses" },
+  { source: "p1", target: "c_nnd", label: "Proposed metric", type: "uses" },
+  { source: "p1", target: "c_dcrp", label: "Proposed metric", type: "uses" },
+  { source: "p2", target: "c_structural_holes", label: "Legal voids", type: "uses" },
+  { source: "p2", target: "c_fisher_rao", label: "Manifold geometry", type: "uses" },
+  { source: "p3", target: "c_structural_holes", label: "Void detection", type: "uses" },
+  { source: "p3b", target: "c_structural_holes", label: "Knowledge voids", type: "uses" },
+  { source: "p4", target: "c_dcrp", label: "Benchmark definition", type: "uses" },
+  { source: "p5", target: "c_scl_cisa", label: "Coherence loss", type: "uses" },
+  { source: "p5", target: "c_nnd", label: "Distortion measure", type: "uses" },
+  { source: "p6", target: "c_discoverative", label: "Central thesis", type: "uses" },
+  { source: "p6", target: "c_operators", label: "Operator definition", type: "uses" },
+  { source: "p7", target: "c_operators", label: "Operator benchmarks", type: "uses" },
+  { source: "p9", target: "c_babel", label: "Translation gaps", type: "uses" },
+  { source: "p9", target: "c_discoverative", label: "Discovery mode", type: "uses" },
+  { source: "p12", target: "c_operators", label: "Governance operators", type: "uses" },
+  { source: "p14", target: "c_discoverative", label: "Novelty detection", type: "uses" },
+
+  // --- REFERENCED AUTHOR -> CONCEPT ---
+  { source: "ref_gleiser", target: "c_operators", label: "Configurational entropy", type: "foundational" },
+  { source: "ref_walker", target: "c_discoverative", label: "Assembly complexity", type: "foundational" },
+  { source: "ref_levin", target: "c_operators", label: "Bioelectric coherence", type: "foundational" },
+  { source: "ref_coleman", target: "c_operators", label: "Symmetry breaking", type: "foundational" },
+  { source: "ref_witten", target: "c_fisher_rao", label: "Topological invariants", type: "foundational" },
+  { source: "ref_scheffer", target: "c_discoverative", label: "Critical transitions", type: "foundational" },
+  { source: "ref_kauffman", target: "c_discoverative", label: "Self-organization", type: "foundational" },
+  { source: "ref_prigogine", target: "c_operators", label: "Dissipative structures", type: "foundational" },
+  { source: "ref_frohlich", target: "c_operators", label: "Coherent excitations", type: "foundational" },
+  { source: "ref_yu", target: "c_discoverative", label: "Perplexity-creativity", type: "foundational" },
+  { source: "ref_benfatto", target: "c_operators", label: "Diffusion entropy", type: "foundational" },
+
+  // --- REFERENCED AUTHOR -> PAPER (key citations) ---
+  { source: "ref_gleiser", target: "p6", label: "Configurational entropy", type: "cited-in" },
+  { source: "ref_gleiser", target: "p7", label: "Entropy benchmarks", type: "cited-in" },
+  { source: "ref_walker", target: "p14", label: "Assembly theory", type: "cited-in" },
+  { source: "ref_levin", target: "p8", label: "Bioelectric morphogenesis", type: "cited-in" },
+  { source: "ref_levin", target: "k1", label: "Biofield formalization", type: "cited-in" },
+  { source: "ref_benfatto", target: "k4", label: "Biophoton DEA", type: "cited-in" },
+  { source: "ref_benfatto", target: "p7", label: "DEA methods", type: "cited-in" },
+  { source: "ref_coleman", target: "p6", label: "Symmetry breaking", type: "cited-in" },
+  { source: "ref_witten", target: "p1", label: "TQFT framework", type: "cited-in" },
+  { source: "ref_frohlich", target: "k1", label: "Coherent excitations", type: "cited-in" },
+  { source: "ref_frohlich", target: "k3", label: "Resonance theory", type: "cited-in" },
+  { source: "ref_scheffer", target: "p6", label: "Early warning signals", type: "cited-in" },
+  { source: "ref_scheffer", target: "p7", label: "Critical transitions", type: "cited-in" },
+  { source: "ref_kauffman", target: "p8", label: "Self-organization", type: "cited-in" },
+  { source: "ref_kauffman", target: "p14", label: "Edge of chaos", type: "cited-in" },
+  { source: "ref_prigogine", target: "p8", label: "Dissipative structures", type: "cited-in" },
+  { source: "ref_prigogine", target: "p13", label: "Non-equilibrium order", type: "cited-in" },
+  { source: "ref_yu", target: "p14", label: "Perplexity-creativity", type: "cited-in" },
+  { source: "ref_yu", target: "p6", label: "Surprise metrics", type: "cited-in" }
+];
+
+
+// ========================================================================
+// COLOR & SIZE MAPS
+// ========================================================================
+
+const colorMap = {
+  embedding: '#7aa2f7',
+  coherence: '#9ece6a',
+  application: '#e0af68',
+  koplik: '#bb9af7',
+  p3b: '#f7768e',
+  author: '#73daca',
+  reference: '#f7768e',
+  concept: '#d4a843'
+};
+
+const radiusMap = {
+  author: 20,
+  paper: 11,
+  reference: 9,
+  concept: 13
+};
+
+function getNodeColor(d) {
+  return colorMap[d.group] || '#888';
+}
+
+function getNodeRadius(d) {
+  return radiusMap[d.type] || 10;
+}
+
+const edgeStyleMap = {
+  'authorship': { stroke: 'rgba(115,218,202,0.25)', width: 1.5, dash: '' },
+  'citation': { stroke: 'rgba(122,162,247,0.30)', width: 1.2, dash: '' },
+  'uses': { stroke: 'rgba(212,168,67,0.25)', width: 1, dash: '4,3' },
+  'foundational': { stroke: 'rgba(247,118,142,0.20)', width: 1, dash: '2,3' },
+  'cited-in': { stroke: 'rgba(247,118,142,0.15)', width: 0.8, dash: '6,4' }
+};
+
+
+// ========================================================================
+// D3 FORCE GRAPH
+// ========================================================================
+
+const svg = d3.select('#graph-svg');
+const width = svg.node().getBoundingClientRect().width;
+const height = svg.node().getBoundingClientRect().height;
+
+const g = svg.append('g');
+
+const zoom = d3.zoom()
+  .scaleExtent([0.2, 5])
+  .on('zoom', (event) => {
+    g.attr('transform', event.transform);
+  });
+svg.call(zoom);
+
+// Force simulation
+const simulation = d3.forceSimulation(nodes)
+  .force('link', d3.forceLink(edges).id(d => d.id).distance(d => {
+    if (d.type === 'authorship') return 80;
+    if (d.type === 'citation') return 70;
+    if (d.type === 'uses') return 90;
+    if (d.type === 'foundational') return 100;
+    if (d.type === 'cited-in') return 110;
+    return 90;
+  }).strength(d => {
+    if (d.type === 'authorship') return 0.4;
+    if (d.type === 'citation') return 0.35;
+    if (d.type === 'uses') return 0.2;
+    if (d.type === 'foundational') return 0.15;
+    if (d.type === 'cited-in') return 0.12;
+    return 0.2;
+  }))
+  .force('charge', d3.forceManyBody().strength(d => {
+    if (d.type === 'author') return -500;
+    if (d.type === 'concept') return -350;
+    return -250;
+  }))
+  .force('center', d3.forceCenter(width / 2, height / 2))
+  .force('collision', d3.forceCollide().radius(d => getNodeRadius(d) + 12))
+  .force('x', d3.forceX(d => {
+    if (d.type === 'author') return width * 0.5;
+    if (d.group === 'embedding') return width * 0.2;
+    if (d.group === 'coherence') return width * 0.4;
+    if (d.group === 'application') return width * 0.6;
+    if (d.group === 'koplik') return width * 0.75;
+    if (d.group === 'p3b') return width * 0.25;
+    if (d.type === 'concept') return width * 0.35;
+    if (d.type === 'reference') return width * 0.65;
+    return width / 2;
+  }).strength(0.08))
+  .force('y', d3.forceY(d => {
+    if (d.type === 'author') return height * 0.3;
+    if (d.type === 'concept') return height * 0.75;
+    if (d.type === 'reference') return height * 0.75;
+    return height * 0.5;
+  }).strength(0.06));
+
+// Draw edges
+const link = g.append('g')
+  .selectAll('line')
+  .data(edges)
+  .join('line')
+  .attr('stroke', d => (edgeStyleMap[d.type] || edgeStyleMap['citation']).stroke)
+  .attr('stroke-width', d => (edgeStyleMap[d.type] || edgeStyleMap['citation']).width)
+  .attr('stroke-dasharray', d => (edgeStyleMap[d.type] || edgeStyleMap['citation']).dash);
+
+// Edge labels (hidden by default)
+const edgeLabel = g.append('g')
+  .selectAll('text')
+  .data(edges)
+  .join('text')
+  .attr('font-family', 'JetBrains Mono, monospace')
+  .attr('font-size', '6.5px')
+  .attr('fill', 'rgba(232,232,244,0.4)')
+  .attr('text-anchor', 'middle')
+  .attr('dy', -3)
+  .attr('opacity', 0)
+  .text(d => d.label || '');
+
+// Draw nodes
+const node = g.append('g')
+  .selectAll('g')
+  .data(nodes)
+  .join('g')
+  .attr('cursor', 'pointer')
+  .call(d3.drag()
+    .on('start', dragStarted)
+    .on('drag', dragged)
+    .on('end', dragEnded));
+
+// Node circles
+node.append('circle')
+  .attr('r', d => getNodeRadius(d))
+  .attr('fill', d => getNodeColor(d))
+  .attr('fill-opacity', d => d.type === 'author' ? 0.20 : 0.12)
+  .attr('stroke', d => getNodeColor(d))
+  .attr('stroke-width', d => d.type === 'author' ? 2 : 1.5)
+  .attr('stroke-opacity', 0.5);
+
+// Author glow
+node.filter(d => d.type === 'author')
+  .append('circle')
+  .attr('r', d => getNodeRadius(d) + 4)
+  .attr('fill', 'none')
+  .attr('stroke', d => getNodeColor(d))
+  .attr('stroke-width', 1)
+  .attr('stroke-opacity', 0.12);
+
+// Node labels
+node.append('text')
+  .attr('font-family', 'Outfit, sans-serif')
+  .attr('font-size', d => {
+    if (d.type === 'author') return '9.5px';
+    if (d.type === 'concept') return '8px';
+    return '7.5px';
+  })
+  .attr('font-weight', d => (d.type === 'author' || d.type === 'concept') ? 500 : 400)
+  .attr('fill', d => getNodeColor(d))
+  .attr('fill-opacity', 0.85)
+  .attr('text-anchor', 'middle')
+  .attr('dy', d => getNodeRadius(d) + 13)
+  .text(d => {
+    if (d.label.length > 30) return d.label.substring(0, 28) + '...';
+    return d.label;
+  });
+
+// Inner text for papers
+node.filter(d => d.type === 'paper')
+  .append('text')
+  .attr('font-family', 'JetBrains Mono, monospace')
+  .attr('font-size', '6px')
+  .attr('font-weight', 600)
+  .attr('fill', d => getNodeColor(d))
+  .attr('fill-opacity', 0.75)
+  .attr('text-anchor', 'middle')
+  .attr('dy', '0.35em')
+  .text(d => d.id.toUpperCase());
+
+// Inner icon for concepts
+node.filter(d => d.type === 'concept')
+  .append('text')
+  .attr('font-family', 'JetBrains Mono, monospace')
+  .attr('font-size', '8px')
+  .attr('font-weight', 600)
+  .attr('fill', d => getNodeColor(d))
+  .attr('fill-opacity', 0.5)
+  .attr('text-anchor', 'middle')
+  .attr('dy', '0.35em')
+  .text('◇');
+
+// Inner initial for authors
+node.filter(d => d.type === 'author')
+  .append('text')
+  .attr('font-family', 'JetBrains Mono, monospace')
+  .attr('font-size', '9px')
+  .attr('font-weight', 600)
+  .attr('fill', d => getNodeColor(d))
+  .attr('fill-opacity', 0.7)
+  .attr('text-anchor', 'middle')
+  .attr('dy', '0.35em')
+  .text(d => d.label.split(' ').map(w => w[0]).join(''));
+
+// Inner initial for references
+node.filter(d => d.type === 'reference')
+  .append('text')
+  .attr('font-family', 'JetBrains Mono, monospace')
+  .attr('font-size', '6px')
+  .attr('font-weight', 500)
+  .attr('fill', d => getNodeColor(d))
+  .attr('fill-opacity', 0.5)
+  .attr('text-anchor', 'middle')
+  .attr('dy', '0.35em')
+  .text(d => {
+    const parts = d.label.split(' ');
+    return parts[parts.length - 1].substring(0, 3);
+  });
+
+
+// ========================================================================
+// INTERACTIONS
+// ========================================================================
+
+node.on('mouseover', function(event, d) {
+  highlightConnections(d);
+}).on('mouseout', function() {
+  if (!panelLocked) resetHighlights();
+}).on('click', function(event, d) {
+  event.stopPropagation();
+  showDetail(d);
+  panelLocked = true;
+});
+
+svg.on('click', function() {
+  closePanel();
+  resetHighlights();
+  panelLocked = false;
+});
+
+let panelLocked = false;
+
+function highlightConnections(d) {
+  const connected = new Set();
+  connected.add(d.id);
+  edges.forEach(e => {
+    const sid = typeof e.source === 'object' ? e.source.id : e.source;
+    const tid = typeof e.target === 'object' ? e.target.id : e.target;
+    if (sid === d.id) connected.add(tid);
+    if (tid === d.id) connected.add(sid);
+  });
+
+  node.select('circle:first-of-type')
+    .attr('fill-opacity', n => connected.has(n.id) ? 0.35 : 0.04)
+    .attr('stroke-opacity', n => connected.has(n.id) ? 0.9 : 0.12);
+  node.selectAll('text')
+    .attr('fill-opacity', n => connected.has(n.id) ? 1 : 0.12);
+
+  link
+    .attr('stroke-opacity', e => {
+      const sid = typeof e.source === 'object' ? e.source.id : e.source;
+      const tid = typeof e.target === 'object' ? e.target.id : e.target;
+      if (sid === d.id || tid === d.id) return 0.7;
+      return 0.02;
+    })
+    .attr('stroke-width', e => {
+      const sid = typeof e.source === 'object' ? e.source.id : e.source;
+      const tid = typeof e.target === 'object' ? e.target.id : e.target;
+      if (sid === d.id || tid === d.id) return 2.5;
+      return 0.3;
+    });
+
+  edgeLabel.attr('opacity', e => {
+    const sid = typeof e.source === 'object' ? e.source.id : e.source;
+    const tid = typeof e.target === 'object' ? e.target.id : e.target;
+    return (sid === d.id || tid === d.id) ? 0.85 : 0;
+  });
+}
+
+function resetHighlights() {
+  node.select('circle:first-of-type')
+    .attr('fill-opacity', d => d.type === 'author' ? 0.20 : 0.12)
+    .attr('stroke-opacity', 0.5);
+  node.selectAll('text')
+    .attr('fill-opacity', 0.85);
+  link
+    .attr('stroke-opacity', 1)
+    .attr('stroke', d => (edgeStyleMap[d.type] || edgeStyleMap['citation']).stroke)
+    .attr('stroke-width', d => (edgeStyleMap[d.type] || edgeStyleMap['citation']).width);
+  edgeLabel.attr('opacity', 0);
+}
+
+function showDetail(d) {
+  const panel = document.getElementById('detail-panel');
+  const content = document.getElementById('detail-content');
+
+  const groupLabels = {
+    embedding: 'Embedding Series',
+    coherence: 'Coherence Core',
+    application: 'Application',
+    koplik: 'Koplik Bridge',
+    p3b: 'Knowledge Holes',
+    author: 'Author',
+    reference: 'Referenced Author',
+    concept: 'Concept'
+  };
+  const groupStyles = {
+    embedding: 'background:rgba(122,162,247,0.15); color:#7aa2f7;',
+    coherence: 'background:rgba(158,206,106,0.12); color:#9ece6a;',
+    application: 'background:rgba(224,175,104,0.12); color:#e0af68;',
+    koplik: 'background:rgba(187,154,247,0.12); color:#bb9af7;',
+    p3b: 'background:rgba(247,118,142,0.12); color:#f7768e;',
+    author: 'background:rgba(115,218,202,0.12); color:#73daca;',
+    reference: 'background:rgba(247,118,142,0.10); color:#f7768e;',
+    concept: 'background:rgba(212,168,67,0.12); color:#d4a843;'
+  };
+
+  let html = `<div class="detail-type" style="${groupStyles[d.group]}">${groupLabels[d.group]}</div>`;
+  html += `<div class="detail-name">${d.label}</div>`;
+
+  if (d.pages || d.status) {
+    html += `<div style="font-family:'JetBrains Mono',monospace; font-size:0.6rem; color:var(--dim); margin-bottom:0.5rem;">`;
+    const parts = [];
+    if (d.pages) parts.push(d.pages + ' pages');
+    if (d.refs) parts.push(d.refs + ' refs');
+    if (d.status) parts.push(d.status);
+    html += parts.join(' &middot; ');
+    html += `</div>`;
+  }
+
+  html += `<div class="detail-desc">${d.desc}</div>`;
+
+  if (d.pdf) {
+    html += `<a href="${d.pdf}" target="_blank" class="detail-link">Download PDF &darr;</a>`;
+  }
+
+  // Find connections grouped by type
+  const connectionsByType = {};
+  edges.forEach(e => {
+    const sid = typeof e.source === 'object' ? e.source.id : e.source;
+    const tid = typeof e.target === 'object' ? e.target.id : e.target;
+    if (sid === d.id) {
+      const target = nodes.find(n => n.id === tid);
+      if (target) {
+        if (!connectionsByType[e.type]) connectionsByType[e.type] = [];
+        connectionsByType[e.type].push({ node: target, label: e.label || '' });
+      }
+    }
+    if (tid === d.id) {
+      const source = nodes.find(n => n.id === sid);
+      if (source) {
+        if (!connectionsByType[e.type]) connectionsByType[e.type] = [];
+        connectionsByType[e.type].push({ node: source, label: e.label || '' });
+      }
+    }
+  });
+
+  const typeLabels = {
+    authorship: 'Authors / Papers',
+    citation: 'Citations',
+    uses: 'Concepts Used',
+    foundational: 'Foundational',
+    'cited-in': 'Cited In'
+  };
+
+  const allConns = Object.values(connectionsByType).flat();
+  if (allConns.length) {
+    html += `<div class="detail-connections">`;
+    html += `<div class="detail-conn-label">Connections (${allConns.length})</div>`;
+
+    for (const [type, conns] of Object.entries(connectionsByType)) {
+      html += `<div style="font-family:'JetBrains Mono',monospace; font-size:0.5rem; color:var(--dim); letter-spacing:0.08em; text-transform:uppercase; margin:0.6rem 0 0.3rem;">${typeLabels[type] || type}</div>`;
+      conns.forEach(c => {
+        html += `<div class="detail-conn-item" onclick="focusNode('${c.node.id}')">`;
+        html += `<span class="detail-conn-dot" style="background:${getNodeColor(c.node)};"></span>`;
+        html += `${c.node.label}`;
+        if (c.label) {
+          html += `<div style="font-family:'JetBrains Mono',monospace; font-size:0.5rem; color:var(--dim); margin-left:14px; margin-top:1px;">${c.label}</div>`;
+        }
+        html += `</div>`;
+      });
+    }
+    html += `</div>`;
+  }
+
+  content.innerHTML = html;
+  panel.classList.add('visible');
+  highlightConnections(d);
+}
+
+function closePanel() {
+  document.getElementById('detail-panel').classList.remove('visible');
+  panelLocked = false;
+}
+
+function focusNode(id) {
+  const d = nodes.find(n => n.id === id);
+  if (d) {
+    showDetail(d);
+    panelLocked = true;
+    const transform = d3.zoomTransform(svg.node());
+    const x = width / 2 - d.x * transform.k;
+    const y = height / 2 - d.y * transform.k;
+    svg.transition().duration(500).call(zoom.transform, d3.zoomIdentity.translate(x, y).scale(transform.k));
+  }
+}
+
+
+// ========================================================================
+// TICK
+// ========================================================================
+
+simulation.on('tick', () => {
+  link
+    .attr('x1', d => d.source.x)
+    .attr('y1', d => d.source.y)
+    .attr('x2', d => d.target.x)
+    .attr('y2', d => d.target.y);
+
+  edgeLabel
+    .attr('x', d => (d.source.x + d.target.x) / 2)
+    .attr('y', d => (d.source.y + d.target.y) / 2);
+
+  node.attr('transform', d => `translate(${d.x},${d.y})`);
+});
+
+function dragStarted(event, d) {
+  if (!event.active) simulation.alphaTarget(0.3).restart();
+  d.fx = d.x; d.fy = d.y;
+}
+function dragged(event, d) {
+  d.fx = event.x; d.fy = event.y;
+}
+function dragEnded(event, d) {
+  if (!event.active) simulation.alphaTarget(0);
+  d.fx = null; d.fy = null;
+}
+
+
+// ========================================================================
+// FILTERS
+// ========================================================================
+
+let activeFilter = 'all';
+
+function filterGraph(filterKey, btn) {
+  activeFilter = filterKey;
+  document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  closePanel();
+
+  if (filterKey === 'all') {
+    node.attr('display', 'block');
+    link.attr('display', 'block');
+    resetHighlights();
+    return;
+  }
+
+  // Determine which groups match the filter
+  const filterGroups = {
+    embedding: ['embedding', 'p3b'],
+    coherence: ['coherence'],
+    application: ['application'],
+    koplik: ['koplik'],
+    author: ['author'],
+    reference: ['reference'],
+    concept: ['concept']
+  };
+
+  const matchGroups = new Set(filterGroups[filterKey] || [filterKey]);
+
+  const primaryNodes = new Set();
+  nodes.forEach(n => {
+    if (matchGroups.has(n.group) || matchGroups.has(n.type)) primaryNodes.add(n.id);
+  });
+
+  // Also show directly connected nodes
+  const visible = new Set(primaryNodes);
+  edges.forEach(e => {
+    const sid = typeof e.source === 'object' ? e.source.id : e.source;
+    const tid = typeof e.target === 'object' ? e.target.id : e.target;
+    if (primaryNodes.has(sid)) visible.add(tid);
+    if (primaryNodes.has(tid)) visible.add(sid);
+  });
+
+  node.attr('display', d => visible.has(d.id) ? 'block' : 'none');
+  node.select('circle:first-of-type')
+    .attr('fill-opacity', d => primaryNodes.has(d.id) ? 0.35 : 0.06)
+    .attr('stroke-opacity', d => primaryNodes.has(d.id) ? 0.9 : 0.18);
+  node.selectAll('text')
+    .attr('fill-opacity', d => primaryNodes.has(d.id) ? 1 : 0.25);
+
+  link.attr('display', e => {
+    const sid = typeof e.source === 'object' ? e.source.id : e.source;
+    const tid = typeof e.target === 'object' ? e.target.id : e.target;
+    return (visible.has(sid) && visible.has(tid)) ? 'block' : 'none';
+  });
+}
+
+
+// ========================================================================
+// SEARCH
+// ========================================================================
+
+document.getElementById('search').addEventListener('input', function(e) {
+  const q = e.target.value.toLowerCase().trim();
+  if (!q) {
+    // Reset filter buttons
+    document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+    document.querySelector('.filter-btn[data-filter="all"]').classList.add('active');
+    activeFilter = 'all';
+    node.attr('display', 'block');
+    link.attr('display', 'block');
+    resetHighlights();
+    return;
+  }
+
+  const matches = new Set();
+  nodes.forEach(n => {
+    const searchable = [n.label, n.desc || '', n.id, n.group].join(' ').toLowerCase();
+    if (searchable.includes(q)) matches.add(n.id);
+  });
+
+  // Also search edge labels
+  edges.forEach(e => {
+    if (e.label && e.label.toLowerCase().includes(q)) {
+      const sid = typeof e.source === 'object' ? e.source.id : e.source;
+      const tid = typeof e.target === 'object' ? e.target.id : e.target;
+      matches.add(sid);
+      matches.add(tid);
+    }
+  });
+
+  const visible = new Set(matches);
+  edges.forEach(e => {
+    const sid = typeof e.source === 'object' ? e.source.id : e.source;
+    const tid = typeof e.target === 'object' ? e.target.id : e.target;
+    if (matches.has(sid)) visible.add(tid);
+    if (matches.has(tid)) visible.add(sid);
+  });
+
+  node.attr('display', d => visible.has(d.id) ? 'block' : 'none');
+  node.select('circle:first-of-type')
+    .attr('fill-opacity', d => matches.has(d.id) ? 0.4 : 0.06)
+    .attr('stroke-opacity', d => matches.has(d.id) ? 1 : 0.15);
+  node.selectAll('text')
+    .attr('fill-opacity', d => matches.has(d.id) ? 1 : 0.2);
+
+  link.attr('display', e => {
+    const sid = typeof e.source === 'object' ? e.source.id : e.source;
+    const tid = typeof e.target === 'object' ? e.target.id : e.target;
+    return (visible.has(sid) && visible.has(tid)) ? 'block' : 'none';
+  });
+
+  // Clear filter buttons
+  document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+});
+
+
+// ========================================================================
+// KEYBOARD
+// ========================================================================
+
+document.addEventListener('keydown', e => {
+  if (e.key === 'Escape') {
+    closePanel();
+    resetHighlights();
+    panelLocked = false;
+    document.getElementById('search').value = '';
+    document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+    document.querySelector('.filter-btn[data-filter="all"]').classList.add('active');
+    activeFilter = 'all';
+    node.attr('display', 'block');
+    link.attr('display', 'block');
+    resetHighlights();
+  }
+});
+
+// Initial zoom
+svg.call(zoom.transform, d3.zoomIdentity.translate(width * 0.05, height * 0.02).scale(0.88));
+</script>
+
+<!-- GoatCounter analytics -->
+<script data-goatcounter="https://jthorvaldur.goatcounter.com/count"
+        async src="//gc.zgo.at/count.js"></script>
+
+</body>
+</html>

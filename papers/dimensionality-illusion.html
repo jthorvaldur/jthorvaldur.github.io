@@ -1,0 +1,596 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>The Dimensionality Illusion — Thorarinson</title>
+  <meta name="description" content="Why PCA variance does not equal semantic information in text embeddings. Intra-domain term pairs collapse by up to +0.140 in cosine similarity at 16 dimensions while inter-domain benchmarks report no degradation.">
+  <meta name="keywords" content="text embeddings, PCA, dimensionality reduction, semantic coherence, DCRP, legal NLP, retrieval, RAG, intrinsic dimensionality, MTEB, domain-specific retrieval">
+  <meta property="og:title" content="The Dimensionality Illusion: Why PCA Variance Does Not Equal Semantic Information in Text Embeddings">
+  <meta property="og:description" content="PCA to 16 dimensions preserves inter-domain classification but destroys intra-domain semantic structure. We introduce SCL, CISA, and DCRP as diagnostic metrics that detect what standard benchmarks miss.">
+  <meta property="og:type" content="article">
+  <meta property="og:url" content="https://jthorvaldur.github.io/papers/dimensionality-illusion.html">
+  <meta property="article:author" content="Joel Thorarinson">
+  <meta property="article:published_time" content="2026-05-01">
+  <link rel="canonical" href="https://jthorvaldur.github.io/papers/dimensionality-illusion.html">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@200;300;400;500;600;700&family=JetBrains+Mono:wght@300;400;500;600&display=swap" rel="stylesheet">
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "ScholarlyArticle",
+    "name": "The Dimensionality Illusion: Why PCA Variance Does Not Equal Semantic Information in Text Embeddings",
+    "author": [
+      {"@type": "Person", "name": "Joel Thorarinson", "identifier": "https://orcid.org/0000-0002-0553-842X"},
+      {"@type": "Person", "name": "Allison Hensgen", "identifier": "https://orcid.org/0009-0008-7247-0307"}
+    ],
+    "datePublished": "2026-05",
+    "description": "PCA to 16 dimensions preserves inter-domain classification but destroys intra-domain semantic structure. We introduce SCL, CISA, and DCRP as diagnostic metrics.",
+    "keywords": ["text embeddings", "PCA", "dimensionality reduction", "semantic coherence", "DCRP", "legal NLP", "retrieval"],
+    "url": "https://jthorvaldur.github.io/papers/dimensionality-illusion.html",
+    "isPartOf": {"@type": "CreativeWorkSeries", "name": "Embedding & Legal NLP (Series 1)"},
+    "pageStart": "1",
+    "pageEnd": "18",
+    "about": "The paper demonstrates that claims of low intrinsic dimensionality in text embeddings are artifacts of coarse evaluation methodology, not properties of the embeddings themselves."
+  }
+  </script>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --bg: #07070f;
+      --surface: rgba(255,255,255,0.035);
+      --surface-hover: rgba(122,162,247,0.07);
+      --border: rgba(255,255,255,0.07);
+      --border-hover: rgba(122,162,247,0.30);
+      --text: #e8e8f4;
+      --muted: rgba(232,232,244,0.45);
+      --dim: rgba(232,232,244,0.25);
+      --accent: #7aa2f7;
+      --accent2: #bb9af7;
+      --green: #9ece6a;
+      --amber: #e0af68;
+      --red: #f7768e;
+      --teal: #73daca;
+      --glow: rgba(122,162,247,0.10);
+    }
+    html { scroll-behavior: smooth; }
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: 'Outfit', sans-serif;
+      overflow-x: hidden;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    /* Nav */
+    .nav {
+      position: fixed; top: 0; left: 0; right: 0; z-index: 50;
+      padding: 0 2rem; height: 56px;
+      display: flex; align-items: center; justify-content: space-between;
+      background: rgba(7,7,15,0.7);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      border-bottom: 1px solid var(--border);
+    }
+    .nav-brand {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.72rem; font-weight: 600;
+      letter-spacing: 0.2em; text-transform: uppercase;
+      color: var(--accent); text-decoration: none;
+    }
+    .nav-links { display: flex; gap: 1.5rem; list-style: none; }
+    .nav-links a {
+      font-size: 0.78rem; font-weight: 400;
+      color: var(--muted); text-decoration: none; transition: color 0.2s;
+    }
+    .nav-links a:hover { color: var(--text); }
+    .nav-links a.active { color: var(--accent); }
+
+    /* Article header */
+    .article-header {
+      padding: 7rem 2rem 2.5rem;
+      max-width: 800px; margin: 0 auto;
+    }
+    .article-series {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.6rem; letter-spacing: 0.3em;
+      text-transform: uppercase; color: var(--accent);
+      margin-bottom: 1rem;
+    }
+    .article-title {
+      font-size: clamp(1.6rem, 4vw, 2.4rem);
+      font-weight: 300; line-height: 1.25;
+      margin-bottom: 0.5rem;
+    }
+    .article-title strong {
+      font-weight: 600;
+      background: linear-gradient(140deg, #ffffff 20%, var(--accent) 60%, var(--accent2));
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+    .article-subtitle {
+      font-size: 1.05rem; color: var(--muted);
+      font-weight: 300; line-height: 1.5;
+      margin-bottom: 1.5rem;
+    }
+    .article-meta {
+      display: flex; flex-wrap: wrap; gap: 1.5rem; align-items: center;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.65rem; color: var(--dim);
+      padding-bottom: 1.5rem;
+      border-bottom: 1px solid var(--border);
+    }
+    .article-meta a {
+      color: var(--accent); text-decoration: none;
+    }
+    .article-meta a:hover { text-decoration: underline; }
+
+    /* Content */
+    .article-content {
+      max-width: 800px; margin: 0 auto;
+      padding: 2rem 2rem 4rem;
+    }
+    .section-label {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.6rem; letter-spacing: 0.3em;
+      text-transform: uppercase; color: var(--accent);
+      margin-bottom: 1.2rem; margin-top: 3rem;
+      display: flex; align-items: center; gap: 0.8rem;
+    }
+    .section-label::after {
+      content: ''; display: block; flex: 1;
+      height: 1px; background: var(--border);
+    }
+
+    /* Abstract */
+    .abstract {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-left: 3px solid var(--accent);
+      border-radius: 8px;
+      padding: 1.5rem 1.8rem;
+      font-size: 0.88rem; color: var(--muted);
+      line-height: 1.75;
+    }
+
+    /* Key findings */
+    .findings-list {
+      list-style: none; padding: 0;
+    }
+    .findings-list li {
+      position: relative;
+      padding: 0.8rem 0 0.8rem 1.8rem;
+      font-size: 0.88rem; line-height: 1.7;
+      color: var(--text);
+      border-bottom: 1px solid var(--border);
+    }
+    .findings-list li::before {
+      content: '';
+      position: absolute; left: 0; top: 1.1rem;
+      width: 8px; height: 8px;
+      border-radius: 50%;
+      background: var(--accent);
+    }
+    .findings-list li:last-child { border-bottom: none; }
+    .findings-list .metric {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.82rem; color: var(--teal);
+      font-weight: 500;
+    }
+
+    /* Figures */
+    .figure-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+      gap: 1.5rem; margin-top: 1rem;
+    }
+    .figure-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 12px; overflow: hidden;
+    }
+    .figure-card img {
+      width: 100%; display: block;
+      background: #fff; padding: 0.8rem;
+      cursor: pointer; transition: transform 0.2s;
+    }
+    .figure-card img:hover { transform: scale(1.02); }
+    .figure-caption {
+      padding: 0.8rem 1.2rem;
+      font-size: 0.75rem; color: var(--muted); line-height: 1.6;
+    }
+    .figure-caption strong { color: var(--text); font-weight: 600; }
+
+    /* Citation blocks */
+    .citation-block {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 1.2rem 1.5rem;
+      margin-top: 0.8rem;
+      position: relative;
+    }
+    .citation-block pre {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.68rem; color: var(--muted);
+      line-height: 1.6; white-space: pre-wrap;
+      word-break: break-all;
+    }
+    .citation-label {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.58rem; font-weight: 600;
+      letter-spacing: 0.1em; text-transform: uppercase;
+      color: var(--accent); margin-bottom: 0.6rem;
+    }
+    .copy-btn {
+      position: absolute; top: 0.8rem; right: 0.8rem;
+      background: rgba(122,162,247,0.15);
+      border: 1px solid rgba(122,162,247,0.3);
+      color: var(--accent);
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.58rem; padding: 4px 10px;
+      border-radius: 4px; cursor: pointer;
+      transition: background 0.2s;
+    }
+    .copy-btn:hover { background: rgba(122,162,247,0.3); }
+
+    /* Keywords */
+    .keywords {
+      display: flex; flex-wrap: wrap; gap: 0.5rem;
+      margin-top: 1rem;
+    }
+    .keyword-tag {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.58rem; font-weight: 500;
+      padding: 4px 10px; border-radius: 4px;
+      background: rgba(122,162,247,0.08);
+      border: 1px solid rgba(122,162,247,0.15);
+      color: var(--accent);
+    }
+
+    /* Authors */
+    .author-card {
+      display: flex; align-items: center; gap: 1rem;
+      padding: 1rem 1.3rem;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      margin-bottom: 0.6rem;
+    }
+    .author-avatar {
+      width: 44px; height: 44px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, var(--accent), var(--accent2));
+      display: flex; align-items: center; justify-content: center;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.75rem; font-weight: 700; color: var(--bg);
+      flex-shrink: 0;
+    }
+    .author-name {
+      font-weight: 600; font-size: 0.88rem;
+    }
+    .author-detail {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.62rem; color: var(--muted);
+    }
+    .author-detail a { color: var(--accent); text-decoration: none; }
+    .author-detail a:hover { text-decoration: underline; }
+
+    /* Related papers */
+    .related-grid {
+      display: grid; grid-template-columns: 1fr;
+      gap: 0.6rem; margin-top: 1rem;
+    }
+    .related-card {
+      display: flex; align-items: center; gap: 1rem;
+      padding: 0.8rem 1.2rem;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      text-decoration: none; color: var(--text);
+      transition: background 0.25s, border-color 0.25s, transform 0.2s;
+    }
+    .related-card:hover {
+      background: var(--surface-hover);
+      border-color: var(--border-hover);
+      transform: translateX(3px);
+    }
+    .related-number {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.7rem; font-weight: 600;
+      color: var(--dim); min-width: 2rem; text-align: center;
+    }
+    .related-title { font-size: 0.85rem; font-weight: 500; }
+    .related-desc {
+      font-size: 0.7rem; color: var(--muted); margin-top: 0.15rem;
+    }
+
+    /* Download button */
+    .download-btn {
+      display: inline-flex; align-items: center; gap: 0.5rem;
+      padding: 0.6rem 1.4rem;
+      background: rgba(122,162,247,0.12);
+      border: 1px solid rgba(122,162,247,0.3);
+      border-radius: 8px;
+      color: var(--accent);
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.72rem; font-weight: 600;
+      text-decoration: none;
+      transition: background 0.2s, transform 0.2s;
+    }
+    .download-btn:hover {
+      background: rgba(122,162,247,0.25);
+      transform: translateY(-1px);
+    }
+    .demo-btn {
+      display: inline-flex; align-items: center; gap: 0.5rem;
+      padding: 0.6rem 1.4rem;
+      background: rgba(115,218,202,0.12);
+      border: 1px solid rgba(115,218,202,0.3);
+      border-radius: 8px;
+      color: var(--teal);
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.72rem; font-weight: 600;
+      text-decoration: none;
+      transition: background 0.2s, transform 0.2s;
+    }
+    .demo-btn:hover {
+      background: rgba(115,218,202,0.25);
+      transform: translateY(-1px);
+    }
+    .btn-row {
+      display: flex; flex-wrap: wrap; gap: 0.8rem;
+      margin-top: 1.5rem;
+    }
+
+    /* Lightbox */
+    .lightbox-overlay {
+      display: none; position: fixed; inset: 0; z-index: 1000;
+      background: rgba(0,0,0,0.92); cursor: pointer;
+      justify-content: center; align-items: center;
+    }
+    .lightbox-overlay.active { display: flex; }
+    .lightbox-overlay img {
+      max-width: 90vw; max-height: 90vh; border-radius: 8px;
+      box-shadow: 0 0 40px rgba(0,0,0,0.5);
+    }
+
+    /* Footer */
+    footer {
+      position: relative; z-index: 2;
+      text-align: center; padding: 2rem;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.65rem; color: var(--dim);
+      border-top: 1px solid var(--border);
+    }
+    footer a { color: var(--muted); text-decoration: none; }
+    footer a:hover { color: var(--accent); }
+
+    @media (max-width: 640px) {
+      .nav-links { display: none; }
+      .article-header { padding: 5rem 1.2rem 2rem; }
+      .article-content { padding: 1.5rem 1.2rem 3rem; }
+      .figure-grid { grid-template-columns: 1fr; }
+      .btn-row { flex-direction: column; }
+    }
+  </style>
+</head>
+<body>
+
+<nav class="nav">
+  <a href="/" class="nav-brand">Thorarinson</a>
+  <ul class="nav-links">
+    <li><a href="/#projects">Projects</a></li>
+    <li><a href="/papers/" class="active">Papers</a></li>
+    <li><a href="/knowledge-systems/">Knowledge Systems</a></li>
+    <li><a href="/#coherence">Coherence</a></li>
+    <li><a href="/#research">Research</a></li>
+  </ul>
+</nav>
+
+<header class="article-header">
+  <p class="article-series">Paper 1 &mdash; Series 1: Embedding &amp; Legal NLP</p>
+  <h1 class="article-title"><strong>The Dimensionality Illusion</strong></h1>
+  <p class="article-subtitle">Why PCA Variance Does Not Equal Semantic Information in Text Embeddings</p>
+  <div class="article-meta">
+    <span>Joel Thorarinson, Allison Hensgen</span>
+    <span>May 2026</span>
+    <span>18 pages</span>
+    <span>40 references</span>
+    <span style="color: var(--green);">arXiv-ready</span>
+  </div>
+</header>
+
+<div class="article-content">
+
+  <p class="section-label">Abstract</p>
+  <div class="abstract">
+    Recent work claims that text embeddings with nominal dimensionality of 768&ndash;4096 have effective intrinsic dimensionality of approximately 16, as measured by PCA variance explained and downstream task performance on standard benchmarks. This conclusion is an artifact of evaluation methodology, not a property of the embeddings themselves. Using domain-specific vectors spanning legal documents, conversational text, and structured records, we demonstrate that fine-grained intra-domain semantic structure degrades sharply when embeddings are reduced to 16 dimensions via PCA, even when coarse inter-domain classification is preserved. In a 62-term legal dictionary experiment, intra-domain term pairs collapse by up to &Delta; = +0.140 in cosine similarity, while inter-domain pairs never collapse &mdash; explaining why MTEB-style benchmarks report &ldquo;no degradation.&rdquo; We introduce three complementary evaluation tools: domain-conditional retrieval precision (DCRP), Semantic Coherence Loss (SCL), and Compression-Induced Semantic Aliasing (CISA). An information-theoretic argument establishes that PCA variance is a poor proxy for semantic information: dimensions with low variance can carry high mutual information with specialized query distributions. Claims of low intrinsic dimensionality confuse the geometry of embedding spaces with their information content. Compression must be evaluated against the semantic resolution required by the domain.
+  </div>
+
+  <div class="btn-row">
+    <a href="pdfs/dimensionality-illusion.pdf" class="download-btn" target="_blank">PDF Download</a>
+    <a href="/embedding-dim/explorer.html" class="demo-btn" target="_blank">3D Embedding Explorer</a>
+    <a href="/embedding-dim/dictionary-collapse.html" class="demo-btn" target="_blank">Dictionary Collapse Demo</a>
+    <a href="/embedding-dim/dcrp-results.html" class="demo-btn" target="_blank">DCRP Results</a>
+  </div>
+
+  <p class="section-label">Key Findings</p>
+  <ul class="findings-list">
+    <li>
+      <strong>Two distinct failure modes of PCA compression:</strong> <em>collapse</em> (semantically distinct terms become indistinguishable) and <em>distortion</em> (category separation amplifies, producing false appearance of robustness). Collapse is invisible to standard benchmarks.
+    </li>
+    <li>
+      Intra-domain term pairs collapse by up to <span class="metric">&Delta; = +0.140</span> in cosine similarity at 16 dimensions, while inter-domain pairs never collapse (max <span class="metric">&Delta; = &minus;0.023</span>). This directly explains why MTEB reports &ldquo;no degradation.&rdquo;
+    </li>
+    <li>
+      An information-theoretic proof that <strong>PCA variance is a necessary but not sufficient condition for semantic utility</strong>: low-variance dimensions can carry arbitrarily high mutual information with domain-specific query distributions.
+    </li>
+    <li>
+      <strong>Three new evaluation metrics</strong> &mdash; Semantic Coherence Loss (SCL), Compression-Induced Semantic Aliasing (CISA), and Domain-Conditional Retrieval Precision (DCRP) &mdash; detect the failure modes that standard benchmarks miss.
+    </li>
+    <li>
+      Forced-heirship legal terms (e.g., German <em>Pflichtteil</em> vs. French <em>r&eacute;serve h&eacute;r&eacute;ditaire</em>) that are semantically distinct in 768d become aliased at 16d, making retrieval systems unable to distinguish them in the domain where the distinction determines legal outcomes.
+    </li>
+  </ul>
+
+  <p class="section-label">Figures</p>
+  <div class="figure-grid">
+    <div class="figure-card">
+      <img src="figures/p1_two_failure_modes.png" alt="Two failure modes of PCA compression: collapse and distortion" loading="lazy">
+      <div class="figure-caption">
+        <strong>Figure 1: Two failure modes.</strong> PCA compression produces collapse (intra-domain pairs merge) and distortion (inter-domain separation amplifies). Standard benchmarks measure only the latter.
+      </div>
+    </div>
+    <div class="figure-card">
+      <img src="figures/p1_heirship_convergence.png" alt="Heirship term convergence under PCA compression" loading="lazy">
+      <div class="figure-caption">
+        <strong>Figure 2: Heirship convergence.</strong> Forced-heirship legal terms from different traditions collapse toward each other as PCA dimensionality decreases, becoming indistinguishable at 16 dimensions.
+      </div>
+    </div>
+    <div class="figure-card">
+      <img src="figures/p1_variance_vs_information.png" alt="PCA variance vs mutual information with domain-specific queries" loading="lazy">
+      <div class="figure-caption">
+        <strong>Figure 4: Variance vs. information.</strong> PCA dimensions ordered by variance (blue) vs. mutual information with domain-specific queries (orange). Low-variance dimensions carry high domain-specific information.
+      </div>
+    </div>
+  </div>
+
+  <p class="section-label">Citation</p>
+  <div class="citation-block">
+    <div class="citation-label">BibTeX</div>
+    <button class="copy-btn" onclick="copyBib(this)">Copy</button>
+    <pre id="bibtex-p1">@article{thorarinson2026dimensionality,
+  title={The Dimensionality Illusion: Why {PCA} Variance Does Not Equal Semantic Information in Text Embeddings},
+  author={Thorarinson, Joel and Hensgen, Allison},
+  year={2026},
+  month={May},
+  pages={1--18},
+  note={arXiv preprint (forthcoming)},
+  keywords={text embeddings, PCA, dimensionality reduction, DCRP, semantic coherence}
+}</pre>
+  </div>
+  <div class="citation-block" style="margin-top: 0.6rem;">
+    <div class="citation-label">APA</div>
+    <button class="copy-btn" onclick="copyAPA(this)">Copy</button>
+    <pre id="apa-p1">Thorarinson, J., & Hensgen, A. (2026). The Dimensionality Illusion: Why PCA Variance Does Not Equal Semantic Information in Text Embeddings. arXiv preprint (forthcoming).</pre>
+  </div>
+
+  <p class="section-label">Authors</p>
+  <div class="author-card">
+    <div class="author-avatar">JT</div>
+    <div>
+      <div class="author-name">Joel Thorarinson</div>
+      <div class="author-detail">Coherence Research Group &middot; <a href="https://orcid.org/0000-0002-0553-842X" target="_blank">ORCID 0000-0002-0553-842X</a></div>
+    </div>
+  </div>
+  <div class="author-card">
+    <div class="author-avatar" style="background: linear-gradient(135deg, var(--accent2), var(--teal));">AH</div>
+    <div>
+      <div class="author-name">Allison Hensgen</div>
+      <div class="author-detail">Contributed SCL, CISA, and coherence threshold framework &middot; <a href="https://orcid.org/0009-0008-7247-0307" target="_blank">ORCID 0009-0008-7247-0307</a></div>
+    </div>
+  </div>
+
+  <p class="section-label">Keywords</p>
+  <div class="keywords">
+    <span class="keyword-tag">text embeddings</span>
+    <span class="keyword-tag">PCA</span>
+    <span class="keyword-tag">dimensionality reduction</span>
+    <span class="keyword-tag">semantic coherence</span>
+    <span class="keyword-tag">semantic aliasing</span>
+    <span class="keyword-tag">domain-specific retrieval</span>
+    <span class="keyword-tag">DCRP</span>
+    <span class="keyword-tag">MTEB</span>
+    <span class="keyword-tag">RAG</span>
+    <span class="keyword-tag">legal NLP</span>
+    <span class="keyword-tag">intrinsic dimensionality</span>
+  </div>
+
+  <p class="section-label">Related Papers</p>
+  <div class="related-grid">
+    <a href="geometry-legal-language.html" class="related-card">
+      <div class="related-number">P2</div>
+      <div>
+        <div class="related-title">The Geometry of Legal Language</div>
+        <div class="related-desc">Extends the 62-term experiment to 6,200 terms from Bouvier's Law Dictionary with definitional drift analysis</div>
+      </div>
+    </a>
+    <a href="structural-holes.html" class="related-card">
+      <div class="related-number">P3</div>
+      <div>
+        <div class="related-title">Structural Holes in Legal Embedding Spaces</div>
+        <div class="related-desc">Builds on compression findings to show that missing words create missing legal protections</div>
+      </div>
+    </a>
+    <a href="pdfs/dcrp-benchmark.pdf" class="related-card" target="_blank">
+      <div class="related-number">P4</div>
+      <div>
+        <div class="related-title">DCRP: Domain-Conditional Retrieval Benchmark</div>
+        <div class="related-desc">Formalizes the DCRP metric introduced in this paper into a standalone benchmark</div>
+      </div>
+    </a>
+    <a href="pdfs/sparse-vs-dense.pdf" class="related-card" target="_blank">
+      <div class="related-number">P5</div>
+      <div>
+        <div class="related-title">Sparse Representations Preserve What Dense PCA Destroys</div>
+        <div class="related-desc">Shows that sparse (SPLADE++) representations avoid the collapse demonstrated here</div>
+      </div>
+    </a>
+  </div>
+
+</div>
+
+<footer>
+  <div style="display:flex; justify-content:center; gap:2rem; margin-bottom:0.8rem;">
+    <a href="/papers/">All Papers</a>
+    <a href="/">Home</a>
+    <a href="https://github.com/jthorvaldur">GitHub</a>
+    <a href="https://arxiv.org/a/thorarinson_j_1.html">arXiv</a>
+    <a href="https://conformalmaps.com">Conformal Maps</a>
+  </div>
+  &copy; 2026 Thorarinson
+</footer>
+
+<!-- Lightbox -->
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+  const overlay = document.createElement('div');
+  overlay.className = 'lightbox-overlay';
+  const img = document.createElement('img');
+  overlay.appendChild(img);
+  document.body.appendChild(overlay);
+  document.querySelectorAll('.figure-card img').forEach(el => {
+    el.addEventListener('click', () => {
+      img.src = el.src;
+      overlay.classList.add('active');
+    });
+  });
+  overlay.addEventListener('click', () => overlay.classList.remove('active'));
+  document.addEventListener('keydown', e => {
+    if (e.key === 'Escape') overlay.classList.remove('active');
+  });
+});
+
+function copyBib(btn) {
+  const pre = btn.parentElement.querySelector('pre');
+  navigator.clipboard.writeText(pre.textContent).then(() => {
+    btn.textContent = 'Copied';
+    setTimeout(() => btn.textContent = 'Copy', 2000);
+  });
+}
+function copyAPA(btn) {
+  const pre = btn.parentElement.querySelector('pre');
+  navigator.clipboard.writeText(pre.textContent).then(() => {
+    btn.textContent = 'Copied';
+    setTimeout(() => btn.textContent = 'Copy', 2000);
+  });
+}
+</script>
+
+<!-- GoatCounter analytics -->
+<script data-goatcounter="https://jthorvaldur.goatcounter.com/count"
+        async src="//gc.zgo.at/count.js"></script>
+
+</body>
+</html>
