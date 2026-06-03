@@ -1,0 +1,374 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Algorithm Network</title>
+<script src="https://d3js.org/d3.v7.min.js"></script>
+<style>
+:root {
+  --bg: #0e1014;
+  --panel: #161922;
+  --panel-2: #1c2030;
+  --edge: #1f2330;
+  --edge-hot: #3a3f56;
+  --ink: #e7e9ee;
+  --ink-dim: #9aa3b2;
+  --ink-faint: #5d6577;
+  --accent: #f5a623;
+  --L1: #4ec9b0;
+  --L2: #c586c0;
+  --L3: #e06c75;
+  --meta: #61afef;
+  --vocab: #e5c07b;
+  --phil: #d19a66;
+  --chip: #2c3140;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+html, body {
+  height: 100%; background: var(--bg); color: var(--ink);
+  font: 13px/1.5 'Inter','SF Pro Text',-apple-system,system-ui,sans-serif;
+  overflow: hidden;
+}
+header {
+  position: fixed; top: 0; left: 0; right: 0;
+  background: rgba(22, 25, 34, 0.92);
+  backdrop-filter: blur(8px);
+  border-bottom: 1px solid var(--edge);
+  padding: 12px 22px;
+  z-index: 10;
+  display: flex; gap: 16px; align-items: center; flex-wrap: wrap;
+}
+h1 { font-size: 15px; font-weight: 600; }
+.meta { color: var(--ink-dim); font-size: 11px; }
+.stats { margin-left: auto; display: flex; gap: 18px; font-size: 11px; color: var(--ink-dim); }
+.stats strong { color: var(--ink); font-size: 13px; }
+.controls {
+  display: flex; gap: 8px; align-items: center; flex-wrap: wrap;
+}
+input.search {
+  background: var(--panel-2); border: 1px solid var(--edge-hot);
+  border-radius: 5px; color: var(--ink); padding: 5px 10px;
+  font: inherit; font-size: 12px; width: 200px;
+}
+button.layer-chip, button.lev-chip {
+  background: var(--chip); border: 1px solid transparent; color: var(--ink-dim);
+  padding: 3px 9px; border-radius: 10px; font: inherit; font-size: 11px;
+  cursor: pointer; font-family: 'JetBrains Mono', ui-monospace, monospace;
+}
+button.layer-chip.on, button.lev-chip.on { color: var(--ink); border-color: var(--accent); }
+button.layer-chip[data-layer="meta"].on      { background: rgba(97,175,239,.18); }
+button.layer-chip[data-layer="L1_demand"].on { background: rgba(78,201,176,.18); }
+button.layer-chip[data-layer="L2_refuse"].on { background: rgba(197,134,192,.18); }
+button.layer-chip[data-layer="L3_expose"].on { background: rgba(224,108,117,.18); }
+button.layer-chip[data-layer="vocab"].on     { background: rgba(229,192,123,.18); }
+button.layer-chip[data-layer="phil"].on      { background: rgba(209,154,102,.18); }
+#graph { position: fixed; top: 56px; left: 0; right: 0; bottom: 0; }
+#graph svg { width: 100%; height: 100%; cursor: grab; }
+#graph svg:active { cursor: grabbing; }
+circle.node { stroke: rgba(255,255,255,0.15); stroke-width: 1px; cursor: pointer; transition: stroke-width 0.15s; }
+circle.node:hover { stroke: #fff; stroke-width: 2px; }
+circle.node.dim { opacity: 0.18; }
+circle.node.highlight { stroke: var(--accent); stroke-width: 2.5px; }
+line.link { stroke: #4a5060; stroke-opacity: 0.35; pointer-events: none; }
+line.link.dim { stroke-opacity: 0.06; }
+line.link.highlight { stroke: var(--accent); stroke-opacity: 0.75; }
+text.label {
+  fill: var(--ink-dim); font-size: 10px;
+  font-family: 'JetBrains Mono', ui-monospace, monospace;
+  pointer-events: none; text-anchor: middle;
+  paint-order: stroke; stroke: var(--bg); stroke-width: 3px; stroke-linejoin: round;
+}
+text.label.dim { opacity: 0.15; }
+text.label.highlight { fill: var(--accent); }
+#detail {
+  position: fixed; right: 16px; top: 80px; width: 340px;
+  background: var(--panel); border: 1px solid var(--edge-hot);
+  border-radius: 8px; padding: 14px 18px;
+  max-height: calc(100vh - 110px); overflow-y: auto;
+  display: none; box-shadow: 0 12px 36px rgba(0,0,0,0.5);
+}
+#detail.show { display: block; }
+#detail h2 {
+  font-family: 'JetBrains Mono', ui-monospace, monospace;
+  font-size: 14px; color: var(--accent); margin-bottom: 10px;
+  font-weight: 600;
+}
+#detail .factor { font-size: 11px; color: var(--ink-dim); font-family: 'JetBrains Mono', monospace; margin: 3px 0; }
+#detail .factor .k { color: var(--ink-faint); }
+#detail .section { margin-top: 10px; padding-top: 10px; border-top: 1px dashed var(--edge-hot); }
+#detail .lbl { font-size: 9px; color: var(--accent); text-transform: uppercase; letter-spacing: .07em; margin-bottom: 4px; }
+#detail .body { font-size: 12px; color: var(--ink); }
+#detail .vocab span {
+  background: var(--chip); color: var(--ink-dim);
+  padding: 1px 6px; border-radius: 3px; font-family: 'JetBrains Mono', monospace;
+  font-size: 10px; margin-right: 3px; display: inline-block; margin-bottom: 3px;
+}
+#detail .neighbors { font-size: 11px; }
+#detail .neighbors .row {
+  display: flex; justify-content: space-between; padding: 3px 0;
+  border-bottom: 1px dotted var(--edge);
+  font-family: 'JetBrains Mono', monospace; cursor: pointer;
+}
+#detail .neighbors .row:hover { color: var(--accent); }
+#detail .neighbors .w { color: var(--ink-faint); }
+#detail .close {
+  position: absolute; top: 10px; right: 12px;
+  background: none; border: 0; color: var(--ink-faint);
+  font-size: 18px; cursor: pointer; line-height: 1;
+}
+#detail .close:hover { color: var(--ink); }
+.legend {
+  position: fixed; left: 16px; bottom: 16px;
+  background: var(--panel); border: 1px solid var(--edge-hot);
+  border-radius: 6px; padding: 10px 12px; font-size: 10px;
+  font-family: 'JetBrains Mono', monospace;
+}
+.legend .row { display: flex; align-items: center; gap: 6px; margin: 2px 0; color: var(--ink-dim); }
+.legend .dot { width: 9px; height: 9px; border-radius: 50%; }
+</style>
+</head>
+<body>
+<header>
+  <h1>Algorithm Network</h1>
+  <span class="meta">2026-06-03 20:24 UTC</span>
+  <div class="controls">
+    <input class="search" id="search" placeholder="search id / vocab"/>
+    <span style="color:var(--ink-faint);font-family:monospace;font-size:11px">layer:</span>
+    <button class="layer-chip on" data-layer="meta">meta</button>
+    <button class="layer-chip on" data-layer="L1_demand">L1</button>
+    <button class="layer-chip on" data-layer="L2_refuse">L2</button>
+    <button class="layer-chip on" data-layer="L3_expose">L3</button>
+    <button class="layer-chip on" data-layer="vocab">vocab</button>
+    <button class="layer-chip on" data-layer="phil">phil</button>
+    <span style="color:var(--ink-faint);font-family:monospace;font-size:11px">lev≥:</span>
+    <button class="lev-chip on" data-lev="0">all</button>
+    <button class="lev-chip" data-lev="3">3</button>
+    <button class="lev-chip" data-lev="4">4</button>
+    <button class="lev-chip" data-lev="5">5</button>
+  </div>
+  <div class="stats">
+    <span><strong id="n-nodes">0</strong> nodes</span>
+    <span><strong id="n-links">0</strong> edges</span>
+    <span><strong id="n-visible">0</strong> visible</span>
+  </div>
+</header>
+<div id="graph"></div>
+<div id="detail"><button class="close" id="detail-close">×</button><div id="detail-body"></div></div>
+<div class="legend" id="legend"></div>
+<script>
+const GRAPH = {"nodes": [{"id": "appellate_word_layering", "layer": "vocab", "leverage": 4, "tempo": "preemptive", "target": ["judge", "appellate_court"], "venue": ["filing", "appeal"], "jurisdiction": ["common-law", "IL", "federal"], "abstraction": "pattern", "precondition": "Trial filings must embed foreign legal concepts before appeal is raised; issue must be preserved in record", "anti_pattern": "Adding comparative law arguments post-appeal; late introduction of novel vocabulary", "vocabulary": ["mu'sir", "umgangssabotage", "capitis_deminutio_minima", "legitieme_portie", "restschuldbefreiung", "nazira", "pflichtteil"], "color": "#e5c07b"}, {"id": "asymmetric_cost_pressure", "layer": "L1_demand", "leverage": 5, "tempo": "parallel", "target": ["opposing_counsel"], "venue": ["discovery", "filing", "regulatory"], "jurisdiction": ["universal"], "abstraction": "tactic", "precondition": "Counterparty uses high-volume collection model with thin margins per case; opponent must process attorney time", "anti_pattern": "Giving counsel time to prepare response; filing demands sequentially instead of simultaneously", "vocabulary": ["double_recovery", "deceptive_collection", "false_communication", "insurance_verification", "pattern_practice"], "color": "#4ec9b0"}, {"id": "bill_of_review_resurrection", "layer": "L1_demand", "leverage": 4, "tempo": "endgame", "target": ["counterparty", "system"], "venue": ["filing", "hearing"], "jurisdiction": ["common-law", "TX"], "abstraction": "template", "precondition": "Default judgment entered; extrinsic fraud documented (e.g., hidden prior payment)", "anti_pattern": "Filing after limitation period expires; using bill of review for intrinsic fraud", "vocabulary": ["bill_of_review", "extrinsic_fraud", "meritorious_defense", "prior_payment", "double_recovery"], "color": "#4ec9b0"}, {"id": "class_action_investigation", "layer": "L2_refuse", "leverage": 5, "tempo": "parallel", "target": ["system", "regulator"], "venue": ["discovery", "regulatory", "filing"], "jurisdiction": ["universal", "TX"], "abstraction": "concept", "precondition": "Pattern documented across multiple cases; default rate calculable; non-disclosure must be systematic", "anti_pattern": "Single case investigation; assuming pattern without statistical validation", "vocabulary": ["pattern_practice", "systematic_fraud", "default_judgment_mill", "class_action", "dtpa", "treble_damages"], "color": "#c586c0"}, {"id": "demand_performance", "layer": "L1_demand", "leverage": 3, "tempo": "reactive", "target": ["counterparty", "opposing_counsel"], "venue": ["email", "filing"], "jurisdiction": ["universal"], "abstraction": "pattern", "precondition": "Specific outstanding obligation exists; deadline is statutory or reasonable; sanction is pre-positioned", "anti_pattern": "Pleading tone; restating opponent's position; offering alternatives; vague consequences", "vocabulary": ["obligation", "deadline", "demand", "sanction", "default", "noncompliance", "motion_to_compel"], "color": "#4ec9b0"}, {"id": "dutch_default_principle", "layer": "phil", "leverage": 2, "tempo": "preemptive", "target": ["self", "system"], "venue": ["all"], "jurisdiction": ["universal"], "abstraction": "concept", "precondition": "Every legal system has defaults; defaults are never favorable to the inactive party", "anti_pattern": "Assuming inaction is neutral; failing to map system defaults", "vocabulary": ["default_outcome", "wettelijke_verdeling", "legitieme_portie", "baseline", "mapped_defaults"], "color": "#d19a66"}, {"id": "foia_confirmation_by_protection", "layer": "L2_refuse", "leverage": 2, "tempo": "reactive", "target": ["regulator", "system"], "venue": ["FOIA", "regulatory"], "jurisdiction": ["universal", "IL"], "abstraction": "concept", "precondition": "FOIA response cites confidentiality protections (implies records exist); denials contradict across agencies", "anti_pattern": "Accepting 'no records found' at face value; not detecting confirmation-by-protection signal", "vocabulary": ["confirmation_by_protection", "foia_denial", "confidentiality_exemption", "identity_verification", "records_exist"], "color": "#c586c0"}, {"id": "foia_doublespeak_test", "layer": "L3_expose", "leverage": 2, "tempo": "reactive", "target": ["system", "regulator"], "venue": ["FOIA", "discovery"], "jurisdiction": ["universal"], "abstraction": "concept", "precondition": "Multiple FOIA denials from different offices; contradiction documentable", "anti_pattern": "Treating each denial independently; not tracking circular referrals", "vocabulary": ["bureaucratic_loop", "doublespeak", "orwell_index", "circular_referral", "contradiction"], "color": "#e06c75"}, {"id": "foia_identity_verification_trap", "layer": "L1_demand", "leverage": 2, "tempo": "reactive", "target": ["regulator"], "venue": ["FOIA", "email"], "jurisdiction": ["universal", "IL"], "abstraction": "tactic", "precondition": "Identity verification required but agency has not specified accepted forms; perjury declaration is legal equivalent to notarization", "anti_pattern": "Accepting agency's vague 'verification needed' without demanding specification; using wrong form first", "vocabulary": ["identity_verification", "perjury_declaration", "penalty_of_perjury", "doj_form_361", "burden_shift"], "color": "#4ec9b0"}, {"id": "foia_title_iv_d_template", "layer": "L1_demand", "leverage": 2, "tempo": "reactive", "target": ["regulator"], "venue": ["FOIA"], "jurisdiction": ["universal", "IL", "federal"], "abstraction": "template", "precondition": "Title IV-D case active; requesting agency is IV-D administering authority; fee waiver available for pro se litigant", "anti_pattern": "Omitting fee waiver request; not specifying ledger gaps; too vague on records requested", "vocabulary": ["title_iv_d", "payment_ledger", "federal_reimbursement", "child_support_enforcement", "iv_d_case_status"], "color": "#4ec9b0"}, {"id": "judge_profile", "layer": "meta", "leverage": 2, "tempo": "preemptive", "target": ["judge", "self"], "venue": ["all"], "jurisdiction": ["IL"], "abstraction": "concept", "precondition": "Judge has public record; biographical data available; bar memberships and community affiliations documented", "anti_pattern": "Personalizing the judge; assuming politics determine outcomes; relying on rumors over verified record", "vocabulary": ["judicial_profile", "community_service", "career_trajectory", "decision_making_pattern", "enforcement_leaning"], "color": "#61afef"}, {"id": "liar_algorithm", "layer": "L3_expose", "leverage": 4, "tempo": "parallel", "target": ["counterparty", "opposing_counsel"], "venue": ["deposition", "discovery", "filing"], "jurisdiction": ["universal"], "abstraction": "pattern", "precondition": "Counterparty has made ≥3 sworn statements contradicted by objective evidence; counter-evidence exists before lock-in", "anti_pattern": "Confronting lie in real-time; engaging substance of the lie; filing single-instance contradiction", "vocabulary": ["lock_in", "documented_gap", "objective_evidence", "perjury", "fraud_on_the_court", "sanctions"], "color": "#e06c75"}, {"id": "manipulation_taxonomy", "layer": "L3_expose", "leverage": 3, "tempo": "preemptive", "target": ["system", "counterparty"], "venue": ["all"], "jurisdiction": ["universal"], "abstraction": "concept", "precondition": "Pattern identified across psychological, interpersonal, legal, institutional, and linguistic layers", "anti_pattern": "Single-layer analysis; ignoring institutional design; not connecting DSM diagnosis to statutory language", "vocabulary": ["dsm_5", "cluster_b", "darvo", "gaslighting", "financial_abuse", "coercive_control", "orwell_index", "manipulation_tactic"], "color": "#e06c75"}, {"id": "marriage_validity_analysis", "layer": "L2_refuse", "leverage": 3, "tempo": "endgame", "target": ["judge", "self"], "venue": ["filing", "hearing"], "jurisdiction": ["IL", "Alberta", "federal"], "abstraction": "concept", "precondition": "Marriage performed in another jurisdiction; separation period documented; comparative law frameworks available", "anti_pattern": "Assuming Illinois jurisdiction is unquestionable; not researching home jurisdiction law; filing before demand period complete", "vocabulary": ["forum_non_conveniens", "concurrent_jurisdiction", "zerruttungsprinzip", "marriage_validity", "separation_period"], "color": "#c586c0"}, {"id": "no_contract", "layer": "L2_refuse", "leverage": 3, "tempo": "reactive", "target": ["judge", "opposing_counsel"], "venue": ["filing"], "jurisdiction": ["universal"], "abstraction": "tactic", "precondition": "Charge lacks required findings (Turner, Rule 137, etc.); underlying order void or procured by fraud; written filing only", "anti_pattern": "Oral invocation in pro se court appearance; mixing with substantive defense; using without procedural citations", "vocabulary": ["notice_of_non_consent", "required_finding", "jurisdictional_defect", "void_order", "coercive_sanction"], "color": "#c586c0"}, {"id": "opt_out_weapon_strategy", "layer": "L1_demand", "leverage": 4, "tempo": "endgame", "target": ["system", "counterparty"], "venue": ["filing"], "jurisdiction": ["TX", "federal"], "abstraction": "tactic", "precondition": "Class action filed and proven; individual plaintiff has strongest evidence; opt-out window respected", "anti_pattern": "Opting out before class verdict; relying on class alone without individual reserve; sharing plaintiff list", "vocabulary": ["opt_out", "collateral_estoppel", "class_action", "treble_damages", "individual_recovery", "offensive_non_mutual"], "color": "#4ec9b0"}, {"id": "orwell_index_spec", "layer": "L3_expose", "leverage": 2, "tempo": "preemptive", "target": ["system", "self"], "venue": ["all"], "jurisdiction": ["universal"], "abstraction": "concept", "precondition": "Any document can be scored on seven axes (verbosity, referrals, agency hiding, stated_vs_actual, template, exemptions, contradiction)", "anti_pattern": "Using single-axis scoring; applying subjectively; not weighting stated_vs_actual at 0.20", "vocabulary": ["verbosity_ratio", "referral_loops", "agency_hiding", "stated_vs_actual", "template_ratio", "exemption_stacking", "contradiction"], "color": "#e06c75"}, {"id": "petition_modify_support_510", "layer": "L1_demand", "leverage": 3, "tempo": "reactive", "target": ["judge"], "venue": ["filing", "hearing"], "jurisdiction": ["IL"], "abstraction": "template", "precondition": "Substantial change in circumstances documented; foreseeability is statutorily barred as defense; involuntary loss proven", "anti_pattern": "Vague causation chain; not quantifying financial change; accepting foreseeability argument", "vocabulary": ["substantial_change_in_circumstances", "involuntary_unemployment", "ability_to_pay", "financial_collapse", "support_modification"], "color": "#4ec9b0"}, {"id": "petition_parenting_time_607_5", "layer": "L2_refuse", "leverage": 4, "tempo": "reactive", "target": ["judge"], "venue": ["filing", "hearing"], "jurisdiction": ["IL"], "abstraction": "template", "precondition": "Parenting time denied for ≥30 days; allocation judgment in place; violations specific and documented", "anti_pattern": "Lumping violations together; not quantifying separation days; assuming reunification without proof", "vocabulary": [6075, "parenting_time_abuse", "expedited_procedure", "make_up_parenting_time", "contempt_for_violator", "reunification_therapy"], "color": "#c586c0"}, {"id": "precision_trigger_words", "layer": "vocab", "leverage": 3, "tempo": "preemptive", "target": ["judge", "appellate_court"], "venue": ["filing"], "jurisdiction": ["universal", "IL"], "abstraction": "tactic", "precondition": "Word has ≥1 dictionary definition and ≥1 Black's Law entry; describes conduct not persons; deployed once per motion", "anti_pattern": "Reusing word across multiple motions; profane or defamatory language; personalizing the word to the litigant", "vocabulary": ["retardation", "dissipation", "dereliction", "spoliation", "contumacious", "obdurate", "peculation", "subterfuge", "unconscionable"], "color": "#e5c07b"}, {"id": "procedural_discovery_algorithm", "layer": "L1_demand", "leverage": 2, "tempo": "preemptive", "target": ["self", "opposing_counsel"], "venue": ["filing", "discovery"], "jurisdiction": ["IL", "universal"], "abstraction": "concept", "precondition": "Pro se litigant has incomplete procedural map; reversal of search direction (situation→tools not tool→situation)", "anti_pattern": "Assuming all tools are known; not connecting case facts to dormant procedures", "vocabulary": ["fee_waiver", "510_modification", 6075, "508a_interim_fees", "exemptions", "turner_motion", "procedural_tools"], "color": "#4ec9b0"}, {"id": "three_layer_algo", "layer": "meta", "leverage": 4, "tempo": "parallel", "target": ["opposing_counsel", "counterparty", "judge"], "venue": ["all"], "jurisdiction": ["universal"], "abstraction": "concept", "precondition": "Counterparty lies repeatedly under oath; separate L1 (owed), L2 (charged), L3 (claimed) into orthogonal vectors", "anti_pattern": "Mixing layers in one message; oral L2 without counsel; L1 without deadline; L3 with substance engagement", "vocabulary": ["layer_1_demand", "layer_2_no_contract", "layer_3_liar_algorithm", "orthogonal_vectors", "one_algorithm_per_move"], "color": "#61afef"}, {"id": "title_iv_d_camarda_analysis", "layer": "L3_expose", "leverage": 4, "tempo": "endgame", "target": ["judge", "system", "regulator"], "venue": ["filing", "federal"], "jurisdiction": ["IL", "federal"], "abstraction": "concept", "precondition": "Camarda case researched; Title IV-D structural conflict documented; federal incentive quantified", "anti_pattern": "Assuming state is neutral; not connecting IV-D incentive to enforcement pressure; missing appellate angle", "vocabulary": ["title_iv_d", "federal_incentive", "enforcement_incentive", "structural_conflict", "section_1983", "deprivation_of_rights"], "color": "#e06c75"}, {"id": "title_iv_d_deconstruction", "layer": "L1_demand", "leverage": 3, "tempo": "preemptive", "target": ["regulator", "judge", "self"], "venue": ["FOIA", "filing", "federal"], "jurisdiction": ["universal", "IL", "federal"], "abstraction": "algorithm", "precondition": "Every enforcement action must have signed judicial predicate; ledger must balance; fitness hearing required for parenting; ability finding required for incarceration", "anti_pattern": "Accepting unsigned orders; not auditing ledger gaps; mixing parenting with debt collection", "vocabulary": ["signed_instrument", "ledger_audit", "parenting_debt_separation", "fitness_hearing", "ability_finding", "section_1983_path"], "color": "#4ec9b0"}, {"id": "selective_recall_credibility_trap", "layer": "L3_expose", "leverage": 3, "tempo": "parallel", "target": ["counterparty", "opposing_counsel", "settlement_negotiator"], "venue": ["deposition", "settlement", "filing"], "jurisdiction": ["universal", "IL"], "abstraction": "pattern", "precondition": "Counterparty's verified filings mix dollar-precision recall (when convenient) with formulaic 'lacks requisite knowledge' responses (when inconvenient), in the same filing; ideally in the same paragraph", "anti_pattern": "Citing as standalone basis for allocation/fitness motion (judges treat axes as orthogonal); listing all contradictions found (volume dilutes impact); leaking the list to opposing counsel before deposition", "vocabulary": ["lacks_requisite_knowledge", "dollar_precision_recall", "selective_verification", "intra_paragraph_self_cancel", "verified_pleading", "credibility_asymmetry", "deposition_outline", "pretrial_memorandum"], "color": "#e06c75"}, {"id": "twelve_laws_legal_framework", "layer": "phil", "leverage": 2, "tempo": "preemptive", "target": ["self", "judge", "system"], "venue": ["all"], "jurisdiction": ["universal"], "abstraction": "concept", "precondition": "Universal laws apply to litigation; Nash equilibrium is the true goal; court system by design prevents it", "anti_pattern": "Treating law as purely procedural; missing philosophical alignment; pursuing punishment instead of resolution", "vocabulary": ["law_of_oneness", "law_of_vibration", "law_of_correspondence", "law_of_attraction", "law_of_inspired_action", "nash_equilibrium"], "color": "#d19a66"}, {"id": "motivational_levers_rice", "layer": "phil", "leverage": 4, "tempo": "preemptive", "target": ["counterparty", "opposing_counsel", "judge", "regulator", "self"], "venue": ["interpersonal", "settlement", "deposition", "meeting", "filing"], "jurisdiction": ["universal"], "abstraction": "", "precondition": "", "anti_pattern": "", "vocabulary": [], "color": "#d19a66"}, {"id": "authority_monopoly_prevention", "layer": "vocab", "leverage": 3, "tempo": "preemptive", "target": ["opposing_counsel", "judge", "witness", "self"], "venue": ["settlement", "hearing", "deposition"], "jurisdiction": ["universal"], "abstraction": "", "precondition": "", "anti_pattern": "", "vocabulary": [], "color": "#e5c07b"}, {"id": "coherence_consistency_test", "layer": "L1_demand", "leverage": 4, "tempo": "parallel", "target": ["opposing_counsel", "judge", "advisor_subprocess"], "venue": ["interpersonal", "deposition", "settlement"], "jurisdiction": ["universal"], "abstraction": "", "precondition": "", "anti_pattern": "", "vocabulary": [], "color": "#4ec9b0"}, {"id": "micropattern_extraction_early_detection", "layer": "L1_demand", "leverage": 4, "tempo": "reactive", "target": ["opposing_counsel", "witness", "judge"], "venue": ["deposition", "interpersonal", "hearing"], "jurisdiction": ["universal"], "abstraction": "", "precondition": "", "anti_pattern": "", "vocabulary": [], "color": "#4ec9b0"}, {"id": "emotional_dysregulation_leverage", "layer": "L2_refuse", "leverage": 4, "tempo": "reactive", "target": ["opposing_counsel", "counterparty"], "venue": ["settlement", "interpersonal", "hearing"], "jurisdiction": ["universal"], "abstraction": "", "precondition": "", "anti_pattern": "", "vocabulary": [], "color": "#c586c0"}, {"id": "momentum_cascade_filing", "layer": "L3_expose", "leverage": 4, "tempo": "parallel", "target": ["opposing_counsel", "judge", "counterparty"], "venue": ["filing", "hearing"], "jurisdiction": ["universal"], "abstraction": "", "precondition": "", "anti_pattern": "", "vocabulary": [], "color": "#e06c75"}, {"id": "negative_sum_frame_shift", "layer": "vocab", "leverage": 4, "tempo": "preemptive", "target": ["opposing_counsel", "judge", "counterparty", "advisor_subprocess"], "venue": ["settlement", "interpersonal"], "jurisdiction": ["universal"], "abstraction": "", "precondition": "", "anti_pattern": "", "vocabulary": [], "color": "#e5c07b"}, {"id": "leverage_choice_framing", "layer": "vocab", "leverage": 4, "tempo": "reactive", "target": ["opposing_counsel"], "venue": ["settlement", "interpersonal"], "jurisdiction": ["universal"], "abstraction": "", "precondition": "", "anti_pattern": "", "vocabulary": [], "color": "#e5c07b"}, {"id": "credential_collapse_documentary", "layer": "L3_expose", "leverage": 5, "tempo": "reactive", "target": ["judge", "opposing_counsel", "counterparty"], "venue": ["filing", "hearing"], "jurisdiction": ["universal"], "abstraction": "", "precondition": "", "anti_pattern": "", "vocabulary": [], "color": "#e06c75"}, {"id": "trigger_point_mapping", "layer": "L2_refuse", "leverage": 3, "tempo": "reactive", "target": ["counterparty", "opposing_counsel"], "venue": ["settlement", "interpersonal", "deposition"], "jurisdiction": ["universal"], "abstraction": "", "precondition": "", "anti_pattern": "", "vocabulary": [], "color": "#c586c0"}, {"id": "settlement_rejection_narrative", "layer": "vocab", "leverage": 3, "tempo": "reactive", "target": ["judge", "advisor_subprocess", "counterparty_counsel"], "venue": ["hearing", "filing"], "jurisdiction": ["universal"], "abstraction": "", "precondition": "", "anti_pattern": "", "vocabulary": [], "color": "#e5c07b"}, {"id": "procedure_compliance_signal", "layer": "L1_demand", "leverage": 3, "tempo": "parallel", "target": ["judge"], "venue": ["filing", "hearing"], "jurisdiction": ["universal"], "abstraction": "", "precondition": "", "anti_pattern": "", "vocabulary": [], "color": "#4ec9b0"}, {"id": "behavioral_coordinate_mapping", "layer": "meta", "leverage": 4, "tempo": "parallel", "target": ["opposing_counsel", "counterparty", "judge"], "venue": ["interpersonal"], "jurisdiction": ["universal"], "abstraction": "", "precondition": "", "anti_pattern": "", "vocabulary": [], "color": "#61afef"}, {"id": "extractive_mask_vulnerability", "layer": "L1_demand", "leverage": 3, "tempo": "preemptive", "target": ["opposing_counsel", "witness", "advisor_subprocess"], "venue": ["interpersonal", "deposition"], "jurisdiction": ["universal"], "abstraction": "", "precondition": "", "anti_pattern": "", "vocabulary": [], "color": "#4ec9b0"}, {"id": "mutual_destruction_parity", "layer": "L3_expose", "leverage": 4, "tempo": "reactive", "target": ["opposing_counsel", "counterparty"], "venue": ["filing"], "jurisdiction": ["universal"], "abstraction": "", "precondition": "", "anti_pattern": "", "vocabulary": [], "color": "#e06c75"}, {"id": "finite_pool_negative_sum_reframing", "layer": "phil", "leverage": 3, "tempo": "preemptive", "target": ["counterparty", "judge"], "venue": ["settlement", "mediation"], "jurisdiction": ["universal"], "abstraction": "", "precondition": "", "anti_pattern": "", "vocabulary": [], "color": "#d19a66"}, {"id": "information_leverage_settlement_forcing", "layer": "L2_refuse", "leverage": 4, "tempo": "preemptive", "target": ["opposing_counsel", "counterparty"], "venue": ["settlement"], "jurisdiction": ["universal"], "abstraction": "", "precondition": "", "anti_pattern": "", "vocabulary": [], "color": "#c586c0"}, {"id": "documented_defection_pattern_recognition", "layer": "L1_demand", "leverage": 4, "tempo": "parallel", "target": ["judge", "opposing_counsel"], "venue": ["filing", "hearing"], "jurisdiction": ["universal"], "abstraction": "", "precondition": "", "anti_pattern": "", "vocabulary": [], "color": "#4ec9b0"}, {"id": "cooperative_signal_through_procedural_restraint", "layer": "L1_demand", "leverage": 2, "tempo": "preemptive", "target": ["judge"], "venue": ["filing", "hearing"], "jurisdiction": ["universal"], "abstraction": "", "precondition": "", "anti_pattern": "", "vocabulary": [], "color": "#4ec9b0"}, {"id": "motion_sequencing_ambush", "layer": "L2_refuse", "leverage": 3, "tempo": "reactive", "target": ["counterparty", "opposing_counsel", "judge"], "venue": ["filing"], "jurisdiction": ["universal"], "abstraction": "", "precondition": "", "anti_pattern": "", "vocabulary": [], "color": "#c586c0"}, {"id": "financial_affidavit_as_leverage_weapon", "layer": "L1_demand", "leverage": 5, "tempo": "preemptive", "target": ["counterparty", "judge"], "venue": ["filing", "hearing"], "jurisdiction": ["universal"], "abstraction": "", "precondition": "", "anti_pattern": "", "vocabulary": [], "color": "#4ec9b0"}, {"id": "threshold_triggered_disclosure_sequencing", "layer": "L2_refuse", "leverage": 3, "tempo": "reactive", "target": ["counterparty", "judge"], "venue": ["filing"], "jurisdiction": ["universal"], "abstraction": "", "precondition": "", "anti_pattern": "", "vocabulary": [], "color": "#c586c0"}, {"id": "sworn_statement_burden_shift", "layer": "L1_demand", "leverage": 2, "tempo": "preemptive", "target": ["counterparty", "judge"], "venue": ["filing", "hearing"], "jurisdiction": ["universal"], "abstraction": "", "precondition": "", "anti_pattern": "", "vocabulary": [], "color": "#4ec9b0"}, {"id": "procedural_exhaustion_attrition", "layer": "L3_expose", "leverage": 3, "tempo": "parallel", "target": ["counterparty", "opposing_counsel"], "venue": ["filing"], "jurisdiction": ["universal"], "abstraction": "", "precondition": "", "anti_pattern": "", "vocabulary": [], "color": "#e06c75"}, {"id": "system_extraction_loop_exit", "layer": "phil", "leverage": 2, "tempo": "preemptive", "target": ["counterparty", "mediator"], "venue": ["settlement", "mediation"], "jurisdiction": ["universal"], "abstraction": "", "precondition": "", "anti_pattern": "", "vocabulary": [], "color": "#d19a66"}, {"id": "discovery_gap_foundational_challenge", "layer": "L1_demand", "leverage": 4, "tempo": "preemptive", "target": ["judge"], "venue": ["filing", "hearing"], "jurisdiction": ["universal"], "abstraction": "", "precondition": "", "anti_pattern": "", "vocabulary": [], "color": "#4ec9b0"}, {"id": "forcing_function_procedural", "layer": "L2_refuse", "leverage": 4, "tempo": "reactive", "target": ["opposing_counsel", "judge"], "venue": ["filing"], "jurisdiction": ["universal"], "abstraction": "", "precondition": "", "anti_pattern": "", "vocabulary": [], "color": "#c586c0"}, {"id": "record_checkpoint_saturation", "layer": "L2_refuse", "leverage": 3, "tempo": "parallel", "target": ["judge"], "venue": ["filing"], "jurisdiction": ["universal"], "abstraction": "", "precondition": "", "anti_pattern": "", "vocabulary": [], "color": "#c586c0"}, {"id": "escalation_ladder_saturation", "layer": "L1_demand", "leverage": 3, "tempo": "preemptive", "target": ["judge"], "venue": ["filing"], "jurisdiction": ["universal"], "abstraction": "", "precondition": "", "anti_pattern": "", "vocabulary": [], "color": "#4ec9b0"}, {"id": "appellate_leverage_record_auditability", "layer": "L3_expose", "leverage": 3, "tempo": "endgame", "target": ["judge"], "venue": ["appeal", "filing"], "jurisdiction": ["universal"], "abstraction": "", "precondition": "", "anti_pattern": "", "vocabulary": [], "color": "#e06c75"}, {"id": "burden_shift_prima_facie_collapse", "layer": "L2_refuse", "leverage": 4, "tempo": "reactive", "target": ["judge"], "venue": ["filing", "hearing"], "jurisdiction": ["universal"], "abstraction": "", "precondition": "", "anti_pattern": "", "vocabulary": [], "color": "#c586c0"}, {"id": "admission_netting_offset_defense", "layer": "L2_refuse", "leverage": 4, "tempo": "reactive", "target": ["judge"], "venue": ["filing", "hearing"], "jurisdiction": ["universal"], "abstraction": "", "precondition": "", "anti_pattern": "", "vocabulary": [], "color": "#c586c0"}, {"id": "triple_axis_pressure_independence", "layer": "L1_demand", "leverage": 3, "tempo": "parallel", "target": ["judge", "opposing_counsel", "regulator"], "venue": ["filing", "regulatory"], "jurisdiction": ["universal"], "abstraction": "", "precondition": "", "anti_pattern": "", "vocabulary": [], "color": "#4ec9b0"}, {"id": "documented_contradiction_impeachment", "layer": "L2_refuse", "leverage": 4, "tempo": "reactive", "target": ["counterparty", "judge"], "venue": ["filing", "discovery"], "jurisdiction": ["universal"], "abstraction": "", "precondition": "", "anti_pattern": "", "vocabulary": [], "color": "#c586c0"}, {"id": "QWPARSE_SYSTEM", "layer": "meta", "leverage": 2, "tempo": "preemptive", "target": ["self", "judge"], "venue": ["filing"], "jurisdiction": ["universal"], "abstraction": "concept", "precondition": "Document draft exists; vector DB populated; structural pre-defects measurable", "anti_pattern": "Treating parse-syntax score as quality metric; skipping second-pass iteration", "vocabulary": ["dog_latin_detection", "null_chain", "csscpsgp_grading", "effectiveness_score", "context_free_judge"], "color": "#61afef"}, {"id": "legal_math", "layer": "L3_expose", "leverage": 5, "tempo": "parallel", "target": ["judge", "opposing_counsel", "self"], "venue": ["filing", "discovery", "deposition", "appeal"], "jurisdiction": ["universal", "IL"], "abstraction": "concept", "precondition": "Case has 10+ filings; structured evidence available; counsel/judge can absorb mathematical framing", "anti_pattern": "Under-saturation leaves the math invisible; over-saturation makes the judge skip it", "vocabulary": ["chain_confidence", "cycle_basis", "sheaf_cohomology", "kl_divergence", "nash_equilibrium", "discount_factor"], "color": "#e06c75"}, {"id": "narrative_protocol", "layer": "L2_refuse", "leverage": 4, "tempo": "parallel", "target": ["judge", "opposing_counsel", "system"], "venue": ["filing", "hearing", "discovery", "appeal"], "jurisdiction": ["IL", "federal", "universal"], "abstraction": "pattern", "precondition": "Case has 3+ filings establishing factual foundation", "anti_pattern": "Over-explanation of math in filing body; jargon-heavy oral argument", "vocabulary": ["forcing_function", "assertion_checkpoint", "communication_log", "escalation_rung", "saturation_gradient", "pre_mortem"], "color": "#c586c0"}, {"id": "demand_escalation_engine", "layer": "L1_demand", "leverage": 3, "tempo": "reactive", "target": ["opposing_counsel", "judge"], "venue": ["email", "filing", "discovery", "hearing"], "jurisdiction": ["IL", "universal"], "abstraction": "pattern", "precondition": "Initial demand issued; response deadline passed or deflected without resolution", "anti_pattern": "Accepting non-response as final; failing to auto-escalate; mixing levels in single message", "vocabulary": ["level_1_statement", "level_3_demand", "level_5_discovery", "level_6_motion", "level_7_contempt"], "color": "#4ec9b0"}], "links": [{"source": "appellate_word_layering", "target": "dutch_default_principle", "weight": 1, "vocab_overlap": 1, "shared_vocab": ["legitieme_portie"], "factor_pair": null}, {"source": "asymmetric_cost_pressure", "target": "bill_of_review_resurrection", "weight": 1, "vocab_overlap": 1, "shared_vocab": ["double_recovery"], "factor_pair": null}, {"source": "asymmetric_cost_pressure", "target": "class_action_investigation", "weight": 1, "vocab_overlap": 1, "shared_vocab": ["pattern_practice"], "factor_pair": null}, {"source": "class_action_investigation", "target": "opt_out_weapon_strategy", "weight": 2, "vocab_overlap": 2, "shared_vocab": ["class_action", "treble_damages"], "factor_pair": null}, {"source": "foia_confirmation_by_protection", "target": "foia_identity_verification_trap", "weight": 1, "vocab_overlap": 1, "shared_vocab": ["identity_verification"], "factor_pair": null}, {"source": "foia_doublespeak_test", "target": "manipulation_taxonomy", "weight": 1, "vocab_overlap": 1, "shared_vocab": ["orwell_index"], "factor_pair": null}, {"source": "foia_doublespeak_test", "target": "orwell_index_spec", "weight": 1, "vocab_overlap": 1, "shared_vocab": ["contradiction"], "factor_pair": null}, {"source": "foia_title_iv_d_template", "target": "title_iv_d_camarda_analysis", "weight": 1, "vocab_overlap": 1, "shared_vocab": ["title_iv_d"], "factor_pair": null}, {"source": "petition_parenting_time_607_5", "target": "procedural_discovery_algorithm", "weight": 1, "vocab_overlap": 1, "shared_vocab": ["6075"], "factor_pair": null}, {"source": "legal_math", "target": "twelve_laws_legal_framework", "weight": 1, "vocab_overlap": 1, "shared_vocab": ["nash_equilibrium"], "factor_pair": null}, {"source": "appellate_word_layering", "target": "precision_trigger_words", "weight": 0.5, "vocab_overlap": 0, "shared_vocab": [], "factor_pair": "vocab / preemptive"}, {"source": "appellate_word_layering", "target": "authority_monopoly_prevention", "weight": 0.5, "vocab_overlap": 0, "shared_vocab": [], "factor_pair": "vocab / preemptive"}, {"source": "appellate_word_layering", "target": "negative_sum_frame_shift", "weight": 0.5, "vocab_overlap": 0, "shared_vocab": [], "factor_pair": "vocab / preemptive"}, {"source": "authority_monopoly_prevention", "target": "precision_trigger_words", "weight": 0.5, "vocab_overlap": 0, "shared_vocab": [], "factor_pair": "vocab / preemptive"}, {"source": "negative_sum_frame_shift", "target": "precision_trigger_words", "weight": 0.5, "vocab_overlap": 0, "shared_vocab": [], "factor_pair": "vocab / preemptive"}, {"source": "authority_monopoly_prevention", "target": "negative_sum_frame_shift", "weight": 0.5, "vocab_overlap": 0, "shared_vocab": [], "factor_pair": "vocab / preemptive"}, {"source": "asymmetric_cost_pressure", "target": "coherence_consistency_test", "weight": 0.5, "vocab_overlap": 0, "shared_vocab": [], "factor_pair": "L1_demand / parallel"}, {"source": "asymmetric_cost_pressure", "target": "procedure_compliance_signal", "weight": 0.5, "vocab_overlap": 0, "shared_vocab": [], "factor_pair": "L1_demand / parallel"}, {"source": "asymmetric_cost_pressure", "target": "documented_defection_pattern_recognition", "weight": 0.5, "vocab_overlap": 0, "shared_vocab": [], "factor_pair": "L1_demand / parallel"}, {"source": "asymmetric_cost_pressure", "target": "triple_axis_pressure_independence", "weight": 0.5, "vocab_overlap": 0, "shared_vocab": [], "factor_pair": "L1_demand / parallel"}, {"source": "coherence_consistency_test", "target": "procedure_compliance_signal", "weight": 0.5, "vocab_overlap": 0, "shared_vocab": [], "factor_pair": "L1_demand / parallel"}, {"source": "coherence_consistency_test", "target": "documented_defection_pattern_recognition", "weight": 0.5, "vocab_overlap": 0, "shared_vocab": [], "factor_pair": "L1_demand / parallel"}, {"source": "coherence_consistency_test", "target": "triple_axis_pressure_independence", "weight": 0.5, "vocab_overlap": 0, "shared_vocab": [], "factor_pair": "L1_demand / parallel"}, {"source": "documented_defection_pattern_recognition", "target": "procedure_compliance_signal", "weight": 0.5, "vocab_overlap": 0, "shared_vocab": [], "factor_pair": "L1_demand / parallel"}, {"source": "procedure_compliance_signal", "target": "triple_axis_pressure_independence", "weight": 0.5, "vocab_overlap": 0, "shared_vocab": [], "factor_pair": "L1_demand / parallel"}, {"source": "documented_defection_pattern_recognition", "target": "triple_axis_pressure_independence", "weight": 0.5, "vocab_overlap": 0, "shared_vocab": [], "factor_pair": "L1_demand / parallel"}, {"source": "bill_of_review_resurrection", "target": "opt_out_weapon_strategy", "weight": 0.5, "vocab_overlap": 0, "shared_vocab": [], "factor_pair": "L1_demand / endgame"}, {"source": "class_action_investigation", "target": "record_checkpoint_saturation", "weight": 0.5, "vocab_overlap": 0, "shared_vocab": [], "factor_pair": "L2_refuse / parallel"}, {"source": "class_action_investigation", "target": "narrative_protocol", "weight": 0.5, "vocab_overlap": 0, "shared_vocab": [], "factor_pair": "L2_refuse / parallel"}, {"source": "narrative_protocol", "target": "record_checkpoint_saturation", "weight": 0.5, "vocab_overlap": 0, "shared_vocab": [], "factor_pair": "L2_refuse / parallel"}, {"source": "demand_performance", "target": "foia_identity_verification_trap", "weight": 0.5, "vocab_overlap": 0, "shared_vocab": [], "factor_pair": "L1_demand / reactive"}, {"source": "demand_performance", "target": "foia_title_iv_d_template", "weight": 0.5, "vocab_overlap": 0, "shared_vocab": [], "factor_pair": "L1_demand / reactive"}, {"source": "demand_performance", "target": "petition_modify_support_510", "weight": 0.5, "vocab_overlap": 0, "shared_vocab": [], "factor_pair": "L1_demand / reactive"}, {"source": "demand_performance", "target": "micropattern_extraction_early_detection", "weight": 0.5, "vocab_overlap": 0, "shared_vocab": [], "factor_pair": "L1_demand / reactive"}, {"source": "demand_escalation_engine", "target": "demand_performance", "weight": 0.5, "vocab_overlap": 0, "shared_vocab": [], "factor_pair": "L1_demand / reactive"}, {"source": "foia_identity_verification_trap", "target": "foia_title_iv_d_template", "weight": 0.5, "vocab_overlap": 0, "shared_vocab": [], "factor_pair": "L1_demand / reactive"}, {"source": "foia_identity_verification_trap", "target": "petition_modify_support_510", "weight": 0.5, "vocab_overlap": 0, "shared_vocab": [], "factor_pair": "L1_demand / reactive"}, {"source": "foia_identity_verification_trap", "target": "micropattern_extraction_early_detection", "weight": 0.5, "vocab_overlap": 0, "shared_vocab": [], "factor_pair": "L1_demand / reactive"}, {"source": "demand_escalation_engine", "target": "foia_identity_verification_trap", "weight": 0.5, "vocab_overlap": 0, "shared_vocab": [], "factor_pair": "L1_demand / reactive"}, {"source": "foia_title_iv_d_template", "target": "petition_modify_support_510", "weight": 0.5, "vocab_overlap": 0, "shared_vocab": [], "factor_pair": "L1_demand / reactive"}, {"source": "foia_title_iv_d_template", "target": "micropattern_extraction_early_detection", "weight": 0.5, "vocab_overlap": 0, "shared_vocab": [], "factor_pair": "L1_demand / reactive"}, {"source": "demand_escalation_engine", "target": "foia_title_iv_d_template", "weight": 0.5, "vocab_overlap": 0, "shared_vocab": [], "factor_pair": "L1_demand / reactive"}, {"source": "micropattern_extraction_early_detection", "target": "petition_modify_support_510", "weight": 0.5, "vocab_overlap": 0, "shared_vocab": [], "factor_pair": "L1_demand / reactive"}, {"source": "demand_escalation_engine", "target": "petition_modify_support_510", "weight": 0.5, "vocab_overlap": 0, "shared_vocab": [], "factor_pair": "L1_demand / reactive"}, {"source": "demand_escalation_engine", "target": "micropattern_extraction_early_detection", "weight": 0.5, "vocab_overlap": 0, "shared_vocab": [], "factor_pair": "L1_demand / reactive"}, {"source": "dutch_default_principle", "target": "twelve_laws_legal_framework", "weight": 0.5, "vocab_overlap": 0, "shared_vocab": [], "factor_pair": "phil / preemptive"}, {"source": "dutch_default_principle", "target": "motivational_levers_rice", "weight": 0.5, "vocab_overlap": 0, "shared_vocab": [], "factor_pair": "phil / preemptive"}, {"source": "dutch_default_principle", "target": "finite_pool_negative_sum_reframing", "weight": 0.5, "vocab_overlap": 0, "shared_vocab": [], "factor_pair": "phil / preemptive"}, {"source": "dutch_default_principle", "target": "system_extraction_loop_exit", "weight": 0.5, "vocab_overlap": 0, "shared_vocab": [], "factor_pair": "phil / preemptive"}, {"source": "motivational_levers_rice", "target": "twelve_laws_legal_framework", "weight": 0.5, "vocab_overlap": 0, "shared_vocab": [], "factor_pair": "phil / preemptive"}, {"source": "finite_pool_negative_sum_reframing", "target": "twelve_laws_legal_framework", "weight": 0.5, "vocab_overlap": 0, "shared_vocab": [], "factor_pair": "phil / preemptive"}, {"source": "system_extraction_loop_exit", "target": "twelve_laws_legal_framework", "weight": 0.5, "vocab_overlap": 0, "shared_vocab": [], "factor_pair": "phil / preemptive"}, {"source": "finite_pool_negative_sum_reframing", "target": "motivational_levers_rice", "weight": 0.5, "vocab_overlap": 0, "shared_vocab": [], "factor_pair": "phil / preemptive"}, {"source": "motivational_levers_rice", "target": "system_extraction_loop_exit", "weight": 0.5, "vocab_overlap": 0, "shared_vocab": [], "factor_pair": "phil / preemptive"}, {"source": "finite_pool_negative_sum_reframing", "target": "system_extraction_loop_exit", "weight": 0.5, "vocab_overlap": 0, "shared_vocab": [], "factor_pair": "phil / preemptive"}, {"source": "foia_confirmation_by_protection", "target": "no_contract", "weight": 0.5, "vocab_overlap": 0, "shared_vocab": [], "factor_pair": "L2_refuse / reactive"}, {"source": "foia_confirmation_by_protection", "target": "petition_parenting_time_607_5", "weight": 0.5, "vocab_overlap": 0, "shared_vocab": [], "factor_pair": "L2_refuse / reactive"}, {"source": "emotional_dysregulation_leverage", "target": "foia_confirmation_by_protection", "weight": 0.5, "vocab_overlap": 0, "shared_vocab": [], "factor_pair": "L2_refuse / reactive"}, {"source": "foia_confirmation_by_protection", "target": "trigger_point_mapping", "weight": 0.5, "vocab_overlap": 0, "shared_vocab": [], "factor_pair": "L2_refuse / reactive"}, {"source": "foia_confirmation_by_protection", "target": "motion_sequencing_ambush", "weight": 0.5, "vocab_overlap": 0, "shared_vocab": [], "factor_pair": "L2_refuse / reactive"}, {"source": "foia_confirmation_by_protection", "target": "threshold_triggered_disclosure_sequencing", "weight": 0.5, "vocab_overlap": 0, "shared_vocab": [], "factor_pair": "L2_refuse / reactive"}, {"source": "foia_confirmation_by_protection", "target": "forcing_function_procedural", "weight": 0.5, "vocab_overlap": 0, "shared_vocab": [], "factor_pair": "L2_refuse / reactive"}, {"source": "burden_shift_prima_facie_collapse", "target": "foia_confirmation_by_protection", "weight": 0.5, "vocab_overlap": 0, "shared_vocab": [], "factor_pair": "L2_refuse / reactive"}, {"source": "admission_netting_offset_defense", "target": "foia_confirmation_by_protection", "weight": 0.5, "vocab_overlap": 0, "shared_vocab": [], "factor_pair": "L2_refuse / reactive"}, {"source": "documented_contradiction_impeachment", "target": "foia_confirmation_by_protection", "weight": 0.5, "vocab_overlap": 0, "shared_vocab": [], "factor_pair": "L2_refuse / reactive"}, {"source": "no_contract", "target": "petition_parenting_time_607_5", "weight": 0.5, "vocab_overlap": 0, "shared_vocab": [], "factor_pair": "L2_refuse / reactive"}, {"source": "emotional_dysregulation_leverage", "target": "no_contract", "weight": 0.5, "vocab_overlap": 0, "shared_vocab": [], "factor_pair": "L2_refuse / reactive"}, {"source": "no_contract", "target": "trigger_point_mapping", "weight": 0.5, "vocab_overlap": 0, "shared_vocab": [], "factor_pair": "L2_refuse / reactive"}, {"source": "motion_sequencing_ambush", "target": "no_contract", "weight": 0.5, "vocab_overlap": 0, "shared_vocab": [], "factor_pair": "L2_refuse / reactive"}, {"source": "no_contract", "target": "threshold_triggered_disclosure_sequencing", "weight": 0.5, "vocab_overlap": 0, "shared_vocab": [], "factor_pair": "L2_refuse / reactive"}, {"source": "forcing_function_procedural", "target": "no_contract", "weight": 0.5, "vocab_overlap": 0, "shared_vocab": [], "factor_pair": "L2_refuse / reactive"}, {"source": "burden_shift_prima_facie_collapse", "target": "no_contract", "weight": 0.5, "vocab_overlap": 0, "shared_vocab": [], "factor_pair": "L2_refuse / reactive"}, {"source": "admission_netting_offset_defense", "target": "no_contract", "weight": 0.5, "vocab_overlap": 0, "shared_vocab": [], "factor_pair": "L2_refuse / reactive"}, {"source": "documented_contradiction_impeachment", "target": "no_contract", "weight": 0.5, "vocab_overlap": 0, "shared_vocab": [], "factor_pair": "L2_refuse / reactive"}, {"source": "emotional_dysregulation_leverage", "target": "petition_parenting_time_607_5", "weight": 0.5, "vocab_overlap": 0, "shared_vocab": [], "factor_pair": "L2_refuse / reactive"}, {"source": "petition_parenting_time_607_5", "target": "trigger_point_mapping", "weight": 0.5, "vocab_overlap": 0, "shared_vocab": [], "factor_pair": "L2_refuse / reactive"}, {"source": "motion_sequencing_ambush", "target": "petition_parenting_time_607_5", "weight": 0.5, "vocab_overlap": 0, "shared_vocab": [], "factor_pair": "L2_refuse / reactive"}, {"source": "petition_parenting_time_607_5", "target": "threshold_triggered_disclosure_sequencing", "weight": 0.5, "vocab_overlap": 0, "shared_vocab": [], "factor_pair": "L2_refuse / reactive"}, {"source": "forcing_function_procedural", "target": "petition_parenting_time_607_5", "weight": 0.5, "vocab_overlap": 0, "shared_vocab": [], "factor_pair": "L2_refuse / reactive"}, {"source": "burden_shift_prima_facie_collapse", "target": "petition_parenting_time_607_5", "weight": 0.5, "vocab_overlap": 0, "shared_vocab": [], "factor_pair": "L2_refuse / reactive"}, {"source": "admission_netting_offset_defense", "target": "petition_parenting_time_607_5", "weight": 0.5, "vocab_overlap": 0, "shared_vocab": [], "factor_pair": "L2_refuse / reactive"}, {"source": "documented_contradiction_impeachment", "target": "petition_parenting_time_607_5", "weight": 0.5, "vocab_overlap": 0, "shared_vocab": [], "factor_pair": "L2_refuse / reactive"}, {"source": "emotional_dysregulation_leverage", "target": "trigger_point_mapping", "weight": 0.5, "vocab_overlap": 0, "shared_vocab": [], "factor_pair": "L2_refuse / reactive"}, {"source": "emotional_dysregulation_leverage", "target": "motion_sequencing_ambush", "weight": 0.5, "vocab_overlap": 0, "shared_vocab": [], "factor_pair": "L2_refuse / reactive"}, {"source": "emotional_dysregulation_leverage", "target": "threshold_triggered_disclosure_sequencing", "weight": 0.5, "vocab_overlap": 0, "shared_vocab": [], "factor_pair": "L2_refuse / reactive"}, {"source": "emotional_dysregulation_leverage", "target": "forcing_function_procedural", "weight": 0.5, "vocab_overlap": 0, "shared_vocab": [], "factor_pair": "L2_refuse / reactive"}, {"source": "burden_shift_prima_facie_collapse", "target": "emotional_dysregulation_leverage", "weight": 0.5, "vocab_overlap": 0, "shared_vocab": [], "factor_pair": "L2_refuse / reactive"}, {"source": "admission_netting_offset_defense", "target": "emotional_dysregulation_leverage", "weight": 0.5, "vocab_overlap": 0, "shared_vocab": [], "factor_pair": "L2_refuse / reactive"}, {"source": "documented_contradiction_impeachment", "target": "emotional_dysregulation_leverage", "weight": 0.5, "vocab_overlap": 0, "shared_vocab": [], "factor_pair": "L2_refuse / reactive"}, {"source": "motion_sequencing_ambush", "target": "trigger_point_mapping", "weight": 0.5, "vocab_overlap": 0, "shared_vocab": [], "factor_pair": "L2_refuse / reactive"}, {"source": "threshold_triggered_disclosure_sequencing", "target": "trigger_point_mapping", "weight": 0.5, "vocab_overlap": 0, "shared_vocab": [], "factor_pair": "L2_refuse / reactive"}, {"source": "forcing_function_procedural", "target": "trigger_point_mapping", "weight": 0.5, "vocab_overlap": 0, "shared_vocab": [], "factor_pair": "L2_refuse / reactive"}, {"source": "burden_shift_prima_facie_collapse", "target": "trigger_point_mapping", "weight": 0.5, "vocab_overlap": 0, "shared_vocab": [], "factor_pair": "L2_refuse / reactive"}, {"source": "admission_netting_offset_defense", "target": "trigger_point_mapping", "weight": 0.5, "vocab_overlap": 0, "shared_vocab": [], "factor_pair": "L2_refuse / reactive"}, {"source": "documented_contradiction_impeachment", "target": "trigger_point_mapping", "weight": 0.5, "vocab_overlap": 0, "shared_vocab": [], "factor_pair": "L2_refuse / reactive"}, {"source": "motion_sequencing_ambush", "target": "threshold_triggered_disclosure_sequencing", "weight": 0.5, "vocab_overlap": 0, "shared_vocab": [], "factor_pair": "L2_refuse / reactive"}, {"source": "forcing_function_procedural", "target": "motion_sequencing_ambush", "weight": 0.5, "vocab_overlap": 0, "shared_vocab": [], "factor_pair": "L2_refuse / reactive"}, {"source": "burden_shift_prima_facie_collapse", "target": "motion_sequencing_ambush", "weight": 0.5, "vocab_overlap": 0, "shared_vocab": [], "factor_pair": "L2_refuse / reactive"}, {"source": "admission_netting_offset_defense", "target": "motion_sequencing_ambush", "weight": 0.5, "vocab_overlap": 0, "shared_vocab": [], "factor_pair": "L2_refuse / reactive"}, {"source": "documented_contradiction_impeachment", "target": "motion_sequencing_ambush", "weight": 0.5, "vocab_overlap": 0, "shared_vocab": [], "factor_pair": "L2_refuse / reactive"}, {"source": "forcing_function_procedural", "target": "threshold_triggered_disclosure_sequencing", "weight": 0.5, "vocab_overlap": 0, "shared_vocab": [], "factor_pair": "L2_refuse / reactive"}, {"source": "burden_shift_prima_facie_collapse", "target": "threshold_triggered_disclosure_sequencing", "weight": 0.5, "vocab_overlap": 0, "shared_vocab": [], "factor_pair": "L2_refuse / reactive"}, {"source": "admission_netting_offset_defense", "target": "threshold_triggered_disclosure_sequencing", "weight": 0.5, "vocab_overlap": 0, "shared_vocab": [], "factor_pair": "L2_refuse / reactive"}, {"source": "documented_contradiction_impeachment", "target": "threshold_triggered_disclosure_sequencing", "weight": 0.5, "vocab_overlap": 0, "shared_vocab": [], "factor_pair": "L2_refuse / reactive"}, {"source": "burden_shift_prima_facie_collapse", "target": "forcing_function_procedural", "weight": 0.5, "vocab_overlap": 0, "shared_vocab": [], "factor_pair": "L2_refuse / reactive"}, {"source": "admission_netting_offset_defense", "target": "forcing_function_procedural", "weight": 0.5, "vocab_overlap": 0, "shared_vocab": [], "factor_pair": "L2_refuse / reactive"}, {"source": "documented_contradiction_impeachment", "target": "forcing_function_procedural", "weight": 0.5, "vocab_overlap": 0, "shared_vocab": [], "factor_pair": "L2_refuse / reactive"}, {"source": "admission_netting_offset_defense", "target": "burden_shift_prima_facie_collapse", "weight": 0.5, "vocab_overlap": 0, "shared_vocab": [], "factor_pair": "L2_refuse / reactive"}, {"source": "burden_shift_prima_facie_collapse", "target": "documented_contradiction_impeachment", "weight": 0.5, "vocab_overlap": 0, "shared_vocab": [], "factor_pair": "L2_refuse / reactive"}, {"source": "admission_netting_offset_defense", "target": "documented_contradiction_impeachment", "weight": 0.5, "vocab_overlap": 0, "shared_vocab": [], "factor_pair": "L2_refuse / reactive"}, {"source": "credential_collapse_documentary", "target": "foia_doublespeak_test", "weight": 0.5, "vocab_overlap": 0, "shared_vocab": [], "factor_pair": "L3_expose / reactive"}, {"source": "foia_doublespeak_test", "target": "mutual_destruction_parity", "weight": 0.5, "vocab_overlap": 0, "shared_vocab": [], "factor_pair": "L3_expose / reactive"}, {"source": "credential_collapse_documentary", "target": "mutual_destruction_parity", "weight": 0.5, "vocab_overlap": 0, "shared_vocab": [], "factor_pair": "L3_expose / reactive"}, {"source": "QWPARSE_SYSTEM", "target": "judge_profile", "weight": 0.5, "vocab_overlap": 0, "shared_vocab": [], "factor_pair": "meta / preemptive"}, {"source": "liar_algorithm", "target": "selective_recall_credibility_trap", "weight": 0.5, "vocab_overlap": 0, "shared_vocab": [], "factor_pair": "L3_expose / parallel"}, {"source": "liar_algorithm", "target": "momentum_cascade_filing", "weight": 0.5, "vocab_overlap": 0, "shared_vocab": [], "factor_pair": "L3_expose / parallel"}, {"source": "liar_algorithm", "target": "procedural_exhaustion_attrition", "weight": 0.5, "vocab_overlap": 0, "shared_vocab": [], "factor_pair": "L3_expose / parallel"}, {"source": "legal_math", "target": "liar_algorithm", "weight": 0.5, "vocab_overlap": 0, "shared_vocab": [], "factor_pair": "L3_expose / parallel"}, {"source": "momentum_cascade_filing", "target": "selective_recall_credibility_trap", "weight": 0.5, "vocab_overlap": 0, "shared_vocab": [], "factor_pair": "L3_expose / parallel"}, {"source": "procedural_exhaustion_attrition", "target": "selective_recall_credibility_trap", "weight": 0.5, "vocab_overlap": 0, "shared_vocab": [], "factor_pair": "L3_expose / parallel"}, {"source": "legal_math", "target": "selective_recall_credibility_trap", "weight": 0.5, "vocab_overlap": 0, "shared_vocab": [], "factor_pair": "L3_expose / parallel"}, {"source": "momentum_cascade_filing", "target": "procedural_exhaustion_attrition", "weight": 0.5, "vocab_overlap": 0, "shared_vocab": [], "factor_pair": "L3_expose / parallel"}, {"source": "legal_math", "target": "momentum_cascade_filing", "weight": 0.5, "vocab_overlap": 0, "shared_vocab": [], "factor_pair": "L3_expose / parallel"}, {"source": "legal_math", "target": "procedural_exhaustion_attrition", "weight": 0.5, "vocab_overlap": 0, "shared_vocab": [], "factor_pair": "L3_expose / parallel"}, {"source": "manipulation_taxonomy", "target": "orwell_index_spec", "weight": 0.5, "vocab_overlap": 0, "shared_vocab": [], "factor_pair": "L3_expose / preemptive"}, {"source": "procedural_discovery_algorithm", "target": "title_iv_d_deconstruction", "weight": 0.5, "vocab_overlap": 0, "shared_vocab": [], "factor_pair": "L1_demand / preemptive"}, {"source": "extractive_mask_vulnerability", "target": "procedural_discovery_algorithm", "weight": 0.5, "vocab_overlap": 0, "shared_vocab": [], "factor_pair": "L1_demand / preemptive"}, {"source": "cooperative_signal_through_procedural_restraint", "target": "procedural_discovery_algorithm", "weight": 0.5, "vocab_overlap": 0, "shared_vocab": [], "factor_pair": "L1_demand / preemptive"}, {"source": "financial_affidavit_as_leverage_weapon", "target": "procedural_discovery_algorithm", "weight": 0.5, "vocab_overlap": 0, "shared_vocab": [], "factor_pair": "L1_demand / preemptive"}, {"source": "procedural_discovery_algorithm", "target": "sworn_statement_burden_shift", "weight": 0.5, "vocab_overlap": 0, "shared_vocab": [], "factor_pair": "L1_demand / preemptive"}, {"source": "discovery_gap_foundational_challenge", "target": "procedural_discovery_algorithm", "weight": 0.5, "vocab_overlap": 0, "shared_vocab": [], "factor_pair": "L1_demand / preemptive"}, {"source": "escalation_ladder_saturation", "target": "procedural_discovery_algorithm", "weight": 0.5, "vocab_overlap": 0, "shared_vocab": [], "factor_pair": "L1_demand / preemptive"}, {"source": "extractive_mask_vulnerability", "target": "title_iv_d_deconstruction", "weight": 0.5, "vocab_overlap": 0, "shared_vocab": [], "factor_pair": "L1_demand / preemptive"}, {"source": "cooperative_signal_through_procedural_restraint", "target": "title_iv_d_deconstruction", "weight": 0.5, "vocab_overlap": 0, "shared_vocab": [], "factor_pair": "L1_demand / preemptive"}, {"source": "financial_affidavit_as_leverage_weapon", "target": "title_iv_d_deconstruction", "weight": 0.5, "vocab_overlap": 0, "shared_vocab": [], "factor_pair": "L1_demand / preemptive"}, {"source": "sworn_statement_burden_shift", "target": "title_iv_d_deconstruction", "weight": 0.5, "vocab_overlap": 0, "shared_vocab": [], "factor_pair": "L1_demand / preemptive"}, {"source": "discovery_gap_foundational_challenge", "target": "title_iv_d_deconstruction", "weight": 0.5, "vocab_overlap": 0, "shared_vocab": [], "factor_pair": "L1_demand / preemptive"}, {"source": "escalation_ladder_saturation", "target": "title_iv_d_deconstruction", "weight": 0.5, "vocab_overlap": 0, "shared_vocab": [], "factor_pair": "L1_demand / preemptive"}, {"source": "cooperative_signal_through_procedural_restraint", "target": "extractive_mask_vulnerability", "weight": 0.5, "vocab_overlap": 0, "shared_vocab": [], "factor_pair": "L1_demand / preemptive"}, {"source": "extractive_mask_vulnerability", "target": "financial_affidavit_as_leverage_weapon", "weight": 0.5, "vocab_overlap": 0, "shared_vocab": [], "factor_pair": "L1_demand / preemptive"}, {"source": "extractive_mask_vulnerability", "target": "sworn_statement_burden_shift", "weight": 0.5, "vocab_overlap": 0, "shared_vocab": [], "factor_pair": "L1_demand / preemptive"}, {"source": "discovery_gap_foundational_challenge", "target": "extractive_mask_vulnerability", "weight": 0.5, "vocab_overlap": 0, "shared_vocab": [], "factor_pair": "L1_demand / preemptive"}, {"source": "escalation_ladder_saturation", "target": "extractive_mask_vulnerability", "weight": 0.5, "vocab_overlap": 0, "shared_vocab": [], "factor_pair": "L1_demand / preemptive"}, {"source": "cooperative_signal_through_procedural_restraint", "target": "financial_affidavit_as_leverage_weapon", "weight": 0.5, "vocab_overlap": 0, "shared_vocab": [], "factor_pair": "L1_demand / preemptive"}, {"source": "cooperative_signal_through_procedural_restraint", "target": "sworn_statement_burden_shift", "weight": 0.5, "vocab_overlap": 0, "shared_vocab": [], "factor_pair": "L1_demand / preemptive"}, {"source": "cooperative_signal_through_procedural_restraint", "target": "discovery_gap_foundational_challenge", "weight": 0.5, "vocab_overlap": 0, "shared_vocab": [], "factor_pair": "L1_demand / preemptive"}, {"source": "cooperative_signal_through_procedural_restraint", "target": "escalation_ladder_saturation", "weight": 0.5, "vocab_overlap": 0, "shared_vocab": [], "factor_pair": "L1_demand / preemptive"}, {"source": "financial_affidavit_as_leverage_weapon", "target": "sworn_statement_burden_shift", "weight": 0.5, "vocab_overlap": 0, "shared_vocab": [], "factor_pair": "L1_demand / preemptive"}, {"source": "discovery_gap_foundational_challenge", "target": "financial_affidavit_as_leverage_weapon", "weight": 0.5, "vocab_overlap": 0, "shared_vocab": [], "factor_pair": "L1_demand / preemptive"}, {"source": "escalation_ladder_saturation", "target": "financial_affidavit_as_leverage_weapon", "weight": 0.5, "vocab_overlap": 0, "shared_vocab": [], "factor_pair": "L1_demand / preemptive"}, {"source": "discovery_gap_foundational_challenge", "target": "sworn_statement_burden_shift", "weight": 0.5, "vocab_overlap": 0, "shared_vocab": [], "factor_pair": "L1_demand / preemptive"}, {"source": "escalation_ladder_saturation", "target": "sworn_statement_burden_shift", "weight": 0.5, "vocab_overlap": 0, "shared_vocab": [], "factor_pair": "L1_demand / preemptive"}, {"source": "discovery_gap_foundational_challenge", "target": "escalation_ladder_saturation", "weight": 0.5, "vocab_overlap": 0, "shared_vocab": [], "factor_pair": "L1_demand / preemptive"}, {"source": "behavioral_coordinate_mapping", "target": "three_layer_algo", "weight": 0.5, "vocab_overlap": 0, "shared_vocab": [], "factor_pair": "meta / parallel"}, {"source": "appellate_leverage_record_auditability", "target": "title_iv_d_camarda_analysis", "weight": 0.5, "vocab_overlap": 0, "shared_vocab": [], "factor_pair": "L3_expose / endgame"}, {"source": "leverage_choice_framing", "target": "settlement_rejection_narrative", "weight": 0.5, "vocab_overlap": 0, "shared_vocab": [], "factor_pair": "vocab / reactive"}]};
+
+document.getElementById("n-nodes").textContent = GRAPH.nodes.length;
+document.getElementById("n-links").textContent = GRAPH.links.length;
+
+// Legend
+const layers = [
+  ["meta", "#61afef", "meta-framework"],
+  ["L1_demand", "#4ec9b0", "L1 demand performance"],
+  ["L2_refuse", "#c586c0", "L2 no contract"],
+  ["L3_expose", "#e06c75", "L3 liar/expose"],
+  ["vocab", "#e5c07b", "vocabulary"],
+  ["phil", "#d19a66", "philosophy"],
+];
+document.getElementById("legend").innerHTML = layers.map(([id, c, label]) =>
+  `<div class="row"><span class="dot" style="background:${c}"></span><span>${label}</span></div>`
+).join("");
+
+const svg = d3.select("#graph").append("svg");
+const width = window.innerWidth;
+const height = window.innerHeight - 56;
+svg.attr("viewBox", [0, 0, width, height]);
+
+const g = svg.append("g");
+const zoom = d3.zoom().scaleExtent([0.2, 4]).on("zoom", (e) => g.attr("transform", e.transform));
+svg.call(zoom);
+
+const linkScale = d3.scaleLinear()
+  .domain(d3.extent(GRAPH.links, l => l.weight))
+  .range([0.8, 3.5]);
+
+const radiusScale = d3.scaleLinear()
+  .domain([0, 5])
+  .range([6, 14]);
+
+const linkG = g.append("g").attr("class", "links");
+const nodeG = g.append("g").attr("class", "nodes");
+const labelG = g.append("g").attr("class", "labels");
+
+const linkSel = linkG.selectAll("line")
+  .data(GRAPH.links)
+  .join("line")
+  .attr("class", "link")
+  .attr("stroke-width", d => linkScale(d.weight));
+
+const nodeSel = nodeG.selectAll("circle")
+  .data(GRAPH.nodes)
+  .join("circle")
+  .attr("class", "node")
+  .attr("r", d => radiusScale(d.leverage))
+  .attr("fill", d => d.color)
+  .call(d3.drag()
+    .on("start", dragStart)
+    .on("drag", dragMove)
+    .on("end", dragEnd));
+
+const labelSel = labelG.selectAll("text")
+  .data(GRAPH.nodes)
+  .join("text")
+  .attr("class", "label")
+  .text(d => d.id);
+
+const sim = d3.forceSimulation(GRAPH.nodes)
+  .force("link", d3.forceLink(GRAPH.links).id(d => d.id).distance(d => 80 - d.weight * 2).strength(d => 0.05 + d.weight * 0.04))
+  .force("charge", d3.forceManyBody().strength(-180))
+  .force("center", d3.forceCenter(width / 2, height / 2))
+  .force("collide", d3.forceCollide().radius(d => radiusScale(d.leverage) + 4))
+  .on("tick", tick);
+
+function tick() {
+  linkSel
+    .attr("x1", d => d.source.x).attr("y1", d => d.source.y)
+    .attr("x2", d => d.target.x).attr("y2", d => d.target.y);
+  nodeSel.attr("cx", d => d.x).attr("cy", d => d.y);
+  labelSel.attr("x", d => d.x).attr("y", d => d.y - radiusScale(d.leverage) - 3);
+}
+
+function dragStart(e, d) { if (!e.active) sim.alphaTarget(0.3).restart(); d.fx = d.x; d.fy = d.y; }
+function dragMove(e, d) { d.fx = e.x; d.fy = e.y; }
+function dragEnd(e, d) { if (!e.active) sim.alphaTarget(0); d.fx = null; d.fy = null; }
+
+// Filtering
+const state = {
+  layers: new Set(["meta", "L1_demand", "L2_refuse", "L3_expose", "vocab", "phil"]),
+  minLev: 0,
+  search: "",
+  selected: null,
+};
+
+function applyFilters() {
+  const q = state.search.toLowerCase();
+  GRAPH.nodes.forEach(n => {
+    const layerOk = state.layers.has(n.layer);
+    const levOk = (n.leverage || 0) >= state.minLev;
+    let searchOk = true;
+    if (q) {
+      const hay = (n.id + " " + (n.vocabulary || []).join(" ")).toLowerCase();
+      searchOk = hay.includes(q);
+    }
+    n._visible = layerOk && levOk && searchOk;
+  });
+  const visibleIds = new Set(GRAPH.nodes.filter(n => n._visible).map(n => n.id));
+  GRAPH.links.forEach(l => {
+    const sId = typeof l.source === "object" ? l.source.id : l.source;
+    const tId = typeof l.target === "object" ? l.target.id : l.target;
+    l._visible = visibleIds.has(sId) && visibleIds.has(tId);
+  });
+
+  nodeSel.classed("dim", n => !n._visible);
+  labelSel.classed("dim", n => !n._visible);
+  linkSel.classed("dim", l => !l._visible);
+  document.getElementById("n-visible").textContent = visibleIds.size;
+  applyHighlight();
+}
+
+function applyHighlight() {
+  nodeSel.classed("highlight", n => state.selected && n.id === state.selected);
+  labelSel.classed("highlight", n => state.selected && n.id === state.selected);
+  if (!state.selected) {
+    linkSel.classed("highlight", false);
+    return;
+  }
+  const neighborIds = new Set([state.selected]);
+  GRAPH.links.forEach(l => {
+    const sId = typeof l.source === "object" ? l.source.id : l.source;
+    const tId = typeof l.target === "object" ? l.target.id : l.target;
+    if (sId === state.selected) neighborIds.add(tId);
+    if (tId === state.selected) neighborIds.add(sId);
+  });
+  linkSel.classed("highlight", l => {
+    const sId = typeof l.source === "object" ? l.source.id : l.source;
+    const tId = typeof l.target === "object" ? l.target.id : l.target;
+    return sId === state.selected || tId === state.selected;
+  });
+}
+
+// Bind controls
+document.querySelectorAll("button.layer-chip").forEach(b => {
+  b.addEventListener("click", () => {
+    const layer = b.dataset.layer;
+    if (state.layers.has(layer)) {
+      state.layers.delete(layer);
+      b.classList.remove("on");
+    } else {
+      state.layers.add(layer);
+      b.classList.add("on");
+    }
+    applyFilters();
+  });
+});
+document.querySelectorAll("button.lev-chip").forEach(b => {
+  b.addEventListener("click", () => {
+    document.querySelectorAll("button.lev-chip").forEach(x => x.classList.remove("on"));
+    b.classList.add("on");
+    state.minLev = +b.dataset.lev;
+    applyFilters();
+  });
+});
+document.getElementById("search").addEventListener("input", e => {
+  state.search = e.target.value;
+  applyFilters();
+});
+
+// Detail panel
+function showDetail(node) {
+  state.selected = node.id;
+  applyHighlight();
+  const neighbors = [];
+  GRAPH.links.forEach(l => {
+    const sId = typeof l.source === "object" ? l.source.id : l.source;
+    const tId = typeof l.target === "object" ? l.target.id : l.target;
+    if (sId === node.id) neighbors.push({ id: tId, weight: l.weight, shared: l.shared_vocab || [] });
+    else if (tId === node.id) neighbors.push({ id: sId, weight: l.weight, shared: l.shared_vocab || [] });
+  });
+  neighbors.sort((a, b) => b.weight - a.weight);
+  const factors = [
+    ["layer", node.layer], ["leverage", `${node.leverage}/5`],
+    ["tempo", node.tempo], ["target", (node.target || []).join(", ")],
+    ["venue", (node.venue || []).join(", ")],
+    ["jurisdiction", (node.jurisdiction || []).join(", ")],
+    ["abstraction", node.abstraction],
+  ];
+  const factorHtml = factors.map(([k, v]) => v ? `<div class="factor"><span class="k">${k}:</span> ${esc(String(v))}</div>` : "").join("");
+  const vocab = (node.vocabulary || []).map(v => `<span>${esc(v)}</span>`).join("");
+  const neighborHtml = neighbors.slice(0, 12).map(n => `<div class="row" data-id="${n.id}"><span>${esc(n.id)}</span><span class="w">${n.weight.toFixed(1)}</span></div>`).join("");
+  document.getElementById("detail-body").innerHTML = `
+    <h2>${esc(node.id)}</h2>
+    ${factorHtml}
+    <div class="section"><div class="lbl">precondition</div><div class="body">${esc(node.precondition || "—")}</div></div>
+    <div class="section"><div class="lbl">anti-pattern</div><div class="body">${esc(node.anti_pattern || "—")}</div></div>
+    ${vocab ? `<div class="section"><div class="lbl">vocabulary</div><div class="vocab">${vocab}</div></div>` : ""}
+    ${neighbors.length ? `<div class="section"><div class="lbl">neighbors (weight)</div><div class="neighbors">${neighborHtml}</div></div>` : ""}
+  `;
+  document.getElementById("detail").classList.add("show");
+  document.querySelectorAll("#detail .neighbors .row").forEach(r => {
+    r.addEventListener("click", () => {
+      const target = GRAPH.nodes.find(n => n.id === r.dataset.id);
+      if (target) showDetail(target);
+    });
+  });
+}
+
+function esc(s) { return String(s).replace(/[&<>"]/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;"})[c]); }
+
+nodeSel.on("click", (e, d) => showDetail(d));
+document.getElementById("detail-close").addEventListener("click", () => {
+  document.getElementById("detail").classList.remove("show");
+  state.selected = null;
+  applyHighlight();
+});
+
+applyFilters();
+</script>
+</body>
+</html>
