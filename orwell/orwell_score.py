@@ -195,6 +195,164 @@ def exemption_stacking(body: str) -> float:
     rate = (any_hit + 2 * stacked) / (2 * len(sents))
     return max(0.0, min(1.0, rate * 2.5))
 
+# ────────── diagnostic axes (not in v1 composite) ──────────
+# These extend the feature space for multi-dim exploration (PCA / t-SNE / UMAP).
+# The 7-axis composite above is unchanged so historical scores stay comparable.
+
+HEDGE_PATTERNS = [
+    r"\barguably\b", r"\bpresumably\b", r"\bostensibly\b", r"\bapparently\b",
+    r"\bseemingly\b", r"\bperhaps\b", r"\bpossibly\b",
+    r"\bit\s+(?:would\s+)?(?:appear|seem)s?\b",
+    r"\bto\s+the\s+extent\s+that\b",
+    r"\bmay\s+be\s+(?:deemed|considered|construed|interpreted)\b",
+    r"\b(?:may|might|could|would)\s+(?:reasonably|fairly|properly)\s+be\b",
+    r"\bif\s+(?:any|applicable)\b",
+    r"\bsubstantially\s+(?:similar|equivalent)\b",
+]
+def hedge_density(body: str) -> float:
+    """Modal stacking — claims softened to deniability. Distinct from passive."""
+    sents = _sentences(body)
+    if not sents: return 0.0
+    per_s = [sum(1 for p in HEDGE_PATTERNS if re.search(p, s, re.I)) for s in sents]
+    rate = sum(per_s) / len(sents)
+    return max(0.0, min(1.0, rate * 1.5))
+
+TEMPORAL_VAGUE_PATTERNS = [
+    r"\bin\s+due\s+course\b",
+    r"\bas\s+soon\s+as\s+(?:practicable|possible|reasonably)\b",
+    r"\bat\s+the\s+appropriate\s+time\b",
+    r"\bwithout\s+undue\s+delay\b",
+    r"\bin\s+a\s+(?:timely|reasonable)\s+manner\b",
+    r"\bforthwith\b",
+    r"\bin\s+the\s+near\s+future\b",
+    r"\bin\s+the\s+ordinary\s+course\b",
+    r"\bpromptly\b",
+    r"\bwhen\s+(?:appropriate|necessary|required)\b",
+    r"\bperiodically\b",
+    r"\bfrom\s+time\s+to\s+time\b",
+    r"\bsubsequent(?:ly)?\b",
+]
+def temporal_vagueness(body: str) -> float:
+    """Time-fog: promises action without a date."""
+    sents = _sentences(body)
+    if not sents: return 0.0
+    hits = sum(1 for s in sents if any(re.search(p, s, re.I) for p in TEMPORAL_VAGUE_PATTERNS))
+    rate = hits / len(sents)
+    return max(0.0, min(1.0, rate * 4))
+
+AUTHORITY_LAUNDER_PATTERNS = [
+    r"\bas\s+the\s+(?:court|tribunal)\s+(?:is\s+)?(?:aware|knows)\b",
+    r"\bit\s+is\s+well[\-\s]+(?:settled|established|recognized|known)\b",
+    r"\bit\s+is\s+(?:undisputed|uncontested|axiomatic|self[\-\s]+evident)\b",
+    r"\bas\s+has\s+been\s+(?:previously\s+)?(?:established|recognized|noted)\b",
+    r"\bwell[\-\s]+(?:recognized|established)\s+authority\b",
+    r"\bgenerally\s+(?:accepted|recognized|acknowledged)\b",
+    r"\bcommon(?:ly)?\s+(?:known|understood|accepted)\b",
+    r"\bclearly\s+(?:established|the\s+law)\b",
+    r"\bbeyond\s+(?:dispute|question|cavil)\b",
+    r"\b(?:black[\-\s]+letter|hornbook)\s+law\b",
+    r"\buniversally\s+(?:held|recognized|accepted)\b",
+]
+def authority_laundering(body: str) -> float:
+    """Asserting consensus instead of citing it."""
+    sents = _sentences(body)
+    if not sents: return 0.0
+    hits = sum(1 for s in sents if any(re.search(p, s, re.I) for p in AUTHORITY_LAUNDER_PATTERNS))
+    rate = hits / len(sents)
+    return max(0.0, min(1.0, rate * 6))
+
+NOMINALIZATION_SUFFIXES = ("tion", "ment", "ance", "ence", "ity", "ness", "ization", "isation")
+def nominalization_rate(body: str) -> float:
+    """Verbs frozen into nouns — 'the determination of' density."""
+    words = _words(body)
+    if len(words) < 30: return 0.0
+    nominals = sum(1 for w in words if len(w) >= 6 and w.endswith(NOMINALIZATION_SUFFIXES))
+    rate = nominals / len(words)
+    return max(0.0, min(1.0, (rate - 0.02) / 0.10))
+
+MAGNITUDE_WORDS = [
+    "substantial","significant","considerable","material","minimal","negligible",
+    "extensive","numerous","multiple","several","various","many","few",
+    "ample","sufficient","insufficient","modest","sizeable","sizable",
+]
+def numerical_evasion(body: str) -> float:
+    """Magnitude words ('substantial') without numerals nearby."""
+    sents = _sentences(body)
+    if not sents: return 0.0
+    bare = 0; total = 0
+    for s in sents:
+        for mw in MAGNITUDE_WORDS:
+            for m in re.finditer(rf"\b{mw}\b", s, re.I):
+                total += 1
+                lo = max(0, m.start() - 40); hi = min(len(s), m.end() + 40)
+                if not re.search(r"\d", s[lo:hi]): bare += 1
+    if total == 0: return 0.0
+    return max(0.0, min(1.0, bare / total))
+
+PRONOUN_ROT_PATTERNS = [
+    r"\bsaid\s+(?:party|parties|petitioner|respondent|motion|order|matter|document|filing)\b",
+    r"\bsuch\s+(?:party|parties|conduct|action|matter|relief)\b",
+    r"\bthe\s+(?:same|foregoing|aforementioned|aforesaid)\b",
+    r"\bhere(?:in|by|inafter|tofore|upon|with)\b",
+    r"\bthere(?:of|to|in|by|fore|after|with|upon)\b",
+    r"\bwhere(?:as|fore|by|in|upon)\b",
+]
+def pronoun_rot(body: str) -> float:
+    """'said party / the foregoing / hereinafter' — antecedent-light reference."""
+    words = _words(body)
+    if len(words) < 30: return 0.0
+    hits = sum(len(re.findall(p, body, re.I)) for p in PRONOUN_ROT_PATTERNS)
+    rate = hits / len(words) * 100  # per 100 words
+    return max(0.0, min(1.0, rate / 6))
+
+ADJECTIVE_INFLATION_PATTERNS = [
+    r"\bwill[fully]+\b", r"\begregious(?:ly)?\b", r"\bblatant(?:ly)?\b",
+    r"\bflagrant(?:ly)?\b", r"\bin\s+bad\s+faith\b", r"\bmalicious(?:ly)?\b",
+    r"\bfrivolous(?:ly)?\b", r"\bvexatious(?:ly)?\b", r"\bcontumacious(?:ly)?\b",
+    r"\bgrossly\s+(?:negligent|unfair|inadequate)\b", r"\bwanton(?:ly)?\b",
+    r"\boutrageous(?:ly)?\b", r"\breprehensible\b",
+]
+def adjective_inflation(body: str) -> float:
+    """Character framing where evidence is expected — emotional inflation without numbers."""
+    sents = _sentences(body)
+    if not sents: return 0.0
+    inflamed = 0
+    for s in sents:
+        if any(re.search(p, s, re.I) for p in ADJECTIVE_INFLATION_PATTERNS):
+            if not re.search(r"\d", s):  # no supporting number in same sentence
+                inflamed += 1
+    rate = inflamed / len(sents)
+    return max(0.0, min(1.0, rate * 6))
+
+def sentence_burial(body: str) -> float:
+    """Fraction of sentences over 40 words — long-sentence obfuscation."""
+    sents = _sentences(body)
+    if not sents: return 0.0
+    long_sents = sum(1 for s in sents if len(re.findall(r"\S+", s)) > 40)
+    rate = long_sents / len(sents)
+    return max(0.0, min(1.0, rate * 3))
+
+DIAGNOSTIC_AXES = [
+    ("hedge_density",        "Hedge Density"),
+    ("temporal_vagueness",   "Temporal Vagueness"),
+    ("authority_laundering", "Authority Laundering"),
+    ("nominalization",       "Nominalization"),
+    ("numerical_evasion",    "Numerical Evasion"),
+    ("pronoun_rot",          "Pronoun Reference Rot"),
+    ("adjective_inflation",  "Adjective Inflation"),
+    ("sentence_burial",      "Sentence Burial"),
+]
+DIAGNOSTIC_FUNCS = {
+    "hedge_density":        hedge_density,
+    "temporal_vagueness":   temporal_vagueness,
+    "authority_laundering": authority_laundering,
+    "nominalization":       nominalization_rate,
+    "numerical_evasion":    numerical_evasion,
+    "pronoun_rot":          pronoun_rot,
+    "adjective_inflation":  adjective_inflation,
+    "sentence_burial":      sentence_burial,
+}
+
 # ────────── orchestration ──────────
 
 @dataclass
@@ -204,6 +362,18 @@ class OrwellScore:
     composite: float
     axes: dict[str, float] = field(default_factory=dict)
     weighted: dict[str, float] = field(default_factory=dict)
+    diagnostics: dict[str, float] = field(default_factory=dict)
+    n_words: int = 0
+    n_sentences: int = 0
+
+    def feature_vector(self) -> list[float]:
+        """15-dim feature: 7 composite axes + 8 diagnostics. For PCA/t-SNE/UMAP."""
+        return [self.axes[k] for k, _ in WEIGHTS.items()] + \
+               [self.diagnostics[k] for k, _ in DIAGNOSTIC_AXES]
+
+    @staticmethod
+    def feature_names() -> list[str]:
+        return list(WEIGHTS.keys()) + [k for k, _ in DIAGNOSTIC_AXES]
 
     def banner(self) -> str:
         bar = "█" * int(self.composite * 30) + "·" * (30 - int(self.composite * 30))
@@ -214,9 +384,10 @@ class OrwellScore:
         lines = [
             f"Document : {self.path}",
             f"Title    : {self.title or '(none provided)'}",
-            f"Orwell   : {self.composite:.3f}  [{bar}]  {verdict}",
+            f"Length   : {self.n_words} words, {self.n_sentences} sentences",
+            f"Orwell   : {self.composite:.3f}  [{bar}]  {verdict}  (v1 composite — 7 axes)",
             "",
-            f"  {'axis':<22} {'raw':>6} {'×w':>6}   contribution",
+            f"  COMPOSITE AXES         {'raw':>6} {'×w':>6}   contribution",
             f"  {'-'*22} {'-'*6} {'-'*6}   {'-'*30}",
         ]
         for k, w in WEIGHTS.items():
@@ -224,6 +395,14 @@ class OrwellScore:
             contrib = raw * w
             tick = "█" * int(contrib * 80) + "·" * max(0, 16 - int(contrib * 80))
             lines.append(f"  {k:<22} {raw:>6.3f} {w:>6.2f}   {tick}")
+        lines += ["",
+            f"  DIAGNOSTIC AXES        {'raw':>6}        feature-space only",
+            f"  {'-'*22} {'-'*6}        {'-'*30}",
+        ]
+        for k, _ in DIAGNOSTIC_AXES:
+            raw = self.diagnostics[k]
+            tick = "█" * int(raw * 16) + "·" * max(0, 16 - int(raw * 16))
+            lines.append(f"  {k:<22} {raw:>6.3f}        {tick}")
         return "\n".join(lines)
 
 def score_document(body: str, title: str = "", path: str = "<stdin>") -> OrwellScore:
@@ -238,8 +417,12 @@ def score_document(body: str, title: str = "", path: str = "<stdin>") -> OrwellS
     }
     weighted = {k: axes[k] * WEIGHTS[k] for k in WEIGHTS}
     composite = sum(weighted.values())
-    return OrwellScore(path=path, title=title, composite=composite,
-                       axes=axes, weighted=weighted)
+    diagnostics = {k: f(body) for k, f in DIAGNOSTIC_FUNCS.items()}
+    return OrwellScore(
+        path=path, title=title, composite=composite,
+        axes=axes, weighted=weighted, diagnostics=diagnostics,
+        n_words=len(_words(body)), n_sentences=len(_sentences(body)),
+    )
 
 # ────────── CLI ──────────
 
