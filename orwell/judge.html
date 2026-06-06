@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Orwell — LLM-as-Judge (reproducible semantic scoring)</title>
+<meta name="robots" content="noindex, nofollow">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<script src="https://cdn.plot.ly/plotly-2.35.2.min.js"></script>
+<style>
+  *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+  :root{--bg:#07070f;--panel:#0f1018;--panel2:#161824;--line:rgba(232,232,244,0.08);
+    --ink:#e8e8f4;--dim:rgba(232,232,244,0.45);--mute:rgba(232,232,244,0.25);
+    --accent:#7aa2f7;--accent2:#bb9af7;--coral:#f7768e;--teal:#73daca;--amber:#e0af68;
+    --ours:#9ece6a;--theirs:#f7768e;}
+  html,body{background:var(--bg);color:var(--ink);font:14px/1.5 'Inter',system-ui,sans-serif}
+  a{color:var(--accent2);text-decoration:none}a:hover{text-decoration:underline}
+  header{padding:28px 32px 14px;border-bottom:1px solid var(--line);max-width:1400px;margin:0 auto}
+  .eyebrow{color:var(--accent2);font-size:11px;letter-spacing:.18em;text-transform:uppercase;margin-bottom:6px}
+  header h1{font-size:24px;font-weight:600}
+  .subtitle{color:var(--dim);font-size:13px;margin-top:6px;max-width:1000px;line-height:1.7}
+  nav{display:flex;gap:4px;padding:14px 32px 0;border-bottom:1px solid var(--line);flex-wrap:wrap;max-width:1400px;margin:0 auto}
+  nav a{color:var(--dim);padding:10px 14px;font-size:13px;border-bottom:2px solid transparent}
+  nav a.active{color:var(--accent);border-bottom-color:var(--accent)}
+  main{max-width:1400px;margin:0 auto;padding:22px 32px 70px}
+  .finding{background:var(--panel2);border:1px solid var(--coral);border-left:3px solid var(--coral);border-radius:8px;padding:13px 16px;margin-bottom:20px;font-size:13px;line-height:1.7}
+  .finding b{color:var(--ink)}
+  .kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:22px}
+  @media(max-width:900px){.kpis{grid-template-columns:repeat(2,1fr)}}
+  .card{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:14px 16px}
+  .card .label{color:var(--dim);font-size:10px;text-transform:uppercase;letter-spacing:.12em}
+  .card .val{font-size:23px;font-weight:600;margin-top:4px;font-variant-numeric:tabular-nums}
+  .card .sub{color:var(--mute);font-size:11px;margin-top:2px}
+  .row2{display:grid;grid-template-columns:1fr 1fr;gap:16px}@media(max-width:1000px){.row2{grid-template-columns:1fr}}
+  .plot{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:8px}
+  .ptitle{font-size:12.5px;font-weight:600;padding:4px 8px 0}
+  .section{margin-top:28px}.section-header{display:flex;align-items:center;gap:12px;margin-bottom:6px}
+  .section-header h2{font-size:16px;font-weight:600;white-space:nowrap}.section-header::after{content:'';flex:1;height:1px;background:var(--line)}
+  .section-desc{color:var(--dim);font-size:12.5px;margin:0 0 14px;max-width:980px;line-height:1.7}
+  .loading{padding:50px;text-align:center;color:var(--dim)} code{background:var(--panel2);padding:2px 6px;border-radius:4px;font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--teal)}
+</style>
+</head>
+<body>
+<header>
+  <div class="eyebrow">Coherence Research Group · Orwell Index — LLM-as-judge</div>
+  <h1>The honest form of the original method — and what it actually shows</h1>
+  <p class="subtitle">The original 0.7/0.04 plot was a prior model's holistic read of each document. This reproduces that
+  method as code (<code>orwell_judge.py</code>: pinned model, fixed rubric, temp 0, cached to <code>judge_scores.json</code>) and runs it on the real documents.</p>
+</header>
+<nav>
+  <a href="./">Orwell Index</a><a href="./explorer.html">Explorer</a><a href="./timeline.html">15-Dim Timeline</a>
+  <a href="./compare.html">Compare</a><a href="./axes.html">Axis Breakdown</a><a href="./replication.html">Replication (regex)</a>
+  <a href="./judge.html" class="active">LLM Judge</a>
+</nav>
+<main>
+  <div class="finding" id="finding">Loading…</div>
+  <div id="loading" class="loading">Loading judge_scores.json…</div>
+  <div id="content" style="display:none">
+    <div class="kpis" id="kpis"></div>
+    <div class="row2">
+      <div class="plot"><div class="ptitle">Composite by cohort — fair LLM judge</div><div id="strip" style="height:430px"></div></div>
+      <div class="plot"><div class="ptitle">Per-axis means — where any difference lives</div><div id="axes" style="height:430px"></div></div>
+    </div>
+    <section class="section"><div class="section-header"><h2>Reading the result</h2></div>
+      <p class="section-desc" id="readout"></p></section>
+  </div>
+</main>
+<script>
+const P={panel:'#0f1018',line:'rgba(232,232,244,0.08)',ink:'#e8e8f4',dim:'rgba(232,232,244,0.45)'};
+const base={paper_bgcolor:P.panel,plot_bgcolor:P.panel,font:{color:P.ink,family:'Inter',size:11},margin:{l:60,r:18,t:16,b:60}};
+const grid={gridcolor:P.line,zerolinecolor:P.line,linecolor:P.line,tickfont:{color:P.dim}};
+const CFG={displayModeBar:false,responsive:true};const OURS='#9ece6a',THEIRS='#f7768e',TARGET='#e0af68';
+const seed=i=>((Math.sin(i*99.13)+1)/2);
+async function load(){
+  let D=null;try{const r=await fetch('./judge_scores.json');if(r.ok)D=await r.json();}catch(e){}
+  if(!D){document.getElementById('loading').innerHTML='<span style="color:#f7768e">run <code>python3 orwell_judge.py</code></span>';return;}
+  document.getElementById('loading').style.display='none';document.getElementById('content').style.display='block';
+  const docs=D.documents,W=D.weights,axes=Object.keys(W);
+  const ours=docs.filter(d=>d.cohort==='OURS'),theirs=docs.filter(d=>d.cohort==='THEIRS');
+  const mean=a=>a.length?a.reduce((s,v)=>s+v,0)/a.length:0;
+  const om=D.ours_mean??mean(ours.map(d=>d.composite)),tm=D.theirs_mean??mean(theirs.map(d=>d.composite)),sep=tm-om;
+  document.getElementById('finding').innerHTML=`<b>Finding.</b> A fair, reproducible LLM judge (<code>${D.model}</code>) reading the real documents finds <b>no separation</b>: ours ${om.toFixed(3)}, theirs ${tm.toFixed(3)} (Δ ${sep>=0?'+':''}${sep.toFixed(3)}). The v1 plot's 0.04 vs 0.70 was a prior model's <i>motivated</i> read ("your stuff scores near zero"), not what a neutral judge produces.`;
+  document.getElementById('kpis').innerHTML=[
+    {l:'Our filings',v:om.toFixed(3),s:`n=${ours.length}`,c:'var(--ours)'},
+    {l:'What they sent',v:tm.toFixed(3),s:`n=${theirs.length}`,c:'var(--theirs)'},
+    {l:'Measured separation',v:(sep>=0?'+':'')+sep.toFixed(3),s:'them − us',c:'var(--teal)'},
+    {l:'v1 claimed separation',v:'~0.66',s:'motivated estimate',c:'var(--amber)'},
+  ].map(k=>`<div class="card"><div class="label">${k.l}</div><div class="val" style="color:${k.c}">${k.v}</div><div class="sub">${k.s}</div></div>`).join('');
+  const mk=(arr,x,c)=>({x:arr.map((d,i)=>x+(seed(i)-0.5)*0.6),y:arr.map(d=>d.composite),mode:'markers',type:'scatter',
+    marker:{color:c,size:7,opacity:0.6},text:arr.map(d=>d.file.split('/').pop()+' — '+(d.rationale||'')),hovertemplate:'%{text}<br>%{y:.3f}<extra></extra>'});
+  Plotly.newPlot('strip',[mk(ours,1,OURS),mk(theirs,2,THEIRS),
+    {x:[0.5,2.5],y:[om,om],mode:'lines',line:{color:OURS,width:1,dash:'dash'},hoverinfo:'skip'},
+    {x:[0.5,2.5],y:[tm,tm],mode:'lines',line:{color:THEIRS,width:1,dash:'dash'},hoverinfo:'skip'},
+    {x:[0.5,2.5],y:[0.04,0.04],mode:'lines',line:{color:TARGET,width:1,dash:'dot'},hoverinfo:'skip'},
+    {x:[0.5,2.5],y:[0.70,0.70],mode:'lines',line:{color:TARGET,width:1,dash:'dot'},hoverinfo:'skip'}],
+    {...base,showlegend:false,xaxis:{...grid,tickvals:[1,2],ticktext:['Our filings','What they sent'],range:[0.4,2.6]},
+     yaxis:{...grid,title:{text:'composite Orwell (LLM judge)',font:{color:P.dim}},range:[0,1]},
+     annotations:[{x:2.5,y:0.71,text:'v1 "theirs" 0.70',showarrow:false,font:{color:TARGET,size:9},xanchor:'right'},
+                  {x:2.5,y:0.06,text:'v1 "ours" 0.04',showarrow:false,font:{color:TARGET,size:9},xanchor:'right'}]},CFG);
+  const om_=axes.map(a=>mean(ours.map(d=>d.axes[a]))),tm_=axes.map(a=>mean(theirs.map(d=>d.axes[a])));
+  Plotly.newPlot('axes',[
+    {type:'bar',x:axes,y:om_,name:'ours',marker:{color:OURS},hovertemplate:'%{x}<br>ours %{y:.3f}<extra></extra>'},
+    {type:'bar',x:axes,y:tm_,name:'theirs',marker:{color:THEIRS},hovertemplate:'%{x}<br>theirs %{y:.3f}<extra></extra>'}],
+    {...base,barmode:'group',showlegend:true,legend:{orientation:'h',y:1.1,font:{color:P.dim}},
+     xaxis:{...grid,tickangle:-40,tickfont:{size:9}},yaxis:{...grid,range:[0,1],title:{text:'mean axis score',font:{color:P.dim}}}},CFG);
+  const deltas=axes.map((a,i)=>({a,d:tm_[i]-om_[i]})).sort((x,y)=>y.d-x.d);
+  document.getElementById('readout').innerHTML=
+    `The only axis where opposing docs score meaningfully higher is <b>${deltas[0].a}</b> (Δ +${deltas[0].d.toFixed(2)}) — their filings are heavier boilerplate. `+
+    `On <b>stated_vs_actual</b>, <b>verbosity</b>, <b>internal_contradict</b> and <b>referral_loops</b> our docs score equal or HIGHER — partly because the sample includes internal strategy/work-product (e.g. trigger-word memos), not just filed court documents. `+
+    `To reproduce the v1 0.66 gap you would have to weight <b>${deltas[0].a}</b> almost exclusively and restrict "ours" to clean filed motions — i.e. choose the inputs and weights that produce the desired answer. That is the motivated-reasoning trap, not a measurement.`;
+}
+load();
+</script>
+</body>
+</html>

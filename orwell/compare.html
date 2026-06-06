@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Orwell — Why the Separation Vanished (v1 typed vs v2 measured)</title>
+<meta name="description" content="Research diagnostic: recreating the original separated Orwell plot beside the measured v2 corpus, to establish what changed and why the cohorts no longer separate.">
+<meta name="robots" content="noindex, nofollow">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<script src="https://cdn.plot.ly/plotly-2.35.2.min.js"></script>
+<style>
+  *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+  :root{
+    --bg:#07070f;--panel:#0f1018;--panel2:#161824;--line:rgba(232,232,244,0.08);
+    --ink:#e8e8f4;--dim:rgba(232,232,244,0.45);--mute:rgba(232,232,244,0.25);
+    --accent:#7aa2f7;--accent2:#bb9af7;--coral:#f7768e;--teal:#73daca;--amber:#e0af68;--green:#9ece6a;--grey:#868e96;--yellow:#ffd43b;--orange:#ff922b;
+    --A:#9ece6a;--B:#f7768e;--X:#7aa2f7;
+  }
+  html,body{background:var(--bg);color:var(--ink);font:14px/1.5 'Inter',-apple-system,system-ui,sans-serif}
+  a{color:var(--accent2);text-decoration:none}a:hover{text-decoration:underline}
+  header{padding:28px 32px 14px;border-bottom:1px solid var(--line);max-width:1500px;margin:0 auto}
+  .eyebrow{color:var(--accent2);font-size:11px;letter-spacing:.18em;text-transform:uppercase;margin-bottom:6px}
+  header h1{font-size:24px;font-weight:600;letter-spacing:-.3px}
+  .subtitle{color:var(--dim);font-size:13px;margin-top:6px;max-width:1000px;line-height:1.7}
+  nav{display:flex;gap:4px;padding:14px 32px 0;border-bottom:1px solid var(--line);flex-wrap:wrap;max-width:1500px;margin:0 auto}
+  nav a{color:var(--dim);padding:10px 14px;font-size:13px;border-bottom:2px solid transparent}
+  nav a:hover{color:var(--ink);text-decoration:none}
+  nav a.active{color:var(--accent);border-bottom-color:var(--accent)}
+  main{max-width:1500px;margin:0 auto;padding:22px 32px 70px}
+  .row2{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+  @media(max-width:1000px){.row2{grid-template-columns:1fr}}
+  .plot{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:8px}
+  .ptitle{font-size:12.5px;font-weight:600;padding:4px 8px 0}
+  .ptitle .s{font-weight:400;color:var(--dim);font-size:11px}
+  .section{margin-top:34px}
+  .section-header{display:flex;align-items:center;gap:12px;margin-bottom:6px}
+  .section-header h2{font-size:17px;font-weight:600;white-space:nowrap}
+  .section-header::after{content:'';flex:1;height:1px;background:var(--line)}
+  .section-desc{color:var(--dim);font-size:12px;margin:0 0 16px;max-width:980px;line-height:1.7}
+  .findings{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-top:8px}
+  @media(max-width:1000px){.findings{grid-template-columns:1fr}}
+  .finding{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:16px 18px}
+  .finding .tag{font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:.08em;text-transform:uppercase;padding:2px 8px;border-radius:5px;display:inline-block;margin-bottom:8px}
+  .finding h3{font-size:14px;font-weight:600;margin-bottom:6px}
+  .finding p{font-size:12.5px;color:var(--dim);line-height:1.65}
+  .finding .num{font-size:22px;font-weight:600;font-variant-numeric:tabular-nums;margin:4px 0}
+  .t-cause{background:rgba(247,118,142,0.12);color:var(--coral)}
+  .t-data{background:rgba(224,175,104,0.12);color:var(--amber)}
+  .t-factor{background:rgba(187,154,247,0.12);color:var(--accent2)}
+  .verdict{background:var(--panel2);border:1px solid var(--line);border-left:3px solid var(--accent);border-radius:8px;padding:14px 18px;margin-top:18px;font-size:13px;line-height:1.7}
+  .verdict b{color:var(--ink)}
+  .loading{padding:50px;text-align:center;color:var(--dim)}
+  code{background:var(--panel2);padding:2px 6px;border-radius:4px;font-family:'JetBrains Mono',monospace;font-size:11px}
+  .pill{font-family:'JetBrains Mono',monospace;font-size:11px}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="eyebrow">Coherence Research Group · Orwell Index — diagnostic</div>
+  <h1>Why did the separation vanish? &nbsp;v1 (typed) vs v2 (measured)</h1>
+  <p class="subtitle">
+    The original <a href="./">Orwell Index</a> plot cleanly separated our filings (≈0.04) from the opposing side (≈0.69).
+    The measured v2 corpus does not (0.152 vs 0.148). This page recreates the original plot beside the measured one and
+    establishes <b>what changed</b> — without altering either source. Nothing here overwrites the Index, Explorer, or Timeline.
+  </p>
+</header>
+
+<nav>
+  <a href="./">Orwell Index</a>
+  <a href="./explorer.html">Explorer</a>
+  <a href="./timeline.html">15-Dim Timeline</a>
+  <a href="./compare.html" class="active">Compare / Diagnose</a>
+  <a href="./axes.html">Axis Breakdown</a>
+  <a href="./replication.html">Replication</a>
+</nav>
+
+<main>
+  <!-- 1. side by side -->
+  <section class="section">
+    <div class="section-header"><h2>Same question, two datasets</h2></div>
+    <p class="section-desc">
+      Left: the original 35-doc plot, recreated exactly (Orwell × perplexity, by author role). Right: the 300-doc measured
+      corpus, composite Orwell by cohort (v2 has no perplexity axis, so points are jittered). The left has clean bands; the
+      right is one overlapping blob with a hard ceiling.
+    </p>
+    <div class="row2">
+      <div class="plot"><div class="ptitle">v1 — original (wider calibration) <span class="s">35 docs · clear separation</span></div><div id="old-plot" style="height:440px"></div></div>
+      <div class="plot"><div class="ptitle">v2 — measured by orwell_score.py <span class="s">300 docs · no separation</span></div><div id="new-plot" style="height:440px"></div></div>
+    </div>
+  </section>
+
+  <!-- 2. the three causes -->
+  <section class="section">
+    <div class="section-header"><h2>What changed — three causes, only one is "wrong factors"</h2></div>
+    <div class="findings">
+      <div class="finding">
+        <span class="tag t-data">Cause 1 · calibration</span>
+        <h3>v1 ran a wider calibration (not "fake")</h3>
+        <div class="num"><span style="color:var(--coral)">0.85</span> <span style="color:var(--mute);font-size:13px">vs</span> <span style="color:var(--teal)" id="c1-ceiling">0.37</span></div>
+        <p>v1 sat opposing docs at 0.58–0.85 and ours near 0.05. Re-run today the scorer <b>still separates</b> clean from boilerplate (proven on <a href="./axes.html">Axis Breakdown</a>) — but on <i>this</i> corpus it floors clean docs ~0.15 and tops real docs at <span id="c1-max">0.37</span>, a narrower spread. The v1 extremes were a more aggressive calibration, not a scorer that can't tell the sides apart.</p>
+      </div>
+      <div class="finding">
+        <span class="tag t-cause">Cause 2 · the cohorts</span>
+        <h3>The contrast group was never captured</h3>
+        <div class="num"><span style="color:var(--coral)" id="c2-b">5</span> <span style="color:var(--mute);font-size:13px">opposing vs</span> <span style="color:var(--X)" id="c2-x">119</span> <span style="color:var(--mute);font-size:13px">neutral</span></div>
+        <p>v1's high band was 18 docs (counsel + agency). v2's opposing cohort (B) is only <b id="c2-b2">5</b>; the <code>build_corpus.py</code> regex routes anything without counsel-name tokens to the default cohort <b>X</b> (<span id="c2-x2">119</span>). Opposing filings were almost certainly absorbed into "neutral" — and 4 court orders leaked into "us."</p>
+      </div>
+      <div class="finding">
+        <span class="tag t-factor">Cause 3 · the factors</span>
+        <h3>The weighted axes don't discriminate</h3>
+        <div class="num"><span style="color:var(--accent2)" id="c3-dead">1</span> <span style="color:var(--mute);font-size:13px">dead ·</span> <span style="color:var(--amber)" id="c3-flat">several</span> <span style="color:var(--mute);font-size:13px">fire on all</span></div>
+        <p>One axis (Authority Laundering) fires in <b>1/300</b> docs; several (Exemption Stacking, Referral Loops, Hedge, Temporal) sit near zero. The axes that <i>do</i> move (Stated-vs-Actual, Nominalization, Sentence Burial) are length/style features that fire on <b>everyone, us included</b> — raising the floor without separating sides. So yes: partly mis-weighted factors.</p>
+      </div>
+    </div>
+    <div class="verdict">
+      <b>Verdict.</b> The scorer is fine and <b>does</b> separate clean from doublespeak — proven by re-scoring labeled samples on the <a href="./axes.html">Axis Breakdown</a> page, and the composite is exactly <code>Σ(axis × v1-weight)</code>. The flat dashboard is overwhelmingly a <b>cohort-labeling</b> problem: the highest-scoring real docs sit in X and A, while the opposing cohort B captured only 5. Secondary: a couple of axes barely fire. <b>To re-establish a fair contrast</b>, fix cohort capture first (re-classify B from real opposing-counsel paths, pull court orders out of A), then recalibrate the flat axes. The v1 0.05/0.85 extremes were a wider/older calibration — don't treat them as ground truth.
+    </div>
+  </section>
+
+  <!-- 3. evidence plots -->
+  <section class="section">
+    <div class="section-header"><h2>The evidence</h2></div>
+    <p class="section-desc">Left: headline-score ceiling, v1 (authored) vs v2 (measured). Right: per-axis firing — how often each axis is non-zero, and its max. Dead/flat axes can't separate anyone.</p>
+    <div class="row2">
+      <div class="plot"><div class="ptitle">Score ceiling — authored vs measured</div><div id="ceiling-plot" style="height:380px"></div></div>
+      <div class="plot"><div class="ptitle">Per-axis firing rate &amp; ceiling <span class="s">(measured corpus)</span></div><div id="firing-plot" style="height:380px"></div></div>
+    </div>
+  </section>
+
+  <div id="loading" class="loading">Loading measured corpus…</div>
+</main>
+
+<script>
+const PALETTE={panel:'#0f1018',line:'rgba(232,232,244,0.08)',ink:'#e8e8f4',dim:'rgba(232,232,244,0.45)'};
+const baseLayout={paper_bgcolor:PALETTE.panel,plot_bgcolor:PALETTE.panel,font:{color:PALETTE.ink,family:'Inter, system-ui',size:11},margin:{l:60,r:18,t:14,b:46},showlegend:true,legend:{orientation:'h',y:1.08,font:{color:PALETTE.dim,size:10}}};
+const gridAxis={gridcolor:PALETTE.line,zerolinecolor:PALETTE.line,linecolor:PALETTE.line,tickfont:{color:PALETTE.dim}};
+const CFG={displayModeBar:false,responsive:true};
+
+// ── v1 original 35-doc data (recreated verbatim from index.html), labels anonymized ──
+const AUTH={respondent:{c:'#9ece6a',name:'Us (then respondent)'},petitioner_counsel:{c:'#f7768e',name:'Opposing counsel'},
+  petitioner:{c:'#ff922b',name:'Opposing party'},court:{c:'#868e96',name:'Court'},government:{c:'#ffd43b',name:'Agency / FOIA'}};
+const OLD=[
+ ['respondent',0.05,0.35],['respondent',0.03,0.15],['respondent',0.05,0.52],['respondent',0.08,0.55],['respondent',0.02,0.08],['respondent',0.08,0.88],['respondent',0.01,0.10],['respondent',0.04,0.45],['respondent',0.05,0.65],['respondent',0.06,0.70],['respondent',0.01,0.22],['respondent',0.04,0.72],
+ ['petitioner_counsel',0.75,0.62],['petitioner_counsel',0.65,0.48],['petitioner_counsel',0.70,0.45],['petitioner_counsel',0.78,0.58],['petitioner_counsel',0.68,0.42],['petitioner_counsel',0.72,0.55],['petitioner_counsel',0.80,0.60],['petitioner_counsel',0.70,0.50],['petitioner_counsel',0.74,0.52],['petitioner_counsel',0.60,0.18],['petitioner_counsel',0.62,0.20],['petitioner_counsel',0.58,0.15],
+ ['petitioner',0.82,0.70],['petitioner',0.35,0.40],
+ ['court',0.55,0.30],['court',0.78,0.35],['court',0.45,0.28],['court',0.50,0.32],['court',0.42,0.30],
+ ['government',0.85,0.18],['government',0.70,0.15],['government',0.80,0.12],['government',0.25,0.55],
+];
+
+function mean(a){return a.length?a.reduce((s,v)=>s+v,0)/a.length:0;}
+
+// ── old quadrant scatter (recreate index.html plot: x=perplexity, y=orwell) ──
+function renderOld(){
+  const traces=Object.keys(AUTH).map(k=>{
+    const pts=OLD.filter(r=>r[0]===k);
+    return {x:pts.map(p=>p[2]),y:pts.map(p=>p[1]),mode:'markers',type:'scatter',name:AUTH[k].name,
+      marker:{color:AUTH[k].c,size:9,line:{color:'#0f1018',width:1}},hovertemplate:`${AUTH[k].name}<br>Orwell %{y:.2f} · perplexity %{x:.2f}<extra></extra>`};
+  });
+  Plotly.newPlot('old-plot',traces,{...baseLayout,
+    shapes:[{type:'rect',x0:0,x1:1,y0:0.5,y1:1,fillcolor:'rgba(247,118,142,0.05)',line:{width:0}}],
+    annotations:[{x:0.98,y:0.95,xref:'x',yref:'y',text:'BUREAUCRATIC DOUBLESPEAK',showarrow:false,font:{color:'rgba(247,118,142,0.5)',size:9},xanchor:'right'}],
+    xaxis:{...gridAxis,title:{text:'perplexity (surprise)',font:{color:PALETTE.dim}},range:[0,1]},
+    yaxis:{...gridAxis,title:{text:'Orwell index (doublespeak)',font:{color:PALETTE.dim}},range:[0,1]}},CFG);
+}
+
+async function load(){
+  let C=null; try{const r=await fetch('./corpus_scores.json');if(r.ok)C=await r.json();}catch(e){}
+  if(!C){try{const r=await fetch('./corpus_scores.demo.json');if(r.ok)C=await r.json();}catch(e){}}
+  renderOld();
+  if(!C){document.getElementById('loading').innerHTML='<span style="color:#f7768e">measured corpus not found</span>';return;}
+  document.getElementById('loading').style.display='none';
+
+  const docs=C.documents,feats=C.feature_names,labels=C.feature_labels||feats,nC=C.n_composite||7;
+  const val=(x,f)=>({...x.axes,...x.diagnostics})[f];
+  const COH={A:'#9ece6a',B:'#f7768e',X:'#7aa2f7'},CNAME={A:'Us (petitioner)',B:'Opposing (capt. as B)',X:'Court / neutral'};
+  const maxComp=Math.max(...docs.map(d=>d.composite));
+
+  // ── new scatter: composite by cohort, jittered x ──
+  const seedJ=(i)=>((Math.sin(i*99.13)+1)/2); // deterministic jitter
+  const nt=['A','B','X'].map(c=>{const dd=docs.filter(d=>d.cohort===c);
+    return {x:dd.map((d,i)=>(c==='A'?0.5:c==='B'?1.5:2.5)+(seedJ(i)-0.5)*0.7),y:dd.map(d=>d.composite),mode:'markers',type:'scatter',
+      name:`${CNAME[c]} (${dd.length})`,marker:{color:COH[c],size:6,opacity:0.55},hovertemplate:`${c} %{y:.3f}<extra></extra>`};});
+  Plotly.newPlot('new-plot',nt,{...baseLayout,
+    xaxis:{...gridAxis,tickvals:[0.5,1.5,2.5],ticktext:['Us (A)','Opp (B)','Neutral (X)'],range:[0,3]},
+    yaxis:{...gridAxis,title:{text:'composite Orwell (measured)',font:{color:PALETTE.dim}},range:[0,1]},
+    shapes:[{type:'line',x0:0,x1:3,y0:maxComp,y1:maxComp,line:{color:'#73daca',width:1,dash:'dot'}}],
+    annotations:[{x:2.9,y:maxComp+0.04,text:`measured ceiling ${maxComp.toFixed(2)}`,showarrow:false,font:{color:'#73daca',size:9},xanchor:'right'}]},CFG);
+
+  // ── ceiling bar ──
+  Plotly.newPlot('ceiling-plot',[{type:'bar',x:['v1 authored (opposing)','v2 measured (any doc)'],y:[0.85,maxComp],
+    marker:{color:['#f7768e','#73daca']},text:[' 0.85',' '+maxComp.toFixed(2)],textposition:'outside',hoverinfo:'skip'}],
+    {...baseLayout,showlegend:false,yaxis:{...gridAxis,title:{text:'max headline Orwell',font:{color:PALETTE.dim}},range:[0,1]},xaxis:{...gridAxis}},CFG);
+
+  // ── per-axis firing ──
+  const stats=feats.map((f,i)=>{const v=docs.map(d=>val(d,f));return {label:labels[i],comp:i<nC,nz:v.filter(x=>x>0).length/v.length,max:Math.max(...v)};});
+  stats.sort((a,b)=>a.nz-b.nz);
+  Plotly.newPlot('firing-plot',[
+    {type:'bar',orientation:'h',y:stats.map(s=>s.label),x:stats.map(s=>s.nz),name:'% docs non-zero',marker:{color:'#7aa2f7'},hovertemplate:'%{y}<br>%{x:.0%} fire<extra></extra>'},
+    {type:'bar',orientation:'h',y:stats.map(s=>s.label),x:stats.map(s=>s.max),name:'max value',marker:{color:'#bb9af7'},opacity:0.55,hovertemplate:'%{y}<br>max %{x:.2f}<extra></extra>'},
+  ],{...baseLayout,barmode:'group',margin:{l:150,r:14,t:30,b:40},xaxis:{...gridAxis,range:[0,1]},yaxis:{...gridAxis,tickfont:{size:9}}},CFG);
+
+  // ── fill finding numbers ──
+  const set=(id,v)=>{const e=document.getElementById(id);if(e)e.textContent=v;};
+  set('c1-ceiling',maxComp.toFixed(2)); set('c1-max',maxComp.toFixed(2));
+  set('c2-b',docs.filter(d=>d.cohort==='B').length); set('c2-b2',docs.filter(d=>d.cohort==='B').length);
+  set('c2-x',docs.filter(d=>d.cohort==='X').length); set('c2-x2',docs.filter(d=>d.cohort==='X').length);
+  set('c3-dead',stats.filter(s=>s.nz<0.02).length);
+  set('c3-flat',stats.filter(s=>s.nz>=0.02&&s.max<0.25).length);
+}
+load();
+</script>
+</body>
+</html>

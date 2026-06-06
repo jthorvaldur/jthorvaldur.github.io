@@ -1,0 +1,248 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Orwell Timeline — 15-Dimension Cohort Evaluation</title>
+<meta name="description" content="Us (petitioner) vs the rest across all 15 Orwell axes, evaluated as a timeline over filing sequence. Anonymized corpus.">
+<meta name="robots" content="noindex, nofollow">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<script src="https://cdn.plot.ly/plotly-2.35.2.min.js"></script>
+<style>
+  *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+  :root{
+    --bg:#07070f; --panel:#0f1018; --panel2:#161824;
+    --line:rgba(232,232,244,0.08);
+    --ink:#e8e8f4; --dim:rgba(232,232,244,0.45); --mute:rgba(232,232,244,0.25);
+    --accent:#7aa2f7; --accent2:#bb9af7; --coral:#f7768e; --teal:#73daca; --amber:#e0af68;
+    --A:#9ece6a;  /* Us — petitioner */
+    --B:#f7768e;  /* Opposing — respondent / counsel */
+    --X:#7aa2f7;  /* Court / neutral / control */
+    --rest:#e0af68; /* "the rest" aggregate */
+  }
+  html,body{background:var(--bg);color:var(--ink);font:14px/1.5 'Inter',-apple-system,system-ui,sans-serif}
+  a{color:var(--accent2);text-decoration:none}
+  a:hover{text-decoration:underline}
+  header{padding:28px 32px 16px;border-bottom:1px solid var(--line);max-width:1500px;margin:0 auto}
+  .eyebrow{color:var(--accent2);font-size:11px;letter-spacing:.18em;text-transform:uppercase;margin-bottom:6px}
+  header h1{font-size:25px;font-weight:600;letter-spacing:-.3px}
+  .subtitle{color:var(--dim);font-size:13px;margin-top:6px;max-width:980px;line-height:1.7}
+  nav{display:flex;gap:4px;padding:14px 32px 0;border-bottom:1px solid var(--line);flex-wrap:wrap;max-width:1500px;margin:0 auto}
+  nav a{color:var(--dim);padding:10px 14px;font-size:13px;border-bottom:2px solid transparent;transition:color .15s,border-color .15s}
+  nav a:hover{color:var(--ink);text-decoration:none}
+  nav a.active{color:var(--accent);border-bottom-color:var(--accent)}
+  main{max-width:1500px;margin:0 auto;padding:22px 32px 70px}
+
+  .note{background:var(--panel2);border:1px solid var(--amber);border-left:3px solid var(--amber);
+    color:var(--amber);padding:10px 14px;border-radius:8px;margin-bottom:20px;font-size:12px;line-height:1.6}
+  .note b{color:var(--ink)}
+
+  .kpis{display:grid;grid-template-columns:repeat(5,1fr);gap:12px;margin-bottom:22px}
+  @media(max-width:900px){.kpis{grid-template-columns:repeat(2,1fr)}}
+  .card{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:14px 16px}
+  .card .label{color:var(--dim);font-size:10px;text-transform:uppercase;letter-spacing:.12em}
+  .card .val{font-size:24px;font-weight:600;margin-top:4px;font-variant-numeric:tabular-nums}
+  .card .sub{color:var(--mute);font-size:11px;margin-top:2px}
+
+  .legend{display:flex;gap:16px;flex-wrap:wrap;margin:0 0 14px;font-size:12px;color:var(--dim)}
+  .legend .key{display:inline-flex;align-items:center;gap:6px}
+  .legend .dot{width:10px;height:10px;border-radius:50%}
+
+  .section{margin-top:34px}
+  .section-header{display:flex;align-items:center;gap:12px;margin-bottom:6px}
+  .section-header h2{font-size:17px;font-weight:600;white-space:nowrap}
+  .section-header::after{content:'';flex:1;height:1px;background:var(--line)}
+  .section-desc{color:var(--dim);font-size:12px;margin:0 0 18px;max-width:880px;line-height:1.7}
+
+  .plot{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:8px}
+  .grid15{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
+  @media(max-width:1100px){.grid15{grid-template-columns:repeat(2,1fr)}}
+  @media(max-width:720px){.grid15{grid-template-columns:1fr}}
+  .mini{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:6px 6px 2px}
+  .mini.composite{border-color:rgba(122,162,247,0.28)}
+  .mini.diagnostic{border-color:rgba(187,154,247,0.22)}
+  .mini .mtitle{font-size:11.5px;font-weight:500;padding:4px 8px 0;display:flex;justify-content:space-between;align-items:baseline}
+  .mini .mtag{font-family:'JetBrains Mono',monospace;font-size:8.5px;letter-spacing:.06em;text-transform:uppercase;color:var(--mute)}
+  .mini .delta{font-family:'JetBrains Mono',monospace;font-size:10px}
+  .loading{padding:60px;text-align:center;color:var(--dim)}
+  code{background:var(--panel2);padding:2px 6px;border-radius:4px;font-family:'JetBrains Mono',monospace;font-size:11px}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="eyebrow">Coherence Research Group · Orwell Index v2</div>
+  <h1>Timeline — 15-Dimension Cohort Evaluation</h1>
+  <p class="subtitle">
+    Us — the petitioner (cohort A) — vs the rest: the opposing side (B, respondent / counsel) and court/neutral (X),
+    across all 15 axes: 7 composite (weighted into the Orwell score) + 8 diagnostic. Each axis is traced as a timeline
+    over filing sequence. <b>Note:</b> in the 2017 divorce (which she filed) you were the respondent; in the current
+    matter you're the petitioner — both eras sit in cohort A. The original scatter &amp; dated timeline are unchanged on the
+    <a href="./">Orwell Index</a> page.
+  </p>
+</header>
+
+<nav>
+  <a href="./">Orwell Index</a>
+  <a href="./explorer.html">Explorer</a>
+  <a href="./timeline.html" class="active">15-Dim Timeline</a>
+  <a href="./compare.html">Compare / Diagnose</a>
+  <a href="./axes.html">Axis Breakdown</a>
+  <a href="./replication.html">Replication</a>
+</nav>
+
+<main>
+  <div id="loading" class="loading">Loading corpus_scores.json…</div>
+
+  <div id="content" style="display:none">
+    <div class="note">
+      <b>On the x-axis:</b> the anonymized corpus redacts filing dates (only <b id="n-dated">…</b> of <b id="n-total">…</b> docs retain a year,
+      and the opposing cohort has none), so a calendar timeline would misrepresent the data. Each axis is therefore plotted over
+      <b>filing progression</b> — each cohort's documents ordered and normalized 0→1 (first→last). Dashed lines are
+      cohort means. To restore real dates, rebuild with dated paths: <code>python3 build_corpus.py --root … --out corpus_scores.json</code>.
+    </div>
+
+    <div class="legend">
+      <span class="key"><span class="dot" style="background:var(--A)"></span> A · Us — petitioner</span>
+      <span class="key"><span class="dot" style="background:var(--B)"></span> B · Opposing (respondent / counsel)</span>
+      <span class="key"><span class="dot" style="background:var(--X)"></span> X · Court / neutral</span>
+      <span class="key"><span class="dot" style="background:var(--rest)"></span> "The rest" (B ∪ X)</span>
+    </div>
+
+    <div class="kpis" id="kpis"></div>
+
+    <!-- 1. Signature gap: A vs the rest -->
+    <section class="section">
+      <div class="section-header"><h2>Us (petitioner) vs the rest — signature gap</h2></div>
+      <p class="section-desc">
+        Mean score per axis: us (cohort A) against the rest (B ∪ X). Lower = more transparent. The biggest gaps
+        are where the rhetorical signatures diverge most — the axes worth arguing.
+      </p>
+      <div class="plot"><div id="gap-plot" style="height:540px"></div></div>
+    </section>
+
+    <!-- 2. Composite Orwell over sequence -->
+    <section class="section">
+      <div class="section-header"><h2>Composite Orwell — over filing progression</h2></div>
+      <p class="section-desc">The headline score traced per cohort, with cohort means. This is the v2 analogue of the dated timeline on the Index page.</p>
+      <div class="plot"><div id="composite-plot" style="height:420px"></div></div>
+    </section>
+
+    <!-- 3. All 15 axes as small-multiple timelines -->
+    <section class="section">
+      <div class="section-header"><h2>All 15 axes — per-dimension timelines</h2></div>
+      <p class="section-desc">
+        Every axis traced over filing progression for each cohort (dashed = cohort mean). Blue-bordered tiles are the
+        7 composite axes; purple-bordered are the 8 diagnostics. The Δ chip shows our (petitioner) mean minus the rest's mean
+        (negative = respondent more transparent on that axis).
+      </p>
+      <div class="grid15" id="grid15"></div>
+    </section>
+  </div>
+</main>
+
+<script>
+const PALETTE={bg:'#07070f',panel:'#0f1018',panel2:'#161824',line:'rgba(232,232,244,0.08)',
+  ink:'#e8e8f4',dim:'rgba(232,232,244,0.45)',mute:'rgba(232,232,244,0.25)'};
+const COHORT={A:{c:'#9ece6a',name:'Us — petitioner'},B:{c:'#f7768e',name:'Opposing (respondent / counsel)'},X:{c:'#7aa2f7',name:'Court / neutral'}};
+const REST_COLOR='#e0af68';
+const baseLayout={paper_bgcolor:PALETTE.panel,plot_bgcolor:PALETTE.panel,
+  font:{color:PALETTE.ink,family:'Inter, system-ui',size:12},margin:{l:60,r:18,t:18,b:42},showlegend:false};
+const gridAxis={gridcolor:PALETTE.line,zerolinecolor:PALETTE.line,linecolor:PALETTE.line,tickfont:{color:PALETTE.dim}};
+const CFG={displayModeBar:false,responsive:true};
+let CORPUS=null;
+
+async function tryFetch(u){try{const r=await fetch(u);if(r.ok)return await r.json();}catch(e){}return null;}
+
+function mean(a){return a.length?a.reduce((s,v)=>s+v,0)/a.length:0;}
+function idNum(id){const m=id.match(/(\d+)$/);return m?+m[1]:0;}
+function val(doc,feat){return (doc.axes&&feat in doc.axes)?doc.axes[feat]:(doc.diagnostics&&feat in doc.diagnostics?doc.diagnostics[feat]:(doc.vector?doc.vector[CORPUS.feature_names.indexOf(feat)]:0));}
+
+// per-cohort docs ordered by filing sequence (id suffix), with normalized x in [0,1]
+function cohortSeq(cohort){
+  const docs=CORPUS.documents.filter(d=>d.cohort===cohort).sort((a,b)=>idNum(a.id)-idNum(b.id));
+  const n=docs.length;
+  return docs.map((d,i)=>({doc:d,x:n>1?i/(n-1):0.5}));
+}
+
+async function load(){
+  CORPUS=await tryFetch('./corpus_scores.json') || await tryFetch('./corpus_scores.demo.json');
+  if(!CORPUS){document.getElementById('loading').innerHTML='<span style="color:#f7768e">No corpus_scores.json found.</span>';return;}
+
+  const docs=CORPUS.documents, feats=CORPUS.feature_names, labels=CORPUS.feature_labels||feats;
+  const nComp=CORPUS.n_composite||7;
+  const dated=docs.filter(d=>d.year).length;
+
+  document.getElementById('n-dated').textContent=dated;
+  document.getElementById('n-total').textContent=docs.length;
+
+  document.getElementById('loading').style.display='none';
+  document.getElementById('content').style.display='block';
+
+  const byC={A:docs.filter(d=>d.cohort==='A'),B:docs.filter(d=>d.cohort==='B'),X:docs.filter(d=>d.cohort==='X')};
+  const rest=docs.filter(d=>d.cohort!=='A');
+
+  // ---- KPIs ----
+  const kpis=[
+    {label:'Documents',val:docs.length,sub:`A ${byC.A.length} · B ${byC.B.length} · X ${byC.X.length}`},
+    {label:'Our (petitioner) mean Orwell',val:mean(byC.A.map(d=>d.composite)).toFixed(3),sub:'cohort A',col:'var(--A)'},
+    {label:'The rest — mean Orwell',val:mean(rest.map(d=>d.composite)).toFixed(3),sub:'B ∪ X',col:'var(--rest)'},
+    {label:'Gap (rest − us)',val:(mean(rest.map(d=>d.composite))-mean(byC.A.map(d=>d.composite))).toFixed(3),sub:'composite Orwell',col:'var(--teal)'},
+    {label:'Axes evaluated',val:feats.length,sub:`${nComp} composite · ${feats.length-nComp} diagnostic`,col:'var(--accent2)'},
+  ];
+  document.getElementById('kpis').innerHTML=kpis.map(k=>
+    `<div class="card"><div class="label">${k.label}</div><div class="val"${k.col?` style="color:${k.col}"`:''}>${k.val}</div><div class="sub">${k.sub}</div></div>`).join('');
+
+  // ---- 1. signature gap (A vs rest) ----
+  const meanA=feats.map(f=>mean(byC.A.map(d=>val(d,f))));
+  const meanRest=feats.map(f=>mean(rest.map(d=>val(d,f))));
+  const order=feats.map((f,i)=>i).sort((a,b)=>(meanRest[b]-meanA[b])-(meanRest[a]-meanA[a]));
+  const oFeat=order.map(i=>labels[i]), oA=order.map(i=>meanA[i]), oR=order.map(i=>meanRest[i]);
+  Plotly.newPlot('gap-plot',[
+    {type:'bar',orientation:'h',y:oFeat,x:oA,name:'Us (petitioner)',marker:{color:COHORT.A.c},opacity:0.92,hovertemplate:'%{y}<br>us: %{x:.3f}<extra></extra>'},
+    {type:'bar',orientation:'h',y:oFeat,x:oR,name:'The rest',marker:{color:REST_COLOR},opacity:0.92,hovertemplate:'%{y}<br>rest: %{x:.3f}<extra></extra>'},
+  ],{...baseLayout,barmode:'group',showlegend:true,legend:{orientation:'h',y:1.06,font:{color:PALETTE.dim}},
+     margin:{l:160,r:24,t:30,b:40},xaxis:{...gridAxis,title:{text:'mean axis score (0 → 1)',font:{color:PALETTE.dim}},range:[0,1]},yaxis:{...gridAxis,autorange:'reversed'}},CFG);
+
+  // ---- 2. composite over progression ----
+  const compTraces=[];
+  ['A','B','X'].forEach(c=>{
+    const seq=cohortSeq(c); if(!seq.length)return;
+    compTraces.push({x:seq.map(s=>s.x),y:seq.map(s=>s.doc.composite),mode:'markers',type:'scatter',
+      name:COHORT[c].name,marker:{color:COHORT[c].c,size:6,opacity:0.6},hovertemplate:`${c} %{customdata}<br>Orwell %{y:.3f}<extra></extra>`,customdata:seq.map(s=>s.doc.id)});
+    const m=mean(seq.map(s=>s.doc.composite));
+    compTraces.push({x:[0,1],y:[m,m],mode:'lines',type:'scatter',line:{color:COHORT[c].c,width:1.5,dash:'dash'},hoverinfo:'skip',showlegend:false});
+  });
+  Plotly.newPlot('composite-plot',compTraces,{...baseLayout,showlegend:true,legend:{orientation:'h',y:1.08,font:{color:PALETTE.dim}},
+    xaxis:{...gridAxis,title:{text:'filing progression (first → latest, per cohort)',font:{color:PALETTE.dim}},range:[-0.02,1.02]},
+    yaxis:{...gridAxis,title:{text:'composite Orwell',font:{color:PALETTE.dim}},range:[0,1]}},CFG);
+
+  // ---- 3. 15 small-multiple timelines ----
+  const grid=document.getElementById('grid15');
+  feats.forEach((f,fi)=>{
+    const isComp=fi<nComp;
+    const dA=mean(byC.A.map(d=>val(d,f))), dR=mean(rest.map(d=>val(d,f))), delta=dA-dR;
+    const dColor=delta<=0?'var(--A)':'var(--coral)';
+    const tile=document.createElement('div');
+    tile.className='mini '+(isComp?'composite':'diagnostic');
+    tile.innerHTML=`<div class="mtitle"><span>${labels[fi]}</span><span class="delta" style="color:${dColor}">Δ ${delta>=0?'+':''}${delta.toFixed(2)}</span></div>
+      <div class="mtag">${isComp?`composite · w=${(CORPUS.weights&&CORPUS.weights[f]||0)}`:'diagnostic'}</div>
+      <div id="mini-${fi}" style="height:170px"></div>`;
+    grid.appendChild(tile);
+    const traces=[];
+    ['A','B','X'].forEach(c=>{
+      const seq=cohortSeq(c); if(!seq.length)return;
+      traces.push({x:seq.map(s=>s.x),y:seq.map(s=>val(s.doc,f)),mode:'markers',type:'scatter',
+        marker:{color:COHORT[c].c,size:4,opacity:0.5},hovertemplate:`${c} %{customdata}<br>%{y:.3f}<extra></extra>`,customdata:seq.map(s=>s.doc.id)});
+      const m=mean(seq.map(s=>val(s.doc,f)));
+      traces.push({x:[0,1],y:[m,m],mode:'lines',type:'scatter',line:{color:COHORT[c].c,width:1.3,dash:'dash'},hoverinfo:'skip'});
+    });
+    Plotly.newPlot(`mini-${fi}`,traces,{...baseLayout,margin:{l:34,r:8,t:6,b:24},
+      xaxis:{...gridAxis,range:[-0.02,1.02],tickvals:[0,0.5,1],ticktext:['','',''],tickfont:{size:8}},
+      yaxis:{...gridAxis,range:[0,1],tickvals:[0,0.5,1],tickfont:{size:9,color:PALETTE.dim}}},CFG);
+  });
+}
+load();
+</script>
+</body>
+</html>

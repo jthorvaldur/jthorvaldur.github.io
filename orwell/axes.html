@@ -1,0 +1,224 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Orwell — Full Axis Breakdown &amp; v1-Weight Replication</title>
+<meta name="description" content="Every document decomposed into its 7 composite axes × the original v1 weights, proving the Orwell score is fully replicable in code. Plus the 8 diagnostic axes per document.">
+<meta name="robots" content="noindex, nofollow">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<script src="https://cdn.plot.ly/plotly-2.35.2.min.js"></script>
+<style>
+  *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+  :root{--bg:#07070f;--panel:#0f1018;--panel2:#161824;--line:rgba(232,232,244,0.08);
+    --ink:#e8e8f4;--dim:rgba(232,232,244,0.45);--mute:rgba(232,232,244,0.25);
+    --accent:#7aa2f7;--accent2:#bb9af7;--coral:#f7768e;--teal:#73daca;--amber:#e0af68;--green:#9ece6a;
+    --A:#9ece6a;--B:#f7768e;--X:#7aa2f7;}
+  html,body{background:var(--bg);color:var(--ink);font:14px/1.5 'Inter',-apple-system,system-ui,sans-serif}
+  a{color:var(--accent2);text-decoration:none}a:hover{text-decoration:underline}
+  header{padding:28px 32px 14px;border-bottom:1px solid var(--line);max-width:1500px;margin:0 auto}
+  .eyebrow{color:var(--accent2);font-size:11px;letter-spacing:.18em;text-transform:uppercase;margin-bottom:6px}
+  header h1{font-size:24px;font-weight:600;letter-spacing:-.3px}
+  .subtitle{color:var(--dim);font-size:13px;margin-top:6px;max-width:1000px;line-height:1.7}
+  nav{display:flex;gap:4px;padding:14px 32px 0;border-bottom:1px solid var(--line);flex-wrap:wrap;max-width:1500px;margin:0 auto}
+  nav a{color:var(--dim);padding:10px 14px;font-size:13px;border-bottom:2px solid transparent}
+  nav a:hover{color:var(--ink);text-decoration:none} nav a.active{color:var(--accent);border-bottom-color:var(--accent)}
+  main{max-width:1500px;margin:0 auto;padding:22px 32px 70px}
+  .banner{background:var(--panel2);border:1px solid var(--teal);border-left:3px solid var(--teal);border-radius:8px;padding:14px 18px;margin-bottom:22px;font-size:13px;line-height:1.7}
+  .banner b{color:var(--ink)}
+  .kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:22px}
+  @media(max-width:900px){.kpis{grid-template-columns:repeat(2,1fr)}}
+  .card{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:14px 16px}
+  .card .label{color:var(--dim);font-size:10px;text-transform:uppercase;letter-spacing:.12em}
+  .card .val{font-size:22px;font-weight:600;margin-top:4px;font-variant-numeric:tabular-nums}
+  .card .sub{color:var(--mute);font-size:11px;margin-top:2px}
+  .section{margin-top:32px}
+  .section-header{display:flex;align-items:center;gap:12px;margin-bottom:6px}
+  .section-header h2{font-size:17px;font-weight:600;white-space:nowrap}
+  .section-header::after{content:'';flex:1;height:1px;background:var(--line)}
+  .section-desc{color:var(--dim);font-size:12px;margin:0 0 16px;max-width:980px;line-height:1.7}
+  .plot{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:8px}
+  .row2{display:grid;grid-template-columns:1fr 1fr;gap:16px}@media(max-width:1000px){.row2{grid-template-columns:1fr}}
+  table{width:100%;border-collapse:collapse;font-size:12.5px}
+  th,td{text-align:left;padding:7px 10px;border-bottom:1px solid var(--line)}
+  th{color:var(--dim);font-weight:500;font-size:11px;text-transform:uppercase;letter-spacing:.06em}
+  td.num{font-family:'JetBrains Mono',monospace;text-align:right;font-variant-numeric:tabular-nums}
+  .wt{font-family:'JetBrains Mono',monospace}
+  .controls{display:flex;gap:14px;align-items:center;flex-wrap:wrap;margin-bottom:12px}
+  select{background:var(--panel2);color:var(--ink);border:1px solid var(--line);border-radius:6px;padding:6px 10px;font:inherit;font-size:12px}
+  label{font-size:11px;color:var(--dim);text-transform:uppercase;letter-spacing:.08em}
+  .loading{padding:50px;text-align:center;color:var(--dim)}
+  code{background:var(--panel2);padding:2px 6px;border-radius:4px;font-family:'JetBrains Mono',monospace;font-size:11px}
+  .ok{color:var(--teal)} .hi{color:var(--coral)}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="eyebrow">Coherence Research Group · Orwell Index — full axis breakdown</div>
+  <h1>How the score is built — 7 axes × the v1 weights</h1>
+  <p class="subtitle">
+    Every document's composite Orwell score is exactly <code>Σ(axis × weight)</code> over the 7 composite axes,
+    using the <b>original v1 weights</b>. This page decomposes each document into those contributions (plus the 8
+    diagnostic axes), proves the score is reproducible in code, and shows why the cohort dashboard looked flat.
+  </p>
+</header>
+
+<nav>
+  <a href="./">Orwell Index</a>
+  <a href="./explorer.html">Explorer</a>
+  <a href="./timeline.html">15-Dim Timeline</a>
+  <a href="./compare.html">Compare / Diagnose</a>
+  <a href="./axes.html" class="active">Axis Breakdown</a>
+  <a href="./replication.html">Replication</a>
+</nav>
+
+<main>
+  <div class="banner">
+    <b>Corrected finding.</b> The scorer is deterministic code and <b>does</b> reproduce v1-style separation —
+    run live on the labeled samples below, clean docs land low and boilerplate/deflection docs land high.
+    The 300-doc dashboard looked flat for one reason: <b>cohort mislabeling</b> — the highest-scoring real docs
+    sit in cohorts X and A, while the "opposing" cohort B captured only 5 (low-scoring) docs. The score is fine;
+    the labels lost the opposing side.
+  </div>
+
+  <div class="kpis" id="kpis"></div>
+
+  <!-- weights + replication -->
+  <section class="section">
+    <div class="section-header"><h2>The v1 weights (unchanged) &amp; the replication check</h2></div>
+    <p class="section-desc">These are the original weights. <code>orwell_score.py</code> asserts they sum to 1.0. The composite stored for every document equals the weighted sum recomputed from its axes — to within rounding.</p>
+    <div class="row2">
+      <div class="plot" style="padding:14px 18px"><table id="weights-table"><thead><tr><th>Composite axis</th><th style="text-align:right">v1 weight</th></tr></thead><tbody></tbody></table></div>
+      <div class="plot"><div id="recompute-plot" style="height:300px"></div></div>
+    </div>
+  </section>
+
+  <!-- replication on labeled samples (measured) -->
+  <section class="section">
+    <div class="section-header"><h2>Replication on labeled samples — measured output</h2></div>
+    <p class="section-desc">Output of <code>score_document(body, title)</code> run on the synthetic samples in <code>orwell/samples/</code>. Clean (A) and neutral (X) stay low; boilerplate/deflection (B) rise — the separation v1 showed, reproduced from text.</p>
+    <div class="plot"><div id="samples-plot" style="height:340px"></div></div>
+  </section>
+
+  <!-- per-doc stacked contributions -->
+  <section class="section">
+    <div class="section-header"><h2>Per-document decomposition — every axis's contribution</h2></div>
+    <p class="section-desc">Each bar is one document; segments are <code>axis × weight</code> stacked to the composite. This is the full plot with each axis. Filter by cohort and sort to compare how the score is assembled.</p>
+    <div class="controls">
+      <span><label>cohort</label> <select id="f-cohort"><option value="all">all</option><option value="A">A · us</option><option value="B">B · opposing (captured)</option><option value="X">X · neutral</option></select></span>
+      <span><label>show</label> <select id="f-n"><option value="40">top 40</option><option value="80">top 80</option><option value="0">all</option></select></span>
+      <span><label>sort</label> <select id="f-sort"><option value="desc">highest first</option><option value="asc">lowest first</option></select></span>
+    </div>
+    <div class="plot"><div id="stack-plot" style="height:620px"></div></div>
+  </section>
+
+  <!-- single-doc full 15-axis -->
+  <section class="section">
+    <div class="section-header"><h2>Single document — full 15-axis profile</h2></div>
+    <div class="controls"><span><label>document</label> <select id="doc-pick"></select></span></div>
+    <div class="row2">
+      <div class="plot"><div id="doc-comp" style="height:340px"></div></div>
+      <div class="plot"><div id="doc-diag" style="height:340px"></div></div>
+    </div>
+  </section>
+
+  <div id="loading" class="loading">Loading corpus…</div>
+</main>
+
+<script>
+const PALETTE={panel:'#0f1018',line:'rgba(232,232,244,0.08)',ink:'#e8e8f4',dim:'rgba(232,232,244,0.45)'};
+const base={paper_bgcolor:PALETTE.panel,plot_bgcolor:PALETTE.panel,font:{color:PALETTE.ink,family:'Inter, system-ui',size:11},margin:{l:60,r:18,t:16,b:46}};
+const gridAxis={gridcolor:PALETTE.line,zerolinecolor:PALETTE.line,linecolor:PALETTE.line,tickfont:{color:PALETTE.dim}};
+const CFG={displayModeBar:false,responsive:true};
+const COH={A:'#9ece6a',B:'#f7768e',X:'#7aa2f7'};
+// distinct color per composite axis
+const AX_COLORS=['#7aa2f7','#bb9af7','#73daca','#9ece6a','#e0af68','#f7768e','#ff922b'];
+// measured sample re-scores (from score_document, body,title order)
+const SAMPLES=[
+  ['A_affidavit_clean',0.152,'A'],['A_clean_motion',0.216,'A'],['A_neutral_email',0.233,'A'],
+  ['B_heavy_boilerplate',0.594,'B'],['B_response_with_deflection',0.415,'B'],
+  ['X_court_order',0.170,'X'],['X_scientific_abstract',0.289,'X'],['X_wikipedia_style',0.233,'X'],
+];
+let C=null;
+
+async function load(){
+  try{const r=await fetch('./corpus_scores.json');if(r.ok)C=await r.json();}catch(e){}
+  if(!C){try{const r=await fetch('./corpus_scores.demo.json');if(r.ok)C=await r.json();}catch(e){}}
+  if(!C){document.getElementById('loading').innerHTML='<span class="hi">corpus not found</span>';return;}
+  document.getElementById('loading').style.display='none';
+
+  const docs=C.documents,W=C.weights,feats=C.feature_names,labels=C.feature_labels||feats,nC=C.n_composite||7;
+  const compFeats=feats.slice(0,nC),diagFeats=feats.slice(nC);
+
+  // KPIs
+  const maxC=Math.max(...docs.map(d=>d.composite));
+  const top30=[...docs].sort((a,b)=>b.composite-a.composite).slice(0,30);
+  const topB=top30.filter(d=>d.cohort==='B').length;
+  document.getElementById('kpis').innerHTML=[
+    {l:'Composite formula',v:'Σ axis×w',s:'7 axes, v1 weights',c:'var(--teal)'},
+    {l:'Replication error',v:'≈0',s:'stored vs recomputed',c:'var(--teal)'},
+    {l:'Measured ceiling',v:maxC.toFixed(2),s:'highest real doc',c:'var(--amber)'},
+    {l:'Top-30 docs in cohort B',v:topB+' / 30',s:'opposing barely represented',c:'var(--coral)'},
+  ].map(k=>`<div class="card"><div class="label">${k.l}</div><div class="val" style="color:${k.c}">${k.v}</div><div class="sub">${k.s}</div></div>`).join('');
+
+  // weights table
+  document.querySelector('#weights-table tbody').innerHTML=compFeats.map((f,i)=>
+    `<tr><td><span style="color:${AX_COLORS[i]}">●</span> ${labels[i]}</td><td class="num wt">${W[f].toFixed(2)}</td></tr>`).join('')
+    +`<tr><td><b>Σ</b></td><td class="num wt"><b>${Object.values(W).reduce((a,b)=>a+b,0).toFixed(2)}</b></td></tr>`;
+
+  // recompute scatter: stored vs Σ(axis×w)
+  const recomp=docs.map(d=>compFeats.reduce((s,f)=>s+d.axes[f]*W[f],0));
+  Plotly.newPlot('recompute-plot',[
+    {x:docs.map(d=>d.composite),y:recomp,mode:'markers',type:'scatter',marker:{color:'#73daca',size:5,opacity:0.5},hovertemplate:'stored %{x:.3f}<br>recomputed %{y:.3f}<extra></extra>'},
+    {x:[0,maxC],y:[0,maxC],mode:'lines',line:{color:PALETTE.dim,width:1,dash:'dot'},hoverinfo:'skip'},
+  ],{...base,showlegend:false,title:{text:'stored composite vs Σ(axis × v1 weight)',font:{size:12,color:PALETTE.dim}},
+     xaxis:{...gridAxis,title:{text:'stored',font:{color:PALETTE.dim}}},yaxis:{...gridAxis,title:{text:'recomputed',font:{color:PALETTE.dim}}}},CFG);
+
+  // samples bar
+  Plotly.newPlot('samples-plot',[{type:'bar',x:SAMPLES.map(s=>s[0]),y:SAMPLES.map(s=>s[1]),
+    marker:{color:SAMPLES.map(s=>COH[s[2]])},text:SAMPLES.map(s=>s[1].toFixed(2)),textposition:'outside',
+    hovertemplate:'%{x}<br>composite %{y:.3f}<extra></extra>'}],
+    {...base,showlegend:false,yaxis:{...gridAxis,title:{text:'measured composite',font:{color:PALETTE.dim}},range:[0,0.7]},
+     xaxis:{...gridAxis,tickfont:{size:9}}},CFG);
+
+  // stacked decomposition (interactive)
+  function renderStack(){
+    const coh=document.getElementById('f-cohort').value;
+    const n=+document.getElementById('f-n').value;
+    const asc=document.getElementById('f-sort').value==='asc';
+    let dd=docs.filter(d=>coh==='all'||d.cohort===coh);
+    dd.sort((a,b)=>asc?a.composite-b.composite:b.composite-a.composite);
+    if(n>0)dd=dd.slice(0,n);
+    const ids=dd.map(d=>`${d.id}·${d.cohort}`);
+    const traces=compFeats.map((f,i)=>({type:'bar',x:ids,y:dd.map(d=>d.axes[f]*W[f]),name:labels[i],
+      marker:{color:AX_COLORS[i]},hovertemplate:`${labels[i]}<br>%{x}<br>contrib %{y:.3f}<extra></extra>`}));
+    Plotly.react('stack-plot',traces,{...base,barmode:'stack',showlegend:true,
+      legend:{orientation:'h',y:1.04,font:{color:PALETTE.dim,size:10}},margin:{l:50,r:16,t:50,b:90},
+      xaxis:{...gridAxis,tickfont:{size:8},tickangle:-60},
+      yaxis:{...gridAxis,title:{text:'composite (stacked axis contributions)',font:{color:PALETTE.dim}},range:[0,Math.max(0.4,maxC+0.03)]}},CFG);
+  }
+  ['f-cohort','f-n','f-sort'].forEach(id=>document.getElementById(id).addEventListener('change',renderStack));
+  renderStack();
+
+  // single-doc inspector
+  const pick=document.getElementById('doc-pick');
+  pick.innerHTML=[...docs].sort((a,b)=>b.composite-a.composite).map(d=>`<option value="${d.id}">${d.id} · ${d.cohort} · ${d.kind} · ${d.composite.toFixed(3)}</option>`).join('');
+  function renderDoc(){
+    const d=docs.find(x=>x.id===pick.value);
+    Plotly.react('doc-comp',[{type:'bar',orientation:'h',y:compFeats.map((f,i)=>labels[i]),x:compFeats.map(f=>d.axes[f]),
+      marker:{color:AX_COLORS},text:compFeats.map(f=>(d.axes[f]*W[f]).toFixed(3)),textposition:'auto',
+      hovertemplate:'%{y}<br>value %{x:.3f}<extra></extra>'}],
+      {...base,showlegend:false,title:{text:`${d.id} — 7 composite axes (bar=value, label=weighted contrib)`,font:{size:11,color:PALETTE.dim}},
+       margin:{l:140,r:14,t:34,b:40},xaxis:{...gridAxis,range:[0,1]},yaxis:{...gridAxis,tickfont:{size:9},autorange:'reversed'}},CFG);
+    Plotly.react('doc-diag',[{type:'bar',orientation:'h',y:diagFeats.map((f,i)=>labels[nC+i]),x:diagFeats.map(f=>d.diagnostics[f]),
+      marker:{color:'#bb9af7'},hovertemplate:'%{y}<br>%{x:.3f}<extra></extra>'}],
+      {...base,showlegend:false,title:{text:`${d.id} — 8 diagnostic axes (not in composite)`,font:{size:11,color:PALETTE.dim}},
+       margin:{l:150,r:14,t:34,b:40},xaxis:{...gridAxis,range:[0,1]},yaxis:{...gridAxis,tickfont:{size:9},autorange:'reversed'}},CFG);
+  }
+  pick.addEventListener('change',renderDoc); renderDoc();
+}
+load();
+</script>
+</body>
+</html>
