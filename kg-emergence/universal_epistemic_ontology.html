@@ -1,0 +1,799 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Universal Epistemic Ontology — KG Emergence</title>
+<meta name="description" content="The neutral schema: node and edge types, the source-as-observation model, Cromwell-rule probabilities, bridge-quality taxonomy, and the anti-overfit rules that stop symbolic similarity from masquerading as causation.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg:#07070f; --surface:rgba(255,255,255,0.035); --surface-hover:rgba(122,162,247,0.07);
+  --border:rgba(255,255,255,0.07); --border-hover:rgba(122,162,247,0.30);
+  --text:#e8e8f4; --muted:rgba(232,232,244,0.45); --dim:rgba(232,232,244,0.25);
+  --accent:#7aa2f7; --accent2:#bb9af7; --green:#9ece6a;
+  --amber:#e0af68; --red:#f7768e; --teal:#73daca;
+}
+* { box-sizing:border-box; }
+html { scroll-behavior:smooth; }
+body {
+  background:var(--bg); color:var(--text);
+  font-family:'Outfit',system-ui,sans-serif;
+  -webkit-font-smoothing:antialiased; margin:0; line-height:1.65;
+}
+a { color:var(--accent); text-decoration:none; }
+a:hover { text-decoration:underline; }
+.nav {
+  position:sticky; top:0; z-index:50; display:flex; gap:1.25rem; align-items:center;
+  padding:0 1.5rem; height:52px; background:rgba(7,7,15,0.82);
+  backdrop-filter:blur(12px); border-bottom:1px solid var(--border); font-size:.9rem;
+}
+.nav .home { color:var(--muted); }
+.nav .sep { color:var(--dim); }
+.wrap { max-width:860px; margin:0 auto; padding:2.5rem 1.5rem 6rem; }
+.eyebrow {
+  font-size:.72rem; letter-spacing:.16em; text-transform:uppercase;
+  color:var(--muted); margin-bottom:.6rem;
+}
+.label {
+  display:inline-block; font-size:.72rem; font-weight:600; letter-spacing:.04em;
+  padding:.25rem .65rem; border-radius:999px; margin:.2rem 0 1.4rem;
+}
+h1 { font-size:2.1rem; line-height:1.2; margin:.2rem 0 1rem; font-weight:600; }
+h2 { font-size:1.45rem; margin:2.4rem 0 .8rem; font-weight:600;
+      border-bottom:1px solid var(--border); padding-bottom:.4rem; }
+h3 { font-size:1.15rem; margin:1.8rem 0 .6rem; color:var(--accent2); }
+h4 { font-size:1rem; margin:1.4rem 0 .5rem; color:var(--teal); }
+p, li { color:var(--text); }
+code {
+  font-family:'JetBrains Mono',ui-monospace,monospace; font-size:.86em;
+  background:rgba(255,255,255,0.06); padding:.12em .4em; border-radius:5px;
+}
+pre {
+  background:#0c0c18; border:1px solid var(--border); border-radius:10px;
+  padding:1rem 1.1rem; overflow-x:auto; font-size:.84rem; line-height:1.55;
+}
+pre code { background:none; padding:0; }
+blockquote {
+  border-left:3px solid var(--accent); margin:1.2rem 0; padding:.3rem 1rem;
+  color:var(--muted); background:var(--surface-hover); border-radius:0 8px 8px 0;
+}
+table { border-collapse:collapse; width:100%; margin:1.3rem 0; font-size:.9rem; }
+th, td { border:1px solid var(--border); padding:.5rem .7rem; text-align:left; }
+th { background:var(--surface); color:var(--accent); font-weight:600; }
+hr { border:none; border-top:1px solid var(--border); margin:2.4rem 0; }
+.summary { color:var(--muted); font-size:1.05rem; margin-bottom:2rem; }
+/* landing grid */
+.hero-tags { display:flex; flex-wrap:wrap; gap:.5rem; margin:1.4rem 0 .5rem; }
+.tag { font-size:.75rem; color:var(--muted); border:1px solid var(--border);
+        padding:.22rem .6rem; border-radius:999px; }
+.cards { display:grid; grid-template-columns:repeat(auto-fill,minmax(260px,1fr));
+          gap:1rem; margin-top:1.8rem; }
+.card {
+  display:block; padding:1.2rem 1.3rem; border:1px solid var(--border);
+  border-radius:12px; background:var(--surface); transition:.18s;
+}
+.card:hover { border-color:var(--border-hover); background:var(--surface-hover);
+               text-decoration:none; transform:translateY(-2px); }
+.card .ttl { font-weight:600; font-size:1.02rem; color:var(--text); margin-bottom:.4rem; }
+.card .lbl { font-size:.68rem; font-weight:600; letter-spacing:.04em;
+              padding:.18rem .55rem; border-radius:999px; display:inline-block; margin-bottom:.6rem; }
+.card .dsc { font-size:.86rem; color:var(--muted); line-height:1.55; }
+.card .arrow { display:block; margin-top:.8rem; font-size:.8rem; color:var(--accent); }
+.foot { margin-top:4rem; padding-top:1.5rem; border-top:1px solid var(--border);
+         color:var(--dim); font-size:.8rem; }
+</style>
+</head>
+<body>
+<nav class="nav">
+  <a class="home" href="https://jthorvaldur.github.io/">&larr; jthorvaldur.github.io</a>
+  <span class="sep">/</span>
+  <a href="index.html">KG Emergence</a>
+</nav>
+<main class="wrap">
+<div class="eyebrow">KG Emergence</div>
+<span class="label" style="background:rgba(224,175,104,0.12);color:#e0af68;">Exploratory Framework</span>
+<p class="summary">The neutral schema: node and edge types, the source-as-observation model, Cromwell-rule probabilities, bridge-quality taxonomy, and the anti-overfit rules that stop symbolic similarity from masquerading as causation.</p>
+<hr />
+<p>title: "Universal Epistemic Ontology for Latent-Structure Discovery"
+created: "2026-06-20"
+artifact_type: "ontology_specification"
+graph_target: "Neo4j + Qdrant hybrid"
+status: "draft v0.1"
+purpose: "Define a neutral schema for ingesting strange, contested, historical, religious, cultural, and conspiracy-adjacent claims without prejudice, while preserving evidence quality and preventing overfit."</p>
+<hr />
+<h1 id="universal-epistemic-ontology">Universal Epistemic Ontology</h1>
+<h2 id="0-purpose">0. Purpose</h2>
+<p>This ontology is designed for one experiment:</p>
+<blockquote>
+<p>Can a graph ingest strange historical assertions, religious motifs, cultural adversary figures, official records, occult texts, legal records, witness claims, and mainstream accounts, then discover latent structure without assigning automatic authority or automatic stigma to any source class?</p>
+</blockquote>
+<p>The system is not a "conspiracy graph." It is an <strong>epistemic emergence engine</strong>.</p>
+<p>Its core principle:</p>
+<pre><code class="language-text">No prejudice at intake.
+No authority at face value.
+No whole-narrative promotion.
+No anomaly deletion.
+Every claim decomposed.
+Every bridge typed.
+Every source treated as an observation.
+Every structure allowed to emerge only through recurrence, independence, mechanism, prediction, and posterior update.
+</code></pre>
+<hr />
+<h2 id="1-core-epistemic-rule">1. Core Epistemic Rule</h2>
+<h3 id="11-cromwell-rule">1.1 Cromwell rule</h3>
+<p>No empirical hypothesis receives probability exactly 0 or 1 unless logically impossible.</p>
+<pre><code class="language-text">P(H) ∈ (0, 1) for all empirical H
+</code></pre>
+<p>This permits a hypothesis classically dismissed as false to become dominant if enough independent observations support it.</p>
+<h3 id="12-source-as-observation">1.2 Source-as-observation</h3>
+<p>A source does not emit truth. A source emits an observation.</p>
+<pre><code class="language-text">world -&gt; event -&gt; trace -&gt; observer/source -&gt; observation -&gt; claim -&gt; graph -&gt; posterior structure
+</code></pre>
+<h3 id="13-confidence-and-salience-are-separate">1.3 Confidence and salience are separate</h3>
+<p>A node can be:</p>
+<pre><code class="language-text">low confidence / high salience
+high confidence / low salience
+high confidence / high salience
+low confidence / low salience
+</code></pre>
+<p>Low-confidence/high-salience nodes are not accepted as fact, but they are watched.</p>
+<hr />
+<h2 id="2-primary-node-types">2. Primary Node Types</h2>
+<h3 id="21-source">2.1 <code>Source</code></h3>
+<p>A thing from which observations come.</p>
+<pre><code class="language-yaml">Source:
+  source_id: string
+  title: string
+  source_type:
+    - court_record
+    - official_record
+    - FOIA
+    - legal_filing
+    - academic
+    - journalism
+    - memoir
+    - witness
+    - oral_tradition
+    - religious_text
+    - occult_text
+    - forum_post
+    - social_media
+    - database
+    - image
+    - unknown
+  provenance: string
+  author_or_origin: string | null
+  date_created: date | null
+  date_observed: date | null
+  access_type:
+    - primary
+    - secondary
+    - tertiary
+    - copied
+    - unknown
+  source_family_id: string
+  source_quality_prior: float
+  incentive_risk: float
+  adversarial_pressure: float
+  notes: string
+</code></pre>
+<h3 id="22-observation">2.2 <code>Observation</code></h3>
+<p>A source-specific emitted statement, trace, denial, accusation, or symbolic assertion.</p>
+<pre><code class="language-yaml">Observation:
+  observation_id: string
+  source_id: string
+  claim_id: string
+  observation_text: string
+  observation_role:
+    - asserts
+    - denies
+    - documents
+    - alleges
+    - interprets
+    - confesses
+    - repeats
+    - quotes
+    - symbolizes
+    - omits
+    - contradicts
+  proximity:
+    - direct
+    - near
+    - secondary
+    - tertiary
+    - unknown
+  specificity: float
+  falsifiability: float
+  independence: float
+  contamination_risk: float
+  observation_weight: float
+  notes: string
+</code></pre>
+<h3 id="23-claim">2.3 <code>Claim</code></h3>
+<p>A smallest practical proposition.</p>
+<pre><code class="language-yaml">Claim:
+  claim_id: string
+  claim_text: string
+  claim_type:
+    - fact
+    - legal_status
+    - allegation
+    - self_claim
+    - interpretation
+    - causal_claim
+    - symbolic_claim
+    - metaphysical_claim
+    - statistical_claim
+    - bridge_claim
+    - prediction
+    - remedy_claim
+  ontology_layer:
+    - historical
+    - legal
+    - institutional
+    - intelligence
+    - mechanism
+    - symbolic
+    - metaphysical
+    - physics
+    - psychological
+    - remediation
+    - rejected
+  status:
+    - documented
+    - self_claim
+    - alleged
+    - contested
+    - inferred
+    - symbolic
+    - speculative
+    - rejected
+    - unresolved
+  evidence_rating:
+    - E5_DOCUMENTED
+    - E4_STRONG
+    - E3_MIXED
+    - E2_WEAK
+    - E1_SPECULATIVE
+    - E0_REJECT_OR_AVOID
+  prior_probability: float
+  posterior_probability: float
+  confidence_weight: float
+  salience_weight: float
+  convergence_weight: float
+  hazard_weight: float
+  fact_export_score: float
+  structure_watch_score: float
+  notes: string
+</code></pre>
+<h3 id="24-bridge">2.4 <code>Bridge</code></h3>
+<p>A typed relation that connects claims, actors, mechanisms, symbols, or events.</p>
+<p>The graph must score bridges separately from endpoint facts.</p>
+<pre><code class="language-yaml">Bridge:
+  bridge_id: string
+  source_node_id: string
+  target_node_id: string
+  relation_type: string
+  bridge_quality:
+    - B5_DOCUMENTED
+    - B4_STRONG_INFERENTIAL
+    - B3_PLAUSIBLE
+    - B2_WEAK
+    - B1_NARRATIVE
+    - B0_FORBIDDEN
+  bridge_confidence: float
+  bridge_salience: float
+  temporal_coherence: float
+  mechanism_fit: float
+  independence_support: float
+  overfit_risk: float
+  export_to_fact_layer: bool
+  notes: string
+</code></pre>
+<p>Bridge taxonomy:</p>
+<pre><code class="language-text">B5 documented bridge:
+  contract, memo, direct admission, financial transfer, legal finding, explicit text.
+
+B4 strong inferential bridge:
+  independent observations + time-order + mechanism + partial documentation.
+
+B3 plausible bridge:
+  real adjacency + mechanism fit but no direct evidence.
+
+B2 weak bridge:
+  symbolic similarity, rumor, milieu adjacency, circumstantial timing.
+
+B1 narrative bridge:
+  emotionally or thematically coherent but evidentiary-poor.
+
+B0 forbidden bridge:
+  collective blame, pure guilt-by-association, time-order violation, category error.
+</code></pre>
+<h3 id="25-actor">2.5 <code>Actor</code></h3>
+<pre><code class="language-yaml">Actor:
+  actor_id: string
+  actor_type:
+    - person
+    - institution
+    - state
+    - agency
+    - religious_order
+    - occult_group
+    - cult
+    - movement
+    - financial_entity
+    - media_entity
+    - technology_platform
+    - unknown
+  name: string
+  dates_active: string | null
+  ontology_layer: string
+  confidence_weight: float
+  salience_weight: float
+  harm_risk: string
+</code></pre>
+<h3 id="26-event">2.6 <code>Event</code></h3>
+<pre><code class="language-yaml">Event:
+  event_id: string
+  name: string
+  date_start: date | null
+  date_end: date | null
+  location: string | null
+  event_type:
+    - treaty
+    - founding
+    - publication
+    - investigation
+    - scandal
+    - ritual
+    - war
+    - assassination
+    - court_case
+    - reform
+    - suppression
+    - disclosure
+    - unknown
+  confidence_weight: float
+  salience_weight: float
+</code></pre>
+<h3 id="27-mechanism">2.7 <code>Mechanism</code></h3>
+<p>A process that can recur across domains.</p>
+<pre><code class="language-yaml">Mechanism:
+  mechanism_id: string
+  name: string
+  mechanism_family:
+    - controlled_opposition
+    - ritual_inversion
+    - manufactured_criminality
+    - legitimacy_laundering
+    - identity_break_rebuild
+    - blackmail_lock
+    - narrative_control
+    - algorithmic_amplification
+    - off_books_funding
+    - source_suppression
+    - adversary_whisper
+    - attention_drain
+    - purification_remediation
+    - other
+  description: string
+  expected_graphlet: string
+  confidence_weight: float
+  salience_weight: float
+</code></pre>
+<h3 id="28-localconcept">2.8 <code>LocalConcept</code></h3>
+<p>A culture-specific concept, figure, practice, warning, or symbol.</p>
+<pre><code class="language-yaml">LocalConcept:
+  local_concept_id: string
+  name: string
+  tradition_id: string
+  language: string
+  concept_type:
+    - deity
+    - spirit
+    - demon
+    - angel
+    - adversary
+    - practice
+    - ritual
+    - moral_warning
+    - cosmological_principle
+    - psychological_state
+    - social_disease
+    - mythic_event
+    - remedy
+  summary: string
+  source_basis: string
+  confidence_weight: float
+  salience_weight: float
+</code></pre>
+<h3 id="29-canonicalrole">2.9 <code>CanonicalRole</code></h3>
+<p>A neutral cross-cultural role used to compare local concepts.</p>
+<pre><code class="language-yaml">CanonicalRole:
+  role_id: string
+  name: string
+  role_family:
+    - adversarial_intelligence
+    - deceptive_authority
+    - whispering_influence
+    - possession_influence
+    - moral_inversion
+    - controlled_revolt
+    - hidden_hierarchy
+    - elite_corruption
+    - sacrificial_violence
+    - human_drain
+    - false_light
+    - purification
+    - awareness
+    - generative_redirection
+  definition: string
+</code></pre>
+<p>Mapping:</p>
+<pre><code class="language-yaml">LocalConceptToCanonicalRole:
+  local_concept_id: string
+  role_id: string
+  mapping_weight: float
+  mapping_reason: string
+  same_as: bool
+  similar_role_as: bool
+  analogous_to: bool
+</code></pre>
+<p>Use:</p>
+<pre><code class="language-text">SAME_AS: same concept/entity/translation in direct lineage.
+SIMILAR_ROLE_AS: same functional role in different systems.
+ANALOGOUS_TO: useful comparison, not identity.
+</code></pre>
+<h3 id="210-graphlettemplate">2.10 <code>GraphletTemplate</code></h3>
+<p>A recurring structural motif.</p>
+<pre><code class="language-yaml">GraphletTemplate:
+  graphlet_id: string
+  name: string
+  description: string
+  node_roles: list
+  edge_roles: list
+  required_edges: list
+  optional_edges: list
+  negative_controls: list
+  predicted_missing_edges: list
+  expected_observables: list
+</code></pre>
+<h3 id="211-latentstructure">2.11 <code>LatentStructure</code></h3>
+<p>Predicted hidden node, edge, document, actor, source, mechanism, or translation equivalence.</p>
+<pre><code class="language-yaml">LatentStructure:
+  latent_id: string
+  latent_type:
+    - LatentNode
+    - LatentEdge
+    - LatentMechanism
+    - LatentActor
+    - LatentSource
+    - LatentDocument
+    - LatentFundingPath
+    - LatentRitualPattern
+    - LatentSuppressionEvent
+    - LatentTranslationEquivalence
+  predicted_relation: string | null
+  source_node_id: string | null
+  target_node_id_or_class: string | null
+  predicted_by_graphlets: list
+  latent_confidence: float
+  latent_salience: float
+  anomaly_pressure: float
+  prediction_specificity: float
+  status:
+    - unresolved
+    - partially_confirmed
+    - confirmed
+    - contradicted
+    - dissolved
+  next_best_questions: list
+</code></pre>
+<h3 id="212-alternativeexplanation">2.12 <code>AlternativeExplanation</code></h3>
+<pre><code class="language-yaml">AlternativeExplanation:
+  alt_id: string
+  claim_id_or_structure_id: string
+  explanation_text: string
+  explanation_type:
+    - coincidence
+    - source_copying
+    - symbolic_convergence
+    - human_psychological_universal
+    - institutional_incentive
+    - deliberate_coverup
+    - panic_contamination
+    - planted_disinformation
+    - operational_truth
+    - unknown
+  explanatory_score: float
+  discriminating_questions: list
+</code></pre>
+<h3 id="213-prediction">2.13 <code>Prediction</code></h3>
+<pre><code class="language-yaml">Prediction:
+  prediction_id: string
+  hypothesis_id: string
+  predicted_observable: string
+  prediction_type:
+    - document
+    - actor
+    - funding_path
+    - terminology
+    - legal_pattern
+    - victim_profile
+    - ritual_sequence
+    - source_suppression
+    - cross_cultural_equivalence
+    - graph_topology
+  specificity: float
+  due_context: string | null
+  observed_status:
+    - not_tested
+    - found
+    - not_found
+    - ambiguous
+    - contradicted
+  information_gain_if_resolved: float
+</code></pre>
+<h3 id="214-nextbestquestion">2.14 <code>NextBestQuestion</code></h3>
+<pre><code class="language-yaml">NextBestQuestion:
+  question_id: string
+  question_text: string
+  target_uncertainty: string
+  hypotheses_discriminated: list
+  expected_information_gain: float
+  feasibility: float
+  source_availability: float
+  safety_hazard: float
+  priority_score: float
+</code></pre>
+<p>Formula:</p>
+<pre><code class="language-text">priority_score =
+    expected_information_gain
+  * feasibility
+  * source_availability
+  * (1 - safety_hazard)
+</code></pre>
+<hr />
+<h2 id="3-core-edge-types">3. Core Edge Types</h2>
+<pre><code class="language-text">OBSERVES
+ASSERTS
+DENIES
+DOCUMENTS
+ALLEGES
+SUPPORTS
+CONTESTS
+CONTRADICTS
+OMITS
+QUOTES
+COPIES_FROM
+SAME_SOURCE_FAMILY_AS
+
+AUTHORED
+FOUNDED
+FUNDED
+PUBLISHED
+INVESTIGATED
+NAMED_IN_INVESTIGATION
+NOT_CHARGED_IN
+SUED_TO_AMEND_RECORD
+CONTAINS_FINDING
+
+USES_MECHANISM
+CONTAINS_MECHANISM
+BRIDGES_TO
+REQUIRES
+PREDICTS
+FILLS_LATENT_STRUCTURE
+ALTERNATIVE_TO
+DISCRIMINATES_BETWEEN
+
+HAS_LOCAL_CONCEPT
+MAPS_TO_CANONICAL_ROLE
+SAME_AS
+SIMILAR_ROLE_AS
+ANALOGOUS_TO
+SYMBOLIZES
+INTERPRETS
+MYTHICALLY_INTERPRETS
+
+CAN_BE_INTERRUPTED_BY
+ROUTES_ENERGY_TO
+REMEDIATES
+</code></pre>
+<hr />
+<h2 id="4-weights">4. Weights</h2>
+<h3 id="41-claim-weights">4.1 Claim weights</h3>
+<pre><code class="language-text">confidence_weight =
+    evidence_weight
+  * source_quality_adjustment
+  * independence_adjustment
+  * specificity_adjustment
+  * falsifiability_adjustment
+  * contradiction_penalty
+  * hazard_penalty
+</code></pre>
+<pre><code class="language-text">structure_watch_score =
+    salience_weight
+  * convergence_weight
+  * mechanism_fit
+  * anomaly_pressure
+  * prediction_specificity
+  * anti_overfit_penalty
+</code></pre>
+<pre><code class="language-text">fact_export_score =
+    confidence_weight
+  * source_quality_adjustment
+  * falsifiability_adjustment
+  * independence_adjustment
+  * hazard_penalty
+</code></pre>
+<h3 id="42-latent-structure-score">4.2 Latent structure score</h3>
+<pre><code class="language-text">latent_score =
+    structural_fit
+  * recurrence_across_subgraphs
+  * independence_weight
+  * mechanism_fit
+  * temporal_coherence
+  * prediction_specificity
+  * anomaly_pressure
+  * anti_overfit_penalty
+</code></pre>
+<h3 id="43-hypothesis-openness-condition">4.3 Hypothesis openness condition</h3>
+<p>For any empirical hypothesis <code>H</code>:</p>
+<pre><code class="language-text">P(H) &gt; 0
+</code></pre>
+<p>and if the likelihood ratio accumulates without artificial cap:</p>
+<pre><code class="language-text">Posterior odds(H1/H0) = Prior odds(H1/H0) × ∏ LR_i
+</code></pre>
+<p>then a classically dismissed hypothesis can defeat a consensus hypothesis.</p>
+<hr />
+<h2 id="5-graphlet-templates">5. Graphlet Templates</h2>
+<h3 id="51-whispering-adversary">5.1 Whispering adversary</h3>
+<pre><code class="language-yaml">graphlet_id: graphlet_whispering_adversary
+node_roles:
+  - human_subject
+  - adversarial_influence
+  - whispered_command_or_intrusion
+  - distorted_perception
+  - destructive_action
+  - remedy_practice
+edge_roles:
+  - INFLUENCES
+  - WHISPERS_OR_IMPLANTS
+  - DISTORTS
+  - LEADS_TO
+  - CAN_BE_INTERRUPTED_BY
+negative_controls:
+  - ordinary temptation without externalized agency
+  - psychiatric intrusive thought without cultural adversary framing
+  - metaphor-only uses
+</code></pre>
+<h3 id="52-controlled-inversion">5.2 Controlled inversion</h3>
+<pre><code class="language-yaml">graphlet_id: graphlet_controlled_inversion
+node_roles:
+  - existing_order
+  - temporary_revolt
+  - licensed_transgression
+  - pressure_release
+  - restoration_of_order
+edge_roles:
+  - PERMITS
+  - VENTS
+  - CONTAINS
+  - RESTORES
+</code></pre>
+<h3 id="53-manufactured-criminality">5.3 Manufactured criminality</h3>
+<pre><code class="language-yaml">graphlet_id: graphlet_manufactured_criminality
+node_roles:
+  - vulnerable_subject
+  - recruiter_or_handler
+  - isolating_group
+  - confession_or_compromise
+  - transgressive_act
+  - blackmail_or_shame_lock
+  - new_identity
+  - deployment
+edge_roles:
+  - RECRUITS
+  - ISOLATES
+  - EXTRACTS_CONFESSION
+  - INDUCES_TRANSGRESSION
+  - LOCKS_WITH_COMPROMISE
+  - REBUILDS_IDENTITY
+  - DEPLOYS
+</code></pre>
+<h3 id="54-legitimacy-laundering">5.4 Legitimacy laundering</h3>
+<pre><code class="language-yaml">graphlet_id: graphlet_legitimacy_laundering
+node_roles:
+  - sacred_or_moral_tradition
+  - institution
+  - political_project
+  - public_legitimacy
+  - hidden_operation
+edge_roles:
+  - BORROWS_AUTHORITY_FROM
+  - CONFERS_LEGITIMACY_ON
+  - MASKS
+  - REDIRECTS_MORAL_ENERGY
+</code></pre>
+<h3 id="55-source-suppression-sealed-archive">5.5 Source suppression / sealed archive</h3>
+<pre><code class="language-yaml">graphlet_id: graphlet_source_suppression
+node_roles:
+  - scandal_or_anomaly
+  - institution
+  - archive_or_record
+  - classification_or_sealing
+  - public_narrative
+  - unresolved_latent_structure
+edge_roles:
+  - GENERATES_RECORD
+  - SEALS_OR_WITHHOLDS
+  - SIMPLIFIES_PUBLIC_STORY
+  - CREATES_LATENT_STRUCTURE
+</code></pre>
+<h3 id="56-purification-remediation">5.6 Purification / remediation</h3>
+<pre><code class="language-yaml">graphlet_id: graphlet_purification_remediation
+node_roles:
+  - hostile_activation
+  - awareness
+  - naming
+  - downshift
+  - generative_practice
+  - restored_agency
+edge_roles:
+  - NOTICES
+  - NAMES
+  - INTERRUPTS
+  - REDIRECTS
+  - RESTORES
+</code></pre>
+<hr />
+<h2 id="6-anti-overfit-rules">6. Anti-Overfit Rules</h2>
+<pre><code class="language-text">1. Symbolic similarity is not causation.
+2. Motif recurrence is not entity identity.
+3. Adjacency is not control.
+4. Endpoint facts do not prove bridge claims.
+5. Official denial is evidence, not final truth.
+6. Conspiracy source is noisy, not null.
+7. A source family copied ten times counts as one dependent source.
+8. Every strong hypothesis must expose required missing links.
+9. Every major hypothesis must have alternative explanations.
+10. Every graphlet must be tested on out-of-sample traditions/cases.
+</code></pre>
+<hr />
+<h2 id="7-minimal-json-schema-sketch">7. Minimal JSON Schema Sketch</h2>
+<pre><code class="language-json">{
+  &quot;claim&quot;: {
+    &quot;claim_id&quot;: &quot;string&quot;,
+    &quot;claim_text&quot;: &quot;string&quot;,
+    &quot;claim_type&quot;: &quot;fact|allegation|self_claim|symbolic_claim|bridge_claim|prediction&quot;,
+    &quot;ontology_layer&quot;: &quot;historical|legal|institutional|mechanism|symbolic|metaphysical&quot;,
+    &quot;status&quot;: &quot;documented|alleged|contested|inferred|symbolic|speculative|rejected&quot;,
+    &quot;prior_probability&quot;: 0.5,
+    &quot;posterior_probability&quot;: 0.5,
+    &quot;confidence_weight&quot;: 0.0,
+    &quot;salience_weight&quot;: 0.0,
+    &quot;structure_watch_score&quot;: 0.0,
+    &quot;fact_export_score&quot;: 0.0
+  }
+}
+</code></pre>
+<hr />
+<h2 id="8-design-philosophy">8. Design Philosophy</h2>
+<p>The graph is allowed to say:</p>
+<pre><code class="language-text">This is real.
+This is alleged.
+This is symbolic.
+This is missing.
+This is dangerous to assert carelessly.
+This weak claim is still structurally important.
+This strong fact does not prove the large theory.
+This graph cavity predicts where to look next.
+</code></pre>
+<p>That is the epistemic posture needed for strange-history inference.</p>
+<div class="foot">Generated by scripts/build_site.py from docs/*.md. Single source of truth: the Markdown. Do not hand-edit this HTML.</div>
+</main>
+</body>
+</html>

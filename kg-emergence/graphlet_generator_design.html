@@ -1,0 +1,427 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Graphlet Generator — KG Emergence</title>
+<meta name="description" content="How candidate structural motifs are found without knowing the question in advance: edge-dominance scoring, ego-neighborhood extraction, canonicalization into role families, recurrence scoring, and latent missing-edge prediction.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg:#07070f; --surface:rgba(255,255,255,0.035); --surface-hover:rgba(122,162,247,0.07);
+  --border:rgba(255,255,255,0.07); --border-hover:rgba(122,162,247,0.30);
+  --text:#e8e8f4; --muted:rgba(232,232,244,0.45); --dim:rgba(232,232,244,0.25);
+  --accent:#7aa2f7; --accent2:#bb9af7; --green:#9ece6a;
+  --amber:#e0af68; --red:#f7768e; --teal:#73daca;
+}
+* { box-sizing:border-box; }
+html { scroll-behavior:smooth; }
+body {
+  background:var(--bg); color:var(--text);
+  font-family:'Outfit',system-ui,sans-serif;
+  -webkit-font-smoothing:antialiased; margin:0; line-height:1.65;
+}
+a { color:var(--accent); text-decoration:none; }
+a:hover { text-decoration:underline; }
+.nav {
+  position:sticky; top:0; z-index:50; display:flex; gap:1.25rem; align-items:center;
+  padding:0 1.5rem; height:52px; background:rgba(7,7,15,0.82);
+  backdrop-filter:blur(12px); border-bottom:1px solid var(--border); font-size:.9rem;
+}
+.nav .home { color:var(--muted); }
+.nav .sep { color:var(--dim); }
+.wrap { max-width:860px; margin:0 auto; padding:2.5rem 1.5rem 6rem; }
+.eyebrow {
+  font-size:.72rem; letter-spacing:.16em; text-transform:uppercase;
+  color:var(--muted); margin-bottom:.6rem;
+}
+.label {
+  display:inline-block; font-size:.72rem; font-weight:600; letter-spacing:.04em;
+  padding:.25rem .65rem; border-radius:999px; margin:.2rem 0 1.4rem;
+}
+h1 { font-size:2.1rem; line-height:1.2; margin:.2rem 0 1rem; font-weight:600; }
+h2 { font-size:1.45rem; margin:2.4rem 0 .8rem; font-weight:600;
+      border-bottom:1px solid var(--border); padding-bottom:.4rem; }
+h3 { font-size:1.15rem; margin:1.8rem 0 .6rem; color:var(--accent2); }
+h4 { font-size:1rem; margin:1.4rem 0 .5rem; color:var(--teal); }
+p, li { color:var(--text); }
+code {
+  font-family:'JetBrains Mono',ui-monospace,monospace; font-size:.86em;
+  background:rgba(255,255,255,0.06); padding:.12em .4em; border-radius:5px;
+}
+pre {
+  background:#0c0c18; border:1px solid var(--border); border-radius:10px;
+  padding:1rem 1.1rem; overflow-x:auto; font-size:.84rem; line-height:1.55;
+}
+pre code { background:none; padding:0; }
+blockquote {
+  border-left:3px solid var(--accent); margin:1.2rem 0; padding:.3rem 1rem;
+  color:var(--muted); background:var(--surface-hover); border-radius:0 8px 8px 0;
+}
+table { border-collapse:collapse; width:100%; margin:1.3rem 0; font-size:.9rem; }
+th, td { border:1px solid var(--border); padding:.5rem .7rem; text-align:left; }
+th { background:var(--surface); color:var(--accent); font-weight:600; }
+hr { border:none; border-top:1px solid var(--border); margin:2.4rem 0; }
+.summary { color:var(--muted); font-size:1.05rem; margin-bottom:2rem; }
+/* landing grid */
+.hero-tags { display:flex; flex-wrap:wrap; gap:.5rem; margin:1.4rem 0 .5rem; }
+.tag { font-size:.75rem; color:var(--muted); border:1px solid var(--border);
+        padding:.22rem .6rem; border-radius:999px; }
+.cards { display:grid; grid-template-columns:repeat(auto-fill,minmax(260px,1fr));
+          gap:1rem; margin-top:1.8rem; }
+.card {
+  display:block; padding:1.2rem 1.3rem; border:1px solid var(--border);
+  border-radius:12px; background:var(--surface); transition:.18s;
+}
+.card:hover { border-color:var(--border-hover); background:var(--surface-hover);
+               text-decoration:none; transform:translateY(-2px); }
+.card .ttl { font-weight:600; font-size:1.02rem; color:var(--text); margin-bottom:.4rem; }
+.card .lbl { font-size:.68rem; font-weight:600; letter-spacing:.04em;
+              padding:.18rem .55rem; border-radius:999px; display:inline-block; margin-bottom:.6rem; }
+.card .dsc { font-size:.86rem; color:var(--muted); line-height:1.55; }
+.card .arrow { display:block; margin-top:.8rem; font-size:.8rem; color:var(--accent); }
+.foot { margin-top:4rem; padding-top:1.5rem; border-top:1px solid var(--border);
+         color:var(--dim); font-size:.8rem; }
+</style>
+</head>
+<body>
+<nav class="nav">
+  <a class="home" href="https://jthorvaldur.github.io/">&larr; jthorvaldur.github.io</a>
+  <span class="sep">/</span>
+  <a href="index.html">KG Emergence</a>
+</nav>
+<main class="wrap">
+<div class="eyebrow">KG Emergence</div>
+<span class="label" style="background:rgba(122,162,247,0.12);color:#7aa2f7;">Algorithm Design</span>
+<p class="summary">How candidate structural motifs are found without knowing the question in advance: edge-dominance scoring, ego-neighborhood extraction, canonicalization into role families, recurrence scoring, and latent missing-edge prediction.</p>
+<hr />
+<p>title: "Graphlet Generator Design"
+created: "2026-06-20"
+artifact_type: "algorithm_design"
+status: "draft v0.1"
+purpose: "Specify generators for candidate graphlets using near-edge dominant concepts, canonical roles, culture partitions, and out-of-sample validation."</p>
+<hr />
+<h1 id="graphlet-generator-design">Graphlet Generator Design</h1>
+<h2 id="0-premise">0. Premise</h2>
+<p>The user does not yet know the right questions. Therefore the system should generate candidate questions and graphlets from structure.</p>
+<p>The generator should begin with:</p>
+<pre><code class="language-text">near-edge dominant concepts
+culture/tradition partitions
+canonical role projections
+local ego-neighborhoods
+recurring typed structures
+latent missing-edge predictions
+</code></pre>
+<p>The goal is not to output "the answer." The goal is to output:</p>
+<pre><code class="language-text">candidate graphlets
+structure-watch hypotheses
+latent structures
+next-best questions
+</code></pre>
+<hr />
+<h2 id="1-inputs">1. Inputs</h2>
+<pre><code class="language-yaml">Nodes:
+  Actor
+  Event
+  Source
+  Observation
+  Claim
+  LocalConcept
+  CanonicalRole
+  Mechanism
+  Practice
+  Symbol
+  LatentStructure
+
+Edges:
+  typed relations with confidence, salience, bridge_quality, source_family_id
+
+Metadata:
+  tradition
+  culture
+  language
+  date_range
+  source_family_id
+  split
+  ontology_layer
+  holdout_status
+</code></pre>
+<hr />
+<h2 id="2-output-objects">2. Output Objects</h2>
+<pre><code class="language-yaml">GraphletCandidate:
+  graphlet_id: string
+  canonical_node_roles: list
+  canonical_edge_roles: list
+  supporting_instances: list
+  cultures_present: list
+  source_families_present: list
+  recurrence_score: float
+  independence_score: float
+  mapping_confidence: float
+  anomaly_pressure: float
+  prediction_potential: float
+  anti_overfit_penalty: float
+  candidate_score: float
+  latent_predictions: list
+  next_best_questions: list
+</code></pre>
+<hr />
+<h2 id="3-step-1-compute-near-edge-dominant-concepts">3. Step 1: Compute Near-Edge Dominant Concepts</h2>
+<p>For every concept node <code>c</code>:</p>
+<pre><code class="language-text">edge_dominance(c) =
+    Σ_e incident(c) [
+      edge_salience(e)
+    * edge_confidence(e)
+    * bridge_quality_weight(e)
+    * source_independence(e)
+    * recurrence_hint(e)
+    ]
+    / degree_penalty(c)
+</code></pre>
+<p>Degree penalty:</p>
+<pre><code class="language-text">degree_penalty(c) = log(2 + degree(c)) ^ alpha
+</code></pre>
+<p>Use <code>alpha</code> around 0.5 to 1.5.</p>
+<p>Rationale:</p>
+<pre><code class="language-text">Generic concepts like &quot;evil&quot; should not dominate just because they connect everywhere.
+Specific but structurally powerful concepts like &quot;whisper&quot;, &quot;inversion&quot;, &quot;confession&quot;, &quot;blackmail&quot;, &quot;purification&quot; should surface.
+</code></pre>
+<hr />
+<h2 id="4-step-2-role-projection">4. Step 2: Role Projection</h2>
+<p>Each local concept maps to a vector of canonical roles.</p>
+<p>Example:</p>
+<pre><code class="language-yaml">waswasa:
+  whispering_influence: 0.95
+  deception: 0.70
+  possession_influence: 0.30
+  moral_inversion: 0.40
+  awareness_remedy: 0.75
+</code></pre>
+<p>The graphlet generator should use role vectors, not only labels.</p>
+<p>Similarity:</p>
+<pre><code class="language-text">role_similarity(a, b) = cosine(role_vector(a), role_vector(b))
+</code></pre>
+<p>But relation topology matters more than vector similarity.</p>
+<hr />
+<h2 id="5-step-3-ego-neighborhood-extraction">5. Step 3: Ego-Neighborhood Extraction</h2>
+<p>For high-dominance concepts:</p>
+<pre><code class="language-text">extract radius-1 and radius-2 ego graphs
+filter by:
+  edge_confidence &gt;= loose_threshold
+  edge_salience &gt;= salience_threshold
+  ontology_layer compatibility
+  source_family de-duplication
+</code></pre>
+<p>Do not overfilter in exploration.</p>
+<p>Recommended:</p>
+<pre><code class="language-text">exploratory_thresholds:
+  edge_confidence &gt;= 0.15
+  edge_salience &gt;= 0.50
+
+fact_thresholds:
+  edge_confidence &gt;= 0.70
+  export_to_fact_layer = true
+</code></pre>
+<hr />
+<h2 id="6-step-4-canonicalization">6. Step 4: Canonicalization</h2>
+<p>Convert the local ego graph into a canonical graphlet.</p>
+<pre><code class="language-text">LocalConcept -&gt; top-k CanonicalRole labels
+Person -&gt; ActorRole
+Institution -&gt; InstitutionRole
+Event -&gt; EventRole
+Practice -&gt; RemedyRole
+Symbol -&gt; SymbolRole
+Claim -&gt; ClaimRole
+</code></pre>
+<p>Edge canonicalization:</p>
+<pre><code class="language-text">ASSERTS / ALLEGES / DOCUMENTS -&gt; EvidenceRelation
+INFLUENCES / TEMPTS / WHISPERS -&gt; InfluenceRelation
+CORRUPTS / INVERTS -&gt; MoralInversionRelation
+ISOLATES / RECRUITS / INDUCES -&gt; CoerciveConversionRelation
+PURIFIES / REMEDIATES -&gt; RemedyRelation
+</code></pre>
+<p>Canonical graphlet key:</p>
+<pre><code class="language-text">hash(sorted node_role multiset + sorted typed edge triples + directionality signature)
+</code></pre>
+<p>Keep directionality. Direction is often the signal.</p>
+<hr />
+<h2 id="7-step-5-recurrence-across-partitions">7. Step 5: Recurrence Across Partitions</h2>
+<p>For each canonical graphlet:</p>
+<pre><code class="language-text">recurrence_count = number of independent subgraphs containing graphlet
+culture_diversity = number of culture buckets
+tradition_diversity = number of traditions
+temporal_diversity = spread across time buckets
+source_family_diversity = number of independent source families
+</code></pre>
+<p>Source-family leakage penalty:</p>
+<pre><code class="language-text">source_independence =
+  independent_source_families / raw_source_count
+</code></pre>
+<hr />
+<h2 id="8-step-6-latent-prediction-generation">8. Step 6: Latent Prediction Generation</h2>
+<p>A graphlet becomes more valuable if it predicts missing structure.</p>
+<p>For every graphlet template:</p>
+<pre><code class="language-text">learn common role sequence
+identify missing role in a partial instance
+create LatentStructure
+rank by structural cavity score
+</code></pre>
+<p>Example:</p>
+<pre><code class="language-text">Known graphlet:
+  recruiter -&gt; isolation -&gt; confession -&gt; transgression -&gt; blackmail -&gt; deployment
+
+Observed partial:
+  recruiter -&gt; isolation -&gt; confession -&gt; transgression -&gt; deployment
+
+Predicted missing:
+  blackmail_or_shame_lock edge/node
+</code></pre>
+<p>Latent prediction object:</p>
+<pre><code class="language-yaml">latent_type: LatentEdge
+source_node: transgression
+target_class: blackmail_or_shame_lock
+predicted_by: manufactured_criminality_graphlet
+specificity: medium
+status: unresolved
+</code></pre>
+<hr />
+<h2 id="9-step-7-next-best-question-generation">9. Step 7: Next-Best-Question Generation</h2>
+<p>For each latent structure:</p>
+<pre><code class="language-text">question = &quot;What evidence would most reduce uncertainty about this missing edge?&quot;
+</code></pre>
+<p>Rank:</p>
+<pre><code class="language-text">priority =
+    expected_information_gain
+  * salience
+  * feasibility
+  * source_availability
+  * safety_factor
+</code></pre>
+<p>Question templates:</p>
+<pre><code class="language-text">Does source family X contain evidence of relation Y?
+Does culture A have a local concept mapping to role R?
+Does this graphlet survive source-family de-duplication?
+Does this mechanism recur in out-of-sample tradition T?
+Does rival explanation E explain the same partial graphlet?
+What missing document type would distinguish H1 from H0?
+</code></pre>
+<hr />
+<h2 id="10-generator-modes">10. Generator Modes</h2>
+<h3 id="101-exploratory-mode">10.1 Exploratory mode</h3>
+<p>Purpose:</p>
+<pre><code class="language-text">Find candidate structures.
+</code></pre>
+<p>Properties:</p>
+<pre><code class="language-text">loose confidence thresholds
+high salience sensitivity
+allows symbolic layers
+outputs many candidates
+marks as exploratory
+</code></pre>
+<h3 id="102-validation-mode">10.2 Validation mode</h3>
+<p>Purpose:</p>
+<pre><code class="language-text">Test frozen graphlets.
+</code></pre>
+<p>Properties:</p>
+<pre><code class="language-text">no graphlet mutation
+strict source-family de-duplication
+fixed role mappings
+records misses
+</code></pre>
+<h3 id="103-holdout-mode">10.3 Holdout mode</h3>
+<p>Purpose:</p>
+<pre><code class="language-text">Score out-of-sample predictive performance.
+</code></pre>
+<p>Properties:</p>
+<pre><code class="language-text">no tuning
+no new canonical roles unless marked post-hoc
+failed predictions logged
+null model comparison required
+</code></pre>
+<hr />
+<h2 id="11-sorting-views">11. Sorting Views</h2>
+<p>The generator should output sorted tables.</p>
+<h3 id="111-by-edge-dominance">11.1 By edge dominance</h3>
+<pre><code class="language-text">concept
+tradition
+culture
+edge_dominance
+top_edges
+top_mechanisms
+</code></pre>
+<h3 id="112-by-graphlet-recurrence">11.2 By graphlet recurrence</h3>
+<pre><code class="language-text">graphlet
+recurrence_count
+culture_diversity
+source_family_diversity
+candidate_score
+</code></pre>
+<h3 id="113-by-latent-prediction">11.3 By latent prediction</h3>
+<pre><code class="language-text">latent_structure
+predicted_by
+latent_confidence
+latent_salience
+expected_information_gain
+next_question
+</code></pre>
+<h3 id="114-by-cultureconcept-matrix">11.4 By culture/concept matrix</h3>
+<p>Rows:</p>
+<pre><code class="language-text">tradition / culture
+</code></pre>
+<p>Columns:</p>
+<pre><code class="language-text">canonical roles or graphlets
+</code></pre>
+<p>Cells:</p>
+<pre><code class="language-text">mapping_weight or graphlet_instance_score
+</code></pre>
+<p>This is the view where the user can visually see convergence and non-convergence.</p>
+<hr />
+<h2 id="12-pseudocode">12. Pseudocode</h2>
+<pre><code class="language-python">def generate_graphlets(graph, split=&quot;train&quot;, mode=&quot;exploratory&quot;):
+    nodes = filter_nodes_by_split(graph.nodes, split)
+    edges = filter_edges_by_split(graph.edges, split)
+
+    concept_scores = compute_edge_dominance(nodes, edges)
+    seeds = select_top_concepts(concept_scores, mode=mode)
+
+    candidates = []
+    for seed in seeds:
+        ego = extract_ego_graph(graph, seed, radius=2, mode=mode)
+        canonical = canonicalize_graphlet(ego)
+        candidates.append(canonical)
+
+    grouped = group_isomorphic_or_similar_graphlets(candidates)
+    scored = score_graphlet_candidates(grouped)
+    latent = generate_latent_predictions(scored, graph)
+    questions = generate_next_best_questions(latent, graph)
+
+    return {
+        &quot;concept_scores&quot;: concept_scores,
+        &quot;graphlet_candidates&quot;: scored,
+        &quot;latent_predictions&quot;: latent,
+        &quot;next_best_questions&quot;: questions,
+    }
+</code></pre>
+<hr />
+<h2 id="13-what-this-prevents">13. What This Prevents</h2>
+<p>This design prevents:</p>
+<pre><code class="language-text">- starting with only the user's preferred graphlet
+- flattening cultures into one mythology
+- validating on the same cases used to discover the structure
+- letting generic concepts dominate
+- mistaking symbolic similarity for causal connection
+- ignoring missing edges
+- failing to record failed predictions
+</code></pre>
+<p>It enables:</p>
+<pre><code class="language-text">- exploratory discovery
+- out-of-sample testing
+- hidden-structure prediction
+- next-best-question generation
+- convergence detection across meaning systems
+</code></pre>
+<div class="foot">Generated by scripts/build_site.py from docs/*.md. Single source of truth: the Markdown. Do not hand-edit this HTML.</div>
+</main>
+</body>
+</html>

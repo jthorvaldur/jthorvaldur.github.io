@@ -1,0 +1,511 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Experiment Protocol — KG Emergence</title>
+<meta name="description" content="A trading-grade validation harness: train/validation/test/holdout splits, six null models, and metrics for graphlet recurrence and out-of-sample latent-edge prediction — so emergence has to beat chance.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg:#07070f; --surface:rgba(255,255,255,0.035); --surface-hover:rgba(122,162,247,0.07);
+  --border:rgba(255,255,255,0.07); --border-hover:rgba(122,162,247,0.30);
+  --text:#e8e8f4; --muted:rgba(232,232,244,0.45); --dim:rgba(232,232,244,0.25);
+  --accent:#7aa2f7; --accent2:#bb9af7; --green:#9ece6a;
+  --amber:#e0af68; --red:#f7768e; --teal:#73daca;
+}
+* { box-sizing:border-box; }
+html { scroll-behavior:smooth; }
+body {
+  background:var(--bg); color:var(--text);
+  font-family:'Outfit',system-ui,sans-serif;
+  -webkit-font-smoothing:antialiased; margin:0; line-height:1.65;
+}
+a { color:var(--accent); text-decoration:none; }
+a:hover { text-decoration:underline; }
+.nav {
+  position:sticky; top:0; z-index:50; display:flex; gap:1.25rem; align-items:center;
+  padding:0 1.5rem; height:52px; background:rgba(7,7,15,0.82);
+  backdrop-filter:blur(12px); border-bottom:1px solid var(--border); font-size:.9rem;
+}
+.nav .home { color:var(--muted); }
+.nav .sep { color:var(--dim); }
+.wrap { max-width:860px; margin:0 auto; padding:2.5rem 1.5rem 6rem; }
+.eyebrow {
+  font-size:.72rem; letter-spacing:.16em; text-transform:uppercase;
+  color:var(--muted); margin-bottom:.6rem;
+}
+.label {
+  display:inline-block; font-size:.72rem; font-weight:600; letter-spacing:.04em;
+  padding:.25rem .65rem; border-radius:999px; margin:.2rem 0 1.4rem;
+}
+h1 { font-size:2.1rem; line-height:1.2; margin:.2rem 0 1rem; font-weight:600; }
+h2 { font-size:1.45rem; margin:2.4rem 0 .8rem; font-weight:600;
+      border-bottom:1px solid var(--border); padding-bottom:.4rem; }
+h3 { font-size:1.15rem; margin:1.8rem 0 .6rem; color:var(--accent2); }
+h4 { font-size:1rem; margin:1.4rem 0 .5rem; color:var(--teal); }
+p, li { color:var(--text); }
+code {
+  font-family:'JetBrains Mono',ui-monospace,monospace; font-size:.86em;
+  background:rgba(255,255,255,0.06); padding:.12em .4em; border-radius:5px;
+}
+pre {
+  background:#0c0c18; border:1px solid var(--border); border-radius:10px;
+  padding:1rem 1.1rem; overflow-x:auto; font-size:.84rem; line-height:1.55;
+}
+pre code { background:none; padding:0; }
+blockquote {
+  border-left:3px solid var(--accent); margin:1.2rem 0; padding:.3rem 1rem;
+  color:var(--muted); background:var(--surface-hover); border-radius:0 8px 8px 0;
+}
+table { border-collapse:collapse; width:100%; margin:1.3rem 0; font-size:.9rem; }
+th, td { border:1px solid var(--border); padding:.5rem .7rem; text-align:left; }
+th { background:var(--surface); color:var(--accent); font-weight:600; }
+hr { border:none; border-top:1px solid var(--border); margin:2.4rem 0; }
+.summary { color:var(--muted); font-size:1.05rem; margin-bottom:2rem; }
+/* landing grid */
+.hero-tags { display:flex; flex-wrap:wrap; gap:.5rem; margin:1.4rem 0 .5rem; }
+.tag { font-size:.75rem; color:var(--muted); border:1px solid var(--border);
+        padding:.22rem .6rem; border-radius:999px; }
+.cards { display:grid; grid-template-columns:repeat(auto-fill,minmax(260px,1fr));
+          gap:1rem; margin-top:1.8rem; }
+.card {
+  display:block; padding:1.2rem 1.3rem; border:1px solid var(--border);
+  border-radius:12px; background:var(--surface); transition:.18s;
+}
+.card:hover { border-color:var(--border-hover); background:var(--surface-hover);
+               text-decoration:none; transform:translateY(-2px); }
+.card .ttl { font-weight:600; font-size:1.02rem; color:var(--text); margin-bottom:.4rem; }
+.card .lbl { font-size:.68rem; font-weight:600; letter-spacing:.04em;
+              padding:.18rem .55rem; border-radius:999px; display:inline-block; margin-bottom:.6rem; }
+.card .dsc { font-size:.86rem; color:var(--muted); line-height:1.55; }
+.card .arrow { display:block; margin-top:.8rem; font-size:.8rem; color:var(--accent); }
+.foot { margin-top:4rem; padding-top:1.5rem; border-top:1px solid var(--border);
+         color:var(--dim); font-size:.8rem; }
+</style>
+</head>
+<body>
+<nav class="nav">
+  <a class="home" href="https://jthorvaldur.github.io/">&larr; jthorvaldur.github.io</a>
+  <span class="sep">/</span>
+  <a href="index.html">KG Emergence</a>
+</nav>
+<main class="wrap">
+<div class="eyebrow">KG Emergence</div>
+<span class="label" style="background:rgba(115,218,202,0.12);color:#73daca;">Falsification Protocol</span>
+<p class="summary">A trading-grade validation harness: train/validation/test/holdout splits, six null models, and metrics for graphlet recurrence and out-of-sample latent-edge prediction — so emergence has to beat chance.</p>
+<hr />
+<p>title: "Experiment Protocol for Latent-Structure Discovery"
+created: "2026-06-20"
+artifact_type: "research_protocol"
+status: "draft v0.1"
+purpose: "Define a trading-model-like experimental framework: train/test splits, out-of-sample validation, graphlet discovery, hidden-structure prediction, and next-best-question selection."</p>
+<hr />
+<h1 id="experiment-protocol-for-latent-structure-discovery">Experiment Protocol for Latent-Structure Discovery</h1>
+<h2 id="0-core-aim">0. Core Aim</h2>
+<p>We want to discover whether strange historical, religious, cultural, occult, intelligence, and conspiracy-adjacent material contains recurring latent structure.</p>
+<p>The experiment should proceed like a trading model:</p>
+<pre><code class="language-text">Do not overfit.
+Do not let the same data generate and validate the hypothesis.
+Do not tune until every anomaly fits.
+Preserve out-of-sample material.
+Reward prediction, not post-hoc explanation.
+</code></pre>
+<hr />
+<h2 id="1-what-we-are-testing">1. What We Are Testing</h2>
+<p>The primary test is not:</p>
+<pre><code class="language-text">Is a specific metaphysical claim true?
+</code></pre>
+<p>The primary test is:</p>
+<pre><code class="language-text">Do independent subgraphs converge on recurring graphlets, latent structures, missing edges, or mechanism families more strongly than expected under null models?
+</code></pre>
+<p>A stronger test:</p>
+<pre><code class="language-text">Do graph-derived predictions about missing nodes/edges get filled by later-ingested information at rates above baseline?
+</code></pre>
+<hr />
+<h2 id="2-research-objects">2. Research Objects</h2>
+<h3 id="21-local-subgraphs">2.1 Local subgraphs</h3>
+<p>Each culture/religion/case becomes a local subgraph.</p>
+<p>Examples:</p>
+<pre><code class="language-text">Christianity
+Judaism
+Islam
+Buddhism
+Gnosticism
+Hinduism
+Zoroastrianism
+Indigenous wetiko traditions
+Yazidi / Mesopotamian motifs
+Norse myth
+Greek/Roman cults
+Egyptian myth
+West African / Afro-diasporic spirits
+Chinese demonology / hungry ghosts
+Japanese yōkai / possession motifs
+Modern cults
+Modern intelligence programs
+Modern extremist movements
+</code></pre>
+<h3 id="22-canonical-role-layer">2.2 Canonical role layer</h3>
+<p>Local concepts are mapped into canonical roles with weights, not collapsed into identity.</p>
+<pre><code class="language-text">jinn != demon != archon != Mara != wetiko
+</code></pre>
+<p>But they may share weighted roles:</p>
+<pre><code class="language-text">whispering influence
+deceptive authority
+possession influence
+moral inversion
+human drain
+anti-awakening force
+</code></pre>
+<h3 id="23-graphlets">2.3 Graphlets</h3>
+<p>Graphlets are typed recurring structures.</p>
+<p>Examples:</p>
+<pre><code class="language-text">whispering adversary
+controlled inversion
+manufactured criminality
+legitimacy laundering
+source suppression
+purification/remediation
+apocalyptic acceleration
+elite-deception motif
+sacrificial-violence loop
+hidden-hierarchy doctrine
+</code></pre>
+<hr />
+<h2 id="3-dataset-splits">3. Dataset Splits</h2>
+<h3 id="31-temporal-split">3.1 Temporal split</h3>
+<p>Use older material to generate graphlets, later material to test.</p>
+<pre><code class="language-text">Train: pre-1500 religious/cultural texts
+Validation: 1500-1900 esoteric/religious reform movements
+Test: 1900-2000 political cults/intelligence/counterculture
+Final holdout: 2000-present algorithmic/extremist/AI-era cases
+</code></pre>
+<h3 id="32-cultural-split">3.2 Cultural split</h3>
+<p>Generate graphlets from some traditions, test on unseen traditions.</p>
+<p>Example:</p>
+<pre><code class="language-text">Train:
+  Christianity, Judaism, Greek/Roman, Gnosticism
+
+Validation:
+  Islam, Buddhism, Hinduism, Zoroastrianism
+
+Test:
+  Indigenous wetiko, Chinese hungry ghosts, Japanese yōkai, African diaspora
+
+Holdout:
+  modern cults, intelligence programs, extremist networks
+</code></pre>
+<h3 id="33-mechanism-split">3.3 Mechanism split</h3>
+<p>Generate mechanisms from historical cults, test on religious motifs — or reverse.</p>
+<pre><code class="language-text">Train mechanisms on:
+  Jonestown, SLA, O9A, 764, Epstein-like blackmail networks
+
+Test mechanism analogues in:
+  religious warnings about possession, temptation, corruption, false prophet, hidden hierarchy
+</code></pre>
+<h3 id="34-source-family-split">3.4 Source-family split</h3>
+<p>Ensure that validation evidence is not copied from training evidence.</p>
+<pre><code class="language-text">No source-family leakage.
+No quote-chain leakage.
+No derivative blog/video leakage.
+No repeated rumor counted as independent confirmation.
+</code></pre>
+<h3 id="35-analyst-split">3.5 Analyst split</h3>
+<p>If possible:</p>
+<pre><code class="language-text">Analyst A builds graphlets.
+Analyst B, blind to graphlet hypotheses, maps unseen traditions.
+Compare predicted convergence after mapping.
+</code></pre>
+<hr />
+<h2 id="4-null-models">4. Null Models</h2>
+<p>We need null models, otherwise all pattern discovery becomes self-confirming.</p>
+<h3 id="41-random-rewiring-null">4.1 Random rewiring null</h3>
+<p>Preserve degree distribution, randomize edges.</p>
+<p>Question:</p>
+<pre><code class="language-text">Do observed graphlets recur more often than in degree-preserving random graphs?
+</code></pre>
+<h3 id="42-label-shuffle-null">4.2 Label-shuffle null</h3>
+<p>Preserve topology, shuffle canonical-role labels.</p>
+<p>Question:</p>
+<pre><code class="language-text">Is convergence driven by actual role structure or by generic graph density?
+</code></pre>
+<h3 id="43-source-copy-null">4.3 Source-copy null</h3>
+<p>Collapse dependent source families.</p>
+<p>Question:</p>
+<pre><code class="language-text">Does convergence survive when copied sources count as one?
+</code></pre>
+<h3 id="44-motif-universal-null">4.4 Motif-universal null</h3>
+<p>Some motifs are common because humans are humans.</p>
+<p>Question:</p>
+<pre><code class="language-text">Does this graphlet exceed baseline archetype recurrence?
+</code></pre>
+<h3 id="45-prestige-inversion-null">4.5 Prestige-inversion null</h3>
+<p>Test with and without source-authority weighting.</p>
+<p>Question:</p>
+<pre><code class="language-text">Does the structure only appear when stigmatized sources are upweighted or prestigious sources downweighted?
+</code></pre>
+<h3 id="46-analyst-overfit-null">4.6 Analyst-overfit null</h3>
+<p>Have a second analyst map concepts without knowing desired convergence.</p>
+<p>Question:</p>
+<pre><code class="language-text">Does the same structure appear under blind mapping?
+</code></pre>
+<hr />
+<h2 id="5-experimental-phases">5. Experimental Phases</h2>
+<h3 id="phase-0-schema-lock">Phase 0: Schema lock</h3>
+<p>Before ingesting the next large corpus, freeze:</p>
+<pre><code class="language-text">node types
+edge types
+canonical roles
+claim statuses
+bridge qualities
+weight formulas
+graphlet definitions
+holdout sets
+</code></pre>
+<h3 id="phase-1-initial-graphlet-library">Phase 1: Initial graphlet library</h3>
+<p>Create broad graphlet templates without overconstraining.</p>
+<p>Initial graphlets:</p>
+<pre><code class="language-text">whispering adversary
+controlled inversion
+manufactured criminality
+legitimacy laundering
+source suppression
+purification/remediation
+apocalyptic acceleration
+hidden hierarchy
+false light
+sacrificial violence
+elite corruption
+attention drain
+generative redirection
+</code></pre>
+<h3 id="phase-2-training-subgraphs">Phase 2: Training subgraphs</h3>
+<p>Ingest training traditions/cases.</p>
+<p>Output:</p>
+<pre><code class="language-text">candidate graphlets
+canonical role mappings
+latent structures
+next-best questions
+</code></pre>
+<h3 id="phase-3-validation-subgraphs">Phase 3: Validation subgraphs</h3>
+<p>Ingest validation traditions/cases.</p>
+<p>Measure:</p>
+<pre><code class="language-text">graphlet recurrence
+mapping stability
+latent prediction accuracy
+alternative explanation survival
+</code></pre>
+<h3 id="phase-4-test-subgraphs">Phase 4: Test subgraphs</h3>
+<p>No tuning. Ingest test cases and score.</p>
+<p>Measure:</p>
+<pre><code class="language-text">out-of-sample graphlet recurrence
+false-positive rate under nulls
+prediction fill rate
+missing-edge accuracy
+</code></pre>
+<h3 id="phase-5-final-holdout">Phase 5: Final holdout</h3>
+<p>Use modern cases only after the model is frozen.</p>
+<p>This is where the system earns credibility.</p>
+<hr />
+<h2 id="6-metrics">6. Metrics</h2>
+<h3 id="61-graphlet-recurrence-score">6.1 Graphlet recurrence score</h3>
+<pre><code class="language-text">GRS(g) =
+    count_independent_subgraphs_containing_g
+  * average_mapping_confidence
+  * average_edge_quality
+  * independence_weight
+  * anti_overfit_penalty
+</code></pre>
+<h3 id="62-latent-prediction-hit-rate">6.2 Latent prediction hit rate</h3>
+<pre><code class="language-text">LPHR =
+    confirmed_latent_structures
+  / total_testable_latent_predictions
+</code></pre>
+<h3 id="63-prediction-specificity">6.3 Prediction specificity</h3>
+<pre><code class="language-text">Specificity is high when the prediction names:
+  - node class
+  - relation type
+  - time window
+  - source type likely to contain evidence
+  - discriminating alternative
+</code></pre>
+<p>Bad:</p>
+<pre><code class="language-text">There will be hidden connections.
+</code></pre>
+<p>Good:</p>
+<pre><code class="language-text">If graphlet X is active in case Y, we should find a funding intermediary or legal-suppression event within ±5 years of the public scandal.
+</code></pre>
+<h3 id="64-alternative-explanation-defeat-rate">6.4 Alternative-explanation defeat rate</h3>
+<pre><code class="language-text">AEDR =
+    number_of_cases_where_primary_structure_beats_best_alt
+  / total_cases_with_alt_explanations
+</code></pre>
+<h3 id="65-holdout-convergence-score">6.5 Holdout convergence score</h3>
+<pre><code class="language-text">HCS =
+    recurrence_on_holdout
+  / recurrence_expected_under_null
+</code></pre>
+<h3 id="66-structural-cavity-score">6.6 Structural cavity score</h3>
+<pre><code class="language-text">SCS(L) =
+    anomaly_pressure
+  * mechanism_fit
+  * recurrence_across_subgraphs
+  * temporal_coherence
+  * prediction_specificity
+  * independence_weight
+</code></pre>
+<hr />
+<h2 id="7-next-best-question-engine">7. Next-Best-Question Engine</h2>
+<p>The interface should continuously rank questions.</p>
+<pre><code class="language-text">EIG(question) =
+    uncertainty_reduction
+  * salience_of_resolved_node
+  * number_of_hypotheses_discriminated
+  * feasibility
+  * source_availability
+  * safety_factor
+</code></pre>
+<p>Question types:</p>
+<pre><code class="language-text">translation question
+source-family question
+missing-edge question
+alternative-explanation question
+prediction question
+negative-control question
+mechanism question
+timeline question
+actor-network question
+symbolic-equivalence question
+</code></pre>
+<p>Example:</p>
+<pre><code class="language-yaml">question: &quot;Does the whispering adversary graphlet recur in Islamic waswasa, Buddhist Mara, Christian demonic temptation, and wetiko literature under blind mapping?&quot;
+hypotheses_discriminated:
+  - universal_psychological_archetype
+  - shared_metaphysical_entity
+  - later_interpretive_overlay
+  - translator_imposed_similarity
+expected_information_gain: high
+</code></pre>
+<hr />
+<h2 id="8-out-of-sample-discipline">8. Out-of-Sample Discipline</h2>
+<p>Rules:</p>
+<pre><code class="language-text">1. No changing graphlet definitions after seeing test-set results.
+2. No adding new canonical roles to rescue a failed prediction unless the result is marked exploratory.
+3. No counting copied source families as independent.
+4. No accepting symbolic convergence as causal convergence.
+5. No deleting failed predictions.
+6. No collapsing rival explanations until tested.
+7. No fact export from low-confidence/high-salience nodes.
+8. No cross-cultural SAME_AS without direct lineage or translation basis.
+9. All rejected or failed theories remain in the archive for calibration.
+10. Every model version receives a versioned schema hash.
+</code></pre>
+<hr />
+<h2 id="9-suggested-initial-experiment-set">9. Suggested Initial Experiment Set</h2>
+<h3 id="experiment-a-whispering-adversary">Experiment A: Whispering adversary</h3>
+<p>Goal:</p>
+<pre><code class="language-text">Test whether traditions independently describe a hostile influence that whispers, tempts, implants thought, or distorts perception.
+</code></pre>
+<p>Train:</p>
+<pre><code class="language-text">Christianity, Judaism, Gnosticism
+</code></pre>
+<p>Validation:</p>
+<pre><code class="language-text">Islam, Buddhism, Hinduism
+</code></pre>
+<p>Test:</p>
+<pre><code class="language-text">Indigenous wetiko, Chinese hungry ghosts, Japanese yōkai, African diaspora
+</code></pre>
+<p>Holdout:</p>
+<pre><code class="language-text">modern cult testimony, extremist radicalization, algorithmic rage loops
+</code></pre>
+<h3 id="experiment-b-controlled-inversion">Experiment B: Controlled inversion</h3>
+<p>Goal:</p>
+<pre><code class="language-text">Test whether ritualized inversion functions as pressure release that stabilizes hierarchy.
+</code></pre>
+<p>Train:</p>
+<pre><code class="language-text">Saturnalia, Carnival, Feast of Fools
+</code></pre>
+<p>Validation:</p>
+<pre><code class="language-text">trickster rites, liminal festivals, anti-structure rituals
+</code></pre>
+<p>Test:</p>
+<pre><code class="language-text">modern protest festivals, controlled opposition cases, media outrage cycles
+</code></pre>
+<h3 id="experiment-c-manufactured-criminality">Experiment C: Manufactured criminality</h3>
+<p>Goal:</p>
+<pre><code class="language-text">Test whether isolation/confession/transgression/blackmail/new-identity/deployment recurs across cults and extremist networks.
+</code></pre>
+<p>Train:</p>
+<pre><code class="language-text">Jonestown, O9A, 764
+</code></pre>
+<p>Validation:</p>
+<pre><code class="language-text">NXIVM, Children of God, Aum Shinrikyo, extremist grooming cases
+</code></pre>
+<p>Test:</p>
+<pre><code class="language-text">political discrediting operations, gang recruitment, intelligence kompromat cases
+</code></pre>
+<h3 id="experiment-d-legitimacy-laundering">Experiment D: Legitimacy laundering</h3>
+<p>Goal:</p>
+<pre><code class="language-text">Test whether sacred/moral traditions are repeatedly used to legitimate state, financial, or intelligence projects.
+</code></pre>
+<p>Train:</p>
+<pre><code class="language-text">Lateran Treaty, Reichskonkordat, Balfour/Scofield bridge
+</code></pre>
+<p>Validation:</p>
+<pre><code class="language-text">imperial religious charters, Cold War religious fronts, NGO-civil society fronts
+</code></pre>
+<p>Test:</p>
+<pre><code class="language-text">modern platform morality, human-rights language used for war, development-bank moral language
+</code></pre>
+<h3 id="experiment-e-source-suppression">Experiment E: Source suppression</h3>
+<p>Goal:</p>
+<pre><code class="language-text">Test whether anomalous scandals show repeated record-sealing, classification, missing autopsies, missing client lists, or public-narrative simplification.
+</code></pre>
+<p>Train:</p>
+<pre><code class="language-text">Jonestown, Presidio, Epstein, P2/Banco Ambrosiano
+</code></pre>
+<p>Validation:</p>
+<pre><code class="language-text">MKUltra, COINTELPRO, church abuse archives, intelligence disclosures
+</code></pre>
+<p>Test:</p>
+<pre><code class="language-text">modern algorithmic censorship/disclosure controversies
+</code></pre>
+<h3 id="experiment-f-remedy-convergence">Experiment F: Remedy convergence</h3>
+<p>Goal:</p>
+<pre><code class="language-text">Test whether traditions converge on awareness, naming, purification, prayer, discipline, mindfulness, or generative redirection as remedy for adversarial influence.
+</code></pre>
+<p>Train:</p>
+<pre><code class="language-text">Christian discernment, Jewish heshbon ha-nefesh, Buddhist mindfulness
+</code></pre>
+<p>Validation:</p>
+<pre><code class="language-text">Islamic dhikr/ruqyah/waswasa handling, Hindu mantra/yoga, Indigenous purification
+</code></pre>
+<p>Test:</p>
+<pre><code class="language-text">modern trauma therapy, cognitive defusion, nervous-system regulation, anti-radicalization methods
+</code></pre>
+<hr />
+<h2 id="10-success-criteria">10. Success Criteria</h2>
+<p>The program succeeds if it can:</p>
+<pre><code class="language-text">1. Preserve anomaly without credulity.
+2. Generate graphlets before seeing holdout data.
+3. Predict missing structures.
+4. Score whether new evidence fills predicted cavities.
+5. Separate surface-language difference from structural equivalence.
+6. Penalize overfit and source copying.
+7. Allow consensus to lose if posterior evidence warrants.
+8. Allow strange hypotheses to fail cleanly without deleting useful subclaims.
+</code></pre>
+<p>The real product is not a single answer.</p>
+<p>It is a ranked list:</p>
+<pre><code class="language-text">what is known
+what is alleged
+what is structurally expected
+what is missing
+what would most reduce uncertainty next
+</code></pre>
+<div class="foot">Generated by scripts/build_site.py from docs/*.md. Single source of truth: the Markdown. Do not hand-edit this HTML.</div>
+</main>
+</body>
+</html>

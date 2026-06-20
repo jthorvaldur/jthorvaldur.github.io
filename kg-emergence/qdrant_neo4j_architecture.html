@@ -1,0 +1,600 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Qdrant + Neo4j Architecture — KG Emergence</title>
+<meta name="description" content="Division of labor: Qdrant proposes semantic candidates (dense + sparse), Neo4j decides typed meaning and topology. Collections, hybrid retrieval, and six exploration views.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg:#07070f; --surface:rgba(255,255,255,0.035); --surface-hover:rgba(122,162,247,0.07);
+  --border:rgba(255,255,255,0.07); --border-hover:rgba(122,162,247,0.30);
+  --text:#e8e8f4; --muted:rgba(232,232,244,0.45); --dim:rgba(232,232,244,0.25);
+  --accent:#7aa2f7; --accent2:#bb9af7; --green:#9ece6a;
+  --amber:#e0af68; --red:#f7768e; --teal:#73daca;
+}
+* { box-sizing:border-box; }
+html { scroll-behavior:smooth; }
+body {
+  background:var(--bg); color:var(--text);
+  font-family:'Outfit',system-ui,sans-serif;
+  -webkit-font-smoothing:antialiased; margin:0; line-height:1.65;
+}
+a { color:var(--accent); text-decoration:none; }
+a:hover { text-decoration:underline; }
+.nav {
+  position:sticky; top:0; z-index:50; display:flex; gap:1.25rem; align-items:center;
+  padding:0 1.5rem; height:52px; background:rgba(7,7,15,0.82);
+  backdrop-filter:blur(12px); border-bottom:1px solid var(--border); font-size:.9rem;
+}
+.nav .home { color:var(--muted); }
+.nav .sep { color:var(--dim); }
+.wrap { max-width:860px; margin:0 auto; padding:2.5rem 1.5rem 6rem; }
+.eyebrow {
+  font-size:.72rem; letter-spacing:.16em; text-transform:uppercase;
+  color:var(--muted); margin-bottom:.6rem;
+}
+.label {
+  display:inline-block; font-size:.72rem; font-weight:600; letter-spacing:.04em;
+  padding:.25rem .65rem; border-radius:999px; margin:.2rem 0 1.4rem;
+}
+h1 { font-size:2.1rem; line-height:1.2; margin:.2rem 0 1rem; font-weight:600; }
+h2 { font-size:1.45rem; margin:2.4rem 0 .8rem; font-weight:600;
+      border-bottom:1px solid var(--border); padding-bottom:.4rem; }
+h3 { font-size:1.15rem; margin:1.8rem 0 .6rem; color:var(--accent2); }
+h4 { font-size:1rem; margin:1.4rem 0 .5rem; color:var(--teal); }
+p, li { color:var(--text); }
+code {
+  font-family:'JetBrains Mono',ui-monospace,monospace; font-size:.86em;
+  background:rgba(255,255,255,0.06); padding:.12em .4em; border-radius:5px;
+}
+pre {
+  background:#0c0c18; border:1px solid var(--border); border-radius:10px;
+  padding:1rem 1.1rem; overflow-x:auto; font-size:.84rem; line-height:1.55;
+}
+pre code { background:none; padding:0; }
+blockquote {
+  border-left:3px solid var(--accent); margin:1.2rem 0; padding:.3rem 1rem;
+  color:var(--muted); background:var(--surface-hover); border-radius:0 8px 8px 0;
+}
+table { border-collapse:collapse; width:100%; margin:1.3rem 0; font-size:.9rem; }
+th, td { border:1px solid var(--border); padding:.5rem .7rem; text-align:left; }
+th { background:var(--surface); color:var(--accent); font-weight:600; }
+hr { border:none; border-top:1px solid var(--border); margin:2.4rem 0; }
+.summary { color:var(--muted); font-size:1.05rem; margin-bottom:2rem; }
+/* landing grid */
+.hero-tags { display:flex; flex-wrap:wrap; gap:.5rem; margin:1.4rem 0 .5rem; }
+.tag { font-size:.75rem; color:var(--muted); border:1px solid var(--border);
+        padding:.22rem .6rem; border-radius:999px; }
+.cards { display:grid; grid-template-columns:repeat(auto-fill,minmax(260px,1fr));
+          gap:1rem; margin-top:1.8rem; }
+.card {
+  display:block; padding:1.2rem 1.3rem; border:1px solid var(--border);
+  border-radius:12px; background:var(--surface); transition:.18s;
+}
+.card:hover { border-color:var(--border-hover); background:var(--surface-hover);
+               text-decoration:none; transform:translateY(-2px); }
+.card .ttl { font-weight:600; font-size:1.02rem; color:var(--text); margin-bottom:.4rem; }
+.card .lbl { font-size:.68rem; font-weight:600; letter-spacing:.04em;
+              padding:.18rem .55rem; border-radius:999px; display:inline-block; margin-bottom:.6rem; }
+.card .dsc { font-size:.86rem; color:var(--muted); line-height:1.55; }
+.card .arrow { display:block; margin-top:.8rem; font-size:.8rem; color:var(--accent); }
+.foot { margin-top:4rem; padding-top:1.5rem; border-top:1px solid var(--border);
+         color:var(--dim); font-size:.8rem; }
+</style>
+</head>
+<body>
+<nav class="nav">
+  <a class="home" href="https://jthorvaldur.github.io/">&larr; jthorvaldur.github.io</a>
+  <span class="sep">/</span>
+  <a href="index.html">KG Emergence</a>
+</nav>
+<main class="wrap">
+<div class="eyebrow">KG Emergence</div>
+<span class="label" style="background:rgba(187,154,247,0.12);color:#bb9af7;">System Architecture</span>
+<p class="summary">Division of labor: Qdrant proposes semantic candidates (dense + sparse), Neo4j decides typed meaning and topology. Collections, hybrid retrieval, and six exploration views.</p>
+<hr />
+<p>title: "Qdrant + Neo4j Architecture for Latent-Structure Discovery"
+created: "2026-06-20"
+artifact_type: "system_architecture"
+status: "draft v0.1"
+purpose: "Specify how hybrid dense/sparse retrieval in Qdrant can cooperate with Neo4j graph topology to support epistemic emergence, hidden-structure prediction, and visual exploration."</p>
+<hr />
+<h1 id="qdrant-neo4j-architecture">Qdrant + Neo4j Architecture</h1>
+<h2 id="0-why-two-databases">0. Why Two Databases?</h2>
+<p>The system needs two different computational geometries.</p>
+<h3 id="qdrant-is-for-semantic-retrieval">Qdrant is for semantic retrieval</h3>
+<p>Use Qdrant for:</p>
+<pre><code class="language-text">dense semantic search
+sparse keyword/entity search
+hybrid dense+sparse retrieval
+multi-vector representations
+chunk-level retrieval
+source-family detection
+analogy search
+translation-equivalence discovery
+near-duplicate detection
+claim candidate retrieval
+</code></pre>
+<p>Qdrant is especially useful when language varies:</p>
+<pre><code class="language-text">jinn / demon / archon / Mara / wetiko / intrusive thought / whisper / temptation
+</code></pre>
+<p>The surface words differ. Dense retrieval finds semantic kinship. Sparse retrieval preserves exact names, dates, and rare terms.</p>
+<h3 id="neo4j-is-for-typed-structure">Neo4j is for typed structure</h3>
+<p>Use Neo4j for:</p>
+<pre><code class="language-text">actors
+events
+claims
+observations
+bridges
+mechanisms
+canonical roles
+graphlets
+latent structures
+posterior weights
+causal constraints
+temporal constraints
+visual graph exploration
+next-best-question topology
+</code></pre>
+<p>Neo4j is where semantic candidates become typed claims and edges.</p>
+<hr />
+<h2 id="1-current-feature-assumptions">1. Current Feature Assumptions</h2>
+<p>Qdrant supports collections with dense, sparse, and multivector configurations, including named vectors. Qdrant hybrid queries can combine dense and sparse prefetches and fuse them, for example with Reciprocal Rank Fusion.</p>
+<p>Neo4j supports graph-native modeling, vector indexes for embeddings, and Graph Data Science node embeddings such as FastRP, GraphSAGE, Node2Vec, and HashGNN.</p>
+<p>Architecture implication:</p>
+<pre><code class="language-text">Qdrant = retrieval and semantic candidate generation
+Neo4j = graph state, topology, inference, visualization
+</code></pre>
+<p>Do not force Qdrant to be the graph database.<br />
+Do not force Neo4j to be the primary chunk-retrieval engine.</p>
+<hr />
+<h2 id="2-data-flow">2. Data Flow</h2>
+<pre><code class="language-text">Raw Source
+  -&gt; chunking / OCR / metadata extraction
+  -&gt; Qdrant points for chunks, claims, motifs, source excerpts
+  -&gt; LLM-assisted atomization into observations and claims
+  -&gt; Neo4j nodes/edges
+  -&gt; graphlet matching / latent structure prediction
+  -&gt; next-best-question generation
+  -&gt; Qdrant retrieval for evidence to fill graph cavities
+  -&gt; Neo4j update
+</code></pre>
+<hr />
+<h2 id="3-qdrant-collections">3. Qdrant Collections</h2>
+<h3 id="31-source_chunks">3.1 <code>source_chunks</code></h3>
+<p>Chunk-level storage.</p>
+<p>Payload:</p>
+<pre><code class="language-yaml">chunk_id: string
+source_id: string
+source_family_id: string
+document_title: string
+author: string | null
+date_created: date | null
+date_observed: date
+source_type: string
+tradition: string | null
+culture: string | null
+language: string
+chunk_text: string
+page_or_section: string | null
+ontology_layer_guess: list
+risk_flags: list
+neo4j_node_ids: list
+</code></pre>
+<p>Vectors:</p>
+<pre><code class="language-yaml">dense_semantic: embedding(chunk_text)
+sparse_lexical: BM25/SPLADE-style sparse vector
+dense_claimlike: optional embedding optimized for proposition retrieval
+dense_symbolic: optional embedding for mythic/motif similarity
+</code></pre>
+<h3 id="32-claims">3.2 <code>claims</code></h3>
+<p>One point per atomized claim.</p>
+<p>Payload:</p>
+<pre><code class="language-yaml">claim_id: string
+claim_text: string
+claim_type: string
+ontology_layer: string
+status: string
+source_ids: list
+observation_ids: list
+confidence_weight: float
+salience_weight: float
+structure_watch_score: float
+fact_export_score: float
+neo4j_node_id: string
+</code></pre>
+<p>Vectors:</p>
+<pre><code class="language-yaml">dense_claim: embedding(claim_text)
+sparse_claim: sparse vector for exact entity/date/term match
+</code></pre>
+<h3 id="33-local_concepts">3.3 <code>local_concepts</code></h3>
+<p>One point per local religious/cultural concept.</p>
+<p>Payload:</p>
+<pre><code class="language-yaml">local_concept_id: string
+name: string
+tradition: string
+language: string
+summary: string
+canonical_role_candidates: list
+neo4j_node_id: string
+</code></pre>
+<p>Vectors:</p>
+<pre><code class="language-yaml">dense_concept: semantic embedding of concept description
+sparse_concept: exact terms
+dense_role_signature: embedding of mapped canonical roles
+</code></pre>
+<h3 id="34-graphlets">3.4 <code>graphlets</code></h3>
+<p>One point per graphlet template or observed graphlet instance.</p>
+<p>Payload:</p>
+<pre><code class="language-yaml">graphlet_id: string
+name: string
+node_roles: list
+edge_roles: list
+required_edges: list
+observed_case_ids: list
+latent_predictions: list
+neo4j_node_id: string
+</code></pre>
+<p>Vectors:</p>
+<pre><code class="language-yaml">dense_graphlet_description
+sparse_graphlet_terms
+</code></pre>
+<h3 id="35-questions">3.5 <code>questions</code></h3>
+<p>One point per next-best question.</p>
+<p>Payload:</p>
+<pre><code class="language-yaml">question_id: string
+question_text: string
+target_uncertainty: string
+hypotheses_discriminated: list
+expected_information_gain: float
+priority_score: float
+status: open | answered | retired
+</code></pre>
+<p>Vectors:</p>
+<pre><code class="language-yaml">dense_question
+sparse_question
+</code></pre>
+<hr />
+<h2 id="4-hybrid-retrieval-strategy">4. Hybrid Retrieval Strategy</h2>
+<h3 id="41-dense-retrieval">4.1 Dense retrieval</h3>
+<p>Good for:</p>
+<pre><code class="language-text">semantic similarity
+cross-cultural analogy
+paraphrase
+conceptual recurrence
+translation drift
+motif discovery
+</code></pre>
+<p>Example query:</p>
+<pre><code class="language-text">&quot;hostile invisible influence that whispers destructive thoughts and is countered by awareness or prayer&quot;
+</code></pre>
+<p>Dense search may retrieve:</p>
+<pre><code class="language-text">waswasa
+Mara
+demonic temptation
+intrusive thoughts
+wetiko
+archons
+hungry ghosts
+</code></pre>
+<h3 id="42-sparse-retrieval">4.2 Sparse retrieval</h3>
+<p>Good for:</p>
+<pre><code class="language-text">rare proper nouns
+dates
+institutions
+titles
+technical terms
+exact phrases
+legal names
+</code></pre>
+<p>Example query:</p>
+<pre><code class="language-text">&quot;Michael Aquino Presidio Privacy Act Stone MindWar&quot;
+</code></pre>
+<p>Sparse search protects specificity.</p>
+<h3 id="43-hybrid-retrieval">4.3 Hybrid retrieval</h3>
+<p>Use hybrid when both concept and exactness matter.</p>
+<p>Example:</p>
+<pre><code class="language-text">&quot;occult military psychological warfare Aquino Set MindWar&quot;
+</code></pre>
+<p>Dense finds conceptually related PSYOP/cult material. Sparse anchors Aquino/Set/MindWar.</p>
+<h3 id="44-multi-representation-retrieval">4.4 Multi-representation retrieval</h3>
+<p>For each source chunk, store several views:</p>
+<pre><code class="language-text">literal text
+claim summary
+symbolic/motif summary
+mechanism summary
+historical metadata summary
+</code></pre>
+<p>This prevents a single embedding from flattening very different questions.</p>
+<hr />
+<h2 id="5-qdrant-neo4j-mapping">5. Qdrant → Neo4j Mapping</h2>
+<p>Qdrant retrieves candidates.</p>
+<p>Neo4j decides what they mean.</p>
+<p>Pipeline:</p>
+<pre><code class="language-text">1. User asks question or graph predicts latent structure.
+2. Query Qdrant hybrid collections.
+3. Retrieve candidate chunks/claims/concepts.
+4. Rerank by:
+   - semantic score
+   - sparse exactness
+   - source independence
+   - graph relevance
+   - expected information gain
+5. LLM or parser atomizes new observations.
+6. Neo4j creates/updates:
+   - Source
+   - Observation
+   - Claim
+   - Bridge
+   - Mechanism
+   - LatentStructure
+7. Graph scores update.
+</code></pre>
+<p>Mapping table:</p>
+<table>
+<thead>
+<tr>
+<th>Qdrant object</th>
+<th>Neo4j object</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>source chunk</td>
+<td><code>(:SourceChunk)</code> or payload attached to <code>(:Source)</code></td>
+</tr>
+<tr>
+<td>claim point</td>
+<td><code>(:Claim)</code></td>
+</tr>
+<tr>
+<td>local concept point</td>
+<td><code>(:LocalConcept)</code></td>
+</tr>
+<tr>
+<td>graphlet point</td>
+<td><code>(:GraphletTemplate)</code> / <code>(:GraphletInstance)</code></td>
+</tr>
+<tr>
+<td>question point</td>
+<td><code>(:NextBestQuestion)</code></td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="6-neo4j-qdrant-mapping">6. Neo4j → Qdrant Mapping</h2>
+<p>Neo4j generates semantic retrieval targets.</p>
+<p>Examples:</p>
+<pre><code class="language-text">latent edge: Cult -&gt; IntelligenceActor
+missing document: court record or FOIA file
+graphlet: manufactured criminality
+unresolved claim: Dwyer CIA link
+canonical role: whispering adversary
+</code></pre>
+<p>Neo4j converts these into retrieval prompts.</p>
+<p>Example:</p>
+<pre><code class="language-yaml">latent_structure_id: latent_edge_cult_intelligence_adjacency
+retrieval_prompt: &quot;religious cult political protection intelligence officer embassy anomalous official presence investigation&quot;
+sparse_terms:
+  - CIA
+  - embassy
+  - deputy chief of mission
+  - investigation
+  - classified
+dense_prompt:
+  - &quot;official state or intelligence adjacency to coercive religious-political cult&quot;
+</code></pre>
+<p>Then Qdrant searches sources likely to fill that cavity.</p>
+<hr />
+<h2 id="7-user-experience">7. User Experience</h2>
+<h3 id="71-main-interface-views">7.1 Main interface views</h3>
+<h4 id="view-a-confidence-vs-salience-map">View A: Confidence vs salience map</h4>
+<p>Quadrants:</p>
+<pre><code class="language-text">high confidence / high salience      core facts
+high confidence / low salience       context
+low confidence / high salience       watchlist
+low confidence / low salience        archive
+</code></pre>
+<h4 id="view-b-latent-structure-heatmap">View B: Latent structure heatmap</h4>
+<p>Show predicted missing nodes/edges:</p>
+<pre><code class="language-text">missing funding path
+missing handler/intermediary
+missing source family
+missing translation equivalence
+missing suppression event
+missing ritual sequence
+</code></pre>
+<p>Each cell has:</p>
+<pre><code class="language-text">latent_confidence
+latent_salience
+expected_information_gain
+next-best question
+</code></pre>
+<h4 id="view-c-graphlet-recurrence-matrix">View C: Graphlet recurrence matrix</h4>
+<p>Rows = subgraphs/cultures/cases.<br />
+Columns = graphlet templates.</p>
+<p>Example:</p>
+<pre><code class="language-text">                         Whisper  Inversion  Criminality  Suppression  Remedy
+Christianity                .82       .40         .30          .55        .90
+Islam                       .85       .25         .25          .45        .88
+Buddhism                    .70       .20         .10          .30        .92
+Jonestown                   .20       .45         .88          .80        .10
+O9A                         .35       .75         .90          .55        .05
+</code></pre>
+<h4 id="view-d-hypothesis-dependency-chain">View D: Hypothesis dependency chain</h4>
+<p>Each big hypothesis shows required links.</p>
+<p>Example:</p>
+<pre><code class="language-text">Saturn neural influence
+├── Saturn plasma environment                           strong
+├── plasma self-organization                            medium
+├── agency in plasma                                    weak
+├── semantic signal propagation to Earth                very weak
+├── coupling to human neural dynamics                   very weak
+├── hostile semantic content                            very weak
+└── historical cult interface                           very weak
+</code></pre>
+<h4 id="view-e-source-family-graph">View E: Source-family graph</h4>
+<p>Show whether evidence is independent or copied.</p>
+<h4 id="view-f-next-best-question-queue">View F: Next-best-question queue</h4>
+<p>Ranked by expected information gain.</p>
+<hr />
+<h2 id="8-workflow-examples">8. Workflow Examples</h2>
+<h3 id="81-cross-cultural-motif-discovery">8.1 Cross-cultural motif discovery</h3>
+<p>User asks:</p>
+<pre><code class="language-text">Find traditions with a whispering adversarial influence and awareness-based remedy.
+</code></pre>
+<p>System:</p>
+<pre><code class="language-text">1. Qdrant dense retrieves concepts from many traditions.
+2. Sparse search anchors terms: waswasa, Mara, demon, archon, wetiko.
+3. Neo4j maps concepts to canonical roles.
+4. Graphlet recurrence scored.
+5. Interface shows convergence and divergences.
+</code></pre>
+<h3 id="82-hidden-edge-prediction">8.2 Hidden edge prediction</h3>
+<p>Neo4j notices:</p>
+<pre><code class="language-text">Cult case has isolation/confession/transgression/identity-rebuild
+but missing funding/intermediary edge.
+</code></pre>
+<p>System:</p>
+<pre><code class="language-text">1. Creates LatentFundingPath node.
+2. Generates search prompts.
+3. Qdrant retrieves chunks mentioning donors, foundations, legal defense, foreign transfers.
+4. Retrieved material either fills, weakens, or dissolves latent structure.
+</code></pre>
+<h3 id="83-consensus-challenge">8.3 Consensus challenge</h3>
+<p>A mainstream source claims:</p>
+<pre><code class="language-text">No intelligence relationship existed.
+</code></pre>
+<p>System stores this as:</p>
+<pre><code class="language-text">Observation(role=denies)
+</code></pre>
+<p>It does not become final truth. It competes against:</p>
+<pre><code class="language-text">witness claims
+FOIA traces
+court records
+source omissions
+timeline anomalies
+later disclosures
+</code></pre>
+<p>The consensus hypothesis can lose if posterior evidence warrants.</p>
+<hr />
+<h2 id="9-deployment-sketch">9. Deployment Sketch</h2>
+<h3 id="91-ingestion-pipeline">9.1 Ingestion pipeline</h3>
+<pre><code class="language-text">raw_docs/
+  pdf
+  html
+  text
+  markdown
+  screenshots
+
+extract/
+  text
+  metadata
+  chunks
+  source family detection
+
+embed/
+  dense vectors
+  sparse vectors
+  role-signature vectors
+
+qdrant/
+  upsert chunks
+  upsert claims
+  upsert concepts
+  upsert graphlets
+
+neo4j/
+  upsert sources
+  upsert observations
+  upsert claims
+  upsert edges
+  recompute weights
+</code></pre>
+<h3 id="92-service-components">9.2 Service components</h3>
+<pre><code class="language-text">ingest_service
+claim_atomizer
+role_mapper
+qdrant_retriever
+neo4j_writer
+graphlet_matcher
+latent_structure_detector
+next_best_question_ranker
+visualization_api
+</code></pre>
+<h3 id="93-minimal-stack">9.3 Minimal stack</h3>
+<pre><code class="language-text">Python
+Qdrant
+Neo4j
+FastAPI
+Pydantic schemas
+LLM extraction layer
+Graph visualization: Neo4j Bloom / custom D3 / Cytoscape
+Notebook research layer
+</code></pre>
+<hr />
+<h2 id="10-why-qdrant-may-be-better-for-part-of-this">10. Why Qdrant May Be Better for Part of This</h2>
+<p>A pure Neo4j system will struggle with:</p>
+<pre><code class="language-text">fuzzy language
+cross-cultural paraphrase
+large raw text corpora
+symbolic similarity
+translation drift
+exact + semantic retrieval together
+</code></pre>
+<p>Qdrant solves the retrieval problem.</p>
+<p>A pure Qdrant system will struggle with:</p>
+<pre><code class="language-text">typed causality
+temporal constraints
+bridge-quality scoring
+source-family dependency
+graphlet recurrence
+latent edge prediction
+visual topology
+</code></pre>
+<p>Neo4j solves the structure problem.</p>
+<p>The hybrid design is therefore natural:</p>
+<pre><code class="language-text">Qdrant finds possible meaning.
+Neo4j decides structural meaning.
+Qdrant searches for missing evidence.
+Neo4j updates posterior structure.
+</code></pre>
+<hr />
+<h2 id="11-open-design-questions">11. Open Design Questions</h2>
+<pre><code class="language-text">1. Should all Neo4j nodes also have embeddings stored in Neo4j vector indexes?
+2. Should Qdrant own all embeddings, with Neo4j storing only Qdrant point IDs?
+3. Should graph embeddings from Neo4j GDS be pushed back into Qdrant as structural vectors?
+4. Should each claim have multiple embeddings: literal, mechanism, symbolic, and legal?
+5. Should user exploration begin from search, graph, or next-best-question queue?
+</code></pre>
+<p>Best initial answer:</p>
+<pre><code class="language-text">Store raw/chunk/claim embeddings in Qdrant.
+Store graph structure in Neo4j.
+Optionally compute Neo4j graph embeddings and push them into Qdrant as a separate &quot;structural_embedding&quot; vector.
+</code></pre>
+<hr />
+<h2 id="12-product-principle">12. Product Principle</h2>
+<p>The user should never be forced to choose between:</p>
+<pre><code class="language-text">semantic search
+graph traversal
+evidence inspection
+hypothesis testing
+visual exploration
+</code></pre>
+<p>The interface should let them move fluidly:</p>
+<pre><code class="language-text">search phrase
+-&gt; retrieved observations
+-&gt; claim nodes
+-&gt; graphlet recurrence
+-&gt; latent structure
+-&gt; next-best question
+-&gt; new retrieval
+</code></pre>
+<p>That loop is the research engine.</p>
+<div class="foot">Generated by scripts/build_site.py from docs/*.md. Single source of truth: the Markdown. Do not hand-edit this HTML.</div>
+</main>
+</body>
+</html>
