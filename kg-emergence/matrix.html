@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="en"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>KG Emergence — graphlet recurrence matrix</title>
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;500;600&family=JetBrains+Mono&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/d3@7/dist/d3.min.js"></script>
+<style>
+  :root{--bg:#07070f;--text:#e8e8f4;--muted:rgba(232,232,244,.5);--border:rgba(255,255,255,.08);
+        --accent:#7aa2f7;--green:#9ece6a;--amber:#e0af68;}
+  *{box-sizing:border-box} html,body{margin:0;min-height:100%}
+  body{background:var(--bg);color:var(--text);font-family:'Outfit',sans-serif}
+  .nav{position:sticky;top:0;height:50px;display:flex;gap:1rem;align-items:center;
+        padding:0 1.2rem;background:rgba(7,7,15,.85);backdrop-filter:blur(10px);
+        border-bottom:1px solid var(--border);z-index:10;font-size:.9rem}
+  .nav a{color:var(--muted);text-decoration:none} .nav a:hover{color:var(--text)}
+  .wrap{max-width:980px;margin:0 auto;padding:1.6rem 1.2rem 3rem}
+  h1{font-size:1.5rem;margin:.2rem 0 .5rem;font-weight:600}
+  h1 .a{color:var(--accent)}
+  p.cap{font-size:.9rem;color:var(--muted);line-height:1.55;max-width:62ch;margin:.3rem 0 1.4rem}
+  .stat{font-family:'JetBrains Mono',monospace;font-size:.76rem;color:var(--muted);margin:.2rem 0 1.2rem}
+  svg{display:block;width:100%;height:auto;overflow:visible}
+  .cell{stroke:var(--bg);stroke-width:2;rx:5}
+  .clabel{font-size:.74rem;fill:var(--text);font-family:'Outfit',sans-serif}
+  .rlabel{font-size:.82rem;fill:var(--text);font-family:'Outfit',sans-serif}
+  .val{font-size:.72rem;font-family:'JetBrains Mono',monospace;}
+  .recur{font-size:.72rem;font-family:'JetBrains Mono',monospace;fill:var(--amber)}
+  .axhead{font-size:.7rem;fill:var(--muted);font-family:'JetBrains Mono',monospace}
+  .tip{position:fixed;pointer-events:none;background:#0c0c18;border:1px solid var(--border);
+        border-radius:6px;padding:.35rem .55rem;font-size:.75rem;
+        font-family:'JetBrains Mono',monospace;opacity:0;transition:.1s;z-index:20}
+  .key{display:flex;align-items:center;gap:.5rem;margin-top:1.3rem;font-size:.74rem;color:var(--muted)}
+  .bar{height:12px;width:200px;border-radius:3px;
+        background:linear-gradient(90deg,#10101e,#3b4a78,#7aa2f7,#9ece6a);}
+</style></head><body>
+<nav class="nav"><a href="index.html">&larr; KG Emergence</a>
+  <span style="color:var(--muted)">/ recurrence matrix</span></nav>
+<div class="wrap">
+  <h1>Graphlet <span class="a">recurrence matrix</span></h1>
+  <p class="cap">View C of the experiment design. Each row is one tradition's extracted
+     role-graph; each column is a <b>named graphlet template</b> from the library. A cell's
+     colour and number are how strongly that tradition instantiates that template's canonical
+     edge/role skeleton (coverage in [0,1]). The bottom row counts how many independent traditions
+     clear the recurrence threshold — a motif that lights up across many traditions is a
+     cross-tradition structure, not a local accident.</p>
+  <div class="stat" id="stat"></div>
+  <svg id="chart"></svg>
+  <div class="key"><span>0.0</span><div class="bar"></div><span>1.0</span>
+     <span style="margin-left:1rem">cells with a white outline clear the recurrence threshold</span></div>
+</div>
+<div class="tip" id="tip"></div>
+<script>
+const DATA = {"corpus": "traditions_v4", "families": ["alt_chronology", "chinese", "christian", "egyptian", "greek", "indian", "mesoamerican", "modern_conspiracy"], "templates": ["controlled inversion", "legitimacy laundering", "manufactured criminality", "purification remediation", "source suppression", "whispering adversary"], "matrix": [[0.3, 0.15, 0.24, 0.15, 0.3, 0.15], [0.3, 0.3, 0.3, 0.3, 0.3, 0.475], [0.3, 0.225, 0.18, 0.15, 0.15, 0.325], [0.3, 0.3, 0.24, 0.225, 0.225, 0.4], [0.475, 0.3, 0.3, 0.225, 0.3, 0.4], [0.475, 0.3, 0.3, 0.44, 0.3, 0.65], [0.65, 0.3, 0.24, 0.44, 0.225, 0.65], [0.3, 0.3, 0.24, 0.225, 0.225, 0.4]], "threshold": 0.34, "recurrence": [3, 0, 0, 2, 0, 6], "stats": {"n_families": 8, "n_templates": 6, "n_recurring": 3}};
+const fams = DATA.families, tpls = DATA.templates, M = DATA.matrix, THR = DATA.threshold;
+const tip = d3.select("#tip");
+
+d3.select("#stat").text(
+  `${DATA.stats.n_families} traditions x ${DATA.stats.n_templates} templates · `
+  + `${DATA.stats.n_recurring} templates recur across >= 2 traditions · ${DATA.corpus}`);
+
+// score -> Tokyo-Night ramp (dark -> blue accent -> green)
+const color = d3.scaleLinear()
+  .domain([0, THR, 0.66, 1])
+  .range(["#10101e", "#3b4a78", "#7aa2f7", "#9ece6a"])
+  .clamp(true);
+
+const margin = {top: 132, right: 24, bottom: 56, left: 132};
+const cell = 76, gap = 0;
+const W = tpls.length * cell, H = fams.length * cell;
+const svg = d3.select("#chart")
+  .attr("viewBox", `0 0 ${W + margin.left + margin.right} ${H + margin.top + margin.bottom}`);
+const g = svg.append("g").attr("transform", `translate(${margin.left},${margin.top})`);
+
+// column headers (rotated)
+g.append("g").selectAll("text").data(tpls).join("text")
+  .attr("class","clabel")
+  .attr("transform",(d,j)=>`translate(${j*cell + cell/2},-12) rotate(-35)`)
+  .attr("text-anchor","start").text(d=>d);
+
+// row labels
+g.append("g").selectAll("text").data(fams).join("text")
+  .attr("class","rlabel").attr("x",-12).attr("y",(d,i)=>i*cell + cell/2 + 4)
+  .attr("text-anchor","end").text(d=>d);
+
+// cells
+const rows = g.selectAll("g.row").data(M).join("g").attr("class","row")
+  .attr("transform",(d,i)=>`translate(0,${i*cell})`);
+rows.each(function(rowData, i){
+  const row = d3.select(this);
+  row.selectAll("rect").data(rowData).join("rect")
+    .attr("class","cell")
+    .attr("x",(d,j)=>j*cell+gap).attr("y",gap)
+    .attr("width",cell-2*gap).attr("height",cell-2*gap)
+    .attr("rx",5)
+    .attr("fill",d=>color(d))
+    .attr("stroke",d=>d>=THR ? "#ffffff" : "var(--bg)")
+    .attr("stroke-width",d=>d>=THR ? 1.6 : 2)
+    .on("mousemove",(e,d)=>{
+      const j = rowData.indexOf(d);
+      tip.style("opacity",1).style("left",(e.clientX+12)+"px").style("top",(e.clientY+12)+"px")
+         .html(`${fams[i]} · ${tpls[j]}<br>score ${d.toFixed(2)}`
+               + (d>=THR ? " · recurs" : ""));
+    })
+    .on("mouseleave",()=>tip.style("opacity",0));
+  row.selectAll("text").data(rowData).join("text")
+    .attr("class","val")
+    .attr("x",(d,j)=>j*cell+cell/2).attr("y",cell/2+4)
+    .attr("text-anchor","middle")
+    .attr("fill",d=>d>=0.5 ? "#07070f" : "rgba(232,232,244,.85)")
+    .text(d=>d.toFixed(2));
+});
+
+// recurrence count row beneath the grid
+const rg = g.append("g").attr("transform",`translate(0,${H+18})`);
+rg.append("text").attr("class","axhead").attr("x",-12).attr("y",16)
+  .attr("text-anchor","end").text("recurs in");
+rg.selectAll("text.recur").data(DATA.recurrence).join("text")
+  .attr("class","recur").attr("x",(d,j)=>j*cell+cell/2).attr("y",16)
+  .attr("text-anchor","middle").text(d=>d);
+</script></body></html>

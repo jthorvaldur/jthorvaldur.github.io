@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="en"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>KG Emergence — in/out-of-sample lift trend</title>
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;500;600&family=JetBrains+Mono&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/d3@7/dist/d3.min.js"></script>
+<style>
+  :root{--bg:#07070f;--text:#e8e8f4;--muted:rgba(232,232,244,.5);--border:rgba(255,255,255,.08);
+        --accent:#7aa2f7;--accent2:#bb9af7;--green:#9ece6a;--amber:#e0af68;--red:#f7768e;--teal:#73daca;}
+  *{box-sizing:border-box} html,body{margin:0;min-height:100%}
+  body{background:var(--bg);color:var(--text);font-family:'Outfit',sans-serif}
+  .nav{position:sticky;top:0;height:50px;display:flex;gap:1rem;align-items:center;
+        padding:0 1.2rem;background:rgba(7,7,15,.85);backdrop-filter:blur(10px);
+        border-bottom:1px solid var(--border);z-index:10;font-size:.9rem}
+  .nav a{color:var(--muted);text-decoration:none} .nav a:hover{color:var(--text)}
+  .wrap{max-width:980px;margin:0 auto;padding:1.6rem 1.2rem 3rem}
+  h1{font-size:1.5rem;margin:.2rem 0 .5rem;font-weight:600}
+  h1 .a{color:var(--accent)}
+  p.cap{font-size:.9rem;color:var(--muted);line-height:1.55;max-width:64ch;margin:.3rem 0 1.4rem}
+  .stat{font-family:'JetBrains Mono',monospace;font-size:.76rem;color:var(--muted);margin:.2rem 0 1.2rem}
+  svg{display:block;width:100%;height:auto;overflow:visible}
+  .grid line{stroke:var(--border)} .grid path{stroke:none}
+  .axis text{fill:var(--muted);font-family:'JetBrains Mono',monospace;font-size:.7rem}
+  .axis path,.axis line{stroke:rgba(255,255,255,.12)}
+  .chance{stroke:var(--muted);stroke-width:1;stroke-dasharray:4,4}
+  .chance-lbl{fill:var(--muted);font-size:.7rem;font-family:'JetBrains Mono',monospace}
+  .ln-in{fill:none;stroke:var(--accent);stroke-width:2}
+  .ln-out{fill:none;stroke:var(--teal);stroke-width:2}
+  .gap{fill:var(--amber);opacity:.10}
+  .tip{position:fixed;pointer-events:none;background:#0c0c18;border:1px solid var(--border);
+        border-radius:6px;padding:.4rem .6rem;font-size:.74rem;line-height:1.5;
+        font-family:'JetBrains Mono',monospace;opacity:0;transition:.1s;z-index:20;max-width:300px}
+  .key{display:flex;flex-wrap:wrap;gap:1.1rem;margin-top:1.3rem;font-size:.76rem;color:var(--muted)}
+  .ki{display:flex;align-items:center;gap:.45rem}
+  .sw{width:22px;height:0;border-top-width:2px;border-top-style:solid}
+  .dotk{width:11px;height:11px;border-radius:50%}
+</style></head><body>
+<nav class="nav"><a href="index.html">&larr; KG Emergence</a>
+  <span style="color:var(--muted)">/ in/out-of-sample trend</span></nav>
+<div class="wrap">
+  <h1>In / out-of-sample <span class="a">lift trend</span></h1>
+  <p class="cap">The backtest equity curve for graph emergence. Each run on the walk-forward ledger
+     plots its <b style="color:var(--accent)">in-sample</b> (train/validation) lift-over-null against
+     its <b style="color:var(--teal)">out-of-sample</b> (test/holdout) lift. The shaded band is the
+     <b style="color:var(--amber)">gap</b> between them &mdash; the one quant question that governs
+     everything: <i>is structure reproducing out-of-sample, or am I overfitting?</i> A positive,
+     <i>growing</i> in&ndash;out gap is the overfit warning. The dashed line at lift = 1 is chance.
+     Filled markers survive all stochastic nulls; hollow markers are underpowered.</p>
+  <div class="stat" id="stat"></div>
+  <svg id="chart"></svg>
+  <div class="key">
+    <div class="ki"><span class="sw" style="border-top-color:var(--accent)"></span>in-sample lift</div>
+    <div class="ki"><span class="sw" style="border-top-color:var(--teal)"></span>out-of-sample lift</div>
+    <div class="ki"><span class="dotk" style="background:var(--green)"></span>survives all nulls</div>
+    <div class="ki"><span class="dotk" style="background:transparent;border:1.5px solid var(--muted)"></span>underpowered</div>
+    <div class="ki"><span style="color:var(--amber)">&#9617;&#9617;</span> in&ndash;out gap</div>
+  </div>
+</div>
+<div class="tip" id="tip"></div>
+<script>
+const DATA = {"points": [{"order": 0, "run_id": "20260620T150639Z_prior_artifacts_v1_5039aeab", "created_at": "2026-06-20T15:06:39Z", "split": "prior_artifacts_v1", "code_commit": "356f3a8", "in_lift": 28.154, "out_lift": null, "gap": null, "in_underpowered": false, "out_underpowered": true, "in_survives": true, "out_survives": true, "n_families": null, "in_recurrence": 0.0732, "out_recurrence": null}, {"order": 1, "run_id": "20260620T152344Z_prior_artifacts_v1_3552f8ec", "created_at": "2026-06-20T15:23:44Z", "split": "prior_artifacts_v1", "code_commit": "eb7657b", "in_lift": 61.0, "out_lift": null, "gap": null, "in_underpowered": false, "out_underpowered": true, "in_survives": true, "out_survives": true, "n_families": null, "in_recurrence": 0.0732, "out_recurrence": null}, {"order": 2, "run_id": "20260620T153031Z_traditions_v1_a2debdbd", "created_at": "2026-06-20T15:30:31Z", "split": "traditions_v1", "code_commit": "eb7657b", "in_lift": 2.292, "out_lift": 6.895, "gap": -4.603, "in_underpowered": false, "out_underpowered": false, "in_survives": true, "out_survives": true, "n_families": 3, "in_recurrence": 0.2292, "out_recurrence": 0.1579}, {"order": 3, "run_id": "20260620T181456Z_traditions_v2_6aa53408", "created_at": "2026-06-20T18:14:56Z", "split": "traditions_v2", "code_commit": "19108b9", "in_lift": 2.159, "out_lift": 2.75, "gap": -0.591, "in_underpowered": false, "out_underpowered": false, "in_survives": true, "out_survives": false, "n_families": 4, "in_recurrence": 0.4568, "out_recurrence": 0.0968}, {"order": 4, "run_id": "20260620T184857Z_traditions_v3_be4708e5", "created_at": "2026-06-20T18:48:57Z", "split": "traditions_v3", "code_commit": "a142eab", "in_lift": 1.117, "out_lift": 1.045, "gap": 0.072, "in_underpowered": false, "out_underpowered": false, "in_survives": true, "out_survives": true, "n_families": 4, "in_recurrence": 0.2157, "out_recurrence": 0.1538}, {"order": 5, "run_id": "20260620T192333Z_traditions_v3_be4708e5", "created_at": "2026-06-20T19:23:33Z", "split": "traditions_v3", "code_commit": "f3bcd83", "in_lift": 1.117, "out_lift": 1.045, "gap": 0.072, "in_underpowered": false, "out_underpowered": false, "in_survives": true, "out_survives": true, "n_families": 4, "in_recurrence": 0.2157, "out_recurrence": 0.1538}, {"order": 6, "run_id": "20260620T221905Z_traditions_v4_73f7b6e7", "created_at": "2026-06-20T22:19:05Z", "split": "traditions_v4", "code_commit": "94a418e", "in_lift": 1.117, "out_lift": 1.038, "gap": 0.079, "in_underpowered": false, "out_underpowered": false, "in_survives": true, "out_survives": true, "n_families": 4, "in_recurrence": 0.2157, "out_recurrence": 0.2045}], "stats": {"n_runs": 7, "n_with_out": 5, "max_lift": 61.0, "min_lift": 1.0, "last_gap": 0.079}};
+const pts = DATA.points;
+const tip = d3.select("#tip");
+
+d3.select("#stat").text(
+  `${DATA.stats.n_runs} runs · ${DATA.stats.n_with_out} with out-of-sample · `
+  + `lift range [${DATA.stats.min_lift}, ${DATA.stats.max_lift}] · `
+  + `last gap ${DATA.stats.last_gap===null?"n/a":DATA.stats.last_gap}`);
+
+const margin = {top: 24, right: 28, bottom: 64, left: 56};
+const W = 880, H = 420;
+const iw = W - margin.left - margin.right, ih = H - margin.top - margin.bottom;
+const svg = d3.select("#chart").attr("viewBox", `0 0 ${W} ${H}`);
+const g = svg.append("g").attr("transform", `translate(${margin.left},${margin.top})`);
+
+const x = d3.scalePoint().domain(pts.map(p => p.order)).range([0, iw]).padding(0.5);
+// log-ish but lifts can be ~1; use linear from 0 (or just below min) to max with headroom
+const yMax = Math.max(DATA.stats.max_lift * 1.08, 1.2);
+const yMin = Math.min(DATA.stats.min_lift * 0.9, 0.9);
+const y = d3.scaleLinear().domain([yMin, yMax]).range([ih, 0]).nice();
+
+// gridlines
+g.append("g").attr("class","grid")
+  .call(d3.axisLeft(y).ticks(6).tickSize(-iw).tickFormat(""));
+
+// gap band (between in and out where both exist) — draw as area per adjacent segment
+const haveBoth = pts.filter(p => p.in_lift!==null && p.out_lift!==null);
+if (haveBoth.length >= 1) {
+  const area = d3.area()
+    .x(p => x(p.order))
+    .y0(p => y(p.out_lift))
+    .y1(p => y(p.in_lift));
+  g.append("path").datum(haveBoth).attr("class","gap").attr("d", area);
+}
+
+// chance line at 1.0
+g.append("line").attr("class","chance")
+  .attr("x1",0).attr("x2",iw).attr("y1",y(1)).attr("y2",y(1));
+g.append("text").attr("class","chance-lbl").attr("x",iw).attr("y",y(1)-5)
+  .attr("text-anchor","end").text("chance (lift = 1)");
+
+// axes
+g.append("g").attr("class","axis").attr("transform",`translate(0,${ih})`)
+  .call(d3.axisBottom(x).tickFormat(o => {
+    const p = pts[o]; return p ? p.split.replace("traditions_","v").replace("prior_artifacts_v1","prior") : o;
+  }));
+g.append("g").attr("class","axis").call(d3.axisLeft(y).ticks(6));
+g.append("text").attr("class","axis").attr("transform","rotate(-90)")
+  .attr("x",-ih/2).attr("y",-40).attr("text-anchor","middle").text("lift over null");
+g.append("text").attr("class","axis")
+  .attr("x",iw/2).attr("y",ih+50).attr("text-anchor","middle").text("run (walk-forward order →)");
+
+const lineGen = key => d3.line()
+  .defined(p => p[key] !== null)
+  .x(p => x(p.order)).y(p => y(p[key]));
+
+g.append("path").datum(pts).attr("class","ln-in").attr("d", lineGen("in_lift"));
+g.append("path").datum(pts).attr("class","ln-out").attr("d", lineGen("out_lift"));
+
+function plotSeries(key, survKey, upKey, color) {
+  g.selectAll(null).data(pts.filter(p => p[key] !== null)).join("circle")
+    .attr("cx", p => x(p.order)).attr("cy", p => y(p[key]))
+    .attr("r", 5)
+    .attr("fill", p => p[upKey] ? "transparent" : (p[survKey] ? "var(--green)" : color))
+    .attr("stroke", p => p[survKey] ? "var(--green)" : color)
+    .attr("stroke-width", 1.6)
+    .style("cursor","pointer")
+    .on("mousemove", (e,p) => {
+      const sample = key==="in_lift" ? "in-sample (train/val)" : "out-of-sample (test/holdout)";
+      tip.style("opacity",1)
+         .style("left",(e.clientX+12)+"px").style("top",(e.clientY+12)+"px")
+         .html(`<b>${p.split}</b> · ${p.code_commit}<br>`
+             + `${p.run_id}<br>${p.created_at}<br>`
+             + `${sample}<br>`
+             + `lift ${p[key]===null?"n/a":p[key].toFixed(3)}`
+             + (p.gap!==null?` · gap ${p.gap.toFixed(3)}`:"")
+             + (p.n_families!==null?`<br>n_families ${p.n_families}`:"")
+             + (p[upKey]?"<br>⚠ underpowered":"")
+             + (p[survKey]?"<br>✓ survives all nulls":"<br>✗ fails a null"));
+    })
+    .on("mouseleave", () => tip.style("opacity",0));
+}
+plotSeries("out_lift","out_survives","out_underpowered","var(--teal)");
+plotSeries("in_lift","in_survives","in_underpowered","var(--accent)");
+</script></body></html>
