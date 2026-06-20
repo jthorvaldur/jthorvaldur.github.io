@@ -66,6 +66,10 @@
     .rail { display: inline-flex; align-items: center; gap: 0.5rem; }
     .good { color: var(--green); } .bad { color: var(--red); } .mid { color: var(--amber); }
     tr.highlight td { background: rgba(158,206,106,0.07); }
+    .chip { font-family:'JetBrains Mono',monospace; font-size:0.6rem; letter-spacing:0.08em; text-transform:uppercase;
+      padding:0.12rem 0.45rem; border-radius:999px; margin-left:0.5rem; vertical-align:middle; }
+    .chip.meas { color:var(--green); border:1px solid rgba(158,206,106,0.4); background:rgba(158,206,106,0.08); }
+    .chip.modeled { color:var(--dim); border:1px solid var(--border); }
     /* chart */
     .chart-box { margin-top: 1rem; background: var(--surface); border: 1px solid var(--border); border-radius: 14px; padding: 1.2rem; }
     .note { font-size: 0.78rem; color: var(--dim); margin-top: 0.8rem; font-family: 'JetBrains Mono', monospace; }
@@ -122,7 +126,7 @@
       <tbody></tbody>
     </table>
   </div>
-  <div class="note">Models: Stripe 2.9% + $0.30 · USDC-L1 ≈ $2.70 ERC-20 gas · wire ≈ $25 flat · ACH ≈ $0.25 · Compadres = L2 gas (~$0.005) + 5 bps only if a swap is involved.</div>
+  <div class="note">Compadres = <b>measured on-chain gasUsed</b> (peer transfer 90,150 gas; transfer+swap 217,756 gas, from a local anvil run) priced at Base ~0.02 gwei &amp; ETH $3,000 → ~$0.005 / ~$0.013, plus the 5 bps AMM fee where a swap is involved. External rails are representative list prices: Stripe 2.9% + $0.30 · USDC-L1 ≈ $2.70 ERC-20 gas · wire ≈ $25 · ACH ≈ $0.25. A full live Base Sepolia run is still pending — that will replace the assumed gas price with a measured one.</div>
 
   <h2><span class="num">04</span>Extraction vs. transaction size</h2>
   <p class="lead">Flat fees (wire, gas) dominate small transfers and vanish on large ones; percentage fees (Stripe) stay constant. Compadres sits near the floor at every size because its only fee is a tiny basis-point swap charge. Both axes are logarithmic.</p>
@@ -156,11 +160,11 @@
 <script>
 /* ---------- cost model ---------- */
 const rails = [
-  { key:'cpdr_t', name:'Compadres — peer transfer', pct:0,      flat:0.005, color:'#9ece6a',
-    settle:'~2s (Base L2)', rev:'No (final)', cust:'Self-custody', trans:'On-chain + reconciler', hl:true },
-  { key:'cpdr_s', name:'Compadres — incl. AMM swap', pct:0.0005, flat:0.005, color:'#73daca',
-    settle:'~2s (Base L2)', rev:'No (final)', cust:'Self-custody', trans:'On-chain + reconciler', hl:true },
-  { key:'honey',  name:'Honey-backed CPDR (final)', pct:0.0005,  flat:0.005, color:'#e0af68',
+  { key:'cpdr_t', name:'Compadres — peer transfer', pct:0,      flat:0.0054, color:'#9ece6a',
+    settle:'~2s (Base L2)', rev:'No (final)', cust:'Self-custody', trans:'On-chain + reconciler', hl:true, meas:true },
+  { key:'cpdr_s', name:'Compadres — incl. AMM swap', pct:0.0005, flat:0.0131, color:'#73daca',
+    settle:'~2s (Base L2)', rev:'No (final)', cust:'Self-custody', trans:'On-chain + reconciler', hl:true, meas:true },
+  { key:'honey',  name:'Honey-backed CPDR (final)', pct:0.0005,  flat:0.0131, color:'#e0af68',
     settle:'~2s + fulfillment', rev:'No (burn final)', cust:'Self + audited reserve', trans:'On-chain + signed snapshots' },
   { key:'usdc',   name:'USDC on Ethereum L1', pct:0,            flat:2.70,  color:'#7aa2f7',
     settle:'~1–5 min', rev:'No', cust:'Self-custody', trans:'On-chain' },
@@ -184,8 +188,11 @@ const fmtPct = v => v < 0.01 ? v.toFixed(4)+'%' : v < 1 ? v.toFixed(3)+'%' : v.t
     const c = cost(r,A), pct = c/A*100;
     const tr = document.createElement('tr');
     if (r.hl) tr.className = 'highlight';
+    const chip = r.meas
+      ? `<span class="chip meas">measured gas</span>`
+      : `<span class="chip modeled">modeled</span>`;
     tr.innerHTML =
-      `<td><span class="rail"><i class="dot" style="background:${r.color}"></i>${r.name}</span></td>`+
+      `<td><span class="rail"><i class="dot" style="background:${r.color}"></i>${r.name} ${chip}</span></td>`+
       `<td class="num">${fmtUsd(c)}</td>`+
       `<td class="num">${fmtPct(pct)}</td>`+
       `<td>${r.settle}</td><td>${r.rev}</td><td>${r.cust}</td><td>${r.trans}</td>`;
