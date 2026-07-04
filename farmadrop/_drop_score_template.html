@@ -1,0 +1,390 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>DROP SCORE — Regenerative Factor Model</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600;9..144,700&family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;1,6..72,400&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/d3@7"></script>
+<style>
+:root{
+  --parchment:#faf6ec; --parchment-2:#f3ecda; --parchment-3:#ece2c9;
+  --loam:#1e3a2a; --loam-soft:#3a5343; --ink-fade:#6c7b6a;
+  --honey:#d9930d; --honey-deep:#b8790a;
+  --rust:#b23a1e; --rust-deep:#8f2c14;
+  --line:#c9bd9c; --line-soft:#ddd2b4;
+  --paper-card:#fffdf6;
+  /* domain palette */
+  --soil:#2f6b4a; --diversity:#d9930d; --practices:#b23a1e; --animal:#2b6d84; --community:#7a5b8f;
+}
+*{box-sizing:border-box}
+html,body{margin:0;height:100%;background:var(--parchment);color:var(--loam);
+  font-family:"Newsreader",Georgia,serif;font-size:16px;overflow:hidden}
+
+/* textures */
+.grain{position:fixed;inset:0;pointer-events:none;z-index:0;opacity:.05;mix-blend-mode:multiply}
+.fieldrows{position:fixed;inset:0;pointer-events:none;z-index:0;opacity:.35;
+  background:
+    repeating-linear-gradient(115deg, transparent 0 46px, rgba(30,58,42,.028) 46px 47px),
+    radial-gradient(140% 120% at 12% 8%, #fdfbf3 0%, var(--parchment) 42%, var(--parchment-2) 100%);}
+
+/* layout */
+#app{position:relative;z-index:1;display:flex;flex-direction:column;height:100vh}
+header{padding:18px 30px 12px;border-bottom:1.5px solid var(--line);
+  background:linear-gradient(180deg, rgba(255,253,246,.7), rgba(250,246,236,.2));
+  display:flex;align-items:flex-end;justify-content:space-between;gap:24px;flex-wrap:wrap}
+.brand{opacity:0;transform:translateY(10px);animation:rise .8s .05s cubic-bezier(.2,.7,.2,1) forwards}
+.brand h1{font-family:"Fraunces",serif;font-optical-sizing:auto;font-weight:600;
+  font-size:clamp(24px,3.2vw,40px);line-height:.98;margin:0;letter-spacing:-.01em;color:var(--loam)}
+.brand h1 .drop{color:var(--honey-deep);font-style:italic}
+.brand .kicker{font-family:"IBM Plex Mono",monospace;font-size:11px;letter-spacing:.14em;
+  text-transform:uppercase;color:var(--ink-fade);margin-top:9px;max-width:60ch;line-height:1.5}
+nav{display:flex;gap:6px;align-items:center;opacity:0;transform:translateY(10px);
+  animation:rise .8s .18s cubic-bezier(.2,.7,.2,1) forwards}
+nav a{font-family:"IBM Plex Mono",monospace;font-size:12px;text-decoration:none;
+  color:var(--loam-soft);border:1px solid var(--line);border-radius:999px;
+  padding:7px 14px;background:var(--paper-card);transition:all .18s;white-space:nowrap}
+nav a:hover{background:var(--loam);color:var(--parchment);border-color:var(--loam)}
+nav a.here{background:var(--loam);color:var(--parchment);border-color:var(--loam)}
+
+/* toolbar */
+.toolbar{display:flex;gap:18px;align-items:center;flex-wrap:wrap;
+  padding:11px 30px;border-bottom:1px solid var(--line-soft);background:rgba(243,236,218,.5);
+  opacity:0;transform:translateY(8px);animation:rise .7s .3s cubic-bezier(.2,.7,.2,1) forwards}
+.legend{display:flex;gap:14px;flex-wrap:wrap;align-items:center}
+.legend .li{display:flex;align-items:center;gap:6px;font-family:"IBM Plex Mono",monospace;
+  font-size:11px;color:var(--loam-soft)}
+.legend .sw{width:12px;height:12px;border-radius:3px}
+.tools-right{margin-left:auto;display:flex;gap:10px;align-items:center}
+.btn{font-family:"IBM Plex Mono",monospace;font-size:11px;cursor:pointer;color:var(--loam-soft);
+  border:1.5px solid var(--line);border-radius:6px;padding:7px 11px;background:var(--paper-card);transition:all .16s}
+.btn:hover{border-color:var(--loam-soft);background:var(--parchment-2)}
+.search{position:relative}
+.search input{font-family:"Newsreader",serif;font-size:14px;color:var(--loam);
+  background:var(--paper-card);border:1.5px solid var(--line);border-radius:8px;
+  padding:8px 14px 8px 34px;width:220px;outline:none;transition:border-color .16s}
+.search input:focus{border-color:var(--honey)}
+.search svg{position:absolute;left:11px;top:50%;transform:translateY(-50%);opacity:.5}
+
+/* canvas */
+main{flex:1;position:relative;overflow:hidden}
+svg#canvas{width:100%;height:100%;display:block;cursor:grab}
+svg#canvas:active{cursor:grabbing}
+.link{fill:none;stroke:#a9a081;stroke-opacity:.5}
+.rel{fill:none;stroke-dasharray:2 4;stroke-opacity:.55;stroke-width:1.3px}
+.node circle{cursor:pointer;stroke-width:2}
+.node text{font-family:"Newsreader",serif;font-size:12.5px;fill:var(--loam);cursor:pointer;
+  paint-order:stroke;stroke:var(--parchment);stroke-width:3.6px}
+.node.t0 text{font-family:"Fraunces",serif;font-weight:600;font-size:16px}
+.node.t1 text{font-family:"Fraunces",serif;font-weight:500;font-size:13.5px}
+.node.match circle{stroke:var(--honey)!important;stroke-width:3.5px!important}
+.node.match text{fill:var(--honey-deep)}
+.node.faded{opacity:.22}
+
+/* detail card — almanac index card */
+#panel{position:absolute;top:16px;right:16px;width:346px;max-height:calc(100% - 32px);
+  overflow:auto;background:var(--paper-card);border:1px solid var(--line);border-radius:4px;
+  box-shadow:0 1px 0 var(--line),0 18px 40px -22px rgba(30,58,42,.5);
+  transform:translateX(24px);opacity:0;pointer-events:none;transition:all .34s cubic-bezier(.2,.7,.2,1);padding:0}
+#panel.open{transform:none;opacity:1;pointer-events:auto}
+#panel .card-head{padding:18px 20px 12px;border-bottom:1px solid var(--line-soft);position:relative}
+#panel .accent{position:absolute;left:0;top:0;bottom:0;width:5px}
+#panel .layer-tag{font-family:"IBM Plex Mono",monospace;font-size:10px;letter-spacing:.16em;
+  text-transform:uppercase;color:var(--ink-fade)}
+#panel h2{font-family:"Fraunces",serif;font-optical-sizing:auto;font-weight:600;
+  font-size:22px;line-height:1.1;margin:8px 0 6px;color:var(--loam)}
+#panel .type-pill{display:inline-block;font-family:"IBM Plex Mono",monospace;font-size:10px;
+  border:1px solid var(--line);border-radius:4px;padding:2px 7px;color:var(--loam-soft)}
+#panel .body{padding:14px 20px 22px}
+#panel h3{font-family:"IBM Plex Mono",monospace;font-size:10px;letter-spacing:.15em;
+  text-transform:uppercase;color:var(--ink-fade);margin:16px 0 6px;
+  border-bottom:1px solid var(--line-soft);padding-bottom:4px}
+#panel h3:first-child{margin-top:2px}
+#panel p.field{font-size:14.5px;line-height:1.45;margin:0;color:var(--loam)}
+#panel p.plain{font-size:15.5px;line-height:1.5;margin:0;color:var(--loam);font-style:italic}
+#panel .proxy{background:var(--parchment-2);border:1px solid var(--line-soft);border-radius:5px;
+  padding:9px 11px;font-size:14px;line-height:1.4;color:var(--loam-soft)}
+#panel .src-tag{display:inline-block;font-family:"IBM Plex Mono",monospace;font-size:11px;
+  background:#e5efe4;color:#2f6b4a;border-radius:5px;padding:5px 9px;line-height:1.4}
+#panel .ref{font-family:"IBM Plex Mono",monospace;font-size:10.5px;color:var(--loam-soft);
+  background:var(--parchment-2);border:1px solid var(--line-soft);border-radius:4px;
+  padding:7px 10px;margin-top:6px;word-break:break-word;line-height:1.45}
+#panel .close{position:absolute;top:12px;right:12px;cursor:pointer;border:none;background:none;
+  font-size:20px;color:var(--ink-fade);line-height:1;font-family:"Newsreader",serif}
+#panel .close:hover{color:var(--rust)}
+.hint{position:absolute;bottom:14px;left:16px;font-family:"IBM Plex Mono",monospace;
+  font-size:11px;color:var(--ink-fade);background:rgba(255,253,246,.75);
+  border:1px solid var(--line-soft);border-radius:6px;padding:7px 11px;pointer-events:none}
+
+footer{padding:9px 30px;border-top:1px solid var(--line);background:rgba(243,236,218,.6);
+  font-family:"IBM Plex Mono",monospace;font-size:10.5px;color:var(--ink-fade);line-height:1.6;
+  display:flex;justify-content:space-between;gap:18px;flex-wrap:wrap;align-items:center}
+footer a{color:var(--loam-soft)}
+footer .asset{color:var(--honey-deep);font-weight:500;white-space:nowrap}
+
+@keyframes rise{to{opacity:1;transform:none}}
+@media (max-width:760px){#panel{width:calc(100% - 32px)} .search input{width:140px} .legend{display:none}}
+</style>
+</head>
+<body>
+<svg class="grain"><filter id="grainf"><feTurbulence type="fractalNoise" baseFrequency="0.9" numOctaves="3" stitchTiles="stitch"/><feColorMatrix type="saturate" values="0"/></filter><rect width="100%" height="100%" filter="url(#grainf)"/></svg>
+<div class="fieldrows"></div>
+
+<div id="app">
+  <header>
+    <div class="brand">
+      <h1>DROP <span class="drop">SCORE</span> — Regenerative Factor Model</h1>
+      <div class="kicker">A guidance tree, not a black box — definitions and evidence, no weights.</div>
+    </div>
+    <nav>
+      <a href="index.html">index</a>
+      <a href="farmer_drop.html">main graph</a>
+      <a href="drop_score.html" class="here">drop score</a>
+    </nav>
+  </header>
+
+  <div class="toolbar">
+    <div class="legend" id="legend"></div>
+    <div class="tools-right">
+      <button class="btn" id="expandBtn">expand all</button>
+      <button class="btn" id="collapseBtn">collapse</button>
+      <div class="search">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg>
+        <input id="search" type="text" placeholder="search the tree…" autocomplete="off">
+      </div>
+    </div>
+  </div>
+
+  <main>
+    <svg id="canvas"></svg>
+    <div class="hint" id="hint">click a branch to open / close it · click any node for its definition card · drag to pan · scroll to zoom</div>
+    <aside id="panel">
+      <button class="close" id="closep">&times;</button>
+      <div class="card-head">
+        <div class="accent" id="p-accent"></div>
+        <div class="layer-tag" id="p-layer"></div>
+        <h2 id="p-label"></h2>
+        <span class="type-pill" id="p-type"></span>
+      </div>
+      <div class="body" id="p-body"></div>
+    </aside>
+  </main>
+
+  <footer>
+    <span id="foot-sources"></span>
+    <span class="asset">Standalone spec asset — world's first drop score</span>
+  </footer>
+</div>
+
+<script type="application/json" id="graph-data">
+__GRAPH_JSON__
+</script>
+
+<script>
+const DATA = JSON.parse(document.getElementById('graph-data').textContent);
+const byId = new Map(DATA.nodes.map(n=>[n.id,n]));
+
+const DOMAIN_COLORS = {root:'#1e3a2a', d_soil:'#2f6b4a', d_diversity:'#d9930d',
+  d_practices:'#b23a1e', d_animal:'#2b6d84', d_community:'#7a5b8f'};
+const DOMAIN_LABELS = {root:'Drop Score', d_soil:'Regenerative — Soil', d_diversity:'Diversity',
+  d_practices:'Operating Practices', d_animal:'Animal & Livestock Welfare', d_community:'Community & Local Economy'};
+const TIER_NAME = {0:'root', 1:'domain', 2:'factor', 3:'indicator'};
+function colorOf(n){return DOMAIN_COLORS[n.domain]||'#1e3a2a';}
+
+// ---- build hierarchy ----
+const root = d3.stratify().id(d=>d.id).parentId(d=>d.parent)(DATA.nodes);
+root.x0 = 0; root.y0 = 0;
+// collapse factors (tier 2) so indicators start hidden
+root.descendants().forEach(d=>{
+  if(d.data.tier===2 && d.children){ d._children=d.children; d.children=null; }
+});
+
+const dx=24, dy=248;
+const tree = d3.tree().nodeSize([dx,dy])
+  .separation((a,b)=>(a.parent===b.parent?1:1.35));
+const diagonal = d3.linkHorizontal().x(d=>d.y).y(d=>d.x);
+
+const svg = d3.select('#canvas');
+let W=svg.node().clientWidth, H=svg.node().clientHeight;
+const gRoot = svg.append('g');
+const gLink = gRoot.append('g').attr('fill','none');
+const gRel  = gRoot.append('g');
+const gNode = gRoot.append('g');
+
+const zoom = d3.zoom().scaleExtent([.3,2.6]).on('zoom',ev=>gRoot.attr('transform',ev.transform));
+svg.call(zoom).on('dblclick.zoom',null);
+svg.on('click',()=>closePanel());
+
+let matchIds = new Set();
+
+function update(source){
+  const nodesArr = root.descendants();
+  const linksArr = root.links();
+  tree(root);
+
+  let minX=Infinity, maxX=-Infinity;
+  root.each(d=>{ if(d.x<minX)minX=d.x; if(d.x>maxX)maxX=d.x; });
+
+  const t = svg.transition().duration(source?420:0);
+
+  // ---- structural links ----
+  const link = gLink.selectAll('path.link').data(linksArr, d=>d.target.id);
+  link.enter().append('path').attr('class','link')
+      .attr('stroke',d=>colorOf(d.target.data)).attr('stroke-width',d=>d.target.data.tier<=1?2.2:1.4)
+      .attr('stroke-opacity',.5)
+      .attr('d',d=>{const o={x:source?source.x0:d.source.x, y:source?source.y0:d.source.y};return diagonal({source:o,target:o});})
+    .merge(link).transition(t)
+      .attr('stroke',d=>colorOf(d.target.data)).attr('stroke-width',d=>d.target.data.tier<=1?2.2:1.4)
+      .attr('d',diagonal);
+  link.exit().transition(t).remove()
+      .attr('d',d=>{const o={x:source?source.x:d.source.x, y:source?source.y:d.source.y};return diagonal({source:o,target:o});});
+
+  // ---- nodes ----
+  const node = gNode.selectAll('g.node').data(nodesArr, d=>d.id);
+  const nodeEnter = node.enter().append('g')
+      .attr('class',d=>'node t'+d.data.tier)
+      .attr('transform',d=>`translate(${source?source.y0:d.y},${source?source.x0:d.x})`)
+      .attr('opacity',0)
+      .on('click',(ev,d)=>{ev.stopPropagation();
+        if(d.children||d._children){toggle(d);}
+        openPanel(d.data);
+      });
+
+  nodeEnter.append('circle')
+      .attr('r',d=>rad(d))
+      .attr('fill',d=>fillOf(d))
+      .attr('stroke',d=>colorOf(d.data));
+
+  nodeEnter.append('text')
+      .attr('dy','0.32em')
+      .attr('x',d=>(d.children||d._children)?-(rad(d)+6):(rad(d)+6))
+      .attr('text-anchor',d=>(d.children||d._children)?'end':'start')
+      .text(d=>d.data.label);
+
+  const nodeUpdate = nodeEnter.merge(node);
+  nodeUpdate.attr('class',d=>'node t'+d.data.tier+(matchIds.has(d.id)?' match':'')+(matchIds.size&&!matchIds.has(d.id)?' faded':''));
+  nodeUpdate.transition(t)
+      .attr('transform',d=>`translate(${d.y},${d.x})`).attr('opacity',1);
+  nodeUpdate.select('circle')
+      .attr('r',d=>rad(d)).attr('fill',d=>fillOf(d)).attr('stroke',d=>colorOf(d.data));
+  nodeUpdate.select('text')
+      .attr('x',d=>(d.children||d._children)?-(rad(d)+6):(rad(d)+6))
+      .attr('text-anchor',d=>(d.children||d._children)?'end':'start');
+
+  node.exit().transition(t).remove()
+      .attr('transform',`translate(${source?source.y:0},${source?source.x:0})`).attr('opacity',0);
+
+  // ---- related cross-links (only between currently visible nodes) ----
+  const visible = new Map(nodesArr.map(d=>[d.id,d]));
+  const relData = DATA.edges.filter(e=>e.relation==='related' && visible.has(e.from) && visible.has(e.to));
+  const rel = gRel.selectAll('path.rel').data(relData, d=>d.from+'>'+d.to);
+  rel.enter().append('path').attr('class','rel')
+      .attr('stroke',d=>colorOf(byId.get(d.from)))
+    .merge(rel).transition(t)
+      .attr('stroke',d=>colorOf(byId.get(d.from)))
+      .attr('d',d=>{
+        const a=visible.get(d.from), b=visible.get(d.to);
+        const mx=(a.y+b.y)/2;
+        return `M${a.y},${a.x} C${mx},${a.x} ${mx},${b.x} ${b.y},${b.x}`;
+      });
+  rel.exit().remove();
+
+  root.each(d=>{d.x0=d.x; d.y0=d.y;});
+}
+
+function rad(d){ if(d.data.tier===0)return 9; if(d.data.tier===1)return 7; if(d.data.tier===2)return 5.5; return 4.5; }
+function fillOf(d){ // collapsed internal = solid; expanded internal = parchment; leaf = solid
+  if(d._children) return colorOf(d.data);
+  if(d.children) return 'var(--paper-card)';
+  return colorOf(d.data);
+}
+function toggle(d){
+  if(d.children){ d._children=d.children; d.children=null; }
+  else if(d._children){ d.children=d._children; d._children=null; }
+  update(d);
+}
+
+// ---- panel ----
+function openPanel(n){
+  const p=document.getElementById('panel');
+  document.getElementById('p-accent').style.background=colorOf(n);
+  document.getElementById('p-layer').textContent=DOMAIN_LABELS[n.domain]+' · tier '+n.tier;
+  document.getElementById('p-label').textContent=n.label;
+  document.getElementById('p-type').textContent=TIER_NAME[n.tier];
+  const b=document.getElementById('p-body');
+  let h='';
+  h+='<h3>What it means</h3><p class="plain">'+esc(n.plain_meaning)+'</p>';
+  h+='<h3>Why it matters</h3><p class="field">'+esc(n.why_it_matters)+'</p>';
+  h+='<h3>What we would evaluate</h3><div class="proxy">'+esc(n.evaluable_proxy)+'</div>';
+  h+='<h3>Evidence source</h3><span class="src-tag">'+esc(n.data_source)+'</span>';
+  h+='<h3>Gaming-resistance</h3><p class="field">'+esc(n.gaming_resistance)+'</p>';
+  h+='<h3>References</h3>';
+  (n.refs||[]).forEach(r=>{h+='<div class="ref">'+esc(refCite(r))+'</div>';});
+  b.innerHTML=h;
+  p.classList.add('open');
+  document.getElementById('hint').style.display='none';
+}
+function closePanel(){document.getElementById('panel').classList.remove('open');}
+document.getElementById('closep').addEventListener('click',e=>{e.stopPropagation();closePanel();});
+function esc(s){return String(s).replace(/[&<>]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;'}[c]));}
+
+const SRC_URL=new Map(DATA.meta.sources.map(s=>[s.name,s.url]));
+function refCite(name){const u=SRC_URL.get(name);return u?(name+'  —  '+u):name;}
+
+// ---- expand / collapse controls ----
+function expandAll(){ root.each(d=>{ if(d._children){d.children=d._children;d._children=null;} }); update(root); fit(); }
+function collapseAll(){ root.descendants().forEach(d=>{ if(d.data.tier===2 && d.children){d._children=d.children;d.children=null;} }); matchIds=new Set(); update(root); fit(); }
+document.getElementById('expandBtn').addEventListener('click',expandAll);
+document.getElementById('collapseBtn').addEventListener('click',()=>{document.getElementById('search').value='';collapseAll();});
+
+// ---- search: expand tree + highlight matches ----
+document.getElementById('search').addEventListener('input',e=>{
+  const q=e.target.value.trim().toLowerCase();
+  if(!q){ matchIds=new Set(); update(root); return; }
+  root.each(d=>{ if(d._children){d.children=d._children;d._children=null;} }); // expand everything
+  matchIds=new Set();
+  root.each(d=>{
+    const hay=(d.data.label+' '+d.data.plain_meaning+' '+d.data.why_it_matters+' '+
+      d.data.evaluable_proxy+' '+d.data.data_source+' '+(d.data.refs||[]).join(' ')).toLowerCase();
+    if(hay.includes(q)) matchIds.add(d.id);
+  });
+  update(root); fit();
+});
+
+// ---- legend ----
+const lg=document.getElementById('legend');
+[['d_soil','Soil'],['d_diversity','Diversity'],['d_practices','Operating'],['d_animal','Animal welfare'],['d_community','Community']]
+  .forEach(([k,lab])=>{lg.innerHTML+=`<span class="li"><span class="sw" style="background:${DOMAIN_COLORS[k]}"></span>${lab}</span>`;});
+
+// ---- footer sources ----
+document.getElementById('foot-sources').innerHTML =
+  'Grounded in: '+DATA.meta.sources.map(s=>`<a href="${s.url}" target="_blank" rel="noopener">${s.name.split(' — ')[0]}</a>`).join(' · ')
+  +' &nbsp;|&nbsp; No weights, no scores — evidence only.';
+
+// ---- fit to view ----
+let userZoomed=false;
+svg.on('wheel.usr mousedown.usr',()=>{userZoomed=true;},true);
+function fit(force){
+  if(userZoomed && !force) return;
+  const ns=root.descendants();
+  const xs=ns.map(d=>d.x), ys=ns.map(d=>d.y);
+  const minX=Math.min(...xs), maxX=Math.max(...xs), minY=Math.min(...ys), maxY=Math.max(...ys);
+  const gw=(maxY-minY)+300, gh=(maxX-minX)+120;
+  const k=Math.min(W/gw, H/gh, 1.25);
+  const tx=40 - k*minY + 20;
+  const ty=H/2 - k*(minX+maxX)/2;
+  svg.transition().duration(force?0:600).call(zoom.transform, d3.zoomIdentity.translate(tx,ty).scale(k));
+}
+
+update(null);
+setTimeout(()=>fit(true), 60);
+
+window.addEventListener('resize',()=>{
+  W=svg.node().clientWidth; H=svg.node().clientHeight;
+  if(!userZoomed) fit(true);
+});
+</script>
+</body>
+</html>
