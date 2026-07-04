@@ -1,0 +1,517 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>FARMER DROP — Drop Host, the network's atom</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,500;0,9..144,600;0,9..144,700;1,9..144,400&family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;0,6..72,600;1,6..72,400&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --parchment:#faf6ec; --parchment-2:#f3ecda; --parchment-3:#ece2c9;
+  --loam:#1e3a2a; --loam-soft:#3a5343; --ink-fade:#6c7b6a;
+  --honey:#d9930d; --honey-deep:#b8790a;
+  --rust:#b23a1e; --rust-deep:#8f2c14;
+  --line:#c9bd9c; --line-soft:#ddd2b4;
+  --paper-card:#fffdf6;
+  --conceptual:#2f6b4a; --business:#7a5b8f; --token:#d9930d; --data:#2b6d84;
+  --good:#2f6b4a; --warn:#b8790a; --bad:#8f2c14;
+}
+*{box-sizing:border-box}
+html,body{margin:0;background:var(--parchment);color:var(--loam);
+  font-family:"Newsreader",Georgia,serif;font-size:16px;line-height:1.5}
+.grain{position:fixed;inset:0;pointer-events:none;z-index:0;opacity:.05;mix-blend-mode:multiply}
+.fieldrows{position:fixed;inset:0;pointer-events:none;z-index:0;opacity:.35;
+  background:
+    repeating-linear-gradient(115deg, transparent 0 46px, rgba(30,58,42,.028) 46px 47px),
+    radial-gradient(140% 120% at 12% 8%, #fdfbf3 0%, var(--parchment) 42%, var(--parchment-2) 100%);}
+#app{position:relative;z-index:1;max-width:1180px;margin:0 auto;padding:0 22px 90px}
+
+header{padding:22px 0 14px;border-bottom:1.5px solid var(--line);
+  display:flex;align-items:flex-end;justify-content:space-between;gap:24px;flex-wrap:wrap;
+  position:sticky;top:0;z-index:20;
+  background:linear-gradient(180deg, var(--parchment) 55%, rgba(250,246,236,.85));
+  backdrop-filter:blur(2px)}
+.brand h1{font-family:"Fraunces",serif;font-optical-sizing:auto;font-weight:600;
+  font-size:clamp(23px,3vw,38px);line-height:.96;margin:0;letter-spacing:-.01em}
+.brand h1 .drop{color:var(--honey-deep);font-style:italic}
+.brand .kicker{font-family:"IBM Plex Mono",monospace;font-size:11px;letter-spacing:.2em;
+  text-transform:uppercase;color:var(--ink-fade);margin-top:8px}
+nav{display:flex;gap:6px;align-items:center;flex-wrap:wrap}
+nav a{font-family:"IBM Plex Mono",monospace;font-size:12px;text-decoration:none;
+  color:var(--loam-soft);border:1px solid var(--line);border-radius:999px;
+  padding:7px 14px;background:var(--paper-card);transition:all .18s;white-space:nowrap}
+nav a:hover{background:var(--loam);color:var(--parchment);border-color:var(--loam)}
+nav a.here{background:var(--loam);color:var(--parchment);border-color:var(--loam)}
+
+.banner{margin:20px 0 8px;border:2px solid var(--honey-deep);border-radius:8px;
+  background:linear-gradient(180deg,#fbf1d9,#f6e6c4);padding:15px 20px;
+  display:flex;gap:14px;align-items:flex-start;
+  box-shadow:0 14px 30px -22px rgba(184,121,10,.6)}
+.banner .flag{font-family:"IBM Plex Mono",monospace;font-weight:600;font-size:11px;
+  letter-spacing:.14em;color:#fff;background:var(--honey-deep);border-radius:5px;
+  padding:5px 9px;white-space:nowrap;margin-top:2px}
+.banner p{margin:0;font-size:15.5px;color:var(--loam)}
+.banner b{font-family:"Fraunces",serif}
+
+.controls{position:sticky;top:78px;z-index:15;margin:18px 0 6px;
+  background:var(--paper-card);border:1.5px solid var(--line);border-radius:10px;
+  box-shadow:0 1px 0 var(--line),0 16px 34px -26px rgba(30,58,42,.5);padding:14px 18px}
+.controls .chead{font-family:"IBM Plex Mono",monospace;font-size:10px;letter-spacing:.16em;
+  text-transform:uppercase;color:var(--ink-fade);margin-bottom:11px;display:flex;
+  justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap}
+.ctrl-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(165px,1fr));gap:16px 22px}
+.ctrl label{display:block;font-family:"IBM Plex Mono",monospace;font-size:11px;
+  color:var(--loam-soft);letter-spacing:.03em;margin-bottom:5px;
+  display:flex;justify-content:space-between;align-items:baseline}
+.ctrl label .val{font-weight:600;color:var(--honey-deep);font-size:13px}
+input[type=range]{width:100%;accent-color:var(--honey-deep);height:22px;cursor:pointer}
+.ctrl .sub{font-size:10px;color:var(--ink-fade);margin-top:2px;font-family:"IBM Plex Mono",monospace}
+.reset{font-family:"IBM Plex Mono",monospace;font-size:10.5px;cursor:pointer;
+  border:1px solid var(--line);background:var(--parchment-2);border-radius:6px;
+  padding:5px 10px;color:var(--loam-soft)}
+.reset:hover{border-color:var(--loam-soft)}
+
+section{margin-top:40px;scroll-margin-top:150px}
+.sec-num{font-family:"IBM Plex Mono",monospace;font-size:11px;letter-spacing:.2em;
+  color:var(--honey-deep);text-transform:uppercase}
+h2.sec{font-family:"Fraunces",serif;font-weight:600;font-size:clamp(21px,2.6vw,30px);
+  margin:4px 0 6px;line-height:1.06;letter-spacing:-.01em}
+.lede{font-size:16px;color:var(--loam-soft);max-width:76ch;margin:0 0 16px}
+.lede b{color:var(--loam)}
+
+.panel{background:var(--paper-card);border:1px solid var(--line);border-radius:8px;
+  box-shadow:0 1px 0 var(--line),0 16px 34px -28px rgba(30,58,42,.5);
+  padding:18px 20px;margin-bottom:16px}
+.panel h3{font-family:"IBM Plex Mono",monospace;font-size:10.5px;letter-spacing:.16em;
+  text-transform:uppercase;color:var(--ink-fade);margin:0 0 12px;
+  border-bottom:1px solid var(--line-soft);padding-bottom:6px}
+
+table{width:100%;border-collapse:collapse;font-size:13.5px}
+th,td{text-align:right;padding:6px 8px;border-bottom:1px dotted var(--line-soft)}
+th:first-child,td:first-child{text-align:left}
+thead th{font-family:"IBM Plex Mono",monospace;font-size:10px;letter-spacing:.05em;
+  text-transform:uppercase;color:var(--ink-fade);border-bottom:1.5px solid var(--line)}
+td.num,th.num{font-family:"IBM Plex Mono",monospace}
+tr.total td{border-top:1.5px solid var(--line);border-bottom:none;font-weight:600;
+  font-family:"IBM Plex Mono",monospace}
+tr.sub td{color:var(--ink-fade);font-size:12.5px}
+.tag{display:inline-block;font-family:"IBM Plex Mono",monospace;font-size:9.5px;
+  padding:1px 6px;border-radius:4px;letter-spacing:.04em;vertical-align:middle}
+.tag.good{background:#e5efe4;color:var(--good)}
+.tag.warn{background:#fbeecb;color:var(--warn)}
+.tag.bad{background:#f6d9cf;color:var(--bad)}
+
+.two{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+@media(max-width:760px){.two{grid-template-columns:1fr}}
+
+.strip{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:1px;
+  background:var(--line-soft);border:1px solid var(--line);border-radius:8px;overflow:hidden;margin:14px 0}
+.strip .cell{background:var(--paper-card);padding:13px 15px}
+.strip .k{font-family:"IBM Plex Mono",monospace;font-size:9.5px;letter-spacing:.1em;
+  text-transform:uppercase;color:var(--ink-fade)}
+.strip .v{font-family:"Fraunces",serif;font-weight:600;font-size:22px;line-height:1.1;margin-top:3px}
+.strip .v.bad{color:var(--rust-deep)} .strip .v.good{color:var(--good)}
+.strip .note{font-size:11px;color:var(--ink-fade);margin-top:2px}
+
+.defcard{display:grid;grid-template-columns:1.2fr .8fr;gap:22px}
+@media(max-width:760px){.defcard{grid-template-columns:1fr}}
+.needs{list-style:none;padding:0;margin:0}
+.needs li{padding:8px 0 8px 26px;position:relative;border-bottom:1px dotted var(--line-soft);font-size:14px}
+.needs li:before{content:"◆";position:absolute;left:2px;top:8px;color:var(--conceptual);font-size:10px}
+.who-list{display:flex;flex-wrap:wrap;gap:8px;margin-top:6px}
+.who-chip{font-family:"IBM Plex Mono",monospace;font-size:11px;border:1px solid var(--line);
+  border-radius:6px;padding:5px 10px;background:var(--parchment);color:var(--loam-soft)}
+.who-chip.church{border-color:var(--honey-deep);color:var(--honey-deep);background:#fbf1d9}
+
+/* church waterfall bars */
+.wf{margin-top:6px}
+.wfrow{display:flex;align-items:center;gap:10px;margin:6px 0;font-size:13px}
+.wfrow .lab{font-family:"IBM Plex Mono",monospace;font-size:11px;width:150px;color:var(--loam-soft)}
+.wfrow .bar{flex:1;height:16px;background:var(--parchment-3);border-radius:7px;overflow:hidden}
+.wfrow .fill{height:100%}
+.wfrow .amt{font-family:"IBM Plex Mono",monospace;font-size:11px;width:66px;text-align:right}
+
+.fm{list-style:none;padding:0;margin:0}
+.fm li{padding:10px 0 10px 26px;position:relative;border-bottom:1px dotted var(--line-soft);
+  font-size:14.5px;color:var(--loam-soft)}
+.fm li:before{content:"⚠";position:absolute;left:0;top:9px;color:var(--rust);font-size:12px}
+.fm li b{color:var(--loam)}
+.fm li .src{font-family:"IBM Plex Mono",monospace;font-size:10.5px;color:var(--ink-fade)}
+
+.assume{border-left:4px solid var(--honey-deep);background:#fbf1d9;border-radius:0 8px 8px 0;
+  padding:11px 16px;margin:12px 0;font-size:13.5px;color:var(--loam)}
+.assume b{font-family:"IBM Plex Mono",monospace;font-size:10px;letter-spacing:.12em;
+  text-transform:uppercase;color:var(--honey-deep);display:block;margin-bottom:3px}
+
+.cite{font-family:"IBM Plex Mono",monospace;font-size:11.5px;color:var(--loam-soft)}
+.mininav{display:flex;gap:8px;flex-wrap:wrap;margin:16px 0 0}
+.mininav a{font-family:"IBM Plex Mono",monospace;font-size:11px;text-decoration:none;
+  color:var(--loam-soft);border:1px solid var(--line-soft);border-radius:6px;padding:5px 10px;
+  background:var(--paper-card)}
+.mininav a:hover{border-color:var(--honey);color:var(--honey-deep)}
+footer{margin-top:46px;padding:16px 0;border-top:1.5px solid var(--line);
+  font-family:"IBM Plex Mono",monospace;font-size:10.5px;color:var(--ink-fade);line-height:1.6}
+footer .warn{color:var(--rust-deep)}
+.mono{font-family:"IBM Plex Mono",monospace}
+</style>
+</head>
+<body>
+<svg class="grain"><filter id="grainf"><feTurbulence type="fractalNoise" baseFrequency="0.9" numOctaves="3" stitchTiles="stitch"/><feColorMatrix type="saturate" values="0"/></filter><rect width="100%" height="100%" filter="url(#grainf)"/></svg>
+<div class="fieldrows"></div>
+
+<div id="app">
+  <header>
+    <div class="brand">
+      <h1>FARMER <span class="drop">DROP</span> — Drop Host</h1>
+      <div class="kicker">The network's atom · where people actually buy &amp; pick up the food</div>
+    </div>
+    <nav>
+      <a href="index.html">index</a>
+      <a href="farmer_drop.html">main graph</a>
+      <a href="drop_host.html" class="here">drop host</a>
+      <a href="propagation.html">propagation</a>
+    </nav>
+  </header>
+
+  <div class="banner">
+    <div class="flag">CRITIQUE · FLAG EVERY ASSUMPTION</div>
+    <p>A drop host is <b>where people actually buy and pick up the food</b> — the physical retail atom of the whole network. Every number below is built from a small editable <span class="mono">CONFIG</span>. Fee splits (host ~5%, haul ~5%, platform ~10%) are <b>working assumptions from the voice-note map</b>, and the platform take inherits the unresolved <span class="mono">DR-1</span> ambiguity (10% vs 0.10%). Read the ⚠ lines as open questions for Volkmar &amp; Magnus, not settled facts.</p>
+  </div>
+
+  <div class="mininav">
+    <a href="#s1">1 · what a drop host is</a>
+    <a href="#s2">2 · the $100 basket, two ways</a>
+    <a href="#s3">3 · roles &amp; incentives</a>
+    <a href="#s4">4 · church-as-host</a>
+    <a href="#s5">5 · failure modes</a>
+  </div>
+
+  <!-- LIVE CONTROLS -->
+  <div class="controls" id="controls">
+    <div class="chead">
+      <span>Live fee model · drag to recompute every waterfall ↓</span>
+      <button class="reset" id="reset">reset to map defaults</button>
+    </div>
+    <div class="ctrl-grid">
+      <div class="ctrl">
+        <label>Basket <span class="val" id="v-basket"></span></label>
+        <input type="range" id="s-basket" min="20" max="200" step="5">
+        <div class="sub">the $100 basket (§3.2)</div>
+      </div>
+      <div class="ctrl">
+        <label>Host take <span class="val" id="v-host"></span></label>
+        <input type="range" id="s-host" min="0" max="0.12" step="0.005">
+        <div class="sub">map: ~5% per basket</div>
+      </div>
+      <div class="ctrl">
+        <label>Haul take (per hop) <span class="val" id="v-haul"></span></label>
+        <input type="range" id="s-haul" min="0" max="0.12" step="0.005">
+        <div class="sub">map: ~5% farm→host</div>
+      </div>
+      <div class="ctrl">
+        <label>Platform take <span class="val" id="v-take"></span></label>
+        <input type="range" id="s-take" min="0.001" max="0.20" step="0.001">
+        <div class="sub">DR-1: ~10% (not 0.10%)</div>
+      </div>
+      <div class="ctrl">
+        <label>Extra hops <span class="val" id="v-hops"></span></label>
+        <input type="range" id="s-hops" min="0" max="2" step="1">
+        <div class="sub">each adds another haul slice</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- SECTION 1 -->
+  <section id="s1">
+    <div class="sec-num">Section 1</div>
+    <h2 class="sec">What a drop host is</h2>
+    <p class="lede">Not a warehouse, not a store — the <b>pickup point</b>. A member orders on the platform; the food is hauled from the farm to the nearest drop host; the member collects it inside a pickup window. Everything the network does upstream (routing, tokens, Drop Score) exists to fill these atoms. The map counts <b>~5 hosts today</b>; ideally each is wrapped as a <b>PMA</b>.</p>
+    <div class="panel">
+      <div class="defcard">
+        <div>
+          <h3>What it needs to function</h3>
+          <ul class="needs">
+            <li><b>Cold + dry space</b> — a fridge/freezer and shelf for the pickup window; the binding constraint for perishables.</li>
+            <li><b>A pickup window</b> — a predictable few-hour slot members can rely on (the retail "open hours").</li>
+            <li><b>A coordinator</b> — one human who receives the haul, checks it in, and hands baskets to members. The single point of local trust.</li>
+            <li><b>A location members already go to</b> — church, farm, home, or small shop. Convenience is the whole product.</li>
+          </ul>
+          <div class="assume">
+            <b>Assumption</b>
+            "Fridge + window + coordinator" is inferred from the map's description of hosts as aggregation/pickup nodes — the map never enumerates minimum host requirements. Confirm the real spec before recruiting.
+          </div>
+        </div>
+        <div>
+          <h3>Who can be one</h3>
+          <div class="who-list">
+            <span class="who-chip church">Churches / parish halls</span>
+            <span class="who-chip">Farms (host their own drop)</span>
+            <span class="who-chip">Homes (a neighbor's garage fridge)</span>
+            <span class="who-chip">Small shops / co-ops</span>
+            <span class="who-chip">Community centers</span>
+          </div>
+          <p class="cite" style="margin:14px 0 0">The host is recruited &amp; trained by an <b>independent contractor</b> who earns 3% of that host's drop volume for a fixed window (out of the platform's 10% take, §3.1). Churches carry a built-in fundraising angle — see §4.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- SECTION 2 -->
+  <section id="s2">
+    <div class="sec-num">Section 2</div>
+    <h2 class="sec">The $100 basket, two ways</h2>
+    <p class="lede">Same basket, same host cut, same platform take — the only difference is <b>who hauls the food farm→host</b>. If the farmer drives it himself, he pockets the 5% haul on top of his ~80%. If an Uber-style driver (anyone monetizing an idle truck) hauls it, that 5% goes to the driver instead. The contractor's 3% is carved <b>out of the platform's take</b>, not added on top.</p>
+
+    <div class="two">
+      <div class="panel">
+        <h3>(a) Farmer self-hauls — keeps the 5%</h3>
+        <table id="tbl-a"><thead><tr><th>Per basket</th><th class="num">share</th><th class="num">amount</th></tr></thead><tbody></tbody></table>
+      </div>
+      <div class="panel">
+        <h3>(b) Driver hauls — driver earns the 5%</h3>
+        <table id="tbl-b"><thead><tr><th>Per basket</th><th class="num">share</th><th class="num">amount</th></tr></thead><tbody></tbody></table>
+      </div>
+    </div>
+
+    <div class="panel">
+      <h3>Two-hop variant — where the math stops closing</h3>
+      <p class="cite" style="margin:0 0 10px">Add an extra hop (farm→hub→host, or a relay driver) and a <b>second</b> haul slice appears. The 80% farmer promise and the extra 5% cannot both hold — either the basket costs more or the farmer's share falls. This table shows the tension explicitly.</p>
+      <table id="tbl-c"><thead><tr><th>Per basket</th><th class="num">share</th><th class="num">amount</th></tr></thead><tbody></tbody></table>
+      <div id="close-flag"></div>
+    </div>
+
+    <div class="assume">
+      <b>Assumption</b>
+      The "farmer keeps ~80%" figure and the flat 5% per-hop haul are the map's headline claims (§3.2) — neither is backed by a real unit-economics sheet, and the platform take is <span class="mono">DR-1</span>-unresolved. Treat the closing $100 as a designed identity, not a measured outcome.
+    </div>
+  </section>
+
+  <!-- SECTION 3 -->
+  <section id="s3">
+    <div class="sec-num">Section 3</div>
+    <h2 class="sec">Roles &amp; incentives — who gives what, who earns what, why they stay</h2>
+    <p class="lede">Six actors touch a basket. Earnings shown per <b id="roles-basket"></b> basket at the live model. The network only holds together if every row's "why they stay" is true — that is the real due-diligence question.</p>
+    <div class="panel">
+      <table id="tbl-roles"><thead><tr>
+        <th>Actor</th><th>Gives</th><th class="num">Earns / basket</th><th>Why they stay</th>
+      </tr></thead><tbody></tbody></table>
+    </div>
+  </section>
+
+  <!-- SECTION 4 -->
+  <section id="s4">
+    <div class="sec-num">Section 4</div>
+    <h2 class="sec">Church-as-host — the parish hall earns 5% of every basket</h2>
+    <p class="lede">The median US congregation is <b>~70 weekly attendees ≈ ~30 households</b> (NCS-IV / FACT). At an early <b>12% weekly participation</b> that is roughly <b>3–4 baskets a week</b>. The fundraiser framing writes itself: the church hosts the drop, and the parish hall earns <b>5% of every basket</b> that passes through it — a recurring, effortless collection plate tied to groceries the congregation already buys.</p>
+    <div class="two">
+      <div class="panel">
+        <h3>Congregation math (live basket, $35 default)</h3>
+        <div class="strip" id="church-strip"></div>
+        <div class="wf" id="church-wf"></div>
+      </div>
+      <div class="panel">
+        <h3>The fundraiser framing</h3>
+        <p style="font-size:14.5px;color:var(--loam-soft);margin:0 0 10px">"Add your congregation. Every grocery basket a member picks up here returns <b>5%</b> to the parish hall — no bake sale, no volunteer shift beyond the pickup window. Early it is a few dollars a week; at 12% participation across a 70-seat church it is a modest but recurring line, and it scales with the congregation."</p>
+        <div class="assume">
+          <b>Reality check</b>
+          At the default $35 basket the early number is small — about <span id="church-week"></span>/week. The fundraising story is real but <b>modest</b> at median scale; it becomes material only with larger congregations (attendee-weighted mean ~360), higher baskets, or higher participation. Do not oversell the collection plate.
+        </div>
+        <p class="cite" style="margin:10px 0 0">Cite: median weekly attendance ≈ 70 — U.S. Congregational Life Survey / Faith Communities Today (FACT) &amp; National Congregations Study (NCS-IV). See <span class="mono">propagation.html</span> for the network-growth model built on this atom.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- SECTION 5 -->
+  <section id="s5">
+    <div class="sec-num">Section 5</div>
+    <h2 class="sec">Failure modes — the honest almanac</h2>
+    <p class="lede">Community-hosted food distribution has a long, instructive graveyard. These are the ways the drop-host layer breaks, drawn from real precedents.</p>
+    <div class="panel">
+      <ul class="fm">
+        <li><b>Host churn &amp; volunteer burnout.</b> The coordinator is unpaid attention, not salaried labor. <span class="src">SHARE Food Network and Bountiful Baskets both leaned on volunteer host-site coordinators; burnout and turnover were chronic — Bountiful Baskets wound down in 2018.</span></li>
+        <li><b>Cold-chain &amp; food safety at volunteer sites.</b> A church fridge is not a licensed commissary. <span class="src">Perishables held in uninspected volunteer space is a liability and a regulatory exposure the map does not price in.</span></li>
+        <li><b>Hosts as single points of local trust.</b> One coordinator per neighborhood means one person's reliability gates the whole local network. <span class="src">If they quit, move, or mishandle a hand-off, that geography goes dark with no redundancy.</span></li>
+        <li><b>Cash-handling &amp; reconciliation.</b> Any cash at pickup, or credits owed to the host, invites shrinkage and disputes. <span class="src">The 5% host cut must be auto-settled by the ledger, never hand-counted — otherwise trust erodes fast.</span></li>
+        <li><b>The 5% + 5% + 10% + 3% stack vs the 80% promise.</b> Host, haul, platform, and contractor all draw from the same basket. <span class="src">The map promises the farmer ~80% <b>and</b> a decentralized set of paid intermediaries — the arithmetic only closes if the take is ~10% (not 0.10%) and hops stay at one. Every added hop or a higher take breaks either the farmer promise or the member price. This is the load-bearing tension of the whole model.</span></li>
+      </ul>
+    </div>
+  </section>
+
+  <footer>
+    <span class="warn">Critique whiteboard — assumptions flagged, not resolved.</span> Fee splits, host requirements, and the 80% farmer figure derive from voice-note transcripts (whisper ggml-tiny) via <span class="mono">init_structure/Farmer_Drop__knowledge_map.md §2, §3.1–§3.2</span> &amp; <span class="mono">Glossary__ASR_uncertainties.md</span>. Platform take is <span class="mono">DR-1</span>-unresolved. Congregation median (70) — NCS-IV / FACT. All figures recompute from the inline <span class="mono">CONFIG</span>. Generated 2026-07-04.
+  </footer>
+</div>
+
+<script>
+/* ============================================================
+   CONFIG — single source of truth. No magic numbers below.
+   Fee splits are working assumptions from the voice-note map.
+   ============================================================ */
+const CONFIG = {
+  basket: 100,          // the $100 basket (§3.2)
+  hostPct: 0.05,        // host earns ~5% per basket
+  haulPct: 0.05,        // farm→host haul earns ~5% per hop
+  takePct: 0.10,        // platform take (DR-1: ~10%, NOT 0.10%)
+  contractorPct: 0.03,  // recruiter cut — carved OUT of the platform take
+  extraHops: 0,         // additional haul hops beyond the single farm→host leg
+  church: { medianAttendance: 70, householdsPerAttendee: 0.43,
+            participationEarly: 0.12, basketChurch: 35 },
+  sources: {
+    congregation: "NCS-IV / Faith Communities Today (FACT) — median weekly attendance ~70",
+    fees: "Farmer_Drop__knowledge_map.md §3.1–§3.2 (voice-note transcript)"
+  }
+};
+
+const S = { basket:CONFIG.basket, host:CONFIG.hostPct, haul:CONFIG.haulPct,
+            take:CONFIG.takePct, hops:CONFIG.extraHops };
+
+/* formatting */
+const usd2 = x => '$'+x.toFixed(2);
+const usd  = x => '$'+Math.round(x).toLocaleString('en-US');
+const pct  = (x,d=1) => (x*100).toFixed(d).replace(/\.0$/,'')+'%';
+
+/* core: a basket split. mode 'self' = farmer hauls; 'driver' = driver hauls.
+   hops = number of haul legs (1 = single farm→host; 2 = one extra hop). */
+function split(mode, hops){
+  const b = S.basket;
+  const haulLegs = hops;                       // total haul slices
+  const haulTotal = S.haul * haulLegs;
+  const farmerBase = 1 - S.host - S.haul - S.take;  // ~80% at defaults, single leg
+  // farmer keeps the haul only on the single primary leg when self-hauling
+  const farmerSelfHaul = (mode==='self') ? S.haul : 0;
+  const driverShare = (mode==='self') ? (S.haul*(haulLegs-1)) : haulTotal; // self keeps 1st leg, drivers take the rest
+  const rows = [];
+  rows.push(['Farmer keep', farmerBase + farmerSelfHaul]);
+  if(mode==='self' && haulLegs>1) rows.push(['Extra-hop driver(s)', S.haul*(haulLegs-1)]);
+  if(mode==='driver') rows.push(['Driver haul ('+haulLegs+'×)', haulTotal]);
+  rows.push(['Host cut', S.host]);
+  rows.push(['Platform take', S.take]);
+  const sum = rows.reduce((a,[,v])=>a+v,0);
+  return { rows, sum, b, farmerBase };
+}
+
+function renderSplitTable(id, mode, hops){
+  const s = split(mode, hops);
+  const tb = document.querySelector('#'+id+' tbody');
+  let html = s.rows.map(([lab,frac])=>{
+    const good = lab.startsWith('Farmer');
+    return `<tr${good?' style="font-weight:600"':''}><td>${lab}</td><td class="num">${pct(frac)}</td><td class="num">${usd2(s.b*frac)}</td></tr>`;
+  }).join('');
+  // contractor sub-line (out of take)
+  const contractor = S.contractorPct;
+  html += `<tr class="sub"><td>&nbsp;&nbsp;↳ contractor cut (out of take)</td><td class="num">${pct(contractor)}</td><td class="num" style="color:var(--rust-deep)">−${usd2(s.b*contractor).slice(1)}</td></tr>`;
+  html += `<tr class="sub"><td>&nbsp;&nbsp;↳ platform net after contractor</td><td class="num">${pct(S.take-contractor)}</td><td class="num">${usd2(s.b*(S.take-contractor))}</td></tr>`;
+  const closes = Math.abs(s.sum-1)<1e-9;
+  const tag = closes ? `<span class="tag good">closes to ${usd2(s.b)}</span>`
+    : `<span class="tag bad">${s.sum>1?'over':'under'} by ${pct(Math.abs(s.sum-1))}</span>`;
+  html += `<tr class="total"><td>Member pays ${tag}</td><td class="num">${pct(s.sum)}</td><td class="num">${usd2(s.b*s.sum)}</td></tr>`;
+  tb.innerHTML = html;
+  return s;
+}
+
+function renderTwoHop(){
+  // two-hop = single primary leg + S.hops extra legs; keep farmer at base 80% and let it overflow
+  const legs = 1 + S.hops;
+  const s = split('driver', legs);
+  const tb = document.querySelector('#tbl-c tbody');
+  tb.innerHTML = s.rows.map(([lab,frac])=>
+    `<tr${lab.startsWith('Farmer')?' style="font-weight:600"':''}><td>${lab}</td><td class="num">${pct(frac)}</td><td class="num">${usd2(s.b*frac)}</td></tr>`).join('')
+    + `<tr class="total"><td>Member pays</td><td class="num">${pct(s.sum)}</td><td class="num">${usd2(s.b*s.sum)}</td></tr>`;
+  const flag = document.getElementById('close-flag');
+  if(Math.abs(s.sum-1)<1e-9){
+    flag.innerHTML = `<div class="assume"><b>Closes</b>At ${S.hops} extra hop(s) with these splits the basket still sums to ${usd2(s.b)}. Raise "extra hops" to break it.</div>`;
+  } else {
+    const over = (s.sum-1);
+    const farmerIfHeld = s.farmerBase; // if member price fixed, farmer would absorb the overflow
+    flag.innerHTML = `<div class="assume" style="border-left-color:var(--rust);background:#fbeee9">
+      <b style="color:var(--rust-deep)">Math stops closing</b>
+      With ${S.hops} extra hop(s) the slices sum to <b>${pct(s.sum)}</b> of the basket — <b>${pct(over)} too much</b>.
+      Something has to give: either the member pays <b>${usd2(s.b*s.sum)}</b> instead of ${usd2(s.b)} (a ${pct(over)} surcharge),
+      or the farmer's ~80% is cut to <b>${pct(1 - S.host - S.haul*legs - S.take)}</b> to keep the basket at ${usd2(s.b)}.
+      The 80% promise and every extra hop cannot both hold.</div>`;
+  }
+}
+
+/* ---------- Section 3: roles ---------- */
+function renderRoles(){
+  document.getElementById('roles-basket').textContent = usd(S.basket);
+  const b = S.basket;
+  const rows = [
+    ['Member', 'Demand + payment', b, 'Groceries cheaper &amp; fresher than the store, from a pickup point they already visit.'],
+    ['Farmer', 'Supply + (optionally) the haul', b*(1-S.host-S.haul-S.take) + (b*S.haul), 'Keeps ~80–85% vs ~15–29% at grocery — the core value proposition. <span class="tag warn">80% unproven</span>'],
+    ['Driver', 'Idle truck capacity, farm→host', b*S.haul, 'Monetizes backhaul they were driving anyway; Uber-style flexible income.'],
+    ['Host', 'Space, fridge, pickup window, coordination', b*S.host, 'Recurring 5% on volume they merely receive; churches reframe it as a fundraiser.'],
+    ['Contractor', 'Recruits &amp; trains hosts + links farmers', b*S.contractorPct, '3% of a host\'s volume for a fixed window — commission for building density. <span class="tag warn">out of take</span>'],
+    ['Platform', 'Ledger, routing, Drop Score, fee engine', b*(S.take-S.contractorPct), 'Net ~7% after the contractor cut — funds ops + growth. <span class="tag bad">DR-1</span>']
+  ];
+  document.querySelector('#tbl-roles tbody').innerHTML = rows.map(([a,g,e,w])=>
+    `<tr><td><b>${a}</b></td><td style="font-size:12.5px;color:var(--loam-soft)">${g}</td><td class="num">${usd2(e)}</td><td style="font-size:12.5px">${w}</td></tr>`).join('');
+}
+
+/* ---------- Section 4: church ---------- */
+function renderChurch(){
+  const c = CONFIG.church;
+  const households = c.medianAttendance * c.householdsPerAttendee;   // ~30.1
+  const baskets = households * c.participationEarly;                 // ~3.6/wk
+  const basket = c.basketChurch;                                    // $35
+  const hostPerBasket = basket * S.host;
+  const weekly = baskets * hostPerBasket;
+  const annual = weekly * 52;
+  document.getElementById('church-strip').innerHTML = `
+    <div class="cell"><div class="k">Attendees (median)</div><div class="v">${c.medianAttendance}</div><div class="note">NCS-IV / FACT</div></div>
+    <div class="cell"><div class="k">≈ Households</div><div class="v">${households.toFixed(0)}</div><div class="note">×${c.householdsPerAttendee}/attendee</div></div>
+    <div class="cell"><div class="k">Baskets / wk @12%</div><div class="v">${baskets.toFixed(1)}</div><div class="note">early participation</div></div>
+    <div class="cell"><div class="k">Host earns / wk</div><div class="v good">${usd2(weekly)}</div><div class="note">${usd(annual)}/yr</div></div>`;
+  // little waterfall of a single $35 basket at church
+  const cf = CONFIG.church.basketChurch;
+  const seg = [
+    ['Farmer keep', (1-S.host-S.haul-S.take), 'var(--conceptual)'],
+    ['Haul 5%', S.haul, 'var(--data)'],
+    ['Host 5% → parish', S.host, 'var(--honey)'],
+    ['Platform', S.take, 'var(--business)']
+  ];
+  document.getElementById('church-wf').innerHTML =
+    `<p class="cite" style="margin:12px 0 4px">One $${cf} church basket splits:</p>` +
+    seg.map(([lab,frac,col])=>`
+    <div class="wfrow"><div class="lab">${lab}</div>
+      <div class="bar"><div class="fill" style="width:${frac*100}%;background:${col}"></div></div>
+      <div class="amt">${usd2(cf*frac)}</div></div>`).join('');
+  document.getElementById('church-week').textContent = usd2(weekly);
+}
+
+/* ---------- controls ---------- */
+function syncLabels(){
+  document.getElementById('v-basket').textContent = usd(S.basket);
+  document.getElementById('v-host').textContent   = pct(S.host);
+  document.getElementById('v-haul').textContent   = pct(S.haul);
+  document.getElementById('v-take').textContent   = pct(S.take, S.take<0.01?2:1);
+  document.getElementById('v-hops').textContent   = S.hops;
+}
+function renderAll(){
+  syncLabels();
+  renderSplitTable('tbl-a','self',1);
+  renderSplitTable('tbl-b','driver',1);
+  renderTwoHop();
+  renderRoles();
+  renderChurch();
+}
+function bind(){
+  const map = {'s-basket':'basket','s-host':'host','s-haul':'haul','s-take':'take','s-hops':'hops'};
+  Object.entries(map).forEach(([id,key])=>{
+    const el=document.getElementById(id); el.value=S[key];
+    el.addEventListener('input',e=>{S[key]=+e.target.value; renderAll();});
+  });
+  document.getElementById('reset').addEventListener('click',()=>{
+    S.basket=CONFIG.basket; S.host=CONFIG.hostPct; S.haul=CONFIG.haulPct;
+    S.take=CONFIG.takePct; S.hops=CONFIG.extraHops;
+    Object.entries(map).forEach(([id,key])=>document.getElementById(id).value=S[key]);
+    renderAll();
+  });
+}
+bind();
+renderAll();
+</script>
+</body>
+</html>

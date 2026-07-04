@@ -1,0 +1,644 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>FARMER DROP — Propagation, one church to a network</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,500;0,9..144,600;0,9..144,700;1,9..144,400&family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;0,6..72,600;1,6..72,400&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --parchment:#faf6ec; --parchment-2:#f3ecda; --parchment-3:#ece2c9;
+  --loam:#1e3a2a; --loam-soft:#3a5343; --ink-fade:#6c7b6a;
+  --honey:#d9930d; --honey-deep:#b8790a;
+  --rust:#b23a1e; --rust-deep:#8f2c14;
+  --line:#c9bd9c; --line-soft:#ddd2b4;
+  --paper-card:#fffdf6;
+  --conceptual:#2f6b4a; --business:#7a5b8f; --token:#d9930d; --data:#2b6d84;
+  --good:#2f6b4a; --warn:#b8790a; --bad:#8f2c14;
+}
+*{box-sizing:border-box}
+html,body{margin:0;background:var(--parchment);color:var(--loam);
+  font-family:"Newsreader",Georgia,serif;font-size:16px;line-height:1.5}
+.grain{position:fixed;inset:0;pointer-events:none;z-index:0;opacity:.05;mix-blend-mode:multiply}
+.fieldrows{position:fixed;inset:0;pointer-events:none;z-index:0;opacity:.35;
+  background:
+    repeating-linear-gradient(115deg, transparent 0 46px, rgba(30,58,42,.028) 46px 47px),
+    radial-gradient(140% 120% at 12% 8%, #fdfbf3 0%, var(--parchment) 42%, var(--parchment-2) 100%);}
+#app{position:relative;z-index:1;max-width:1180px;margin:0 auto;padding:0 22px 90px}
+
+header{padding:22px 0 14px;border-bottom:1.5px solid var(--line);
+  display:flex;align-items:flex-end;justify-content:space-between;gap:24px;flex-wrap:wrap;
+  position:sticky;top:0;z-index:20;
+  background:linear-gradient(180deg, var(--parchment) 55%, rgba(250,246,236,.85));
+  backdrop-filter:blur(2px)}
+.brand h1{font-family:"Fraunces",serif;font-optical-sizing:auto;font-weight:600;
+  font-size:clamp(23px,3vw,38px);line-height:.96;margin:0;letter-spacing:-.01em}
+.brand h1 .drop{color:var(--honey-deep);font-style:italic}
+.brand .kicker{font-family:"IBM Plex Mono",monospace;font-size:11px;letter-spacing:.2em;
+  text-transform:uppercase;color:var(--ink-fade);margin-top:8px}
+nav{display:flex;gap:6px;align-items:center;flex-wrap:wrap}
+nav a{font-family:"IBM Plex Mono",monospace;font-size:12px;text-decoration:none;
+  color:var(--loam-soft);border:1px solid var(--line);border-radius:999px;
+  padding:7px 14px;background:var(--paper-card);transition:all .18s;white-space:nowrap}
+nav a:hover{background:var(--loam);color:var(--parchment);border-color:var(--loam)}
+nav a.here{background:var(--loam);color:var(--parchment);border-color:var(--loam)}
+
+.banner{margin:20px 0 8px;border:2px solid var(--rust);border-radius:8px;
+  background:linear-gradient(180deg,#fbeee9,#f7ddd3);padding:15px 20px;
+  display:flex;gap:14px;align-items:flex-start;
+  box-shadow:0 14px 30px -22px rgba(143,44,20,.6)}
+.banner .flag{font-family:"IBM Plex Mono",monospace;font-weight:600;font-size:11px;
+  letter-spacing:.14em;color:#fff;background:var(--rust);border-radius:5px;
+  padding:5px 9px;white-space:nowrap;margin-top:2px}
+.banner p{margin:0;font-size:15.5px;color:var(--rust-deep)}
+.banner b{font-family:"Fraunces",serif}
+
+.controls{position:sticky;top:78px;z-index:15;margin:18px 0 6px;
+  background:var(--paper-card);border:1.5px solid var(--line);border-radius:10px;
+  box-shadow:0 1px 0 var(--line),0 16px 34px -26px rgba(30,58,42,.5);padding:14px 18px}
+.controls .chead{font-family:"IBM Plex Mono",monospace;font-size:10px;letter-spacing:.16em;
+  text-transform:uppercase;color:var(--ink-fade);margin-bottom:11px;display:flex;
+  justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap}
+.ctrl-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:14px 20px}
+.ctrl label{display:block;font-family:"IBM Plex Mono",monospace;font-size:11px;
+  color:var(--loam-soft);letter-spacing:.03em;margin-bottom:5px;
+  display:flex;justify-content:space-between;align-items:baseline}
+.ctrl label .val{font-weight:600;color:var(--honey-deep);font-size:13px}
+input[type=range]{width:100%;accent-color:var(--honey-deep);height:22px;cursor:pointer}
+.ctrl .sub{font-size:10px;color:var(--ink-fade);margin-top:2px;font-family:"IBM Plex Mono",monospace}
+.presets{display:flex;gap:6px;flex-wrap:wrap;margin-top:10px;align-items:center}
+.presets .lbl{font-family:"IBM Plex Mono",monospace;font-size:10px;letter-spacing:.1em;
+  text-transform:uppercase;color:var(--ink-fade);margin-right:2px}
+.pbtn{font-family:"IBM Plex Mono",monospace;font-size:11px;cursor:pointer;
+  border:1px solid var(--line);background:var(--parchment-2);border-radius:6px;
+  padding:5px 10px;color:var(--loam-soft)}
+.pbtn:hover{border-color:var(--honey);color:var(--honey-deep)}
+.pbtn.ceil.active{border-color:var(--data);color:var(--data);background:#e2eef2}
+.reset{font-family:"IBM Plex Mono",monospace;font-size:10.5px;cursor:pointer;
+  border:1px solid var(--line);background:var(--parchment-2);border-radius:6px;
+  padding:5px 10px;color:var(--loam-soft)}
+.reset:hover{border-color:var(--loam-soft)}
+
+.scen-row{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin:16px 0 6px}
+@media(max-width:760px){.scen-row{grid-template-columns:1fr}}
+.scen{cursor:pointer;text-align:left;border:1.5px solid var(--line);border-radius:10px;
+  background:var(--paper-card);padding:12px 14px;transition:all .18s;
+  box-shadow:0 1px 0 var(--line)}
+.scen:hover{border-color:var(--honey);transform:translateY(-2px)}
+.scen.active{border-color:var(--loam);box-shadow:0 1px 0 var(--line),0 14px 30px -22px rgba(30,58,42,.6)}
+.scen .sname{font-family:"Fraunces",serif;font-weight:600;font-size:18px;line-height:1}
+.scen .sname.c{color:var(--data)} .scen .sname.b{color:var(--conceptual)} .scen .sname.a{color:var(--rust-deep)}
+.scen .sparam{font-family:"IBM Plex Mono",monospace;font-size:10.5px;color:var(--loam-soft);margin:6px 0 5px}
+.scen .sjust{font-size:12.5px;color:var(--loam-soft);line-height:1.4}
+
+section{margin-top:40px;scroll-margin-top:150px}
+.sec-num{font-family:"IBM Plex Mono",monospace;font-size:11px;letter-spacing:.2em;
+  color:var(--honey-deep);text-transform:uppercase}
+h2.sec{font-family:"Fraunces",serif;font-weight:600;font-size:clamp(21px,2.6vw,30px);
+  margin:4px 0 6px;line-height:1.06;letter-spacing:-.01em}
+.lede{font-size:16px;color:var(--loam-soft);max-width:78ch;margin:0 0 16px}
+.lede b{color:var(--loam)}
+
+.panel{background:var(--paper-card);border:1px solid var(--line);border-radius:8px;
+  box-shadow:0 1px 0 var(--line),0 16px 34px -28px rgba(30,58,42,.5);
+  padding:18px 20px;margin-bottom:16px}
+.panel h3{font-family:"IBM Plex Mono",monospace;font-size:10.5px;letter-spacing:.16em;
+  text-transform:uppercase;color:var(--ink-fade);margin:0 0 12px;
+  border-bottom:1px solid var(--line-soft);padding-bottom:6px}
+
+.chartwrap{width:100%}
+svg.chart{width:100%;height:auto;display:block}
+.axislbl{font-family:"IBM Plex Mono",monospace;font-size:11px;fill:var(--ink-fade)}
+.gridline{stroke:var(--line-soft);stroke-width:1}
+.markline{stroke:var(--rust);stroke-width:1.4;stroke-dasharray:5 4;opacity:.8}
+.marktxt{font-family:"IBM Plex Mono",monospace;font-size:11px;fill:var(--rust-deep);font-weight:600}
+.curveUsers{fill:none;stroke:var(--honey-deep);stroke-width:2.6}
+.curveChurch{fill:none;stroke:var(--conceptual);stroke-width:2.2;stroke-dasharray:2 3}
+.legendchip{font-family:"IBM Plex Mono",monospace;font-size:11.5px;fill:var(--loam-soft)}
+
+.strip{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:1px;
+  background:var(--line-soft);border:1px solid var(--line);border-radius:8px;overflow:hidden;margin:14px 0}
+.strip .cell{background:var(--paper-card);padding:13px 15px}
+.strip .k{font-family:"IBM Plex Mono",monospace;font-size:9.5px;letter-spacing:.1em;
+  text-transform:uppercase;color:var(--ink-fade)}
+.strip .v{font-family:"Fraunces",serif;font-weight:600;font-size:22px;line-height:1.1;margin-top:3px}
+.strip .v.bad{color:var(--rust-deep)} .strip .v.good{color:var(--good)} .strip .v.warn{color:var(--honey-deep)}
+.strip .note{font-size:11px;color:var(--ink-fade);margin-top:2px}
+
+table{width:100%;border-collapse:collapse;font-size:13.5px}
+th,td{text-align:right;padding:6px 8px;border-bottom:1px dotted var(--line-soft)}
+th:first-child,td:first-child{text-align:left}
+thead th{font-family:"IBM Plex Mono",monospace;font-size:10px;letter-spacing:.05em;
+  text-transform:uppercase;color:var(--ink-fade);border-bottom:1.5px solid var(--line)}
+td.num,th.num{font-family:"IBM Plex Mono",monospace}
+tr.hi td{background:#fbf1d9}
+.tag{display:inline-block;font-family:"IBM Plex Mono",monospace;font-size:9.5px;
+  padding:1px 6px;border-radius:4px;letter-spacing:.04em;vertical-align:middle}
+.tag.good{background:#e5efe4;color:var(--good)}
+.tag.warn{background:#fbeecb;color:var(--warn)}
+.tag.bad{background:#f6d9cf;color:var(--bad)}
+.tag.top{background:#e2eef2;color:var(--data)}
+.tag.auto{background:#efe9f2;color:var(--business)}
+
+.two{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+@media(max-width:760px){.two{grid-template-columns:1fr}}
+
+.findings{list-style:none;padding:0;margin:0}
+.findings li{padding:12px 0 12px 30px;position:relative;border-bottom:1px dotted var(--line-soft);
+  font-size:14.5px;color:var(--loam-soft)}
+.findings li:before{content:"⚑";position:absolute;left:0;top:11px;color:var(--rust);font-size:13px}
+.findings li b{color:var(--loam)}
+.findings li .lede2{font-family:"Fraunces",serif;font-size:15.5px;color:var(--loam);display:block;margin-bottom:2px}
+
+.assume{border-left:4px solid var(--honey-deep);background:#fbf1d9;border-radius:0 8px 8px 0;
+  padding:11px 16px;margin:12px 0;font-size:13.5px;color:var(--loam)}
+.assume b{font-family:"IBM Plex Mono",monospace;font-size:10px;letter-spacing:.12em;
+  text-transform:uppercase;color:var(--honey-deep);display:block;margin-bottom:3px}
+
+.srcs{list-style:none;padding:0;margin:10px 0 0}
+.srcs li{padding:8px 0;border-bottom:1px dotted var(--line-soft);font-size:13px}
+.srcs .lbl{font-weight:600;color:var(--loam)}
+.srcs .n{color:var(--loam-soft)}
+.cite{font-family:"IBM Plex Mono",monospace;font-size:11.5px;color:var(--loam-soft)}
+.mininav{display:flex;gap:8px;flex-wrap:wrap;margin:16px 0 0}
+.mininav a{font-family:"IBM Plex Mono",monospace;font-size:11px;text-decoration:none;
+  color:var(--loam-soft);border:1px solid var(--line-soft);border-radius:6px;padding:5px 10px;
+  background:var(--paper-card)}
+.mininav a:hover{border-color:var(--honey);color:var(--honey-deep)}
+footer{margin-top:46px;padding:16px 0;border-top:1.5px solid var(--line);
+  font-family:"IBM Plex Mono",monospace;font-size:10.5px;color:var(--ink-fade);line-height:1.6}
+footer .warn{color:var(--rust-deep)}
+.mono{font-family:"IBM Plex Mono",monospace}
+</style>
+</head>
+<body>
+<svg class="grain"><filter id="grainf"><feTurbulence type="fractalNoise" baseFrequency="0.9" numOctaves="3" stitchTiles="stitch"/><feColorMatrix type="saturate" values="0"/></filter><rect width="100%" height="100%" filter="url(#grainf)"/></svg>
+<div class="fieldrows"></div>
+
+<div id="app">
+  <header>
+    <div class="brand">
+      <h1>FARMER <span class="drop">DROP</span> — Propagation</h1>
+      <div class="kicker">One church to a network · Bass diffusion over a bounded set of congregations</div>
+    </div>
+    <nav>
+      <a href="index.html">index</a>
+      <a href="farmer_drop.html">main graph</a>
+      <a href="drop_host.html">drop host</a>
+      <a href="propagation.html" class="here">propagation</a>
+    </nav>
+  </header>
+
+  <div class="banner">
+    <div class="flag">⚠ OPEN QUESTION · WHICH NETWORK?</div>
+    <p>"The 12,000 churches" resolves to <b>two very different networks</b> — and they imply <b>opposite go-to-market motions</b>. <b>Assemblies of God (12,651, 2024)</b> has a semi-centralized district polity: a real top-down channel where seeding a few districts can cascade. <b>Churches of Christ (11,776, 2022; 1,901 in Texas)</b> are <b>fully autonomous congregations</b>: no headquarters, so growth is pure one-church-at-a-time peer contagion. Before tuning any diffusion parameter, Volkmar &amp; Magnus must say <b>which one they mean</b> — it is the difference between selling to districts and selling to 12,000 independent front doors.</p>
+  </div>
+
+  <div class="mininav">
+    <a href="#s1">1 · the model</a>
+    <a href="#s2">2 · growth chart</a>
+    <a href="#s3">3 · network candidates</a>
+    <a href="#s4">4 · precedents</a>
+    <a href="#s5">5 · under what conditions</a>
+    <a href="#s6">6 · sources</a>
+  </div>
+
+  <!-- SCENARIO PRESETS -->
+  <div class="scen-row" id="scen-row"></div>
+
+  <!-- LIVE CONTROLS -->
+  <div class="controls" id="controls">
+    <div class="chead">
+      <span>Live diffusion · discrete monthly Bass over a bounded church network ↓</span>
+      <button class="reset" id="reset">reset to map defaults</button>
+    </div>
+    <div class="ctrl-grid">
+      <div class="ctrl"><label>Seed churches <span class="val" id="v-seed"></span></label>
+        <input type="range" id="s-seed" min="1" max="50" step="1"><div class="sub">map: ~5 hosts today</div></div>
+      <div class="ctrl"><label>p · external <span class="val" id="v-p"></span></label>
+        <input type="range" id="s-p" min="0.0005" max="0.01" step="0.0005"><div class="sub">Bass p ≈ 0.003/mo</div></div>
+      <div class="ctrl"><label>q · peer contagion <span class="val" id="v-q"></span></label>
+        <input type="range" id="s-q" min="0.005" max="0.08" step="0.001"><div class="sub">Bass q ≈ 0.03/mo</div></div>
+      <div class="ctrl"><label>Ceiling M · churches <span class="val" id="v-M"></span></label>
+        <input type="range" id="s-M" min="1000" max="46876" step="1"><div class="sub">reachable network size</div></div>
+      <div class="ctrl"><label>Attendance / church <span class="val" id="v-att"></span></label>
+        <input type="range" id="s-att" min="45" max="360" step="5"><div class="sub">median 70 · weighted-mean 360</div></div>
+      <div class="ctrl"><label>Participation M12 <span class="val" id="v-part"></span></label>
+        <input type="range" id="s-part" min="0.03" max="0.40" step="0.01"><div class="sub">ramp 3%→8%→this</div></div>
+      <div class="ctrl"><label>Basket / wk <span class="val" id="v-basket"></span></label>
+        <input type="range" id="s-basket" min="20" max="120" step="5"><div class="sub">church basket ~$35</div></div>
+    </div>
+    <div class="presets" id="ceil-presets">
+      <span class="lbl">Ceiling presets</span>
+    </div>
+  </div>
+
+  <!-- SECTION 1 -->
+  <section id="s1">
+    <div class="sec-num">Section 1</div>
+    <h2 class="sec">The model — churches diffuse, users follow</h2>
+    <p class="lede">A discrete monthly <b>Bass diffusion</b> spreads adoption across a bounded set of <b>M</b> churches:
+      <span class="mono">ΔN = (p + q·N/M)·(M − N)</span> — an external term <b>p</b> (advertising, the founders' direct outreach) plus a peer-contagion term <b>q</b> (churches copying churches). Each adopting church converts to weekly users:
+      <span class="mono">users(t) = N(t) × attendance × 0.43 households/attendee × participation(t)</span>, and
+      <span class="mono">weekly gross = users × basket</span>. Participation ramps <b>3% → 8% → 12%</b> over the first year, then holds.</p>
+    <div class="assume">
+      <b>Assumptions baked into this model</b>
+      (1) Every church is the <b>same median size</b> (70) — reality is heavily skewed: ~50% of churchgoers sit in the largest ~10% of churches (Lifeway 2025), so <b>which</b> churches adopt matters as much as how many. (2) 0.43 households/attendee (~2.3 people/household). (3) A single q for the whole network — but an autonomous network (CoC) and a district network (AoG) do not share a contagion rate. (4) Participation holds flat after year 1 with no churn. Every one of these is optimistic; the chart below shows what they produce.
+    </div>
+  </section>
+
+  <!-- SECTION 2 -->
+  <section id="s2">
+    <div class="sec-num">Section 2</div>
+    <h2 class="sec">Growth over 8 years — against the 100k &amp; 1M targets</h2>
+    <p class="lede">Weekly users (honey, <b>log scale</b>) and adopted churches (green dashed, right axis) over 96 months. The two red dashed lines are the <b>Year-1 target 100k users</b> and the <b>scale scenario 1M users</b> from the main graph. Watch where the honey curve <b>flattens</b> relative to those lines.</p>
+    <div class="panel">
+      <div class="chartwrap"><svg class="chart" id="chart" viewBox="0 0 900 440" preserveAspectRatio="xMidYMid meet"></svg></div>
+    </div>
+    <div class="strip" id="readouts"></div>
+    <div id="verdict-box"></div>
+  </section>
+
+  <!-- SECTION 3 -->
+  <section id="s3">
+    <div class="sec-num">Section 3</div>
+    <h2 class="sec">Network candidates — the field of churches</h2>
+    <p class="lede">Who exactly are "the 12,000 churches," and what is the reachable ceiling? Polity (how the denomination is governed) decides the go-to-market motion far more than raw count. Click a row's ceiling to load it above.</p>
+    <div class="panel">
+      <h3>Denomination candidates</h3>
+      <table id="tbl-net"><thead><tr>
+        <th>Network</th><th class="num">Churches</th><th>Polity → motion</th><th class="num">Load ceiling</th>
+      </tr></thead><tbody></tbody></table>
+      <p class="cite" style="margin:10px 0 0">Sources: graphsaboutreligion.com (AoG 2024), CoC 2022 directory, Texas Baptist conventions (BGCT/SBTC), SBC Annual Church Profile, ARC. The two ⚑ rows are the rival "12k" readings.</p>
+    </div>
+    <div class="two">
+      <div class="panel">
+        <h3>Congregation size — the skew that matters</h3>
+        <div class="strip">
+          <div class="cell"><div class="k">Median attendance</div><div class="v">70</div><div class="note">NCS-IV / FACT · COVID trough ~45</div></div>
+          <div class="cell"><div class="k">Attendee-weighted mean</div><div class="v good">360</div><div class="note">where the people actually are</div></div>
+          <div class="cell"><div class="k">Largest 10% hold</div><div class="v warn">~50%</div><div class="note">of all churchgoers · Lifeway 2025</div></div>
+        </div>
+        <p class="cite" style="margin:8px 0 0">Implication: recruiting a handful of <b>250+ churches</b> captures outsized demand — the median-70 assumption in the slider <b>understates</b> a big-church strategy and <b>overstates</b> a random-church one.</p>
+      </div>
+      <div class="panel">
+        <h3>Texas — the likely beachhead</h3>
+        <div class="strip">
+          <div class="cell"><div class="k">TX congregations</div><div class="v">29,746</div><div class="note">US Religion Census 2020</div></div>
+          <div class="cell"><div class="k">DFW metro</div><div class="v">6,222</div><div class="note"></div></div>
+          <div class="cell"><div class="k">Houston</div><div class="v">4,972</div><div class="note"></div></div>
+          <div class="cell"><div class="k">Austin</div><div class="v">1,433</div><div class="note"></div></div>
+        </div>
+        <p class="cite" style="margin:8px 0 0">Churches of Christ concentrate in Texas (<b>1,901</b>, most of any state) — a natural autonomous-network beachhead, but one that must be sold one congregation at a time.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- SECTION 4 -->
+  <section id="s4">
+    <div class="sec-num">Section 4</div>
+    <h2 class="sec">Precedents — the center dies, the network survives</h2>
+    <p class="lede">Church-hosted food distribution has scaled to national size before. Every collapse happened at the <b>central node</b> — never in the church layer.</p>
+    <div class="panel">
+      <h3>Angel Food Ministries — the shape of the curve, and the shape of the failure</h3>
+      <div class="strip">
+        <div class="cell"><div class="k">Founded 1994</div><div class="v">34</div><div class="note">families</div></div>
+        <div class="cell"><div class="k">Peak host churches</div><div class="v good">~5,000</div><div class="note">43+ states</div></div>
+        <div class="cell"><div class="k">Families / month</div><div class="v good">500k</div><div class="note">2008</div></div>
+        <div class="cell"><div class="k">Revenue 2008</div><div class="v good">$137.5M</div><div class="note"></div></div>
+        <div class="cell"><div class="k">Collapse 2011</div><div class="v bad">FRAUD</div><div class="note">49-count federal indictment</div></div>
+      </div>
+      <p style="font-size:14.5px;color:var(--loam-soft);margin:8px 0 0">Regional and slow for ~10 years — then a <b>2005 $6.9M USDA warehouse loan</b> unlocked the logistics backbone and it went vertical: ~5,000 host churches, half a million families a month. It did not die from the church network failing; it died from <b>founder fraud</b> at the center. The takeaway for Farmer Drop is twofold: <b>(1)</b> the hockey stick came from <b>central logistics capital</b>, not from more churches; <b>(2)</b> the fatal risk lives at the <b>center</b>, in governance and money integrity.</p>
+    </div>
+    <div class="two">
+      <div class="panel">
+        <h3>USDA Farmers-to-Families</h3>
+        <p style="font-size:14px;color:var(--loam-soft);margin:0">~<b>176M</b> food boxes distributed through faith &amp; nonprofit partners — then <b>ended by policy</b>, not by demand. Precedent that a subsidy-dependent center is a policy risk: when the funding stopped, the distribution stopped.</p>
+      </div>
+      <div class="panel">
+        <h3>SHARE Food Network</h3>
+        <p style="font-size:14px;color:var(--loam-soft);margin:0">~<b>300 church host sites</b>, ~<b>12,000 families/month</b> in the DC area. Eroded competitively as grocery discounting and online delivery caught up; <b>survived by institutionalizing</b> (becoming a nonprofit food hub) rather than staying a volunteer buying club.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- SECTION 5 -->
+  <section id="s5">
+    <div class="sec-num">Section 5</div>
+    <h2 class="sec">Under what conditions — what the model makes visible</h2>
+    <p class="lede">Plain-language findings, recomputed live from the sliders above. These are the sentences to argue about.</p>
+    <div class="panel">
+      <ul class="findings" id="findings"></ul>
+    </div>
+    <div class="assume">
+      <b>The honest headline</b>
+      Growth <b>speed</b> and <b>survival</b> are separate axes. The Bass sliders tune speed; but every precedent above died at the <b>center</b> — fraud (Angel Food), subsidy withdrawal (USDA F2F), or competitive erosion (SHARE) — and never in the church layer. <b>Governance and funding integrity is an independent failure variable this model does not capture.</b> A perfect q does not protect you from a compromised center.
+    </div>
+  </section>
+
+  <!-- SECTION 6 -->
+  <section id="s6">
+    <div class="sec-num">Section 6</div>
+    <h2 class="sec">Sources</h2>
+    <div class="panel"><ul class="srcs" id="srcs"></ul></div>
+  </section>
+
+  <footer>
+    <span class="warn">Critique whiteboard — a diffusion model is a hypothesis generator, not a forecast.</span> Bass parameters (p≈0.03/yr, q≈0.35–0.40/yr) and church-network counts are researched and cited in §6. The "which 12k network" question (⚑) is <b>unresolved</b> and governs the whole go-to-market. Church basket &amp; participation ramp are working assumptions. Config: <span class="mono">propagation_params.json</span>. Generated 2026-07-04.
+  </footer>
+</div>
+
+<script>
+/* ============================================================
+   CONFIG — single source of truth. Mirrors propagation_params.json.
+   Bass diffusion over a bounded church network. Every figure reads it.
+   ============================================================ */
+const CONFIG = {
+  model: {
+    seed: 5, p: 0.003, q: 0.03, M: 12000,       // Bass, monthly
+    attendance: 70, householdsPerAttendee: 0.43,
+    participation: { M1: 0.03, M6: 0.08, M12: 0.12 },
+    basket: 35, months: 96
+  },
+  targets: { year1Users: 100000, scaleUsers: 1000000 },
+  ceilings: [
+    { id:"coc_tx", label:"CoC · Texas", M:1901, note:"1,901 · autonomous beachhead" },
+    { id:"dfw", label:"DFW metro", M:6222, note:"6,222 congregations" },
+    { id:"network12k", label:"“the 12k”", M:12000, note:"12,000 · the ambiguous target" },
+    { id:"sbc", label:"SBC national", M:46876, note:"46,876 · national ceiling" }
+  ],
+  networks: [
+    { name:"Assemblies of God (USA)", churches:12651, year:2024, polity:"Semi-centralized districts", motion:"Top-down: seed districts, cascade", flag:true, M:12651, tag:"top", tagtxt:"top-down channel" },
+    { name:"Churches of Christ", churches:11776, year:2022, polity:"Fully autonomous", motion:"One church at a time (peer contagion)", flag:true, M:11776, tag:"auto", tagtxt:"no HQ" },
+    { name:"— of which, Texas (CoC)", churches:1901, year:2022, polity:"Autonomous · TX-concentrated", motion:"Autonomous beachhead", flag:false, M:1901, tag:"auto", tagtxt:"most of any state" },
+    { name:"BGCT (Texas Baptists)", churches:5375, year:2023, polity:"Cooperative convention", motion:"Convention channel", flag:false, M:5375, tag:"top", tagtxt:"TX" },
+    { name:"SBTC (Southern Baptists of TX)", churches:2800, year:2023, polity:"Cooperative convention", motion:"Convention channel", flag:false, M:2800, tag:"top", tagtxt:"TX" },
+    { name:"SBC (national)", churches:46876, year:2023, polity:"Cooperative / autonomous", motion:"Largest reachable ceiling", flag:false, M:46876, tag:"top", tagtxt:"national" },
+    { name:"ARC (church-planting network)", churches:1132, year:2023, polity:"Centralized network", motion:"Fast top-down, small base", flag:false, M:1132, tag:"top", tagtxt:"planting" }
+  ],
+  scenarios: [
+    { id:"conservative", cls:"c", name:"Conservative", set:{ q:0.015, M:1901, partM12:0.08, basket:30 },
+      just:"Autonomous-network pure contagion (CoC-TX). q halved, no top-down channel; half-saturation 6–8+ yrs." },
+    { id:"base", cls:"b", name:"Base", set:{ q:0.03, M:6000, partM12:0.12, basket:35 },
+      just:"Canonical Bass + light promotion across a metro-scale set (~DFW). Half-saturation ~4–6 yrs." },
+    { id:"angel", cls:"a", name:"Angel-Food-speed", set:{ q:0.06, M:12000, partM12:0.20, basket:30 },
+      just:"Requires a funded central warehouse/logistics backbone — that USDA loan is what unlocked Angel Food's hockey stick." }
+  ],
+  sources: [
+    { lbl:"Assemblies of God — 12,651 churches (2024)", n:"graphsaboutreligion.com; semi-centralized district polity → real top-down channel." },
+    { lbl:"Churches of Christ — 11,776 (2022); 1,901 in Texas", n:"2022 directory; fully autonomous congregations (no denominational HQ) → one-church-at-a-time contagion; Texas has the most of any state." },
+    { lbl:"US Religion Census 2020 — Texas congregations", n:"29,746 statewide; DFW ~6,222, Houston ~4,972, Austin ~1,433." },
+    { lbl:"Congregation size — NCS-IV / FACT / Lifeway 2025", n:"Median weekly attendance ~70 (COVID trough ~45); attendee-weighted mean ~360; ~50% of churchgoers in the largest ~10% of churches." },
+    { lbl:"Angel Food Ministries", n:"Founded 1994 (34 families); ~5,000 host churches, 500,000 families/month, 43+ states, $137.5M revenue (2008) after a 2005 $6.9M USDA warehouse loan; collapsed 2011 on a 49-count federal fraud indictment." },
+    { lbl:"USDA Farmers-to-Families Food Box", n:"~176M boxes via faith & nonprofit partners; ended by policy, not demand." },
+    { lbl:"SHARE Food Network", n:"~300 church host sites, ~12,000 families/month (DC); eroded competitively, survived by institutionalizing as a nonprofit food hub." },
+    { lbl:"Bass diffusion & analog growth rates", n:"External p ≈ 0.03/yr, peer q ≈ 0.35–0.40/yr; Celebrate Recovery grew ~43%/yr for decades; per-contact adoption ~15% (10–25%); half-saturation ~6–8 yrs organic, ~3–4 promoted. (Monthly sliders here are ≈annual/12.)" },
+    { lbl:"SBC / BGCT / SBTC / ARC counts", n:"SBC Annual Church Profile ~46,876; BGCT ~5,375; SBTC ~2,800; ARC ~1,132." }
+  ]
+};
+
+/* live state */
+const S = {
+  seed:CONFIG.model.seed, p:CONFIG.model.p, q:CONFIG.model.q, M:CONFIG.model.M,
+  att:CONFIG.model.attendance, partM12:CONFIG.model.participation.M12, basket:CONFIG.model.basket
+};
+
+/* ---------- formatting ---------- */
+const fmtInt = n => Math.round(n).toLocaleString('en-US');
+const fmtUsers = n => n>=1e6?(n/1e6).toFixed(2)+'M':n>=1e3?(n/1e3).toFixed(n>=1e4?0:1)+'k':Math.round(n);
+const money = x => x>=1e6?'$'+(x/1e6).toFixed(2)+'M':x>=1e3?'$'+(x/1e3).toFixed(0)+'k':'$'+Math.round(x);
+const pct = (x,d=0)=>(x*100).toFixed(d)+'%';
+const yr = m => (m/12).toFixed(m%12?1:0);
+
+/* ============================================================
+   CORE — discrete monthly Bass + user conversion
+   ============================================================ */
+function participation(m){
+  const P=CONFIG.model.participation, pM12=S.partM12;
+  if(m<=1) return P.M1;
+  if(m<=6) return P.M1+(P.M6-P.M1)*(m-1)/5;
+  if(m<=12) return P.M6+(pM12-P.M6)*(m-6)/6;
+  return pM12;
+}
+function runModel(){
+  const hpa=CONFIG.model.householdsPerAttendee, months=CONFIG.model.months;
+  let N=S.seed; const series=[];
+  for(let m=1;m<=months;m++){
+    const part=participation(m);
+    const users=N*S.att*hpa*part;
+    series.push({m, N, users, gross:users*S.basket});
+    N=Math.min(S.M, N + (S.p + S.q*N/S.M)*(S.M-N));
+  }
+  return series;
+}
+function analyze(series){
+  let m100=null,g100=null,m1M=null,g1M=null,peak=series[0];
+  for(const d of series){
+    if(m100===null && d.users>=CONFIG.targets.year1Users){m100=d.m;g100=d.gross;}
+    if(m1M===null && d.users>=CONFIG.targets.scaleUsers){m1M=d.m;g1M=d.gross;}
+    if(d.users>peak.users) peak=d;
+  }
+  return {m100,g100,m1M,g1M,peak,last:series[series.length-1]};
+}
+
+/* ============================================================
+   CHART — inline SVG, log users axis + linear churches axis
+   ============================================================ */
+function buildChart(series){
+  const W=900,H=440,mL=66,mR=64,mT=22,mB=52;
+  const pw=W-mL-mR, ph=H-mT-mB, months=CONFIG.model.months;
+  const x = m => mL + (m/months)*pw;
+  const vmin=100, vmax=2e6, lvmin=Math.log10(vmin), lvmax=Math.log10(vmax);
+  const ly = v => mT+ph - (Math.log10(Math.max(v,vmin))-lvmin)/(lvmax-lvmin)*ph;
+  const cy = n => mT+ph - (n/S.M)*ph;
+  let g='';
+  // horizontal log gridlines
+  [100,1000,10000,100000,1000000].forEach(v=>{
+    g+=`<line class="gridline" x1="${mL}" y1="${ly(v).toFixed(1)}" x2="${mL+pw}" y2="${ly(v).toFixed(1)}"/>`;
+    g+=`<text class="axislbl" x="${mL-8}" y="${(ly(v)+4).toFixed(1)}" text-anchor="end">${fmtUsers(v)}</text>`;
+  });
+  // target marker lines
+  [[CONFIG.targets.year1Users,'Year-1 target · 100k users'],[CONFIG.targets.scaleUsers,'Scale · 1M users']].forEach(([v,lab])=>{
+    g+=`<line class="markline" x1="${mL}" y1="${ly(v).toFixed(1)}" x2="${mL+pw}" y2="${ly(v).toFixed(1)}"/>`;
+    g+=`<text class="marktxt" x="${mL+pw-4}" y="${(ly(v)-5).toFixed(1)}" text-anchor="end">${lab}</text>`;
+  });
+  // x ticks by year
+  for(let yy=0;yy<=8;yy++){
+    const m=yy*12; g+=`<text class="axislbl" x="${x(m).toFixed(1)}" y="${mT+ph+18}" text-anchor="middle">yr ${yy}</text>`;
+    g+=`<line class="gridline" x1="${x(m).toFixed(1)}" y1="${mT}" x2="${x(m).toFixed(1)}" y2="${mT+ph}" style="opacity:.4"/>`;
+  }
+  // right churches axis labels
+  [0,0.25,0.5,0.75,1].forEach(f=>{
+    const v=S.M*f; g+=`<text class="axislbl" x="${mL+pw+8}" y="${(cy(v)+4).toFixed(1)}" text-anchor="start" style="fill:var(--conceptual)">${fmtUsers(v)}</text>`;
+  });
+  // curves
+  const up=series.map(d=>`${x(d.m).toFixed(1)},${ly(d.users).toFixed(1)}`).join(' ');
+  const cp=series.map(d=>`${x(d.m).toFixed(1)},${cy(d.N).toFixed(1)}`).join(' ');
+  g+=`<polyline class="curveChurch" points="${cp}"/>`;
+  g+=`<polyline class="curveUsers" points="${up}"/>`;
+  // axis titles + legend
+  g+=`<text class="axislbl" x="${mL}" y="${mT-6}" style="fill:var(--honey-deep)">weekly users (log)</text>`;
+  g+=`<text class="axislbl" x="${mL+pw}" y="${mT-6}" text-anchor="end" style="fill:var(--conceptual)">churches (linear, →${fmtUsers(S.M)})</text>`;
+  g+=`<circle cx="${mL+8}" cy="${H-14}" r="4" fill="var(--honey-deep)"/><text class="legendchip" x="${mL+18}" y="${H-10}">weekly users</text>`;
+  g+=`<line x1="${mL+130}" y1="${H-14}" x2="${mL+150}" y2="${H-14}" stroke="var(--conceptual)" stroke-width="2.2" stroke-dasharray="2 3"/><text class="legendchip" x="${mL+156}" y="${H-10}">adopted churches</text>`;
+  document.getElementById('chart').innerHTML=g;
+}
+
+/* ============================================================
+   READOUTS + verdict
+   ============================================================ */
+function renderReadouts(a){
+  const rd = (m,g)=> m===null
+    ? `<div class="v bad">not in 8 yr</div>`
+    : `<div class="v good">${yr(m)} yr</div><div class="note">month ${m} · ${money(g)}/wk</div>`;
+  document.getElementById('readouts').innerHTML = `
+    <div class="cell"><div class="k">Months → 100k users</div>${a.m100===null?'<div class="v bad">not reached</div><div class="note">in 8 yr</div>':`<div class="v good">${a.m100} mo</div><div class="note">${money(a.g100)}/wk gross</div>`}</div>
+    <div class="cell"><div class="k">Months → 1M users</div>${a.m1M===null?'<div class="v bad">not reached</div><div class="note">in 8 yr</div>':`<div class="v good">${a.m1M} mo</div><div class="note">${money(a.g1M)}/wk gross</div>`}</div>
+    <div class="cell"><div class="k">Peak weekly users (8 yr)</div><div class="v ${a.peak.users>=1e5?'good':'warn'}">${fmtUsers(a.peak.users)}</div><div class="note">month ${a.peak.m}</div></div>
+    <div class="cell"><div class="k">Peak weekly gross</div><div class="v">${money(a.peak.gross)}</div><div class="note">at ${fmtInt(a.peak.users)} users</div></div>
+    <div class="cell"><div class="k">Churches adopted (8 yr)</div><div class="v">${fmtInt(a.last.N)}</div><div class="note">of ${fmtInt(S.M)} ceiling</div></div>`;
+}
+function renderVerdict(a){
+  const churchesFor1M = CONFIG.targets.scaleUsers/(S.att*CONFIG.model.householdsPerAttendee*S.partM12);
+  const churchesFor100k = CONFIG.targets.year1Users/(S.att*CONFIG.model.householdsPerAttendee*S.partM12);
+  const box=document.getElementById('verdict-box');
+  const reach100 = a.m100!==null, reach1M = a.m1M!==null;
+  box.innerHTML = `<div class="assume" style="${reach100?'':'border-left-color:var(--rust);background:#fbeee9'}">
+    <b style="${reach100?'':'color:var(--rust-deep)'}">What this scenario says</b>
+    At <b>${fmtInt(S.M)}</b> reachable churches × <b>${S.att}</b> attendance × <b>${pct(S.partM12)}</b> participation, the network can hold at most
+    <b>${fmtInt(S.M*S.att*CONFIG.model.householdsPerAttendee*S.partM12)}</b> weekly users at full saturation.
+    ${reach100
+      ? `It clears <b>100k</b> at month ${a.m100} (yr ${yr(a.m100)}).`
+      : `It <b>never</b> clears 100k in 8 years — you would need <b>${fmtInt(churchesFor100k)}</b> churches at this size/participation.`}
+    ${reach1M
+      ? `It reaches <b>1M</b> at month ${a.m1M}.`
+      : `1M is <b>out of reach</b>: it would take <b>${fmtInt(churchesFor1M)}</b> churches — ${churchesFor1M>46876?'more than the entire SBC (46,876)':'a much larger network'} — at this church size &amp; participation.`}
+    ${!reach100?' Raise attendance toward the weighted-mean 360 (recruit big churches), lift participation, or widen the ceiling to move the honey curve up to the red lines.':''}
+  </div>`;
+}
+
+/* ============================================================
+   NETWORK TABLE
+   ============================================================ */
+function renderNetworks(){
+  document.querySelector('#tbl-net tbody').innerHTML = CONFIG.networks.map(n=>{
+    const flag = n.flag?' <span class="tag bad">⚑ “12k”</span>':'';
+    return `<tr${n.flag?' class="hi"':''}>
+      <td><b>${n.name}</b>${flag}<div class="cite" style="font-size:10px">${n.year}</div></td>
+      <td class="num">${fmtInt(n.churches)}</td>
+      <td style="font-size:12.5px">${n.polity} <span class="tag ${n.tag}">${n.tagtxt}</span><div style="color:var(--ink-fade);font-size:11.5px">${n.motion}</div></td>
+      <td class="num"><button class="pbtn" data-m="${n.M}">${fmtUsers(n.M)} →</button></td>
+    </tr>`;
+  }).join('');
+  document.querySelectorAll('#tbl-net button[data-m]').forEach(b=>
+    b.addEventListener('click',()=>{ S.M=+b.dataset.m; document.getElementById('s-M').value=Math.min(S.M,46876); clearScenario(); renderAll(); }));
+}
+
+/* ============================================================
+   FINDINGS (live)
+   ============================================================ */
+function renderFindings(a){
+  const angel=CONFIG.scenarios.find(s=>s.id==='angel');
+  const churchesFor1M = CONFIG.targets.scaleUsers/(S.att*CONFIG.model.householdsPerAttendee*S.partM12);
+  const items = [
+    { h:"(a) 100k users in year 1 needs Angel-Food-speed — and big churches, not median ones.",
+      b:`A mid-August launch wanting 100k weekly users by next summer cannot get there on median-70 churches: even at q=${pct(angel.set.q*100,1).replace('%','')}%/mo, ceiling 12,000 and 20% participation the network peaks near <b>72k</b> users. To clear 100k <b>inside year 1</b> you must raise the <b>attendance</b> slider toward the attendee-weighted mean (360) — i.e. recruit a few <b>250+ churches</b> from day one — <b>and</b> run the high-q, high-participation preset. The levers that get you there are q, participation, and church <b>size</b>, not church count.` },
+    { h:"(b) Host churches are never the bottleneck — central logistics capital is.",
+      b:`Adopted churches saturate their ceiling well before users hit target (this scenario: <b>${fmtInt(a.last.N)}</b> of ${fmtInt(S.M)} churches). The constraint is throughput per church and the backbone to move food — exactly the variable Angel Food's <b>$6.9M USDA warehouse loan</b> unlocked. More churches don't fix a missing warehouse.` },
+    { h:"(c) Growth speed and survival are separate axes.",
+      b:`Every precedent died at the <b>center</b> — fraud (Angel Food), subsidy withdrawal (USDA F2F), competitive erosion (SHARE) — never in the church network. A great q buys you speed; it buys you <b>nothing</b> against a compromised or under-funded center. <b>Governance &amp; funding integrity is an independent failure variable</b> absent from this model.` },
+    { h:"The 1M-user / $100M-week scale story is an addressable-market claim, not a diffusion claim.",
+      b:`At this church size &amp; participation, 1M weekly users would require <b>${fmtInt(churchesFor1M)}</b> churches${churchesFor1M>46876?' — more than the entire SBC (46,876)':''}. The main-graph scale scenario therefore presumes a national, multi-denomination footprint (or the big-basket $100 assumption, or near-total participation) — it is a claim about how <b>large</b> the reachable universe is, which loops straight back to the ⚠ open question: <b>which network do we mean?</b>` }
+  ];
+  document.getElementById('findings').innerHTML = items.map(it=>
+    `<li><span class="lede2">${it.h}</span>${it.b}</li>`).join('');
+}
+
+/* ============================================================
+   SCENARIOS + CEILING PRESETS + CONTROLS
+   ============================================================ */
+let activeScenario=null;
+function renderScenarioCards(){
+  document.getElementById('scen-row').innerHTML = CONFIG.scenarios.map(s=>`
+    <button class="scen" data-id="${s.id}">
+      <div class="sname ${s.cls}">${s.name}</div>
+      <div class="sparam">q ${pct(s.set.q*100,1).replace('%','')}%/mo · M ${fmtUsers(s.set.M)} · part ${pct(s.set.partM12)} · $${s.set.basket}</div>
+      <div class="sjust">${s.just}</div>
+    </button>`).join('');
+  document.querySelectorAll('.scen').forEach(b=>b.addEventListener('click',()=>applyScenario(b.dataset.id)));
+}
+function applyScenario(id){
+  const sc=CONFIG.scenarios.find(s=>s.id===id); if(!sc) return;
+  S.q=sc.set.q; S.M=sc.set.M; S.partM12=sc.set.partM12; S.basket=sc.set.basket;
+  // leave seed, p, attendance at defaults per spec
+  activeScenario=id; syncInputs(); markScenario(); renderAll();
+}
+function clearScenario(){ activeScenario=null; markScenario(); }
+function markScenario(){
+  document.querySelectorAll('.scen').forEach(b=>b.classList.toggle('active',b.dataset.id===activeScenario));
+}
+function renderCeilPresets(){
+  const wrap=document.getElementById('ceil-presets');
+  CONFIG.ceilings.forEach(c=>{
+    const b=document.createElement('button'); b.className='pbtn ceil'; b.dataset.m=c.M;
+    b.textContent=`${fmtUsers(c.M)} · ${c.label}`;
+    b.title=c.note;
+    b.addEventListener('click',()=>{ S.M=c.M; document.getElementById('s-M').value=c.M; clearScenario(); renderAll(); });
+    wrap.appendChild(b);
+  });
+}
+function markCeil(){
+  document.querySelectorAll('.pbtn.ceil').forEach(b=>b.classList.toggle('active',+b.dataset.m===S.M));
+}
+function syncInputs(){
+  document.getElementById('s-seed').value=S.seed;
+  document.getElementById('s-p').value=S.p;
+  document.getElementById('s-q').value=S.q;
+  document.getElementById('s-M').value=Math.min(S.M,46876);
+  document.getElementById('s-att').value=S.att;
+  document.getElementById('s-part').value=S.partM12;
+  document.getElementById('s-basket').value=S.basket;
+}
+function syncLabels(){
+  document.getElementById('v-seed').textContent=S.seed;
+  document.getElementById('v-p').textContent=S.p.toFixed(4)+'/mo';
+  document.getElementById('v-q').textContent=(S.q*100).toFixed(1)+'%/mo';
+  document.getElementById('v-M').textContent=fmtInt(S.M);
+  document.getElementById('v-att').textContent=S.att;
+  document.getElementById('v-part').textContent=pct(S.partM12);
+  document.getElementById('v-basket').textContent='$'+S.basket;
+}
+function renderAll(){
+  syncLabels(); markCeil();
+  const series=runModel(); const a=analyze(series);
+  buildChart(series); renderReadouts(a); renderVerdict(a); renderFindings(a);
+}
+function bind(){
+  const map={'s-seed':'seed','s-p':'p','s-q':'q','s-M':'M','s-att':'att','s-part':'partM12','s-basket':'basket'};
+  Object.entries(map).forEach(([id,key])=>{
+    document.getElementById(id).addEventListener('input',e=>{ S[key]=+e.target.value; clearScenario(); renderAll(); });
+  });
+  document.getElementById('reset').addEventListener('click',()=>{
+    S.seed=CONFIG.model.seed; S.p=CONFIG.model.p; S.q=CONFIG.model.q; S.M=CONFIG.model.M;
+    S.att=CONFIG.model.attendance; S.partM12=CONFIG.model.participation.M12; S.basket=CONFIG.model.basket;
+    clearScenario(); syncInputs(); renderAll();
+  });
+}
+function renderSources(){
+  document.getElementById('srcs').innerHTML = CONFIG.sources.map(s=>
+    `<li><span class="lbl">${s.lbl}</span> — <span class="n">${s.n}</span></li>`).join('');
+}
+
+/* init */
+renderScenarioCards();
+renderCeilPresets();
+renderNetworks();
+renderSources();
+syncInputs();
+bind();
+renderAll();
+</script>
+</body>
+</html>

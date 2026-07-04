@@ -1,0 +1,154 @@
+{
+  "meta": {
+    "title": "Farmer Drop — Propagation (Bass diffusion) working parameters",
+    "purpose": "Single source of truth for propagation.html — a discrete monthly Bass-diffusion growth model over a bounded church network. A hypothesis generator for the founders' critique whiteboard, NOT a forecast.",
+    "generated": "2026-07-04",
+    "open_question": "WHICH NETWORK is 'the 12,000 churches'? The two ~12k candidates (Assemblies of God 12,651, semi-centralized districts) and (Churches of Christ 11,776, fully autonomous) imply OPPOSITE go-to-market motions: seed districts top-down vs pure one-church-at-a-time peer contagion. Unresolved — governs the whole GTM and the choice of q. Founders (Volkmar, Magnus) must decide.",
+    "source_files": [
+      "init_structure/Farmer_Drop__knowledge_map.md (§2 actors, §7 GTM: churches distribution)",
+      "graphs/farmer_drop_graph.json (scale_scenario: 1M users, year1 target 100k)"
+    ],
+    "assumptions_flagged": [
+      "Every church modeled at the SAME median size (70) — but ~50% of churchgoers sit in the largest ~10% of churches (Lifeway 2025); WHICH churches adopt matters as much as how many.",
+      "0.43 households per attendee (~2.3 people/household).",
+      "A single q for the whole network — an autonomous (CoC) and a district (AoG) network do not share a contagion rate.",
+      "Participation holds flat after year 1 with zero church/host churn (optimistic).",
+      "Church basket $35 differs from the main-graph $100 scale basket — the scale story mixes two basket assumptions.",
+      "Growth speed (Bass) and survival are DIFFERENT axes: every precedent died at the CENTER (fraud / subsidy withdrawal / competitive erosion), never in the church layer. Governance & funding integrity is an independent failure variable NOT captured by this model."
+    ]
+  },
+
+  "model": {
+    "note": "Discrete monthly update: N[t+1] = min(M, N[t] + (p + q*N[t]/M)*(M - N[t])). users(t) = N(t) * attendance * householdsPerAttendee * participation(t). weeklyGross = users(t) * basket. Months indexed 1..96.",
+    "seed": 5,
+    "p": 0.003,
+    "q": 0.03,
+    "M": 12000,
+    "attendance": 70,
+    "householdsPerAttendee": 0.43,
+    "participation": { "M1": 0.03, "M6": 0.08, "M12": 0.12, "ramp": "linear 3%→8% (months 1-6), 8%→M12 (months 6-12), flat after" },
+    "basket": 35,
+    "months": 96
+  },
+
+  "targets": {
+    "year1Users": 100000,
+    "scaleUsers": 1000000,
+    "note": "Marker lines on the chart. From farmer_drop_graph.json scale_scenario: year-1 target 100k users, scale 1M users."
+  },
+
+  "ceilings": [
+    { "id": "coc_tx", "label": "CoC · Texas", "M": 1901, "note": "1,901 Churches of Christ in Texas (most of any state) — autonomous beachhead" },
+    { "id": "dfw", "label": "DFW metro", "M": 6222, "note": "6,222 congregations, Dallas-Fort Worth (US Religion Census 2020)" },
+    { "id": "network12k", "label": "the 12k", "M": 12000, "note": "12,000 — the ambiguous 'the churches' target" },
+    { "id": "sbc", "label": "SBC national", "M": 46876, "note": "46,876 — national ceiling" }
+  ],
+
+  "diffusion_reference": {
+    "p_external_annual": 0.03,
+    "q_peer_annual_low": 0.35,
+    "q_peer_annual_high": 0.40,
+    "per_contact_adoption": { "point": 0.15, "low": 0.10, "high": 0.25 },
+    "half_saturation_years_organic": [6, 8],
+    "half_saturation_years_promoted": [3, 4],
+    "analog": "Celebrate Recovery grew ~43%/yr for decades",
+    "note": "Monthly slider values ≈ annual/12; q≈0.03/mo ↔ ~0.36/yr."
+  },
+
+  "scenarios": [
+    {
+      "id": "conservative",
+      "name": "Conservative",
+      "set": { "q": 0.015, "M": 1901, "partM12": 0.08, "basket": 30 },
+      "justification": "Autonomous-network pure contagion (CoC-TX): no top-down channel, q halved; half-saturation 6–8+ yrs. Peaks ~2k weekly users in 8 yr — never approaches 100k."
+    },
+    {
+      "id": "base",
+      "name": "Base",
+      "set": { "q": 0.03, "M": 6000, "partM12": 0.12, "basket": 35 },
+      "justification": "Canonical Bass + light promotion across a metro-scale set (~DFW); half-saturation ~4–6 yrs. Peaks ~14k weekly users in 8 yr."
+    },
+    {
+      "id": "angel",
+      "name": "Angel-Food-speed",
+      "set": { "q": 0.06, "M": 12000, "partM12": 0.20, "basket": 30 },
+      "justification": "Requires a funded central warehouse/logistics backbone — the 2005 $6.9M USDA loan is what unlocked Angel Food's hockey stick. Peaks ~69k weekly users in 8 yr on median-70 churches — still under 100k without big-church weighting."
+    }
+  ],
+
+  "computed_readouts_at_defaults": {
+    "note": "months-to-threshold as computed by the page's own model (cross-checked in Python). At median attendance 70 all three scenarios SATURATE below the targets — that is the load-bearing finding.",
+    "conservative": { "months_to_100k": null, "months_to_1M": null, "peak_users_8yr": 1983, "peak_weekly_gross": "$0.06M" },
+    "base": { "months_to_100k": null, "months_to_1M": null, "peak_users_8yr": 14414, "peak_weekly_gross": "$0.50M" },
+    "angel": { "months_to_100k": null, "months_to_1M": null, "peak_users_8yr": 68637, "peak_weekly_gross": "$2.06M" },
+    "default_open": { "q": 0.03, "M": 12000, "partM12": 0.12, "basket": 35, "months_to_100k": null, "months_to_1M": null, "peak_users_8yr": 28780, "peak_weekly_gross": "$1.01M" },
+    "reachability": {
+      "churches_needed_for_100k_at_70att_12pct": 27685,
+      "churches_needed_for_1M_at_70att_12pct": 276855,
+      "comment": "1M users at median-70 churches, 12% participation needs ~276,855 churches — ~6x the entire SBC (46,876). 1M is an addressable-market claim, not a diffusion-speed claim.",
+      "angel_food_speed_reaches_100k_if": "attendance raised toward the attendee-weighted mean (~360): reaches 100k around month 37 — still NOT within year 1. Year-1 100k requires recruiting big (250+) churches from launch plus high q + high participation."
+    }
+  },
+
+  "networks": [
+    { "name": "Assemblies of God (USA)", "churches": 12651, "year": 2024, "polity": "Semi-centralized districts", "motion": "Top-down: seed districts, cascade", "candidate_12k": true, "source": "graphsaboutreligion.com" },
+    { "name": "Churches of Christ", "churches": 11776, "year": 2022, "polity": "Fully autonomous congregations (no HQ)", "motion": "One church at a time (peer contagion)", "candidate_12k": true, "texas": 1901, "texas_note": "most of any state", "source": "2022 CoC directory" },
+    { "name": "BGCT (Texas Baptists)", "churches": 5375, "year": 2023, "polity": "Cooperative convention", "motion": "Convention channel", "candidate_12k": false },
+    { "name": "SBTC (Southern Baptists of Texas)", "churches": 2800, "year": 2023, "polity": "Cooperative convention", "motion": "Convention channel", "candidate_12k": false },
+    { "name": "SBC (national)", "churches": 46876, "year": 2023, "polity": "Cooperative / autonomous", "motion": "Largest reachable ceiling", "candidate_12k": false },
+    { "name": "ARC (church-planting network)", "churches": 1132, "year": 2023, "polity": "Centralized network", "motion": "Fast top-down, small base", "candidate_12k": false }
+  ],
+
+  "congregation_size": {
+    "median_weekly_attendance": 70,
+    "covid_trough": 45,
+    "attendee_weighted_mean": 360,
+    "largest_10pct_share_of_churchgoers": 0.50,
+    "source": "NCS-IV / Faith Communities Today (FACT) / Lifeway Research 2025",
+    "implication": "Recruiting a few 250+ churches captures outsized demand; the median-70 slider understates a big-church strategy and overstates a random-church one."
+  },
+
+  "texas": {
+    "congregations_statewide": 29746,
+    "dfw": 6222,
+    "houston": 4972,
+    "austin": 1433,
+    "source": "US Religion Census 2020"
+  },
+
+  "precedents": [
+    {
+      "name": "Angel Food Ministries",
+      "founded": 1994,
+      "founded_families": 34,
+      "inflection": "2005 $6.9M USDA warehouse loan unlocked logistics backbone",
+      "peak": { "host_churches": 5000, "families_per_month": 500000, "states": "43+", "revenue_2008": "$137.5M" },
+      "collapse": { "year": 2011, "cause": "founder fraud — 49-count federal indictment" },
+      "lesson": "The hockey stick came from central logistics capital, not more churches; the network never failed — the CENTER did."
+    },
+    {
+      "name": "USDA Farmers-to-Families Food Box",
+      "scale": "~176M boxes via faith & nonprofit partners",
+      "end_cause": "ended by policy, not demand",
+      "lesson": "A subsidy-dependent center is a policy risk."
+    },
+    {
+      "name": "SHARE Food Network",
+      "scale": "~300 church host sites, ~12,000 families/month (DC)",
+      "outcome": "eroded competitively; survived by institutionalizing as a nonprofit food hub",
+      "lesson": "Volunteer buying clubs erode as grocery/online discounting catches up unless institutionalized."
+    }
+  ],
+
+  "sources": [
+    { "id": "aog", "label": "Assemblies of God — 12,651 churches (2024)", "note": "graphsaboutreligion.com; semi-centralized district polity → real top-down channel." },
+    { "id": "coc", "label": "Churches of Christ — 11,776 (2022); 1,901 in Texas", "note": "2022 directory; fully autonomous congregations → one-church-at-a-time contagion; Texas has the most of any state." },
+    { "id": "religion_census_tx", "label": "US Religion Census 2020 — Texas", "note": "29,746 congregations statewide; DFW ~6,222, Houston ~4,972, Austin ~1,433." },
+    { "id": "cong_size", "label": "Congregation size — NCS-IV / FACT / Lifeway 2025", "note": "Median weekly attendance ~70 (COVID trough ~45); attendee-weighted mean ~360; ~50% of churchgoers in the largest ~10% of churches." },
+    { "id": "angel_food", "label": "Angel Food Ministries", "note": "1994 (34 families) → ~5,000 host churches, 500k families/mo, 43+ states, $137.5M revenue (2008) after a 2005 $6.9M USDA warehouse loan; collapsed 2011 on a 49-count federal fraud indictment." },
+    { "id": "usda_f2f", "label": "USDA Farmers-to-Families Food Box", "note": "~176M boxes via faith & nonprofit partners; ended by policy, not demand." },
+    { "id": "share", "label": "SHARE Food Network", "note": "~300 church host sites, ~12,000 families/month (DC); eroded competitively, survived by institutionalizing." },
+    { "id": "bass", "label": "Bass diffusion & analog growth rates", "note": "External p ≈ 0.03/yr, peer q ≈ 0.35–0.40/yr; Celebrate Recovery ~43%/yr for decades; per-contact adoption ~15% (10–25%); half-saturation ~6–8 yrs organic, ~3–4 promoted." },
+    { "id": "sbc_conventions", "label": "SBC / BGCT / SBTC / ARC counts", "note": "SBC ~46,876; BGCT ~5,375; SBTC ~2,800; ARC ~1,132." }
+  ]
+}
