@@ -93,6 +93,11 @@ button.ev{font-family:"IBM Plex Mono",monospace;font-size:12px;cursor:pointer;
 button.ev:hover:not(:disabled){background:var(--loam);color:var(--parchment)}
 button.ev:active:not(:disabled){transform:translateY(1px);box-shadow:none}
 button.ev:disabled{opacity:.38;cursor:not-allowed;border-style:dashed}
+button.ev-start:not(:disabled){border-color:var(--honey-deep);
+  animation:startpulse 1.6s ease-in-out infinite}
+@keyframes startpulse{
+  0%,100%{box-shadow:0 0 0 0 rgba(184,121,10,.45)}
+  50%{box-shadow:0 0 0 7px rgba(184,121,10,0)}}
 button.ev.unwind{border-color:var(--rust);color:var(--rust-deep)}
 button.ev.unwind:hover:not(:disabled){background:var(--rust);color:#fff}
 button.ev.credits{border-color:var(--honey-deep);color:var(--honey-deep)}
@@ -217,7 +222,7 @@ footer .warn{color:var(--rust-deep)}
 
   <div class="evgroups">
     <div class="evgroup"><span class="glabel">forward</span>
-      <button class="ev" data-ev="capture">1 · capture &amp; allocate <span class="d">day 0 · fee at capture</span></button>
+      <button class="ev ev-start" data-ev="capture">▶ 1 · capture &amp; allocate <span class="d">day 0 · fee at capture · START HERE</span></button>
       <button class="ev" data-ev="settle">2 · settle <span class="d">T+2 · net only</span></button>
       <button class="ev" data-ev="farmer_payout">3 · farmer payout <span class="d">sets farmer_paid</span></button>
       <button class="ev" data-ev="contractor_accrual">4 · contractor accrual <span class="d">out of the take</span></button>
@@ -508,6 +513,7 @@ function renderRuler(hotDay){
 
 /* ============ actions ============ */
 function fire(id){
+  document.querySelectorAll('.ev-start').forEach(b=>b.classList.remove('ev-start'));
   const ev=EVENTS[id];
   let effFraction;
   if(ev.refundCap==='partial'){effFraction=Math.min(S.refundFraction, round2(1-refunded));
