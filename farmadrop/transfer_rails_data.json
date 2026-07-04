@@ -1,0 +1,144 @@
+{
+  "meta": {
+    "title": "FARMER DROP — Payment Rails: Stripe vs a Chain Transfer Coin",
+    "generated": "2026-07-04",
+    "purpose": "Make the cost gap between Stripe's card rails and an L2 chain transfer coin legible, to ground Farmer Drop's phased rail strategy.",
+    "user_confirmed_facts_2026_07_04": [
+      "Honey Coin is NOT ready to launch and will be ASSET-BACKED in a later phase, via the compadres asset-backed template / IReserveAdapter.",
+      "The FIRST deploy coin is a transfer-efficiency coin (CPDR-style) for cheap peer transfers — NOT the asset-backed Honey Coin.",
+      "Stripe is the launch rail because people know and trust it; it is expensive relative to a chain coin. This page makes that cost gap explicit.",
+      "These override older map language that treated Honey Coin as the near-term token."
+    ],
+    "source_files": [
+      "init_structure/Farmer_Drop__knowledge_map.md (§3.1 fee model, §4 token phases)",
+      "~/GitHub/compadres/README.md, TESTING.md, docs/03_low_extraction_design.md, docs/04_reconciliation_spec.md, docs/06_asset_backed_template.md",
+      "graphs/take_rate_math.html (design + fee constants)"
+    ],
+    "caveats": [
+      "Stripe percentage + USD-flat fees are identical US/CA; region-varying lines (international card, FX, Instant Payout minimum) use US values — the pricing session geolocated to CA.",
+      "Radar US per-screen figures ($0.05 / $0.07) come from a secondary source; verify against stripe.com/radar/pricing from a US IP before publishing.",
+      "Base ERC-20 transfer cost rests mainly on BaseScan's gas tracker; l2fees.info did not list Base at fetch time. Cross-check l2beat.com/scaling/costs."
+    ]
+  },
+  "stripe": {
+    "note": "US-centric. The Farmer Drop fee model already absorbs the highlighted lines: $0.55 per-txn surcharge covers Stripe's $0.30 processing + $0.25 transfer fixed legs; the 3.15% cart surcharge = 2.9% Stripe passthrough + 0.25% strategic wedge.",
+    "categories": [
+      {
+        "group": "Card processing",
+        "lines": [
+          {"item": "Standard card — online / e-commerce", "rate": "2.9% + $0.30", "note": "Per successful charge. The core rail cost.", "fd_relevant": true, "source": "stripe_pricing"},
+          {"item": "Manually keyed-in card", "rate": "+0.5%", "note": "Add-on when the card number is typed, not presented.", "fd_relevant": false, "source": "stripe_pricing"},
+          {"item": "International cards", "rate": "+1.5%", "note": "US accounts. Added on non-domestic cards.", "fd_relevant": false, "source": "stripe_pricing"},
+          {"item": "Currency conversion", "rate": "+1%", "note": "US accounts, when Stripe converts currency.", "fd_relevant": false, "source": "stripe_pricing"}
+        ]
+      },
+      {
+        "group": "Bank debit & payouts",
+        "lines": [
+          {"item": "ACH Direct Debit", "rate": "0.8%, capped $5.00", "note": "Cheaper rail, but slow settlement and reversible for ~60 days.", "fd_relevant": false, "source": "stripe_pricing"},
+          {"item": "Standard payout to your bank", "rate": "Free", "note": "Rolling basis, ~T+2 for US accounts.", "fd_relevant": false, "source": "stripe_payouts"},
+          {"item": "Instant Payout", "rate": "1%, min $0.50", "note": "Pay to get funds in minutes instead of days.", "fd_relevant": false, "source": "stripe_pricing"}
+        ]
+      },
+      {
+        "group": "Connect (platform / marketplace)",
+        "lines": [
+          {"item": "Active connected account", "rate": "$2 / monthly active account", "note": "Express / Custom accounts — per account that transacts that month.", "fd_relevant": false, "source": "stripe_connect"},
+          {"item": "Payout to connected account", "rate": "0.25% + $0.25", "note": "The transfer leg. Farmer Drop's $0.55 surcharge covers this $0.25.", "fd_relevant": true, "source": "stripe_connect"}
+        ]
+      },
+      {
+        "group": "Disputes & risk",
+        "lines": [
+          {"item": "Dispute / chargeback", "rate": "$15.00", "note": "Refunded to you only if you win the dispute.", "fd_relevant": false, "source": "stripe_pricing"},
+          {"item": "Radar (custom pricing)", "rate": "$0.05 / screen", "note": "Included free on standard pricing; per-screen on interchange-plus.", "fd_relevant": false, "source": "stripe_radar"},
+          {"item": "Radar for Fraud Teams", "rate": "$0.07 / screen", "note": "Adds rules, lists, and review tooling.", "fd_relevant": false, "source": "stripe_radar"}
+        ]
+      },
+      {
+        "group": "Revenue tools",
+        "lines": [
+          {"item": "Billing (recurring)", "rate": "0.7% of Billing volume", "note": "0.67% for added volume on paid monthly plans.", "fd_relevant": false, "source": "stripe_billing"},
+          {"item": "Invoicing", "rate": "0.4% / paid invoice", "note": "Starter tier; 0.5% on Plus.", "fd_relevant": false, "source": "stripe_invoicing"},
+          {"item": "Tax", "rate": "0.5% / transaction", "note": "Where you're registered to collect; $0.50/txn on the API tier.", "fd_relevant": false, "source": "stripe_tax"}
+        ]
+      },
+      {
+        "group": "Refunds",
+        "lines": [
+          {"item": "Issue a refund", "rate": "No extra fee — but original fee kept", "note": "The original 2.9% + $0.30 is NOT returned. A refunded $100 sale still cost you $3.20.", "fd_relevant": true, "source": "stripe_pricing"}
+        ]
+      }
+    ]
+  },
+  "base_rail": {
+    "chain": "Base (Coinbase OP-Stack L2)",
+    "post_4844": true,
+    "note": "Post-EIP-4844 (blobs) collapsed L2 data-availability cost. A token transfer is now sub-cent to low-cents.",
+    "costs": {
+      "erc20_transfer_usd_typical": 0.006,
+      "erc20_transfer_usd_range": [0.001, 0.02],
+      "eth_send_gas_units": 21000,
+      "erc20_transfer_gas_units": 55000,
+      "router_transfer_gas_units": 85000,
+      "gas_price_gwei_typical": 0.006,
+      "amm_fee_bps": 5,
+      "primary_market_fee_bps": 0
+    },
+    "honest_additional_costs": [
+      {"item": "On/off-ramp", "detail": "USDC mint/redeem (Circle 1:1, larger sizes) or exchange spread ~0.1–0.5%. Modeled here at 0.1% per crossing. This is where 'chain is free' quietly stops being true."},
+      {"item": "Custody & key management", "detail": "Seed-phrase safety, wallet UX, recovery, and (for the platform) a Safe multisig admin key — a real operating cost, not a per-transfer fee."},
+      {"item": "Compliance overhead", "detail": "KYC/AML posture, whitelist-only pilot (compadres ENABLE_CPDR_WHITELIST), reconciliation, and legal classification — fixed monthly cost amortized across volume."}
+    ]
+  },
+  "comparison": {
+    "model": {
+      "stripe_cost_usd": "0.029 * amount + 0.55  (2.9% card + $0.30 processing + $0.25 transfer leg)",
+      "cpdr_marginal_usd": "0.006  (gas only, once funds are on-chain, via TransferRouter)",
+      "cpdr_all_in_usd": "0.006 + 0.001 * amount  (gas + 0.1% amortized on/off-ramp)"
+    },
+    "scenarios": [
+      {"id": "p2p-30", "label": "$30 P2P transfer", "amount": 30, "kind": "p2p",
+       "stripe_usd": 1.42, "stripe_pct": 4.73, "cpdr_marginal_usd": 0.006, "cpdr_all_in_usd": 0.036, "cpdr_all_in_pct": 0.12,
+       "gap_usd": 1.384, "gap_x_all_in": 39, "gap_x_marginal": 237},
+      {"id": "p2p-100", "label": "$100 P2P transfer", "amount": 100, "kind": "p2p",
+       "stripe_usd": 3.45, "stripe_pct": 3.45, "cpdr_marginal_usd": 0.006, "cpdr_all_in_usd": 0.106, "cpdr_all_in_pct": 0.106,
+       "gap_usd": 3.344, "gap_x_all_in": 33, "gap_x_marginal": 575},
+      {"id": "p2p-500", "label": "$500 P2P transfer", "amount": 500, "kind": "p2p",
+       "stripe_usd": 15.05, "stripe_pct": 3.01, "cpdr_marginal_usd": 0.006, "cpdr_all_in_usd": 0.506, "cpdr_all_in_pct": 0.101,
+       "gap_usd": 14.544, "gap_x_all_in": 30, "gap_x_marginal": 2508},
+      {"id": "cart-100", "label": "$100 marketplace cart", "amount": 100, "kind": "cart",
+       "member_charged_usd": 3.70, "member_charged_note": "3.15% cart surcharge + $0.55; Stripe takes $3.45, platform keeps $0.25 wedge",
+       "stripe_usd": 3.45, "stripe_pct": 3.45, "cpdr_marginal_usd": 0.006, "cpdr_all_in_usd": 0.106, "cpdr_all_in_pct": 0.106,
+       "gap_usd": 3.344, "gap_x_all_in": 33, "gap_x_marginal": 575}
+    ],
+    "crossover": {
+      "note": "On marginal (per-transfer) cost the chain undercuts Stripe from the first dollar — Stripe's $0.55 fixed leg alone is ~90× a Base transfer. What Stripe buys you is trust and zero setup; the chain front-loads custody + compliance + ramp liquidity. The crossover is a monthly-overhead break-even, not a per-transfer one.",
+      "assumed_monthly_overhead_usd": 500,
+      "breakeven_transfers_at_100": 150
+    }
+  },
+  "phases": [
+    {"phase": 0, "name": "Stripe rails", "role": "Trust bootstrap", "status": "now",
+     "detail": "Fiat + credits ledger on Stripe. People know and trust it; onboarding is instant and no custody burden. Cost is high (2.9% + $0.55) but bounded, and the fee model absorbs it via $0.55 + 3.15%.",
+     "warning": null},
+    {"phase": 1, "name": "CPDR-style transfer coin", "role": "Efficient P2P", "status": "first deploy",
+     "detail": "The compadres harness (CPDR): TransferRouter for routed peer transfers with clientOrderId, mock USDC funding, primary issuance, toy AMM (5 bps), burn/redeem, fee measurement and chain==event==DB==UI reconciliation. This is the FIRST real card-rail cost removal — the only mechanism that genuinely drops Stripe's fee, not the PMA 'tax' framing.",
+     "warning": "Whitelist-only mainnet pilot; admin key must be a Safe multisig; exact approvals; no honey/asset-backing yet."},
+    {"phase": 2, "name": "Asset-backed Honey Coin", "role": "Deferred", "status": "not ready",
+     "detail": "Enters through compadres docs/06_asset_backed_template.md and IReserveAdapter (reserveUnitsAvailable / reserveUnitsCommitted / canMint). Redeemable digital honey CREDIT — claim against specified inventory, burn-to-redeem, published inventory snapshots. NOT an investment/profit-share token.",
+     "warning": "REGULATORY CLASSIFICATION REQUIRED FIRST: a USD-redeemable, food-spendable, USD-boosted token sits in stored-value / money-transmission / possibly-securities territory. Counsel before launch, not after (map §4 ⚠)."}
+  ],
+  "sources": {
+    "stripe_pricing": "https://stripe.com/pricing",
+    "stripe_connect": "https://stripe.com/connect/pricing",
+    "stripe_payouts": "https://docs.stripe.com/payouts",
+    "stripe_billing": "https://stripe.com/billing/pricing",
+    "stripe_invoicing": "https://support.stripe.com/questions/stripe-invoicing-pricing",
+    "stripe_radar": "https://stripe.com/radar/pricing",
+    "stripe_tax": "https://stripe.com/tax/pricing",
+    "base_gas": "https://basescan.org/gastracker",
+    "l2_costs": "https://l2beat.com/scaling/costs",
+    "compadres": "~/GitHub/compadres (CPDR low-extraction transfer test harness)"
+  }
+}

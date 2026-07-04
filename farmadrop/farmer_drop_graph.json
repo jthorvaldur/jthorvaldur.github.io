@@ -1,0 +1,775 @@
+{
+  "meta": {
+    "title": "FARMER DROP — Knowledge Graph",
+    "source_files": [
+      "init_structure/Farmer_Drop__knowledge_map.md",
+      "init_structure/Glossary__ASR_uncertainties.md",
+      "init_structure/FABLE_BUILD_BRIEF.md"
+    ],
+    "generated_note": "Nodes/edges extracted from the Farmer Drop knowledge map (conceptual §2, business §3, token §4, drop-score §5, data/routing §6, GTM §7). Terminology normalized against Glossary__ASR_uncertainties.md. Source is voice-note transcripts (whisper ggml-tiny); every ⚠ token is unverified. Code lives in Volkmar's repo, not here — this is the spec/knowledge layer.",
+    "decision_rules_applied": [
+      "DR-1 (take %): platform-take node carries confidence:unresolved — 0.10% vs 10% is a 100x ambiguity that breaks the $5.2B valuation; model halts until resolved.",
+      "DR-2 (credit boost): credit-boost node modeled as a COST line with unattributed funding source (breakage / 0.25% wedge / token float).",
+      "DR-3 (token count): all token-layer nodes carry confidence:verify — blocked pending one-token-or-two decision + regulatory classification; no chain code.",
+      "DR-4 (terminology): 'Host Drop' used globally; 'a.k.a. Drop Spot' noted in description only.",
+      "DR-5 (legal fidelity): any glossary ⚠ item blocks downstream document generation until confirmed."
+    ]
+  },
+  "nodes": [
+    {
+      "id": "member",
+      "layer": "conceptual",
+      "label": "Member",
+      "type": "actor",
+      "deeper_explanation_ref": "init_structure/Farmer_Drop__knowledge_map.md §2",
+      "metrics": {
+        "basket": "$100/wk (scale assumption)",
+        "credit_boost": "~+2% spending power"
+      },
+      "failure_modes": [
+        "Member acquisition (not tech) is the binding constraint on the scale story (§3.4.6)."
+      ],
+      "confidence": "high"
+    },
+    {
+      "id": "farmer",
+      "layer": "conceptual",
+      "label": "Farmer",
+      "type": "actor",
+      "deeper_explanation_ref": "init_structure/Farmer_Drop__knowledge_map.md §2",
+      "metrics": {
+        "net_take": "~80% vs centralized retail",
+        "alberta_baseline": "~5 crops + beef"
+      },
+      "failure_modes": [
+        "Wants diversified income without commodity lock-in; 80% claim unproven until a real unit-economics sheet exists (§3.2)."
+      ],
+      "confidence": "high"
+    },
+    {
+      "id": "host_drop",
+      "layer": "conceptual",
+      "label": "Host Drop",
+      "type": "actor",
+      "deeper_explanation_ref": "init_structure/Farmer_Drop__knowledge_map.md §2",
+      "metrics": {
+        "existing_nodes": "~5 today",
+        "legal_wrapper": "ideally a PMA"
+      },
+      "failure_modes": [
+        "Drop-density thresholds unmodeled — density, not throughput, gates the network (§3.4.6).",
+        "Terminology drift: a.k.a. 'Drop Spot'; DR-4 fixes 'Host Drop' globally."
+      ],
+      "confidence": "high"
+    },
+    {
+      "id": "contractor",
+      "layer": "conceptual",
+      "label": "Independent Contractor",
+      "type": "actor",
+      "deeper_explanation_ref": "init_structure/Farmer_Drop__knowledge_map.md §2",
+      "metrics": {
+        "commission": "100% commission = 3% of drop volume for N months (out of platform's 10%)"
+      },
+      "failure_modes": [
+        "Recruits/trains host drops and links farmers to members; N-month window and take source depend on the unresolved platform take-% (DR-1)."
+      ],
+      "confidence": "high"
+    },
+    {
+      "id": "driver",
+      "layer": "conceptual",
+      "label": "Driver / Resource-Holder",
+      "type": "actor",
+      "deeper_explanation_ref": "init_structure/Farmer_Drop__knowledge_map.md §2",
+      "metrics": {
+        "model": "monetize idle backhaul capacity"
+      },
+      "failure_modes": [
+        "Anyone with a truck fills backhaul routes; supply of idle capacity and route reliability unproven at scale."
+      ],
+      "confidence": "probable"
+    },
+    {
+      "id": "platform",
+      "layer": "conceptual",
+      "label": "Platform (Farmer Drop)",
+      "type": "system",
+      "deeper_explanation_ref": "init_structure/Farmer_Drop__knowledge_map.md §2",
+      "metrics": {
+        "role": "coordination + ledger + fee engine + data/optimization",
+        "legal_wrapper": "a PMA"
+      },
+      "failure_modes": [
+        "Decentralized-Amazon coordination layer; app code held by Volkmar, not in this repo — integration target with enumerated unknowns (BRIEF §1)."
+      ],
+      "confidence": "high"
+    },
+    {
+      "id": "drop_score",
+      "layer": "conceptual",
+      "label": "Drop Score",
+      "type": "product",
+      "deeper_explanation_ref": "init_structure/Farmer_Drop__knowledge_map.md §5",
+      "metrics": {
+        "claim": "'world's first drop score'",
+        "role": "discovery/ranking primitive + policy hook"
+      },
+      "failure_modes": [
+        "Factor tree (5 domains, 19 factors, 38 evaluable indicators) now specced in drop_score_graph.json — weights and scoring rubric still deliberately undefined.",
+        "Presented as a guidance tree, not a black box — the tree spec now exists; the rubric that scores it does not."
+      ],
+      "confidence": "probable",
+      "link": "drop_score.html",
+      "link_label": "Drop Score guidance tree (factor model)"
+    },
+    {
+      "id": "fee_surcharge_txn",
+      "layer": "business",
+      "label": "Per-Transaction Surcharge $0.55",
+      "type": "fee",
+      "deeper_explanation_ref": "init_structure/Farmer_Drop__knowledge_map.md §3.1",
+      "metrics": {
+        "amount": "$0.55/txn",
+        "covers": "Stripe $0.30 txn + $0.25 transfer",
+        "buffer": "deliberately over-covers"
+      },
+      "failure_modes": [
+        "Over-covers so small baskets don't leave the platform underwater; framed as transparent but the buffer margin is not itself modeled."
+      ],
+      "confidence": "high"
+    },
+    {
+      "id": "stripe_cost",
+      "layer": "business",
+      "label": "Stripe Fixed + % Cost",
+      "type": "cost",
+      "deeper_explanation_ref": "init_structure/Farmer_Drop__knowledge_map.md §3.1",
+      "metrics": {
+        "fixed": "$0.30 txn + $0.25 transfer",
+        "percent": "2.9%"
+      },
+      "failure_modes": [
+        "Double-charging risk (§3.4.3): platform adds 2.9% AND passes Stripe's 2.9% — confirm it is not both eating and charging the processor fee.",
+        "Token rail (Phase 1/2) is the only mechanism that actually removes this cost — PMA status does not (§3.4.4)."
+      ],
+      "confidence": "high"
+    },
+    {
+      "id": "cart_surcharge",
+      "layer": "business",
+      "label": "Cart Surcharge 3.15%",
+      "type": "fee",
+      "deeper_explanation_ref": "init_structure/Farmer_Drop__knowledge_map.md §3.1",
+      "metrics": {
+        "total": "3.15%",
+        "composition": "2.9% (Stripe %) + 0.25% wedge"
+      },
+      "failure_modes": [
+        "Double-charging risk (§3.4.3): the 2.9% component may stack with the passed-through Stripe 2.9%; make the stacking explicit."
+      ],
+      "confidence": "high"
+    },
+    {
+      "id": "wedge_025",
+      "layer": "business",
+      "label": "0.25% Strategic Wedge",
+      "type": "fee",
+      "deeper_explanation_ref": "init_structure/Farmer_Drop__knowledge_map.md §3.1",
+      "metrics": {
+        "amount": "0.25% of cart",
+        "funds": "(a) credit system, (b) farmer token uptake"
+      },
+      "failure_modes": [
+        "Is the candidate funding source for the negative-margin credit boost (§3.4.2) — but 0.25% cannot obviously fund a 2% boost; show the math."
+      ],
+      "confidence": "probable"
+    },
+    {
+      "id": "platform_take",
+      "layer": "business",
+      "label": "Platform Take — 10% vs 0.10% ⚠",
+      "type": "revenue",
+      "deeper_explanation_ref": "init_structure/Farmer_Drop__knowledge_map.md §3.4.1",
+      "metrics": {
+        "stated": "0.10%",
+        "model_closes_at": "~10%",
+        "ambiguity": "100x",
+        "working_analysis": "supports 7–12% gross, centered 10% — see linked templates"
+      },
+      "failure_modes": [
+        "LOAD-BEARING AMBIGUITY (DR-1): stated as '0.10%' but the valuation only closes at ~10%. 0.10% of $100M/wk = $100k/wk, which cannot produce $5M/wk net or the $5.2B valuation.",
+        "Working analysis (take_rate_math.html) refutes 0.10% decisively and offers 3 template solutions — but the final number still needs Magnus/Volkmar confirmation; the model HALTS until then.",
+        "Credit boost (2%) and contractor cut (3%) are both carved out of this number — every downstream figure inherits the ambiguity."
+      ],
+      "confidence": "unresolved",
+      "link": "take_rate_math.html",
+      "link_label": "Take-rate math — DR-1 template solutions"
+    },
+    {
+      "id": "credit_boost",
+      "layer": "business",
+      "label": "Credit Purchase Boost ~2%",
+      "type": "cost",
+      "deeper_explanation_ref": "init_structure/Farmer_Drop__knowledge_map.md §3.4.2",
+      "metrics": {
+        "boost": "~+2% ($100 -> $102)",
+        "verbal_slip": "'$100 -> $200' is a transcription error"
+      },
+      "failure_modes": [
+        "COST LINE (DR-2): giving 2% more credits than dollars received is a direct 2% loss unless funded by breakage, the 0.25% wedge, or token/float seigniorage.",
+        "Funding source is unattributed — silently erodes the platform take until made explicit.",
+        "'$100 -> $200' vs '$100 -> $102' must be resolved (glossary ⚠)."
+      ],
+      "confidence": "verify"
+    },
+    {
+      "id": "contractor_cut",
+      "layer": "business",
+      "label": "Contractor Cut 3%",
+      "type": "cost",
+      "deeper_explanation_ref": "init_structure/Farmer_Drop__knowledge_map.md §3.1",
+      "metrics": {
+        "cut": "3% of a host drop's volume",
+        "source": "out of platform's 10% take",
+        "duration": "fixed number of months"
+      },
+      "failure_modes": [
+        "Carved out of the platform take — if the take is really 0.10% (DR-1) this 3% is mathematically impossible."
+      ],
+      "confidence": "high"
+    },
+    {
+      "id": "hop_economics",
+      "layer": "business",
+      "label": "Decentralized Distribution Economics (80% / 5% per hop)",
+      "type": "model",
+      "deeper_explanation_ref": "init_structure/Farmer_Drop__knowledge_map.md §3.2",
+      "metrics": {
+        "farmer_keep": "~80%",
+        "per_hop": "~5%",
+        "claim": "beats incumbent even with two hops"
+      },
+      "failure_modes": [
+        "Two-hop haircut math needs a worked example (§3.4.5): '80% - 5% - 5% beats incumbent' depends entirely on the incumbent baseline (grocery/distributor take often 30-50%).",
+        "Incumbent baseline % is an unresolved open question — put both columns side by side before asserting the wedge."
+      ],
+      "confidence": "verify"
+    },
+    {
+      "id": "scale_scenario",
+      "layer": "business",
+      "label": "Scale Scenario — $100M/wk -> $5.2B",
+      "type": "model",
+      "deeper_explanation_ref": "init_structure/Farmer_Drop__knowledge_map.md §3.3",
+      "metrics": {
+        "gross": "1M users x $100/wk = $100M/wk",
+        "net": "~$5M/wk after ~10% take & fixed cost",
+        "annual": "~$0.25B/yr",
+        "valuation": "~$5.2B (x20 multiple)",
+        "year1_target": "100k users"
+      },
+      "failure_modes": [
+        "Entire valuation assumes ~10% take — collapses under the DR-1 0.10% reading (§3.4.1).",
+        "Throughput story, but adoption is the real constraint (§3.4.6): model CAC and drop-density thresholds, not just steady-state throughput."
+      ],
+      "confidence": "verify"
+    },
+    {
+      "id": "pma_tax_framing",
+      "layer": "business",
+      "label": "Fee-as-Tax / PMA Framing",
+      "type": "framing",
+      "deeper_explanation_ref": "init_structure/Farmer_Drop__knowledge_map.md §3.4.4",
+      "metrics": {
+        "claim": "platform + host drops are PMAs -> some fees are collectively-avoidable 'taxes'"
+      },
+      "failure_modes": [
+        "Legal-characterization claim, not a mechanism (§3.4.4): processor/network fees are contractual costs, not taxes; PMA status does not make Stripe's 2.9% disappear.",
+        "Separate actual cost reduction (token rail replacing card rail) from tax positioning — the latter invites regulatory scrutiny."
+      ],
+      "confidence": "verify"
+    },
+    {
+      "id": "churches_gtm",
+      "layer": "business",
+      "label": "Churches Distribution",
+      "type": "gtm",
+      "deeper_explanation_ref": "init_structure/Farmer_Drop__knowledge_map.md §7",
+      "metrics": {
+        "pitch": "'add your 3,000 members'"
+      },
+      "failure_modes": [
+        "Congregation-scale bulk onboarding is the core member-acquisition bet; CAC unmodeled."
+      ],
+      "confidence": "probable"
+    },
+    {
+      "id": "conferences_gtm",
+      "layer": "business",
+      "label": "Conferences",
+      "type": "gtm",
+      "deeper_explanation_ref": "init_structure/Farmer_Drop__knowledge_map.md §7",
+      "metrics": {},
+      "failure_modes": [
+        "Second acquisition channel; conversion and cost unquantified."
+      ],
+      "confidence": "probable"
+    },
+    {
+      "id": "test_app_gtm",
+      "layer": "business",
+      "label": "Test App as Sales Tool",
+      "type": "gtm",
+      "deeper_explanation_ref": "init_structure/Farmer_Drop__knowledge_map.md §7",
+      "metrics": {
+        "mechanism": "influential testers make Stripe purchases with no money withdrawn, walk the flow, then vouch"
+      },
+      "failure_modes": [
+        "Diverse testers surface UX edge cases; depends on Volkmar's app reaching demo-ready / 100% test coverage (§8)."
+      ],
+      "confidence": "probable"
+    },
+    {
+      "id": "midaugust_deadline",
+      "layer": "business",
+      "label": "Mid-August Launch Deadline",
+      "type": "milestone",
+      "deeper_explanation_ref": "init_structure/Farmer_Drop__knowledge_map.md §7",
+      "metrics": {
+        "deadline": "mid-August",
+        "framing": "'launch by mid-August or lose the race'"
+      },
+      "failure_modes": [
+        "Schedule pressure driving the whole build; blocking items (take-%, tokenomics) are unresolved against this clock."
+      ],
+      "confidence": "probable"
+    },
+    {
+      "id": "regen_legislation",
+      "layer": "business",
+      "label": "Regenerative Legislation",
+      "type": "gtm",
+      "deeper_explanation_ref": "init_structure/Farmer_Drop__knowledge_map.md §7",
+      "metrics": {
+        "signed": "June 25",
+        "note": "consensus + money 'available'"
+      },
+      "failure_modes": [
+        "Policy/funding hook for Drop Score; dependency on legislative timing and actual fund availability unverified."
+      ],
+      "confidence": "probable"
+    },
+    {
+      "id": "honey_coin",
+      "layer": "token",
+      "label": "Honey Coin (asset-backed — deferred)",
+      "type": "token",
+      "deeper_explanation_ref": "init_structure/Farmer_Drop__knowledge_map.md §4; compadres/docs/06_asset_backed_template.md",
+      "metrics": {
+        "role": "ASSET-BACKED loyalty token — explicitly NOT the first deploy (user-confirmed 2026-07-04)",
+        "chain": "Base (via compadres asset-backed template / IReserveAdapter)",
+        "value_claim": "$100 -> $102 effective for food"
+      },
+      "failure_modes": [
+        "DR-3 RESOLVED 2026-07-04: two-token architecture — a transfer-efficiency coin deploys FIRST; Honey Coin comes later, asset-backed, via the compadres template.",
+        "Regulatory (§4): a USD-redeemable, USD-boosted, food-spendable token is near stored-value / money-transmission / possibly-security territory — needs counsel BEFORE launch.",
+        "Not ready to launch; asset-backing spec (reserves, custody, on/off-ramp) still required."
+      ],
+      "confidence": "verify",
+      "link": "transfer_rails.html",
+      "link_label": "Rails: Stripe fee structure vs chain coin"
+    },
+    {
+      "id": "phase0_fiat",
+      "layer": "token",
+      "label": "Phase 0 — Fiat + Credits",
+      "type": "phase",
+      "deeper_explanation_ref": "init_structure/Farmer_Drop__knowledge_map.md §4",
+      "metrics": {
+        "rails": "Stripe fiat + credits ledger"
+      },
+      "failure_modes": [
+        "Current state; ledger design lives in Volkmar's '.7 backend' — scope unconfirmed (§8)."
+      ],
+      "confidence": "high"
+    },
+    {
+      "id": "phase1_alt_transfer",
+      "layer": "token",
+      "label": "Phase 1 — Alt Transfer (drop Stripe fees)",
+      "type": "phase",
+      "deeper_explanation_ref": "init_structure/Farmer_Drop__knowledge_map.md §4",
+      "metrics": {
+        "mechanism": "drop Stripe fees for anyone accepting an alternative transfer form — realized as the CPDR-style transfer coin (first deploy)"
+      },
+      "failure_modes": [
+        "This is the FIRST real cost reduction — the only mechanism that genuinely removes card-rail cost (contrast with PMA tax framing, §3.4.4)."
+      ],
+      "confidence": "probable",
+      "link": "transfer_rails.html",
+      "link_label": "Rails: Stripe fee structure vs chain coin"
+    },
+    {
+      "id": "compadres_base",
+      "layer": "token",
+      "label": "compadres repo · Base chain",
+      "type": "infra",
+      "deeper_explanation_ref": "init_structure/Farmer_Drop__knowledge_map.md §4",
+      "metrics": {
+        "chain": "Base (Coinbase L2)",
+        "repo": "compadres — CONFIRMED at ~/GitHub/compadres: CPDR low-extraction token/exchange test harness (TransferRouter, mock USDC, AMM, burn/redeem, fee measurement)"
+      },
+      "failure_modes": [
+        "Repo confirmed (2026-07-04); asset-backed layer deliberately deferred behind docs/06_asset_backed_template.md + IReserveAdapter.sol. No production chain launch until regulatory classification is resolved."
+      ],
+      "confidence": "high"
+    },
+    {
+      "id": "transfer_coin",
+      "layer": "token",
+      "label": "Transfer Coin (first deploy — CPDR)",
+      "type": "token",
+      "deeper_explanation_ref": "init_structure/Farmer_Drop__knowledge_map.md §4; ~/GitHub/compadres README (CPDR)",
+      "metrics": {
+        "status": "user-confirmed 2026-07-04: the FIRST coin — efficient P2P transfers between people, replacing expensive Stripe rails",
+        "harness": "compadres CPDR: TransferRouter, fee measurement, reconciliation"
+      },
+      "failure_modes": [
+        "DR-3 resolved: this is token #1 of two (Honey Coin, asset-backed, comes later).",
+        "Still requires regulatory review before production launch; compadres v0 is a test harness, not a deployed product."
+      ],
+      "confidence": "probable",
+      "link": "transfer_rails.html",
+      "link_label": "Rails: Stripe fee structure vs chain coin"
+    },
+    {
+      "id": "routing_engine",
+      "layer": "data",
+      "label": "Distribution / Routing Engine",
+      "type": "system",
+      "deeper_explanation_ref": "init_structure/Farmer_Drop__knowledge_map.md §6",
+      "metrics": {
+        "objective": "optimize routing (backhaul chaining TX->Gulf->FL) + production allocation",
+        "future": "eventually own trucks as a sub-service"
+      },
+      "failure_modes": [
+        "Instrument-for-data FIRST — do not over-engineer the math before there is data to scale models on (§6)."
+      ],
+      "confidence": "probable"
+    },
+    {
+      "id": "demand_supply_data",
+      "layer": "data",
+      "label": "Demand + Supply / Seasonality Data",
+      "type": "data",
+      "deeper_explanation_ref": "init_structure/Farmer_Drop__knowledge_map.md §6",
+      "metrics": {
+        "collect": "'what is needed where' (demand) + supply/seasonality"
+      },
+      "failure_modes": [
+        "Data schema for demand/supply/seasonality is the prerequisite; without instrumentation the routing optimization is premature (§6, BRIEF §2.5)."
+      ],
+      "confidence": "probable"
+    },
+    {
+      "id": "backhaul_chaining",
+      "layer": "data",
+      "label": "Backhaul Chaining",
+      "type": "process",
+      "deeper_explanation_ref": "init_structure/Farmer_Drop__knowledge_map.md §6",
+      "metrics": {
+        "route": "TX -> Gulf -> FL",
+        "principle": "monetize idle private capacity near term"
+      },
+      "failure_modes": [
+        "Depends on driver idle-capacity supply and reliable route matching — unproven at network scale."
+      ],
+      "confidence": "probable"
+    },
+    {
+      "id": "peach_prediction",
+      "layer": "data",
+      "label": "Seasonal Prediction (peach-tree test case)",
+      "type": "model",
+      "deeper_explanation_ref": "init_structure/Farmer_Drop__knowledge_map.md §6",
+      "metrics": {
+        "case": "peach-tree owner, 100-mile radius, 3-week window"
+      },
+      "failure_modes": [
+        "Concrete first prediction target; success depends on demand/supply instrumentation existing first (no premature optimization, §6)."
+      ],
+      "confidence": "probable"
+    }
+  ],
+  "edges": [
+    {
+      "from": "member",
+      "to": "platform",
+      "relation": "buys, holds credits",
+      "value": "$100/wk basket"
+    },
+    {
+      "from": "farmer",
+      "to": "platform",
+      "relation": "supplies, rated"
+    },
+    {
+      "from": "platform",
+      "to": "drop_score",
+      "relation": "ranks / discovers via"
+    },
+    {
+      "from": "drop_score",
+      "to": "farmer",
+      "relation": "rates regenerative practice"
+    },
+    {
+      "from": "host_drop",
+      "to": "platform",
+      "relation": "aggregation / pickup node"
+    },
+    {
+      "from": "contractor",
+      "to": "host_drop",
+      "relation": "recruits / trains"
+    },
+    {
+      "from": "driver",
+      "to": "platform",
+      "relation": "fills backhaul routes"
+    },
+    {
+      "from": "platform",
+      "to": "member",
+      "relation": "credits + token boost"
+    },
+    {
+      "from": "platform",
+      "to": "farmer",
+      "relation": "~80% net + token uplift",
+      "value": "80%"
+    },
+    {
+      "from": "platform",
+      "to": "contractor",
+      "relation": "pays 3% of drop volume / N months",
+      "value": "3%"
+    },
+    {
+      "from": "platform",
+      "to": "platform_take",
+      "relation": "earns revenue via"
+    },
+    {
+      "from": "member",
+      "to": "cart_surcharge",
+      "relation": "pays",
+      "value": "3.15%"
+    },
+    {
+      "from": "member",
+      "to": "fee_surcharge_txn",
+      "relation": "pays per-txn",
+      "value": "$0.55"
+    },
+    {
+      "from": "farmer",
+      "to": "hop_economics",
+      "relation": "keeps ~80% under",
+      "value": "80%"
+    },
+    {
+      "from": "platform",
+      "to": "pma_tax_framing",
+      "relation": "positions fees via"
+    },
+    {
+      "from": "platform",
+      "to": "scale_scenario",
+      "relation": "projects"
+    },
+    {
+      "from": "fee_surcharge_txn",
+      "to": "stripe_cost",
+      "relation": "absorbs / buffers",
+      "value": "$0.55 covers $0.55"
+    },
+    {
+      "from": "cart_surcharge",
+      "to": "stripe_cost",
+      "relation": "passes through 2.9%",
+      "value": "2.9%"
+    },
+    {
+      "from": "cart_surcharge",
+      "to": "wedge_025",
+      "relation": "contains",
+      "value": "0.25%"
+    },
+    {
+      "from": "wedge_025",
+      "to": "credit_boost",
+      "relation": "candidate funding for",
+      "value": "0.25% -> 2%?"
+    },
+    {
+      "from": "wedge_025",
+      "to": "honey_coin",
+      "relation": "funds farmer token uptake"
+    },
+    {
+      "from": "platform_take",
+      "to": "contractor_cut",
+      "relation": "carves out",
+      "value": "3% of 10%"
+    },
+    {
+      "from": "platform_take",
+      "to": "credit_boost",
+      "relation": "eroded by",
+      "value": "-2%"
+    },
+    {
+      "from": "platform_take",
+      "to": "scale_scenario",
+      "relation": "drives valuation of",
+      "value": "~10%"
+    },
+    {
+      "from": "credit_boost",
+      "to": "scale_scenario",
+      "relation": "negative-margin risk to"
+    },
+    {
+      "from": "hop_economics",
+      "to": "scale_scenario",
+      "relation": "underpins"
+    },
+    {
+      "from": "pma_tax_framing",
+      "to": "platform_take",
+      "relation": "reframes as avoidable tax"
+    },
+    {
+      "from": "churches_gtm",
+      "to": "member",
+      "relation": "acquires (bulk)"
+    },
+    {
+      "from": "conferences_gtm",
+      "to": "member",
+      "relation": "acquires"
+    },
+    {
+      "from": "test_app_gtm",
+      "to": "member",
+      "relation": "vouch -> acquires"
+    },
+    {
+      "from": "regen_legislation",
+      "to": "drop_score",
+      "relation": "policy / funding hook for"
+    },
+    {
+      "from": "midaugust_deadline",
+      "to": "platform",
+      "relation": "schedule pressure on"
+    },
+    {
+      "from": "churches_gtm",
+      "to": "scale_scenario",
+      "relation": "adoption input to"
+    },
+    {
+      "from": "phase0_fiat",
+      "to": "phase1_alt_transfer",
+      "relation": "then"
+    },
+    {
+      "from": "phase1_alt_transfer",
+      "to": "honey_coin",
+      "relation": "then"
+    },
+    {
+      "from": "honey_coin",
+      "to": "compadres_base",
+      "relation": "asset-backed template (deferred)"
+    },
+    {
+      "from": "transfer_coin",
+      "to": "compadres_base",
+      "relation": "built on (CPDR harness)"
+    },
+    {
+      "from": "transfer_coin",
+      "to": "honey_coin",
+      "relation": "precedes — rails proven first"
+    },
+    {
+      "from": "phase1_alt_transfer",
+      "to": "transfer_coin",
+      "relation": "implemented by"
+    },
+    {
+      "from": "honey_coin",
+      "to": "platform",
+      "relation": "backs / lubricates"
+    },
+    {
+      "from": "honey_coin",
+      "to": "farmer",
+      "relation": "farmer nets more after USD conversion"
+    },
+    {
+      "from": "honey_coin",
+      "to": "member",
+      "relation": "transfer savings"
+    },
+    {
+      "from": "phase0_fiat",
+      "to": "stripe_cost",
+      "relation": "incurs (card rail)"
+    },
+    {
+      "from": "phase1_alt_transfer",
+      "to": "stripe_cost",
+      "relation": "removes (real cost cut)"
+    },
+    {
+      "from": "platform",
+      "to": "routing_engine",
+      "relation": "runs data / optimization"
+    },
+    {
+      "from": "demand_supply_data",
+      "to": "routing_engine",
+      "relation": "feeds"
+    },
+    {
+      "from": "member",
+      "to": "demand_supply_data",
+      "relation": "demand signal"
+    },
+    {
+      "from": "farmer",
+      "to": "demand_supply_data",
+      "relation": "supply / seasonality signal"
+    },
+    {
+      "from": "routing_engine",
+      "to": "backhaul_chaining",
+      "relation": "optimizes"
+    },
+    {
+      "from": "backhaul_chaining",
+      "to": "driver",
+      "relation": "assigns routes to"
+    },
+    {
+      "from": "routing_engine",
+      "to": "peach_prediction",
+      "relation": "first prediction target"
+    }
+  ]
+}

@@ -1,0 +1,910 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>FARMER DROP — Knowledge Graph</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600;9..144,700&family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;1,6..72,400&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/d3@7"></script>
+<style>
+:root{
+  --parchment:#faf6ec; --parchment-2:#f3ecda; --parchment-3:#ece2c9;
+  --loam:#1e3a2a; --loam-soft:#3a5343; --ink-fade:#6c7b6a;
+  --honey:#d9930d; --honey-deep:#b8790a;
+  --rust:#b23a1e; --rust-deep:#8f2c14;
+  --line:#c9bd9c; --line-soft:#ddd2b4;
+  --paper-card:#fffdf6;
+  --conceptual:#2f6b4a; --business:#7a5b8f; --token:#d9930d; --data:#2b6d84;
+}
+*{box-sizing:border-box}
+html,body{margin:0;height:100%;background:var(--parchment);color:var(--loam);
+  font-family:"Newsreader",Georgia,serif;font-size:16px;overflow:hidden}
+
+/* ---- textures ---- */
+.grain{position:fixed;inset:0;pointer-events:none;z-index:0;opacity:.05;mix-blend-mode:multiply}
+.fieldrows{position:fixed;inset:0;pointer-events:none;z-index:0;opacity:.35;
+  background:
+    repeating-linear-gradient(115deg, transparent 0 46px, rgba(30,58,42,.028) 46px 47px),
+    radial-gradient(140% 120% at 12% 8%, #fdfbf3 0%, var(--parchment) 42%, var(--parchment-2) 100%);}
+
+/* ---- layout ---- */
+#app{position:relative;z-index:1;display:flex;flex-direction:column;height:100vh}
+header{padding:18px 30px 12px;border-bottom:1.5px solid var(--line);
+  background:linear-gradient(180deg, rgba(255,253,246,.7), rgba(250,246,236,.2));
+  display:flex;align-items:flex-end;justify-content:space-between;gap:24px;flex-wrap:wrap}
+.brand{opacity:0;transform:translateY(10px);animation:rise .8s .05s cubic-bezier(.2,.7,.2,1) forwards}
+.brand h1{font-family:"Fraunces",serif;font-optical-sizing:auto;font-weight:600;
+  font-size:clamp(26px,3.4vw,44px);line-height:.95;margin:0;letter-spacing:-.01em;
+  color:var(--loam)}
+.brand h1 .drop{color:var(--honey-deep);font-style:italic}
+.brand .kicker{font-family:"IBM Plex Mono",monospace;font-size:11px;letter-spacing:.22em;
+  text-transform:uppercase;color:var(--ink-fade);margin-top:8px}
+nav{display:flex;gap:6px;align-items:center;opacity:0;transform:translateY(10px);
+  animation:rise .8s .18s cubic-bezier(.2,.7,.2,1) forwards}
+nav a{font-family:"IBM Plex Mono",monospace;font-size:12px;text-decoration:none;
+  color:var(--loam-soft);border:1px solid var(--line);border-radius:999px;
+  padding:7px 14px;background:var(--paper-card);transition:all .18s}
+nav a:hover{background:var(--loam);color:var(--parchment);border-color:var(--loam)}
+nav a.here{background:var(--loam);color:var(--parchment);border-color:var(--loam)}
+
+/* ---- toolbar ---- */
+.toolbar{display:flex;gap:18px;align-items:center;flex-wrap:wrap;
+  padding:11px 30px;border-bottom:1px solid var(--line-soft);
+  background:rgba(243,236,218,.5);
+  opacity:0;transform:translateY(8px);animation:rise .7s .3s cubic-bezier(.2,.7,.2,1) forwards}
+.filters{display:flex;gap:8px;flex-wrap:wrap}
+.chip{font-family:"IBM Plex Mono",monospace;font-size:11px;letter-spacing:.04em;
+  cursor:pointer;user-select:none;border:1.5px solid var(--line);border-radius:6px;
+  padding:5px 11px 5px 9px;display:flex;align-items:center;gap:7px;background:var(--paper-card);
+  transition:all .16s;color:var(--loam)}
+.chip .dot{width:11px;height:11px;border-radius:50%;flex:none}
+.chip.off{opacity:.34;filter:grayscale(.6)}
+.chip:hover{border-color:var(--loam-soft)}
+.search{position:relative;margin-left:auto}
+.search input{font-family:"Newsreader",serif;font-size:14px;color:var(--loam);
+  background:var(--paper-card);border:1.5px solid var(--line);border-radius:8px;
+  padding:8px 14px 8px 34px;width:230px;outline:none;transition:border-color .16s}
+.search input:focus{border-color:var(--honey)}
+.search svg{position:absolute;left:11px;top:50%;transform:translateY(-50%);opacity:.5}
+
+/* ---- canvas + panel ---- */
+main{flex:1;position:relative;overflow:hidden}
+svg#canvas{width:100%;height:100%;display:block;cursor:grab}
+svg#canvas:active{cursor:grabbing}
+
+.link{stroke:#a9a081;stroke-opacity:.55}
+.link.warn{stroke:var(--rust);stroke-opacity:.6}
+.linklabel{font-family:"IBM Plex Mono",monospace;font-size:9px;fill:var(--loam-soft);
+  opacity:0;transition:opacity .18s;paint-order:stroke;stroke:var(--parchment);stroke-width:3px}
+.nodewrap{cursor:pointer}
+.nodelabel{font-family:"Newsreader",serif;font-size:11.5px;fill:var(--loam);
+  paint-order:stroke;stroke:var(--parchment);stroke-width:3.4px;pointer-events:none}
+.ring-warn{fill:none;stroke:var(--honey);stroke-width:2;stroke-dasharray:3 3;opacity:.9}
+.ring-unresolved{fill:none;stroke:var(--rust);stroke-width:2.5;opacity:.95}
+.pulse{fill:var(--rust);opacity:.18}
+.badge{font-family:"IBM Plex Mono",monospace;font-size:12px;fill:var(--rust-deep);
+  font-weight:700;pointer-events:none}
+.dim{opacity:.12 !important;transition:opacity .2s}
+.dim-link{stroke-opacity:.05 !important;transition:stroke-opacity .2s}
+.hl{stroke-opacity:.95 !important}
+
+/* detail card */
+#panel{position:absolute;top:16px;right:16px;width:340px;max-height:calc(100% - 32px);
+  overflow:auto;background:var(--paper-card);border:1px solid var(--line);
+  border-radius:4px;box-shadow:0 1px 0 var(--line),0 18px 40px -22px rgba(30,58,42,.5);
+  transform:translateX(24px);opacity:0;pointer-events:none;transition:all .34s cubic-bezier(.2,.7,.2,1);
+  padding:0}
+#panel.open{transform:none;opacity:1;pointer-events:auto}
+#panel .card-head{padding:18px 20px 12px;border-bottom:1px solid var(--line-soft);position:relative}
+#panel .layer-tag{font-family:"IBM Plex Mono",monospace;font-size:10px;letter-spacing:.18em;
+  text-transform:uppercase;color:var(--ink-fade)}
+#panel h2{font-family:"Fraunces",serif;font-optical-sizing:auto;font-weight:600;
+  font-size:22px;line-height:1.08;margin:8px 0 6px;color:var(--loam)}
+#panel .type-pill{display:inline-block;font-family:"IBM Plex Mono",monospace;font-size:10px;
+  border:1px solid var(--line);border-radius:4px;padding:2px 7px;color:var(--loam-soft)}
+#panel .body{padding:14px 20px 22px}
+#panel .conf{display:inline-flex;align-items:center;gap:7px;font-family:"IBM Plex Mono",monospace;
+  font-size:11px;padding:4px 10px;border-radius:5px;margin-bottom:14px}
+.conf-high{background:#e5efe4;color:#2f6b4a}
+.conf-probable{background:#e9e4ef;color:#6a4d80}
+.conf-verify{background:#fbeecb;color:var(--honey-deep)}
+.conf-unresolved{background:#f6d9cf;color:var(--rust-deep);font-weight:600}
+#panel h3{font-family:"IBM Plex Mono",monospace;font-size:10px;letter-spacing:.16em;
+  text-transform:uppercase;color:var(--ink-fade);margin:16px 0 7px;
+  border-bottom:1px solid var(--line-soft);padding-bottom:4px}
+#panel .metric{display:flex;gap:8px;font-size:14px;padding:2px 0;line-height:1.35}
+#panel .metric b{font-family:"IBM Plex Mono",monospace;font-size:11px;color:var(--loam-soft);
+  min-width:78px;flex:none;text-transform:uppercase;letter-spacing:.03em;padding-top:2px}
+#panel ul.fm{margin:4px 0 0;padding-left:0;list-style:none}
+#panel ul.fm li{font-size:13.5px;line-height:1.4;padding:6px 0 6px 16px;position:relative;
+  border-bottom:1px dotted var(--line-soft);color:var(--loam-soft)}
+#panel ul.fm li:before{content:"⚠";position:absolute;left:0;color:var(--rust);font-size:11px;top:6px}
+#panel .ref{font-family:"IBM Plex Mono",monospace;font-size:11px;color:var(--loam-soft);
+  background:var(--parchment-2);border:1px solid var(--line-soft);border-radius:4px;
+  padding:8px 10px;margin-top:6px;word-break:break-word;line-height:1.4}
+#panel .sublink{display:block;margin-top:12px;font-family:"IBM Plex Mono",monospace;font-size:11.5px;
+  letter-spacing:.08em;text-transform:uppercase;color:var(--parchment);background:var(--loam);
+  text-decoration:none;text-align:center;padding:10px 12px;border-radius:4px;transition:background .2s}
+#panel .sublink:hover{background:var(--honey)}
+#panel .close{position:absolute;top:12px;right:12px;cursor:pointer;border:none;background:none;
+  font-size:20px;color:var(--ink-fade);line-height:1;font-family:"Newsreader",serif}
+#panel .close:hover{color:var(--rust)}
+.hint{position:absolute;bottom:14px;left:16px;font-family:"IBM Plex Mono",monospace;
+  font-size:11px;color:var(--ink-fade);background:rgba(255,253,246,.7);
+  border:1px solid var(--line-soft);border-radius:6px;padding:7px 11px;pointer-events:none}
+
+/* legend */
+.legend{position:absolute;bottom:14px;left:50%;transform:translateX(-50%);
+  display:flex;gap:16px;flex-wrap:wrap;align-items:center;justify-content:center;
+  background:rgba(255,253,246,.82);border:1px solid var(--line-soft);border-radius:8px;
+  padding:8px 16px;font-family:"IBM Plex Mono",monospace;font-size:10.5px;color:var(--loam-soft)}
+.legend .li{display:flex;align-items:center;gap:6px}
+.legend .sw{width:12px;height:12px;border-radius:50%}
+.legend .sw.sq{border-radius:2px}
+
+footer{padding:9px 30px;border-top:1px solid var(--line);background:rgba(243,236,218,.6);
+  font-family:"IBM Plex Mono",monospace;font-size:10.5px;color:var(--ink-fade);line-height:1.5}
+footer .warn{color:var(--rust-deep)}
+
+@keyframes rise{to{opacity:1;transform:none}}
+@media (max-width:720px){#panel{width:calc(100% - 32px)} .search input{width:150px} .legend{display:none}}
+</style>
+</head>
+<body>
+<svg class="grain"><filter id="grainf"><feTurbulence type="fractalNoise" baseFrequency="0.9" numOctaves="3" stitchTiles="stitch"/><feColorMatrix type="saturate" values="0"/></filter><rect width="100%" height="100%" filter="url(#grainf)"/></svg>
+<div class="fieldrows"></div>
+
+<div id="app">
+  <header>
+    <div class="brand">
+      <h1>FARMER <span class="drop">DROP</span> — Knowledge Graph</h1>
+      <div class="kicker">Regenerative distribution network · conceptual × business × token × data</div>
+    </div>
+    <nav>
+      <a href="index.html">index</a>
+      <a href="drop_score.html">drop score</a>
+      <a href="take_rate_math.html">take-rate</a>
+      <a href="transfer_rails.html">rails</a>
+      <a href="farmer_drop.html" class="here">graph</a>
+    </nav>
+  </header>
+
+  <div class="toolbar">
+    <div class="filters" id="filters"></div>
+    <div class="search">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg>
+      <input id="search" type="text" placeholder="search nodes…" autocomplete="off">
+    </div>
+  </div>
+
+  <main>
+    <svg id="canvas"></svg>
+    <div class="hint" id="hint">click a node · drag to move · scroll to zoom</div>
+    <div class="legend" id="legend"></div>
+    <aside id="panel">
+      <button class="close" id="closep">×</button>
+      <div class="card-head">
+        <div class="layer-tag" id="p-layer"></div>
+        <h2 id="p-label"></h2>
+        <span class="type-pill" id="p-type"></span>
+      </div>
+      <div class="body" id="p-body"></div>
+    </aside>
+  </main>
+
+  <footer>
+    <span class="warn">Source: voice-note transcripts (whisper ggml-tiny) — ⚠ items unverified; see Glossary__ASR_uncertainties.md. Take-% ambiguity (DR-1) unresolved.</span>
+  </footer>
+</div>
+
+<script type="application/json" id="graph-data">
+{
+  "meta": {
+    "title": "FARMER DROP — Knowledge Graph",
+    "source_files": [
+      "init_structure/Farmer_Drop__knowledge_map.md",
+      "init_structure/Glossary__ASR_uncertainties.md",
+      "init_structure/FABLE_BUILD_BRIEF.md"
+    ],
+    "generated_note": "Nodes/edges extracted from the Farmer Drop knowledge map (conceptual §2, business §3, token §4, drop-score §5, data/routing §6, GTM §7). Terminology normalized against Glossary__ASR_uncertainties.md. Source is voice-note transcripts (whisper ggml-tiny); every ⚠ token is unverified. Code lives in Volkmar's repo, not here — this is the spec/knowledge layer.",
+    "decision_rules_applied": [
+      "DR-1 (take %): platform-take node carries confidence:unresolved — 0.10% vs 10% is a 100x ambiguity that breaks the $5.2B valuation; model halts until resolved.",
+      "DR-2 (credit boost): credit-boost node modeled as a COST line with unattributed funding source (breakage / 0.25% wedge / token float).",
+      "DR-3 (token count): all token-layer nodes carry confidence:verify — blocked pending one-token-or-two decision + regulatory classification; no chain code.",
+      "DR-4 (terminology): 'Host Drop' used globally; 'a.k.a. Drop Spot' noted in description only.",
+      "DR-5 (legal fidelity): any glossary ⚠ item blocks downstream document generation until confirmed."
+    ]
+  },
+  "nodes": [
+    {
+      "id": "member",
+      "layer": "conceptual",
+      "label": "Member",
+      "type": "actor",
+      "deeper_explanation_ref": "init_structure/Farmer_Drop__knowledge_map.md §2",
+      "metrics": {"basket": "$100/wk (scale assumption)", "credit_boost": "~+2% spending power"},
+      "failure_modes": [
+        "Member acquisition (not tech) is the binding constraint on the scale story (§3.4.6)."
+      ],
+      "confidence": "high"
+    },
+    {
+      "id": "farmer",
+      "layer": "conceptual",
+      "label": "Farmer",
+      "type": "actor",
+      "deeper_explanation_ref": "init_structure/Farmer_Drop__knowledge_map.md §2",
+      "metrics": {"net_take": "~80% vs centralized retail", "alberta_baseline": "~5 crops + beef"},
+      "failure_modes": [
+        "Wants diversified income without commodity lock-in; 80% claim unproven until a real unit-economics sheet exists (§3.2)."
+      ],
+      "confidence": "high"
+    },
+    {
+      "id": "host_drop",
+      "layer": "conceptual",
+      "label": "Host Drop",
+      "type": "actor",
+      "deeper_explanation_ref": "init_structure/Farmer_Drop__knowledge_map.md §2",
+      "metrics": {"existing_nodes": "~5 today", "legal_wrapper": "ideally a PMA"},
+      "failure_modes": [
+        "Drop-density thresholds unmodeled — density, not throughput, gates the network (§3.4.6).",
+        "Terminology drift: a.k.a. 'Drop Spot'; DR-4 fixes 'Host Drop' globally."
+      ],
+      "confidence": "high"
+    },
+    {
+      "id": "contractor",
+      "layer": "conceptual",
+      "label": "Independent Contractor",
+      "type": "actor",
+      "deeper_explanation_ref": "init_structure/Farmer_Drop__knowledge_map.md §2",
+      "metrics": {"commission": "100% commission = 3% of drop volume for N months (out of platform's 10%)"},
+      "failure_modes": [
+        "Recruits/trains host drops and links farmers to members; N-month window and take source depend on the unresolved platform take-% (DR-1)."
+      ],
+      "confidence": "high"
+    },
+    {
+      "id": "driver",
+      "layer": "conceptual",
+      "label": "Driver / Resource-Holder",
+      "type": "actor",
+      "deeper_explanation_ref": "init_structure/Farmer_Drop__knowledge_map.md §2",
+      "metrics": {"model": "monetize idle backhaul capacity"},
+      "failure_modes": [
+        "Anyone with a truck fills backhaul routes; supply of idle capacity and route reliability unproven at scale."
+      ],
+      "confidence": "probable"
+    },
+    {
+      "id": "platform",
+      "layer": "conceptual",
+      "label": "Platform (Farmer Drop)",
+      "type": "system",
+      "deeper_explanation_ref": "init_structure/Farmer_Drop__knowledge_map.md §2",
+      "metrics": {"role": "coordination + ledger + fee engine + data/optimization", "legal_wrapper": "a PMA"},
+      "failure_modes": [
+        "Decentralized-Amazon coordination layer; app code held by Volkmar, not in this repo — integration target with enumerated unknowns (BRIEF §1)."
+      ],
+      "confidence": "high"
+    },
+    {
+      "id": "drop_score",
+      "layer": "conceptual",
+      "label": "Drop Score",
+      "type": "product",
+      "deeper_explanation_ref": "init_structure/Farmer_Drop__knowledge_map.md §5",
+      "metrics": {"claim": "'world's first drop score'", "role": "discovery/ranking primitive + policy hook"},
+      "failure_modes": [
+        "Factor tree (5 domains, 19 factors, 38 evaluable indicators) now specced in drop_score_graph.json — weights and scoring rubric still deliberately undefined.",
+        "Presented as a guidance tree, not a black box — the tree spec now exists; the rubric that scores it does not."
+      ],
+      "confidence": "probable",
+      "link": "drop_score.html",
+      "link_label": "Drop Score guidance tree (factor model)"
+    },
+
+    {
+      "id": "fee_surcharge_txn",
+      "layer": "business",
+      "label": "Per-Transaction Surcharge $0.55",
+      "type": "fee",
+      "deeper_explanation_ref": "init_structure/Farmer_Drop__knowledge_map.md §3.1",
+      "metrics": {"amount": "$0.55/txn", "covers": "Stripe $0.30 txn + $0.25 transfer", "buffer": "deliberately over-covers"},
+      "failure_modes": [
+        "Over-covers so small baskets don't leave the platform underwater; framed as transparent but the buffer margin is not itself modeled."
+      ],
+      "confidence": "high"
+    },
+    {
+      "id": "stripe_cost",
+      "layer": "business",
+      "label": "Stripe Fixed + % Cost",
+      "type": "cost",
+      "deeper_explanation_ref": "init_structure/Farmer_Drop__knowledge_map.md §3.1",
+      "metrics": {"fixed": "$0.30 txn + $0.25 transfer", "percent": "2.9%"},
+      "failure_modes": [
+        "Double-charging risk (§3.4.3): platform adds 2.9% AND passes Stripe's 2.9% — confirm it is not both eating and charging the processor fee.",
+        "Token rail (Phase 1/2) is the only mechanism that actually removes this cost — PMA status does not (§3.4.4)."
+      ],
+      "confidence": "high"
+    },
+    {
+      "id": "cart_surcharge",
+      "layer": "business",
+      "label": "Cart Surcharge 3.15%",
+      "type": "fee",
+      "deeper_explanation_ref": "init_structure/Farmer_Drop__knowledge_map.md §3.1",
+      "metrics": {"total": "3.15%", "composition": "2.9% (Stripe %) + 0.25% wedge"},
+      "failure_modes": [
+        "Double-charging risk (§3.4.3): the 2.9% component may stack with the passed-through Stripe 2.9%; make the stacking explicit."
+      ],
+      "confidence": "high"
+    },
+    {
+      "id": "wedge_025",
+      "layer": "business",
+      "label": "0.25% Strategic Wedge",
+      "type": "fee",
+      "deeper_explanation_ref": "init_structure/Farmer_Drop__knowledge_map.md §3.1",
+      "metrics": {"amount": "0.25% of cart", "funds": "(a) credit system, (b) farmer token uptake"},
+      "failure_modes": [
+        "Is the candidate funding source for the negative-margin credit boost (§3.4.2) — but 0.25% cannot obviously fund a 2% boost; show the math."
+      ],
+      "confidence": "probable"
+    },
+    {
+      "id": "platform_take",
+      "layer": "business",
+      "label": "Platform Take — 10% vs 0.10% ⚠",
+      "type": "revenue",
+      "deeper_explanation_ref": "init_structure/Farmer_Drop__knowledge_map.md §3.4.1",
+      "metrics": {"stated": "0.10%", "model_closes_at": "~10%", "ambiguity": "100x", "working_analysis": "supports 7–12% gross, centered 10% — see linked templates"},
+      "failure_modes": [
+        "LOAD-BEARING AMBIGUITY (DR-1): stated as '0.10%' but the valuation only closes at ~10%. 0.10% of $100M/wk = $100k/wk, which cannot produce $5M/wk net or the $5.2B valuation.",
+        "Working analysis (take_rate_math.html) refutes 0.10% decisively and offers 3 template solutions — but the final number still needs Magnus/Volkmar confirmation; the model HALTS until then.",
+        "Credit boost (2%) and contractor cut (3%) are both carved out of this number — every downstream figure inherits the ambiguity."
+      ],
+      "confidence": "unresolved",
+      "link": "take_rate_math.html",
+      "link_label": "Take-rate math — DR-1 template solutions"
+    },
+    {
+      "id": "credit_boost",
+      "layer": "business",
+      "label": "Credit Purchase Boost ~2%",
+      "type": "cost",
+      "deeper_explanation_ref": "init_structure/Farmer_Drop__knowledge_map.md §3.4.2",
+      "metrics": {"boost": "~+2% ($100 -> $102)", "verbal_slip": "'$100 -> $200' is a transcription error"},
+      "failure_modes": [
+        "COST LINE (DR-2): giving 2% more credits than dollars received is a direct 2% loss unless funded by breakage, the 0.25% wedge, or token/float seigniorage.",
+        "Funding source is unattributed — silently erodes the platform take until made explicit.",
+        "'$100 -> $200' vs '$100 -> $102' must be resolved (glossary ⚠)."
+      ],
+      "confidence": "verify"
+    },
+    {
+      "id": "contractor_cut",
+      "layer": "business",
+      "label": "Contractor Cut 3%",
+      "type": "cost",
+      "deeper_explanation_ref": "init_structure/Farmer_Drop__knowledge_map.md §3.1",
+      "metrics": {"cut": "3% of a host drop's volume", "source": "out of platform's 10% take", "duration": "fixed number of months"},
+      "failure_modes": [
+        "Carved out of the platform take — if the take is really 0.10% (DR-1) this 3% is mathematically impossible."
+      ],
+      "confidence": "high"
+    },
+    {
+      "id": "hop_economics",
+      "layer": "business",
+      "label": "Decentralized Distribution Economics (80% / 5% per hop)",
+      "type": "model",
+      "deeper_explanation_ref": "init_structure/Farmer_Drop__knowledge_map.md §3.2",
+      "metrics": {"farmer_keep": "~80%", "per_hop": "~5%", "claim": "beats incumbent even with two hops"},
+      "failure_modes": [
+        "Two-hop haircut math needs a worked example (§3.4.5): '80% - 5% - 5% beats incumbent' depends entirely on the incumbent baseline (grocery/distributor take often 30-50%).",
+        "Incumbent baseline % is an unresolved open question — put both columns side by side before asserting the wedge."
+      ],
+      "confidence": "verify"
+    },
+    {
+      "id": "scale_scenario",
+      "layer": "business",
+      "label": "Scale Scenario — $100M/wk -> $5.2B",
+      "type": "model",
+      "deeper_explanation_ref": "init_structure/Farmer_Drop__knowledge_map.md §3.3",
+      "metrics": {
+        "gross": "1M users x $100/wk = $100M/wk",
+        "net": "~$5M/wk after ~10% take & fixed cost",
+        "annual": "~$0.25B/yr",
+        "valuation": "~$5.2B (x20 multiple)",
+        "year1_target": "100k users"
+      },
+      "failure_modes": [
+        "Entire valuation assumes ~10% take — collapses under the DR-1 0.10% reading (§3.4.1).",
+        "Throughput story, but adoption is the real constraint (§3.4.6): model CAC and drop-density thresholds, not just steady-state throughput."
+      ],
+      "confidence": "verify"
+    },
+    {
+      "id": "pma_tax_framing",
+      "layer": "business",
+      "label": "Fee-as-Tax / PMA Framing",
+      "type": "framing",
+      "deeper_explanation_ref": "init_structure/Farmer_Drop__knowledge_map.md §3.4.4",
+      "metrics": {"claim": "platform + host drops are PMAs -> some fees are collectively-avoidable 'taxes'"},
+      "failure_modes": [
+        "Legal-characterization claim, not a mechanism (§3.4.4): processor/network fees are contractual costs, not taxes; PMA status does not make Stripe's 2.9% disappear.",
+        "Separate actual cost reduction (token rail replacing card rail) from tax positioning — the latter invites regulatory scrutiny."
+      ],
+      "confidence": "verify"
+    },
+    {
+      "id": "churches_gtm",
+      "layer": "business",
+      "label": "Churches Distribution",
+      "type": "gtm",
+      "deeper_explanation_ref": "init_structure/Farmer_Drop__knowledge_map.md §7",
+      "metrics": {"pitch": "'add your 3,000 members'"},
+      "failure_modes": [
+        "Congregation-scale bulk onboarding is the core member-acquisition bet; CAC unmodeled."
+      ],
+      "confidence": "probable"
+    },
+    {
+      "id": "conferences_gtm",
+      "layer": "business",
+      "label": "Conferences",
+      "type": "gtm",
+      "deeper_explanation_ref": "init_structure/Farmer_Drop__knowledge_map.md §7",
+      "metrics": {},
+      "failure_modes": [
+        "Second acquisition channel; conversion and cost unquantified."
+      ],
+      "confidence": "probable"
+    },
+    {
+      "id": "test_app_gtm",
+      "layer": "business",
+      "label": "Test App as Sales Tool",
+      "type": "gtm",
+      "deeper_explanation_ref": "init_structure/Farmer_Drop__knowledge_map.md §7",
+      "metrics": {"mechanism": "influential testers make Stripe purchases with no money withdrawn, walk the flow, then vouch"},
+      "failure_modes": [
+        "Diverse testers surface UX edge cases; depends on Volkmar's app reaching demo-ready / 100% test coverage (§8)."
+      ],
+      "confidence": "probable"
+    },
+    {
+      "id": "midaugust_deadline",
+      "layer": "business",
+      "label": "Mid-August Launch Deadline",
+      "type": "milestone",
+      "deeper_explanation_ref": "init_structure/Farmer_Drop__knowledge_map.md §7",
+      "metrics": {"deadline": "mid-August", "framing": "'launch by mid-August or lose the race'"},
+      "failure_modes": [
+        "Schedule pressure driving the whole build; blocking items (take-%, tokenomics) are unresolved against this clock."
+      ],
+      "confidence": "probable"
+    },
+    {
+      "id": "regen_legislation",
+      "layer": "business",
+      "label": "Regenerative Legislation",
+      "type": "gtm",
+      "deeper_explanation_ref": "init_structure/Farmer_Drop__knowledge_map.md §7",
+      "metrics": {"signed": "June 25", "note": "consensus + money 'available'"},
+      "failure_modes": [
+        "Policy/funding hook for Drop Score; dependency on legislative timing and actual fund availability unverified."
+      ],
+      "confidence": "probable"
+    },
+
+    {
+      "id": "honey_coin",
+      "layer": "token",
+      "label": "Honey Coin (asset-backed — deferred)",
+      "type": "token",
+      "deeper_explanation_ref": "init_structure/Farmer_Drop__knowledge_map.md §4; compadres/docs/06_asset_backed_template.md",
+      "metrics": {"role": "ASSET-BACKED loyalty token — explicitly NOT the first deploy (user-confirmed 2026-07-04)", "chain": "Base (via compadres asset-backed template / IReserveAdapter)", "value_claim": "$100 -> $102 effective for food"},
+      "failure_modes": [
+        "DR-3 RESOLVED 2026-07-04: two-token architecture — a transfer-efficiency coin deploys FIRST; Honey Coin comes later, asset-backed, via the compadres template.",
+        "Regulatory (§4): a USD-redeemable, USD-boosted, food-spendable token is near stored-value / money-transmission / possibly-security territory — needs counsel BEFORE launch.",
+        "Not ready to launch; asset-backing spec (reserves, custody, on/off-ramp) still required."
+      ],
+      "confidence": "verify",
+      "link": "transfer_rails.html",
+      "link_label": "Rails: Stripe fee structure vs chain coin"
+    },
+    {
+      "id": "phase0_fiat",
+      "layer": "token",
+      "label": "Phase 0 — Fiat + Credits",
+      "type": "phase",
+      "deeper_explanation_ref": "init_structure/Farmer_Drop__knowledge_map.md §4",
+      "metrics": {"rails": "Stripe fiat + credits ledger"},
+      "failure_modes": [
+        "Current state; ledger design lives in Volkmar's '.7 backend' — scope unconfirmed (§8)."
+      ],
+      "confidence": "high"
+    },
+    {
+      "id": "phase1_alt_transfer",
+      "layer": "token",
+      "label": "Phase 1 — Alt Transfer (drop Stripe fees)",
+      "type": "phase",
+      "deeper_explanation_ref": "init_structure/Farmer_Drop__knowledge_map.md §4",
+      "metrics": {"mechanism": "drop Stripe fees for anyone accepting an alternative transfer form — realized as the CPDR-style transfer coin (first deploy)"},
+      "failure_modes": [
+        "This is the FIRST real cost reduction — the only mechanism that genuinely removes card-rail cost (contrast with PMA tax framing, §3.4.4)."
+      ],
+      "confidence": "probable",
+      "link": "transfer_rails.html",
+      "link_label": "Rails: Stripe fee structure vs chain coin"
+    },
+    {
+      "id": "compadres_base",
+      "layer": "token",
+      "label": "compadres repo · Base chain",
+      "type": "infra",
+      "deeper_explanation_ref": "init_structure/Farmer_Drop__knowledge_map.md §4",
+      "metrics": {"chain": "Base (Coinbase L2)", "repo": "compadres — CONFIRMED at ~/GitHub/compadres: CPDR low-extraction token/exchange test harness (TransferRouter, mock USDC, AMM, burn/redeem, fee measurement)"},
+      "failure_modes": [
+        "Repo confirmed (2026-07-04); asset-backed layer deliberately deferred behind docs/06_asset_backed_template.md + IReserveAdapter.sol. No production chain launch until regulatory classification is resolved."
+      ],
+      "confidence": "high"
+    },
+    {
+      "id": "transfer_coin",
+      "layer": "token",
+      "label": "Transfer Coin (first deploy — CPDR)",
+      "type": "token",
+      "deeper_explanation_ref": "init_structure/Farmer_Drop__knowledge_map.md §4; ~/GitHub/compadres README (CPDR)",
+      "metrics": {"status": "user-confirmed 2026-07-04: the FIRST coin — efficient P2P transfers between people, replacing expensive Stripe rails", "harness": "compadres CPDR: TransferRouter, fee measurement, reconciliation"},
+      "failure_modes": [
+        "DR-3 resolved: this is token #1 of two (Honey Coin, asset-backed, comes later).",
+        "Still requires regulatory review before production launch; compadres v0 is a test harness, not a deployed product."
+      ],
+      "confidence": "probable",
+      "link": "transfer_rails.html",
+      "link_label": "Rails: Stripe fee structure vs chain coin"
+    },
+
+    {
+      "id": "routing_engine",
+      "layer": "data",
+      "label": "Distribution / Routing Engine",
+      "type": "system",
+      "deeper_explanation_ref": "init_structure/Farmer_Drop__knowledge_map.md §6",
+      "metrics": {"objective": "optimize routing (backhaul chaining TX->Gulf->FL) + production allocation", "future": "eventually own trucks as a sub-service"},
+      "failure_modes": [
+        "Instrument-for-data FIRST — do not over-engineer the math before there is data to scale models on (§6)."
+      ],
+      "confidence": "probable"
+    },
+    {
+      "id": "demand_supply_data",
+      "layer": "data",
+      "label": "Demand + Supply / Seasonality Data",
+      "type": "data",
+      "deeper_explanation_ref": "init_structure/Farmer_Drop__knowledge_map.md §6",
+      "metrics": {"collect": "'what is needed where' (demand) + supply/seasonality"},
+      "failure_modes": [
+        "Data schema for demand/supply/seasonality is the prerequisite; without instrumentation the routing optimization is premature (§6, BRIEF §2.5)."
+      ],
+      "confidence": "probable"
+    },
+    {
+      "id": "backhaul_chaining",
+      "layer": "data",
+      "label": "Backhaul Chaining",
+      "type": "process",
+      "deeper_explanation_ref": "init_structure/Farmer_Drop__knowledge_map.md §6",
+      "metrics": {"route": "TX -> Gulf -> FL", "principle": "monetize idle private capacity near term"},
+      "failure_modes": [
+        "Depends on driver idle-capacity supply and reliable route matching — unproven at network scale."
+      ],
+      "confidence": "probable"
+    },
+    {
+      "id": "peach_prediction",
+      "layer": "data",
+      "label": "Seasonal Prediction (peach-tree test case)",
+      "type": "model",
+      "deeper_explanation_ref": "init_structure/Farmer_Drop__knowledge_map.md §6",
+      "metrics": {"case": "peach-tree owner, 100-mile radius, 3-week window"},
+      "failure_modes": [
+        "Concrete first prediction target; success depends on demand/supply instrumentation existing first (no premature optimization, §6)."
+      ],
+      "confidence": "probable"
+    }
+  ],
+  "edges": [
+    {"from": "member", "to": "platform", "relation": "buys, holds credits", "value": "$100/wk basket"},
+    {"from": "farmer", "to": "platform", "relation": "supplies, rated"},
+    {"from": "platform", "to": "drop_score", "relation": "ranks / discovers via"},
+    {"from": "drop_score", "to": "farmer", "relation": "rates regenerative practice"},
+    {"from": "host_drop", "to": "platform", "relation": "aggregation / pickup node"},
+    {"from": "contractor", "to": "host_drop", "relation": "recruits / trains"},
+    {"from": "driver", "to": "platform", "relation": "fills backhaul routes"},
+    {"from": "platform", "to": "member", "relation": "credits + token boost"},
+    {"from": "platform", "to": "farmer", "relation": "~80% net + token uplift", "value": "80%"},
+    {"from": "platform", "to": "contractor", "relation": "pays 3% of drop volume / N months", "value": "3%"},
+
+    {"from": "platform", "to": "platform_take", "relation": "earns revenue via"},
+    {"from": "member", "to": "cart_surcharge", "relation": "pays", "value": "3.15%"},
+    {"from": "member", "to": "fee_surcharge_txn", "relation": "pays per-txn", "value": "$0.55"},
+    {"from": "farmer", "to": "hop_economics", "relation": "keeps ~80% under", "value": "80%"},
+    {"from": "platform", "to": "pma_tax_framing", "relation": "positions fees via"},
+    {"from": "platform", "to": "scale_scenario", "relation": "projects"},
+
+    {"from": "fee_surcharge_txn", "to": "stripe_cost", "relation": "absorbs / buffers", "value": "$0.55 covers $0.55"},
+    {"from": "cart_surcharge", "to": "stripe_cost", "relation": "passes through 2.9%", "value": "2.9%"},
+    {"from": "cart_surcharge", "to": "wedge_025", "relation": "contains", "value": "0.25%"},
+    {"from": "wedge_025", "to": "credit_boost", "relation": "candidate funding for", "value": "0.25% -> 2%?"},
+    {"from": "wedge_025", "to": "honey_coin", "relation": "funds farmer token uptake"},
+    {"from": "platform_take", "to": "contractor_cut", "relation": "carves out", "value": "3% of 10%"},
+    {"from": "platform_take", "to": "credit_boost", "relation": "eroded by", "value": "-2%"},
+    {"from": "platform_take", "to": "scale_scenario", "relation": "drives valuation of", "value": "~10%"},
+    {"from": "credit_boost", "to": "scale_scenario", "relation": "negative-margin risk to"},
+    {"from": "hop_economics", "to": "scale_scenario", "relation": "underpins"},
+    {"from": "pma_tax_framing", "to": "platform_take", "relation": "reframes as avoidable tax"},
+
+    {"from": "churches_gtm", "to": "member", "relation": "acquires (bulk)"},
+    {"from": "conferences_gtm", "to": "member", "relation": "acquires"},
+    {"from": "test_app_gtm", "to": "member", "relation": "vouch -> acquires"},
+    {"from": "regen_legislation", "to": "drop_score", "relation": "policy / funding hook for"},
+    {"from": "midaugust_deadline", "to": "platform", "relation": "schedule pressure on"},
+    {"from": "churches_gtm", "to": "scale_scenario", "relation": "adoption input to"},
+
+    {"from": "phase0_fiat", "to": "phase1_alt_transfer", "relation": "then"},
+    {"from": "phase1_alt_transfer", "to": "honey_coin", "relation": "then"},
+    {"from": "honey_coin", "to": "compadres_base", "relation": "asset-backed template (deferred)"},
+    {"from": "transfer_coin", "to": "compadres_base", "relation": "built on (CPDR harness)"},
+    {"from": "transfer_coin", "to": "honey_coin", "relation": "precedes — rails proven first"},
+    {"from": "phase1_alt_transfer", "to": "transfer_coin", "relation": "implemented by"},
+    {"from": "honey_coin", "to": "platform", "relation": "backs / lubricates"},
+    {"from": "honey_coin", "to": "farmer", "relation": "farmer nets more after USD conversion"},
+    {"from": "honey_coin", "to": "member", "relation": "transfer savings"},
+    {"from": "phase0_fiat", "to": "stripe_cost", "relation": "incurs (card rail)"},
+    {"from": "phase1_alt_transfer", "to": "stripe_cost", "relation": "removes (real cost cut)"},
+
+    {"from": "platform", "to": "routing_engine", "relation": "runs data / optimization"},
+    {"from": "demand_supply_data", "to": "routing_engine", "relation": "feeds"},
+    {"from": "member", "to": "demand_supply_data", "relation": "demand signal"},
+    {"from": "farmer", "to": "demand_supply_data", "relation": "supply / seasonality signal"},
+    {"from": "routing_engine", "to": "backhaul_chaining", "relation": "optimizes"},
+    {"from": "backhaul_chaining", "to": "driver", "relation": "assigns routes to"},
+    {"from": "routing_engine", "to": "peach_prediction", "relation": "first prediction target"}
+  ]
+}
+</script>
+
+<script>
+const DATA = JSON.parse(document.getElementById('graph-data').textContent);
+const LAYERS = {
+  conceptual:{color:getcv('--conceptual'),shape:'circle',label:'Conceptual'},
+  business:  {color:getcv('--business'),  shape:'square',label:'Business'},
+  token:     {color:getcv('--token'),     shape:'hex',   label:'Token'},
+  data:      {color:getcv('--data'),      shape:'diamond',label:'Data'}
+};
+function getcv(v){return getComputedStyle(document.documentElement).getPropertyValue(v).trim();}
+const RUST=getcv('--rust'), HONEY=getcv('--honey');
+
+const nodes = DATA.nodes.map(d=>Object.assign({},d));
+const edges = DATA.edges.map(d=>Object.assign({source:d.from,target:d.to},d));
+const byId = new Map(nodes.map(n=>[n.id,n]));
+const active = new Set(Object.keys(LAYERS));
+
+// neighbor map for hover highlight
+const nbr = new Map(nodes.map(n=>[n.id,new Set([n.id])]));
+edges.forEach(e=>{nbr.get(e.from).add(e.to);nbr.get(e.to).add(e.from);});
+
+const svg = d3.select('#canvas');
+let W = svg.node().clientWidth, H = svg.node().clientHeight;
+const g = svg.append('g');
+const zoom = d3.zoom().scaleExtent([.35,3.5]).on('zoom',ev=>g.attr('transform',ev.transform));
+svg.call(zoom);
+
+const linkSel = g.append('g').selectAll('line');
+const labelSel = g.append('g').selectAll('text');
+const nodeSel = g.append('g').selectAll('g');
+
+const sim = d3.forceSimulation(nodes)
+  .force('link', d3.forceLink(edges).id(d=>d.id).distance(l=>{
+     return (l.source.layer!==l.target.layer)?150:95;
+  }).strength(.45))
+  .force('charge', d3.forceManyBody().strength(-460))
+  .force('center', d3.forceCenter(W/2,H/2))
+  .force('collide', d3.forceCollide().radius(d=>rad(d)+18))
+  .force('x', d3.forceX(d=>layerX(d.layer)).strength(.09))
+  .force('y', d3.forceY(H/2).strength(.045));
+
+function layerX(l){const o={conceptual:.24,business:.5,token:.76,data:.5};return W*(o[l]||.5);}
+function rad(d){let r=15; if(d.confidence==='unresolved')r=24; else if(d.confidence==='verify')r=18;
+  if(d.id==='platform'||d.id==='platform_take'||d.id==='honey_coin'||d.id==='scale_scenario')r+=3; return r;}
+
+// ---- render links ----
+let link = linkSel.data(edges).join('line')
+  .attr('class',d=>'link'+(isWarn(d)?' warn':''))
+  .attr('stroke-width',d=>isWarn(d)?2:1.2);
+function isWarn(e){const a=byId.get(typeof e.from==='object'?e.from.id:e.from);
+  const b=byId.get(typeof e.to==='object'?e.to.id:e.to);
+  return (a&&(a.confidence==='unresolved'))||(b&&(b.confidence==='unresolved'));}
+
+let elabel = labelSel.data(edges).join('text')
+  .attr('class','linklabel').attr('text-anchor','middle').text(d=>d.relation);
+
+// ---- render nodes ----
+let node = nodeSel.data(nodes).join('g')
+  .attr('class','nodewrap')
+  .call(d3.drag().on('start',dstart).on('drag',dmove).on('end',dend))
+  .on('click',(ev,d)=>{ev.stopPropagation();openPanel(d);})
+  .on('mouseenter',(ev,d)=>hover(d,true))
+  .on('mouseleave',(ev,d)=>hover(d,false));
+
+node.each(function(d){
+  const s=d3.select(this), c=LAYERS[d.layer].color, r=rad(d);
+  // alarm pulse for unresolved
+  if(d.confidence==='unresolved'){
+    s.append('circle').attr('class','pulse').attr('r',r+16)
+      .append('animate').attr('attributeName','r').attr('values',(r+10)+';'+(r+22)+';'+(r+10))
+      .attr('dur','2.4s').attr('repeatCount','indefinite');
+    s.select('.pulse').append('animate').attr('attributeName','opacity')
+      .attr('values','.28;.06;.28').attr('dur','2.4s').attr('repeatCount','indefinite');
+  }
+  shape(s,d.layer,r,c);
+  // warning ring
+  if(d.confidence==='unresolved') s.append('circle').attr('class','ring-unresolved').attr('r',r+7);
+  else if(d.confidence==='verify') s.append('circle').attr('class','ring-warn').attr('r',r+6);
+  // badge
+  if(d.confidence==='unresolved'||d.confidence==='verify')
+    s.append('text').attr('class','badge').attr('x',r+2).attr('y',-r+2).text('⚠')
+     .attr('fill',d.confidence==='unresolved'?RUST:getcv('--honey-deep'));
+  // label
+  s.append('text').attr('class','nodelabel').attr('text-anchor','middle')
+   .attr('dy',r+13).text(d.label.length>30?d.label.slice(0,29)+'…':d.label);
+});
+
+function shape(s,layer,r,c){
+  const sh=LAYERS[layer].shape;
+  if(sh==='circle') s.append('circle').attr('r',r).attr('fill',c).attr('stroke','#fffdf6').attr('stroke-width',2);
+  else if(sh==='square') s.append('rect').attr('x',-r).attr('y',-r).attr('width',2*r).attr('height',2*r)
+     .attr('rx',3).attr('fill',c).attr('stroke','#fffdf6').attr('stroke-width',2);
+  else if(sh==='diamond') s.append('rect').attr('x',-r*.8).attr('y',-r*.8).attr('width',r*1.6).attr('height',r*1.6)
+     .attr('transform','rotate(45)').attr('fill',c).attr('stroke','#fffdf6').attr('stroke-width',2);
+  else if(sh==='hex'){const pts=hexPts(r);s.append('polygon').attr('points',pts)
+     .attr('fill',c).attr('stroke','#fffdf6').attr('stroke-width',2);}
+}
+function hexPts(r){let p=[];for(let i=0;i<6;i++){const a=Math.PI/6+i*Math.PI/3;p.push([r*Math.cos(a),r*Math.sin(a)]);}return p.map(d=>d.join(',')).join(' ');}
+
+sim.on('tick',()=>{
+  link.attr('x1',d=>d.source.x).attr('y1',d=>d.source.y).attr('x2',d=>d.target.x).attr('y2',d=>d.target.y);
+  elabel.attr('x',d=>(d.source.x+d.target.x)/2).attr('y',d=>(d.source.y+d.target.y)/2);
+  node.attr('transform',d=>`translate(${d.x},${d.y})`);
+});
+
+// ---- hover ----
+function hover(d,on){
+  if(on){
+    const near=nbr.get(d.id);
+    node.classed('dim',n=>!near.has(n.id));
+    link.classed('dim-link',l=>!(l.source.id===d.id||l.target.id===d.id))
+        .classed('hl',l=>(l.source.id===d.id||l.target.id===d.id));
+    elabel.style('opacity',l=>(l.source.id===d.id||l.target.id===d.id)?1:0);
+  } else {
+    node.classed('dim',false); link.classed('dim-link',false).classed('hl',false);
+    elabel.style('opacity',0);
+  }
+}
+svg.on('click',()=>closePanel());
+
+// ---- panel ----
+function openPanel(d){
+  const p=document.getElementById('panel');
+  document.getElementById('p-layer').textContent=LAYERS[d.layer].label+' layer';
+  document.getElementById('p-label').textContent=d.label;
+  document.getElementById('p-type').textContent=d.type;
+  const b=document.getElementById('p-body');
+  let h='';
+  h+=`<span class="conf conf-${d.confidence}">${d.confidence==='unresolved'||d.confidence==='verify'?'⚠ ':''}confidence: ${d.confidence}</span>`;
+  if(d.metrics && Object.keys(d.metrics).length){
+    h+='<h3>Metrics</h3>';
+    for(const[k,v]of Object.entries(d.metrics))
+      h+=`<div class="metric"><b>${k}</b><span>${esc(v)}</span></div>`;
+  }
+  if(d.failure_modes && d.failure_modes.length){
+    h+='<h3>Failure modes</h3><ul class="fm">';
+    d.failure_modes.forEach(f=>h+=`<li>${esc(f)}</li>`);
+    h+='</ul>';
+  }
+  h+='<h3>Deeper explanation</h3>';
+  h+=`<div class="ref">${esc(d.deeper_explanation_ref)}</div>`;
+  if(d.link){
+    h+=`<a class="sublink" href="${esc(d.link)}">${esc(d.link_label||d.link)} →</a>`;
+  }
+  b.innerHTML=h;
+  p.classList.add('open');
+  document.getElementById('hint').style.display='none';
+}
+function closePanel(){document.getElementById('panel').classList.remove('open');}
+document.getElementById('closep').addEventListener('click',e=>{e.stopPropagation();closePanel();});
+function esc(s){return String(s).replace(/[&<>]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;'}[c]));}
+
+// ---- filters ----
+const fdiv=document.getElementById('filters');
+Object.entries(LAYERS).forEach(([k,v])=>{
+  const el=document.createElement('div');
+  el.className='chip';el.dataset.layer=k;
+  el.innerHTML=`<span class="dot" style="background:${v.color}"></span>${v.label}`;
+  el.addEventListener('click',()=>{
+    if(active.has(k)){active.delete(k);el.classList.add('off');}
+    else{active.add(k);el.classList.remove('off');}
+    applyFilter();
+  });
+  fdiv.appendChild(el);
+});
+function applyFilter(){
+  node.style('display',d=>active.has(d.layer)?null:'none');
+  link.style('display',d=>(active.has(d.source.layer)&&active.has(d.target.layer))?null:'none');
+  elabel.style('display',d=>(active.has(d.source.layer)&&active.has(d.target.layer))?null:'none');
+}
+
+// ---- search ----
+document.getElementById('search').addEventListener('input',e=>{
+  const q=e.target.value.trim().toLowerCase();
+  node.selectAll('circle,rect,polygon').attr('stroke-width',null).attr('stroke',null);
+  if(!q){node.classed('dim',false);node.each(function(){resetStroke(this);});return;}
+  node.each(function(d){
+    const hit=(d.label+' '+d.type+' '+(d.failure_modes||[]).join(' ')).toLowerCase().includes(q);
+    d3.select(this).classed('dim',!hit);
+    if(hit) d3.select(this).select('circle,rect,polygon').attr('stroke',HONEY).attr('stroke-width',4);
+    else resetStroke(this);
+  });
+});
+function resetStroke(el){d3.select(el).selectAll('circle:not(.pulse):not(.ring-warn):not(.ring-unresolved),rect,polygon').attr('stroke','#fffdf6').attr('stroke-width',2);}
+
+// ---- legend ----
+const lg=document.getElementById('legend');
+Object.entries(LAYERS).forEach(([k,v])=>{
+  const cls=v.shape==='circle'?'':'sq';
+  lg.innerHTML+=`<span class="li"><span class="sw ${cls}" style="background:${v.color}"></span>${v.label}</span>`;
+});
+lg.innerHTML+=`<span class="li"><span class="sw" style="background:none;border:2px dashed ${HONEY}"></span>⚠ verify</span>`;
+lg.innerHTML+=`<span class="li"><span class="sw" style="background:none;border:2.5px solid ${RUST}"></span>⚠ unresolved (DR-1)</span>`;
+
+// ---- drag ----
+function dstart(ev,d){if(!ev.active)sim.alphaTarget(.3).restart();d.fx=d.x;d.fy=d.y;}
+function dmove(ev,d){d.fx=ev.x;d.fy=ev.y;}
+function dend(ev,d){if(!ev.active)sim.alphaTarget(0);d.fx=null;d.fy=null;}
+
+// ---- resize ----
+window.addEventListener('resize',()=>{
+  W=svg.node().clientWidth;H=svg.node().clientHeight;
+  sim.force('center',d3.forceCenter(W/2,H/2));
+  sim.force('x',d3.forceX(d=>layerX(d.layer)).strength(.09));
+  sim.alpha(.3).restart();
+});
+
+// gentle zoom-to-fit: once shortly after load, then again whenever the sim settles
+let userZoomed=false;
+svg.on('wheel.usr mousedown.usr',()=>{userZoomed=true;},true);
+function fitView(){
+  if(userZoomed)return;
+  const xs=nodes.map(n=>n.x),ys=nodes.map(n=>n.y);
+  const minx=Math.min(...xs),maxx=Math.max(...xs),miny=Math.min(...ys),maxy=Math.max(...ys);
+  const gw=maxx-minx+160,gh=maxy-miny+160;
+  const k=Math.min(W/gw,H/gh,1.1);
+  const tx=W/2-k*(minx+maxx)/2, ty=H/2-k*(miny+maxy)/2;
+  svg.transition().duration(700).call(zoom.transform,d3.zoomIdentity.translate(tx,ty).scale(k));
+}
+let fitTicks=0;
+sim.on('tick.fit',()=>{if(++fitTicks===90)fitView();});
+sim.on('end.fit',fitView);
+</script>
+</body>
+</html>

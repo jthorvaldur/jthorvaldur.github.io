@@ -1,0 +1,703 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>FARMER DROP — DR-1 Take-Rate Working Analysis</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,500;0,9..144,600;0,9..144,700;1,9..144,400&family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;0,6..72,600;1,6..72,400&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --parchment:#faf6ec; --parchment-2:#f3ecda; --parchment-3:#ece2c9;
+  --loam:#1e3a2a; --loam-soft:#3a5343; --ink-fade:#6c7b6a;
+  --honey:#d9930d; --honey-deep:#b8790a;
+  --rust:#b23a1e; --rust-deep:#8f2c14;
+  --line:#c9bd9c; --line-soft:#ddd2b4;
+  --paper-card:#fffdf6;
+  --conceptual:#2f6b4a; --business:#7a5b8f; --token:#d9930d; --data:#2b6d84;
+  --good:#2f6b4a; --warn:#b8790a; --bad:#8f2c14;
+}
+*{box-sizing:border-box}
+html,body{margin:0;background:var(--parchment);color:var(--loam);
+  font-family:"Newsreader",Georgia,serif;font-size:16px;line-height:1.5}
+
+/* textures */
+.grain{position:fixed;inset:0;pointer-events:none;z-index:0;opacity:.05;mix-blend-mode:multiply}
+.fieldrows{position:fixed;inset:0;pointer-events:none;z-index:0;opacity:.35;
+  background:
+    repeating-linear-gradient(115deg, transparent 0 46px, rgba(30,58,42,.028) 46px 47px),
+    radial-gradient(140% 120% at 12% 8%, #fdfbf3 0%, var(--parchment) 42%, var(--parchment-2) 100%);}
+
+#app{position:relative;z-index:1;max-width:1180px;margin:0 auto;padding:0 22px 90px}
+
+/* header */
+header{padding:22px 0 14px;border-bottom:1.5px solid var(--line);
+  display:flex;align-items:flex-end;justify-content:space-between;gap:24px;flex-wrap:wrap;
+  position:sticky;top:0;z-index:20;
+  background:linear-gradient(180deg, var(--parchment) 55%, rgba(250,246,236,.85));
+  backdrop-filter:blur(2px)}
+.brand h1{font-family:"Fraunces",serif;font-optical-sizing:auto;font-weight:600;
+  font-size:clamp(23px,3vw,38px);line-height:.96;margin:0;letter-spacing:-.01em}
+.brand h1 .drop{color:var(--honey-deep);font-style:italic}
+.brand .kicker{font-family:"IBM Plex Mono",monospace;font-size:11px;letter-spacing:.2em;
+  text-transform:uppercase;color:var(--ink-fade);margin-top:8px}
+nav{display:flex;gap:6px;align-items:center;flex-wrap:wrap}
+nav a{font-family:"IBM Plex Mono",monospace;font-size:12px;text-decoration:none;
+  color:var(--loam-soft);border:1px solid var(--line);border-radius:999px;
+  padding:7px 14px;background:var(--paper-card);transition:all .18s;white-space:nowrap}
+nav a:hover{background:var(--loam);color:var(--parchment);border-color:var(--loam)}
+nav a.here{background:var(--loam);color:var(--parchment);border-color:var(--loam)}
+
+/* banner */
+.banner{margin:20px 0 8px;border:2px solid var(--rust);border-radius:8px;
+  background:linear-gradient(180deg,#fbeee9,#f7ddd3);padding:15px 20px;
+  display:flex;gap:14px;align-items:flex-start;
+  box-shadow:0 14px 30px -22px rgba(143,44,20,.6)}
+.banner .flag{font-family:"IBM Plex Mono",monospace;font-weight:600;font-size:11px;
+  letter-spacing:.14em;color:#fff;background:var(--rust);border-radius:5px;
+  padding:5px 9px;white-space:nowrap;margin-top:2px}
+.banner p{margin:0;font-size:15.5px;color:var(--rust-deep)}
+.banner b{font-family:"Fraunces",serif}
+
+/* sticky control rail */
+.controls{position:sticky;top:78px;z-index:15;margin:18px 0 6px;
+  background:var(--paper-card);border:1.5px solid var(--line);border-radius:10px;
+  box-shadow:0 1px 0 var(--line),0 16px 34px -26px rgba(30,58,42,.5);
+  padding:14px 18px}
+.controls .chead{font-family:"IBM Plex Mono",monospace;font-size:10px;letter-spacing:.16em;
+  text-transform:uppercase;color:var(--ink-fade);margin-bottom:11px;display:flex;
+  justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap}
+.ctrl-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:16px 22px}
+.ctrl label{display:block;font-family:"IBM Plex Mono",monospace;font-size:11px;
+  color:var(--loam-soft);letter-spacing:.03em;margin-bottom:5px;
+  display:flex;justify-content:space-between;align-items:baseline}
+.ctrl label .val{font-weight:600;color:var(--honey-deep);font-size:13px}
+input[type=range]{width:100%;accent-color:var(--honey-deep);height:22px;cursor:pointer}
+.ctrl .sub{font-size:10px;color:var(--ink-fade);margin-top:2px;font-family:"IBM Plex Mono",monospace}
+.reset{font-family:"IBM Plex Mono",monospace;font-size:10.5px;cursor:pointer;
+  border:1px solid var(--line);background:var(--parchment-2);border-radius:6px;
+  padding:5px 10px;color:var(--loam-soft)}
+.reset:hover{border-color:var(--loam-soft)}
+
+/* sections */
+section{margin-top:40px;scroll-margin-top:150px}
+.sec-num{font-family:"IBM Plex Mono",monospace;font-size:11px;letter-spacing:.2em;
+  color:var(--honey-deep);text-transform:uppercase}
+h2.sec{font-family:"Fraunces",serif;font-weight:600;font-size:clamp(21px,2.6vw,30px);
+  margin:4px 0 6px;line-height:1.06;letter-spacing:-.01em}
+.lede{font-size:16px;color:var(--loam-soft);max-width:74ch;margin:0 0 16px}
+.lede b{color:var(--loam)}
+
+/* generic panel/card */
+.panel{background:var(--paper-card);border:1px solid var(--line);border-radius:8px;
+  box-shadow:0 1px 0 var(--line),0 16px 34px -28px rgba(30,58,42,.5);
+  padding:18px 20px;margin-bottom:16px}
+.panel h3{font-family:"IBM Plex Mono",monospace;font-size:10.5px;letter-spacing:.16em;
+  text-transform:uppercase;color:var(--ink-fade);margin:0 0 12px;
+  border-bottom:1px solid var(--line-soft);padding-bottom:6px}
+
+/* tables */
+table{width:100%;border-collapse:collapse;font-size:13.5px}
+th,td{text-align:right;padding:6px 8px;border-bottom:1px dotted var(--line-soft)}
+th:first-child,td:first-child{text-align:left}
+thead th{font-family:"IBM Plex Mono",monospace;font-size:10px;letter-spacing:.05em;
+  text-transform:uppercase;color:var(--ink-fade);border-bottom:1.5px solid var(--line)}
+td.num,th.num{font-family:"IBM Plex Mono",monospace}
+tr.total td{border-top:1.5px solid var(--line);border-bottom:none;font-weight:600;
+  font-family:"IBM Plex Mono",monospace}
+tr.sub td{color:var(--ink-fade);font-size:12.5px}
+.tag{display:inline-block;font-family:"IBM Plex Mono",monospace;font-size:9.5px;
+  padding:1px 6px;border-radius:4px;letter-spacing:.04em;vertical-align:middle}
+.tag.good{background:#e5efe4;color:var(--good)}
+.tag.warn{background:#fbeecb;color:var(--warn)}
+.tag.bad{background:#f6d9cf;color:var(--bad)}
+
+/* big number strip */
+.strip{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:1px;
+  background:var(--line-soft);border:1px solid var(--line);border-radius:8px;overflow:hidden;margin:14px 0}
+.strip .cell{background:var(--paper-card);padding:13px 15px}
+.strip .k{font-family:"IBM Plex Mono",monospace;font-size:9.5px;letter-spacing:.1em;
+  text-transform:uppercase;color:var(--ink-fade)}
+.strip .v{font-family:"Fraunces",serif;font-weight:600;font-size:23px;line-height:1.1;margin-top:3px}
+.strip .v.bad{color:var(--rust-deep)} .strip .v.good{color:var(--good)}
+.strip .note{font-size:11px;color:var(--ink-fade);margin-top:2px}
+
+/* refutation callout */
+.refute{border-left:4px solid var(--rust);background:#fbeee9;border-radius:0 8px 8px 0;
+  padding:14px 18px;margin:14px 0;font-size:15px}
+.refute .big{font-family:"Fraunces",serif;font-weight:600;font-size:20px;color:var(--rust-deep)}
+
+/* template cards */
+.tcards{display:grid;grid-template-columns:1fr;gap:18px}
+.tcard{background:var(--paper-card);border:1px solid var(--line);border-radius:10px;
+  box-shadow:0 1px 0 var(--line),0 18px 38px -28px rgba(30,58,42,.55);overflow:hidden}
+.tcard .thead{padding:15px 20px 13px;border-bottom:1.5px solid var(--line);
+  background:linear-gradient(180deg,var(--parchment) 0%, rgba(243,236,218,.4));
+  display:flex;justify-content:space-between;align-items:flex-start;gap:16px;flex-wrap:wrap}
+.tcard .tid{font-family:"IBM Plex Mono",monospace;font-size:11px;letter-spacing:.16em;
+  color:var(--honey-deep);text-transform:uppercase}
+.tcard .tname{font-family:"Fraunces",serif;font-weight:600;font-size:25px;line-height:1;margin:5px 0 0}
+.tcard .tname .it{font-style:italic;color:var(--honey-deep)}
+.tcard .takebadge{font-family:"IBM Plex Mono",monospace;font-weight:600;font-size:13px;
+  border:1.5px solid var(--loam);border-radius:8px;padding:8px 12px;text-align:center;
+  color:var(--loam);background:var(--parchment);white-space:nowrap;line-height:1.2}
+.tcard .takebadge span{display:block;font-size:9px;letter-spacing:.12em;color:var(--ink-fade);
+  font-weight:400;text-transform:uppercase;margin-bottom:2px}
+.tcard .tbody{padding:16px 20px 20px}
+.tcard .oneliner{font-size:14.5px;color:var(--loam-soft);margin:0 0 14px;max-width:80ch}
+.tcols{display:grid;grid-template-columns:1.15fr .85fr;gap:22px}
+@media(max-width:760px){.tcols{grid-template-columns:1fr}}
+.verdict{margin-top:14px;border-top:1px dotted var(--line);padding-top:11px;
+  font-size:14px;display:flex;gap:10px;align-items:flex-start}
+.verdict .vk{font-family:"IBM Plex Mono",monospace;font-size:10px;letter-spacing:.12em;
+  text-transform:uppercase;color:#fff;background:var(--loam);border-radius:5px;
+  padding:4px 8px;white-space:nowrap;margin-top:1px}
+
+/* checks row */
+.checks{display:flex;gap:10px;flex-wrap:wrap;margin-top:10px}
+.check{flex:1 1 200px;border:1px solid var(--line-soft);border-radius:7px;padding:9px 12px;
+  background:var(--parchment)}
+.check .ck{font-family:"IBM Plex Mono",monospace;font-size:9.5px;letter-spacing:.08em;
+  text-transform:uppercase;color:var(--ink-fade)}
+.check .cv{font-family:"Fraunces",serif;font-weight:600;font-size:17px;margin-top:2px}
+.check .cn{font-size:11.5px;color:var(--loam-soft);margin-top:2px}
+.check.pass{border-color:#bcd6bb;background:#eef5ed}
+.check.fail{border-color:#e6b9ab;background:#fae7e0}
+
+/* citations / sources */
+.cite{font-family:"IBM Plex Mono",monospace;font-size:11.5px;color:var(--loam-soft)}
+.srcs{list-style:none;padding:0;margin:10px 0 0}
+.srcs li{padding:8px 0;border-bottom:1px dotted var(--line-soft);font-size:13.5px}
+.srcs a{color:var(--business);text-decoration:none;font-family:"IBM Plex Mono",monospace;font-size:12px}
+.srcs a:hover{text-decoration:underline}
+.srcs .lbl{font-weight:600;color:var(--loam)}
+
+/* open items */
+ul.open{list-style:none;padding:0;margin:0}
+ul.open li{padding:10px 0 10px 30px;position:relative;border-bottom:1px dotted var(--line-soft);
+  font-size:14.5px;color:var(--loam-soft)}
+ul.open li:before{content:"?";position:absolute;left:0;top:8px;width:20px;height:20px;
+  font-family:"IBM Plex Mono",monospace;font-weight:600;font-size:12px;color:var(--rust-deep);
+  background:#f6d9cf;border-radius:50%;text-align:center;line-height:20px}
+ul.open li b{color:var(--loam)}
+.who{font-family:"IBM Plex Mono",monospace;font-size:10px;letter-spacing:.06em;
+  color:var(--honey-deep);text-transform:uppercase}
+
+/* drop score coupling */
+.ds{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+@media(max-width:720px){.ds{grid-template-columns:1fr}}
+.dsbar{margin-top:8px}
+.dsrow{display:flex;align-items:center;gap:10px;margin:7px 0;font-size:13px}
+.dsrow .lab{font-family:"IBM Plex Mono",monospace;font-size:11px;width:120px;color:var(--loam-soft)}
+.dsrow .bar{flex:1;height:14px;background:var(--parchment-3);border-radius:7px;overflow:hidden}
+.dsrow .fill{height:100%;background:linear-gradient(90deg,var(--conceptual),var(--honey))}
+.dsrow .pct{font-family:"IBM Plex Mono",monospace;font-size:11px;width:44px;text-align:right}
+
+footer{margin-top:46px;padding:16px 0;border-top:1.5px solid var(--line);
+  font-family:"IBM Plex Mono",monospace;font-size:10.5px;color:var(--ink-fade);line-height:1.6}
+footer .warn{color:var(--rust-deep)}
+sup{font-size:.7em;color:var(--honey-deep)}
+.mono{font-family:"IBM Plex Mono",monospace}
+.mininav{display:flex;gap:8px;flex-wrap:wrap;margin:16px 0 0}
+.mininav a{font-family:"IBM Plex Mono",monospace;font-size:11px;text-decoration:none;
+  color:var(--loam-soft);border:1px solid var(--line-soft);border-radius:6px;padding:5px 10px;
+  background:var(--paper-card)}
+.mininav a:hover{border-color:var(--honey);color:var(--honey-deep)}
+</style>
+</head>
+<body>
+<svg class="grain"><filter id="grainf"><feTurbulence type="fractalNoise" baseFrequency="0.9" numOctaves="3" stitchTiles="stitch"/><feColorMatrix type="saturate" values="0"/></filter><rect width="100%" height="100%" filter="url(#grainf)"/></svg>
+<div class="fieldrows"></div>
+
+<div id="app">
+  <header>
+    <div class="brand">
+      <h1>FARMER <span class="drop">DROP</span> — DR-1 Take-Rate Math</h1>
+      <div class="kicker">Working analysis · 10% vs 0.10% · template solutions to decide the take</div>
+    </div>
+    <nav>
+      <a href="index.html">index</a>
+      <a href="farmer_drop.html">main graph</a>
+      <a href="take_rate_math.html" class="here">take-rate</a>
+      <a href="transfer_rails.html">rails</a>
+    </nav>
+  </header>
+
+  <div class="banner">
+    <div class="flag">DR-1 · UNDECIDED</div>
+    <p>The take-% is <b>UNDECIDED</b>. Everything below is a set of <b>template solutions to decide it</b> — not decided numbers. The map states the take as “0.10%” in one place and the valuation only closes at “~10%” elsewhere: a <b>100× ambiguity</b> that cannot sit in an investor- or member-facing document. Confirm the real number with Magnus &amp; Volkmar before anything ships.</p>
+  </div>
+
+  <!-- LIVE CONTROLS -->
+  <div class="controls" id="controls">
+    <div class="chead">
+      <span>Live scenario · drag to recompute every table &amp; the valuation ↓</span>
+      <button class="reset" id="reset">reset to map defaults</button>
+    </div>
+    <div class="ctrl-grid">
+      <div class="ctrl">
+        <label>Custom take-% <span class="val" id="v-take"></span></label>
+        <input type="range" id="s-take" min="0.001" max="0.20" step="0.001">
+        <div class="sub">strawman 0.10% ·· supported 7–12%</div>
+      </div>
+      <div class="ctrl">
+        <label>Intermediary hops <span class="val" id="v-hops"></span></label>
+        <input type="range" id="s-hops" min="0" max="4" step="1">
+        <div class="sub">~5% haircut each (§3.2)</div>
+      </div>
+      <div class="ctrl">
+        <label>Basket / user / wk <span class="val" id="v-basket"></span></label>
+        <input type="range" id="s-basket" min="20" max="250" step="5">
+        <div class="sub">map assumption: $100/wk</div>
+      </div>
+      <div class="ctrl">
+        <label>Active users <span class="val" id="v-users"></span></label>
+        <input type="range" id="s-users" min="10000" max="1500000" step="10000">
+        <div class="sub">year-1 target 100k · scale 1M</div>
+      </div>
+      <div class="ctrl">
+        <label>Weekly spend override <span class="val" id="v-spend"></span></label>
+        <input type="range" id="s-spend" min="20" max="250" step="5">
+        <div class="sub">alias of basket; kept explicit per brief</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="mininav">
+    <a href="#s1">1 · 0.10% refutation</a>
+    <a href="#s2">2 · incumbent baseline</a>
+    <a href="#s3">3 · templates</a>
+    <a href="#s4">4 · Drop Score coupling</a>
+    <a href="#s5">5 · open items</a>
+  </div>
+
+  <!-- SECTION 1 -->
+  <section id="s1">
+    <div class="sec-num">Section 1</div>
+    <h2 class="sec">Why 0.10% cannot work — plainly</h2>
+    <p class="lede">The take-% is carved out of gross basket volume and must <b>simultaneously</b> pay the contractor cut (3% of drop volume, §3.1), absorb the 2% credit boost (§3.4.2), and leave something for opex + growth. At 0.10% there is nothing to carve.</p>
+
+    <div class="strip" id="strip-refute"></div>
+
+    <div class="refute" id="refute-box"></div>
+
+    <div class="panel">
+      <h3>The 100× fork, at your live scenario</h3>
+      <table id="tbl-refute"><thead><tr>
+        <th>Line (weekly, at live users × basket)</th>
+        <th class="num">@ 0.10% take</th>
+        <th class="num">@ 10% take</th>
+      </tr></thead><tbody></tbody></table>
+      <p class="cite" style="margin:12px 0 0">The valuation math (×20 on annual net) only supports a take in the <b>~7–12%</b> band, centred on <b>10%</b>. 0.10% under-shoots the stated $5.2B valuation by roughly <b id="miss-x">50×</b> and cannot even fund the credit boost — it is negative before any opex. <b>0.10% is a transcription slip for 10%.</b></p>
+    </div>
+  </section>
+
+  <!-- SECTION 2 -->
+  <section id="s2">
+    <div class="sec-num">Section 2</div>
+    <h2 class="sec">The incumbent baseline (grounded)</h2>
+    <p class="lede">Resolves audit §3.4.5: “80% minus two 5% hops still beats incumbent” is only meaningful against a <b>real</b> farm-share number. Here are the grounded ones. Farmer Drop's ~80% farmer keep sits between the grocery channel (~15–29%) and the direct CSA/farmers-market ceiling (~100%).</p>
+
+    <div class="strip">
+      <div class="cell"><div class="k">All food (2024)</div><div class="v">11.8¢</div><div class="note">farm share per $ · USDA ERS</div></div>
+      <div class="cell"><div class="k">Food-at-home (2024)</div><div class="v">18.5¢</div><div class="note">grocery channel · USDA ERS</div></div>
+      <div class="cell"><div class="k">Fresh vegetables</div><div class="v">20–29%</div><div class="note">16-veg basket · Price Spreads</div></div>
+      <div class="cell"><div class="k">Fresh fruit</div><div class="v">32–39%</div><div class="note">13-fruit basket · Price Spreads</div></div>
+      <div class="cell"><div class="k">CSA / farmers mkt</div><div class="v good">~100%</div><div class="note">no distributor/retail hop</div></div>
+    </div>
+
+    <div class="panel">
+      <h3>Where the retail food dollar goes (grocery fresh produce, representative)</h3>
+      <table><thead><tr><th>Channel actor</th><th class="num">Share of retail $</th><th>Source</th></tr></thead>
+      <tbody>
+        <tr><td>Farmer (farm share)</td><td class="num">~15–29%</td><td class="cite">USDA ERS Food Dollar / Price Spreads</td></tr>
+        <tr><td>Distributor / wholesaler gross margin</td><td class="num">10–15% <span class="cite">(2–5% net)</span></td><td class="cite">broadline produce; 20–30% specialty/organic</td></tr>
+        <tr><td>Retailer markup on distributor cost</td><td class="num">30–50%</td><td class="cite">grocery retail</td></tr>
+        <tr class="sub"><td>→ everything past the farm gate (marketing bill)</td><td class="num">~71–85%</td><td class="cite">processing, transport, retail, service</td></tr>
+      </tbody></table>
+      <p class="cite" style="margin:12px 0 0"><b>“Double the farmer” target.</b> Conservative incumbent grocery fresh-produce farm share ≈ <b>22%</b>; 2× = <b>44%</b>. Any Farmer Drop template that leaves the farmer ≥44% clears the bar — and every template below leaves ~78–82%, i.e. roughly <b>3.6×</b> incumbent, near the CSA ceiling rather than merely double.</p>
+    </div>
+
+    <div class="panel">
+      <h3>Sources</h3>
+      <ul class="srcs" id="src-list"></ul>
+    </div>
+  </section>
+
+  <!-- SECTION 3 -->
+  <section id="s3">
+    <div class="sec-num">Section 3</div>
+    <h2 class="sec">Template solutions — almanac cards</h2>
+    <p class="lede">Each card shows the full <b>per-$100 basket waterfall</b>, the <b>weekly/annual P&amp;L</b> at your live user count, the <b>×20 valuation</b>, and two honest checks: the <b>farmer share vs incumbent</b> (the ~2× test) and the <b>member price vs incumbent retail</b>. Where a claim doesn't close, the tension is shown, not hidden. Cards recompute with the sliders above (hops · basket · users); each card keeps its own take-%.</p>
+    <div class="tcards" id="tcards"></div>
+  </section>
+
+  <!-- SECTION 4 -->
+  <section id="s4">
+    <div class="sec-num">Section 4</div>
+    <h2 class="sec">Drop Score coupling — how ranking accelerates “double the farmer”</h2>
+    <p class="lede">The Drop Score (§5) is the discovery/ranking primitive. Coupling the take to it turns the fee schedule into a <b>regenerative incentive</b>: higher-scoring drops surface first (more volume) <em>and</em> pay a lower take (more kept). Two reinforcing levers push the farmer share up without raising member price.</p>
+    <div class="ds">
+      <div class="panel">
+        <h3>Lever A — discovery weighting</h3>
+        <p style="font-size:14px;color:var(--loam-soft);margin:0 0 6px">Ranking is Drop-Score-weighted, so a high-score drop wins a disproportionate share of member demand. More throughput on the same fixed cost = lower effective take needed to hit the platform's net target.</p>
+        <div class="dsbar" id="dsbar"></div>
+      </div>
+      <div class="panel">
+        <h3>Lever B — score-decayed take (feeds T3)</h3>
+        <p style="font-size:14px;color:var(--loam-soft);margin:0">The take falls as a host drop's <b>Drop-Score-weighted volume</b> grows: bootstrap 12% → 7% at scale. Member-facing story: <b>“fees fall as the network regenerates.”</b> Farmer-facing story: <b>“the better you farm, the more you keep.”</b> This is the growth-capital argument — a high early take funds host-drop density &amp; CAC (§3.4.6), then decays as the score-weighted network compounds.</p>
+        <div class="checks" id="ds-take"></div>
+      </div>
+    </div>
+    <p class="cite" style="margin:10px 2px 0">Guard-rail: the Drop Score must be a transparent guidance tree with gaming-resistance (§5) before the take is tied to it — otherwise the fee schedule is only as trustworthy as the score.</p>
+  </section>
+
+  <!-- SECTION 5 -->
+  <section id="s5">
+    <div class="sec-num">Section 5</div>
+    <h2 class="sec">Open items still blocking a final number</h2>
+    <p class="lede">The arithmetic here is internally consistent, but the following can only be <b>confirmed by Magnus &amp; Volkmar</b>. Until they are, DR-1 stays <b>unresolved</b> and no take-% is “decided.”</p>
+    <div class="panel">
+      <ul class="open">
+        <li><b>The literal number.</b> Confirm 10% (not 0.10%). <span class="who">Magnus</span> — decides revenue policy.</li>
+        <li><b>Credit-boost funding (DR-2).</b> Is the 2% boost funded by breakage, the 0.25% wedge, or token float? T2/T3 assume ~1.5% breakage — is that real in Volkmar's ledger? <span class="who">Volkmar</span> — ledger &amp; breakage data.</li>
+        <li><b>Contractor window N.</b> How many months, and what fraction of total volume is in-window at steady state? Sets the real drag on net take. <span class="who">Magnus</span></li>
+        <li><b>Hop count &amp; the 5% figure.</b> Are there really up to two 5% hops, or does the platform absorb the host-drop step? Changes the farmer-share column directly. <span class="who">Magnus / Volkmar</span></li>
+        <li><b>Stripe stacking (§3.4.3).</b> Confirm the 2.9% cart component is a passthrough of Stripe's 2.9% and not a second charge on top. <span class="who">Volkmar</span> — payment integration.</li>
+        <li><b>Basket reality.</b> $100/wk is an assumption; actual basket &amp; frequency move every P&amp;L line. <span class="who">Volkmar</span> — test-app data.</li>
+        <li><b>Opex is not yet in the valuation.</b> The map's $5M/wk net (and ours) is contribution before general opex/CAC — the ×20 is generous until an opex line exists (§3.4.6). <span class="who">Magnus</span></li>
+      </ul>
+    </div>
+  </section>
+
+  <footer>
+    <span class="warn">DR-1 status: UNRESOLVED.</span> Take-% is a template-decision, not a decided number. Source: voice-note transcripts (whisper ggml-tiny) via <span class="mono">init_structure/Farmer_Drop__knowledge_map.md §3–§3.4</span> &amp; <span class="mono">Glossary__ASR_uncertainties.md</span>. Incumbent baselines: USDA ERS (grounded, see §2). Config: <span class="mono">take_rate_params.json</span>. Generated 2026-07-04.
+  </footer>
+</div>
+
+<script>
+/* ============================================================
+   CONFIG — single source of truth. No magic numbers below this.
+   Mirrors take_rate_params.json. Every table & figure reads it.
+   ============================================================ */
+const CONFIG = {
+  scenario: { basketWeekly:100, usersYear1:100000, usersScale:1000000, weeksPerYear:52, valuationMultiple:20 },
+  fees: { txnSurcharge:0.55, stripeTxnFixed:0.30, stripeTransferFixed:0.25, stripePct:0.029,
+          cartSurchargePct:0.0315, wedgePct:0.0025, creditBoostPct:0.02 },
+  hops: { perHopPct:0.05, defaultCount:2, minCount:0, maxCount:4 },
+  contractor: { cutPct:0.03, windowMonths:6, inWindowFraction:1.0 },
+  incumbent: { farmShareAllFood2024:0.118, farmShareFoodAtHome2024:0.185,
+    farmShareFreshVegLow:0.20, farmShareFreshVegHigh:0.29,
+    farmShareFreshFruitLow:0.32, farmShareFreshFruitHigh:0.39,
+    representativeGroceryFreshShare:0.22, csaFarmShare:0.98,
+    distributorGrossLow:0.10, distributorGrossHigh:0.15, retailMarkupLow:0.30, retailMarkupHigh:0.50 },
+  farmerAspiration: 0.80,
+  dr1: { strawman:0.001, supportedLow:0.07, supportedCenter:0.10, supportedHigh:0.12, doubleTargetMultiple:2.0 },
+  templates: [
+    { id:"T1", name:"Flat", nameIt:"Ten", takePct:0.10, hops:2, boostFundedExternally:false, breakagePct:0.0,
+      oneLiner:"10% flat take. Closes exactly (80 farmer + 10 hops + 10 take = 100) and reproduces the map's ≈$5M/wk net and ≈$5.2B valuation. But the 2% credit boost is unfunded, so real net take falls from 10% to ~5%.",
+      verdict:"Reproduces the stated valuation; farmer keeps 80% (~3.6× incumbent grocery). Weakness: DR-2 credit boost is unfunded and quietly halves the net take." },
+    { id:"T2", name:"Lean", nameIt:"Eight", takePct:0.08, hops:2, boostFundedExternally:true, breakagePct:0.015,
+      oneLiner:"8% take + 0.25% wedge; the 2% credit boost is explicitly funded by breakage (~1.5%) + the wedge (~0.25%) so it never touches the take. DR-2 closed on the card.",
+      verdict:"Cleanest DR-2 story: boost funded off-take, farmer keeps 82%. Smaller growth cushion (~5% net) and leans on breakage (~1.5% of credit float) actually materialising." },
+    { id:"T3", name:"Tiered /", nameIt:"Decaying", takeBootstrap:0.12, takeScale:0.07, takePct:0.12, hops:2,
+      boostFundedExternally:true, breakagePct:0.015,
+      oneLiner:"12% during bootstrap (funds CAC + host-drop density) decaying to 7% at scale — the take falls as a host drop's Drop-Score-weighted volume grows. Member story: 'fees fall as the network regenerates.' Card shows the bootstrap rate; scale rate in the strip.",
+      verdict:"Best growth-capital + member narrative and ties fees to the Drop Score. Costs: two rates to communicate and a governance rule for the decay schedule." }
+  ]
+};
+
+/* live state (mutated by sliders) */
+const S = {
+  take: CONFIG.dr1.strawman,   // custom take slider (defaults to strawman to dramatise §1)
+  hops: CONFIG.hops.defaultCount,
+  basket: CONFIG.scenario.basketWeekly,
+  users: CONFIG.scenario.usersScale
+};
+
+/* ---------- formatting ---------- */
+const pct = (x,d=2)=> (x*100).toFixed(d).replace(/\.?0+$/,'')+'%';
+const pctf= (x,d=1)=> (x*100).toFixed(d)+'%';
+const usd = (x)=> '$'+Math.round(x).toLocaleString('en-US');
+const usd2= (x)=> '$'+x.toFixed(2);
+function money(x){
+  const a=Math.abs(x); let s=x<0?'−':'';
+  if(a>=1e9) return s+'$'+(a/1e9).toFixed(2)+'B';
+  if(a>=1e6) return s+'$'+(a/1e6).toFixed(a>=1e7?1:2)+'M';
+  if(a>=1e3) return s+'$'+(a/1e3).toFixed(0)+'k';
+  return s+'$'+a.toFixed(0);
+}
+
+/* ============================================================
+   CORE ECONOMICS — one place, driven entirely by CONFIG + S
+   ============================================================ */
+// farmer keep on a basket = 1 − take − hops*perHop  (contractor comes OUT of take, not extra)
+function farmerShare(take, hops){ return 1 - take - hops*CONFIG.hops.perHopPct; }
+
+// per-$100 waterfall + weekly/annual P&L for a given take, hop count, boost-funding rule
+function model(take, {hops=S.hops, basket=S.basket, users=S.users, boostExternal=false, breakage=0}={}){
+  const perHop = CONFIG.hops.perHopPct;
+  const hopTotal = hops*perHop;
+  const fShare = 1 - take - hopTotal;               // farmer keep fraction
+  const contractor = CONFIG.contractor.cutPct * CONFIG.contractor.inWindowFraction; // out of take
+  const boost = CONFIG.fees.creditBoostPct;
+  const wedge = CONFIG.fees.wedgePct;
+  // funding of the 2% boost
+  const boostFundedOffTake = boostExternal ? Math.min(boost, breakage + wedge) : 0;
+  const boostHitsTake = boost - boostFundedOffTake; // remainder erodes the take
+  // net platform margin as a fraction of gross basket volume
+  const netFrac = take - contractor - boostHitsTake + (boostExternal ? 0 : 0) ; // wedge already used if external; if internal, wedge is spare
+  // if boost internal, the wedge is available to offset part of it:
+  let netAdj = netFrac;
+  let wedgeApplied = 0;
+  if(!boostExternal){ wedgeApplied = Math.min(wedge, boostHitsTake); netAdj = take - contractor - (boostHitsTake - wedgeApplied); }
+  // weekly volumes
+  const grossWk = users*basket;
+  const takeWk = grossWk*take;
+  const contractorWk = grossWk*contractor;
+  const boostCostWk = grossWk*boost;
+  const boostFundedWk = grossWk*(boostExternal ? boostFundedOffTake : wedgeApplied);
+  const wedgeWk = grossWk*wedge;
+  const netWk = grossWk*netAdj;
+  const netAnnual = netWk*CONFIG.scenario.weeksPerYear;
+  const valuation = netAnnual*CONFIG.scenario.valuationMultiple;
+  return { take, hops, hopTotal, fShare, contractor, boost, wedge,
+    boostFundedOffTake, boostHitsTake:(boostExternal?(boost-boostFundedOffTake):(boostHitsTake-wedgeApplied)),
+    netFrac:netAdj, grossWk, takeWk, contractorWk, boostCostWk, boostFundedWk, wedgeWk, netWk, netAnnual, valuation,
+    boostExternal, breakage };
+}
+
+/* member price vs incumbent, holding FARMER income constant */
+function memberPriceCheck(fShare){
+  const inc = CONFIG.incumbent.representativeGroceryFreshShare; // farmer gets this fraction at grocery
+  // For the farmer to net the same $F: incumbent retail = F/inc ; farmerdrop price = F/fShare (+ surcharge)
+  const ratio = (1/fShare)/(1/inc);          // fd price / incumbent price, same farmer income
+  const cheaperBy = 1 - ratio;
+  // equivalently, at equal member price the farmer gets fShare/inc times as much:
+  const farmerMultiple = fShare/inc;
+  return { ratio, cheaperBy, farmerMultiple, inc };
+}
+
+/* ============================================================
+   SECTION 1 — refutation
+   ============================================================ */
+function renderRefute(){
+  const straw = model(CONFIG.dr1.strawman, {boostExternal:false});
+  const ten   = model(CONFIG.dr1.supportedCenter, {boostExternal:false});
+  // strip
+  document.getElementById('strip-refute').innerHTML = `
+    <div class="cell"><div class="k">Gross / wk (live)</div><div class="v">${money(straw.grossWk)}</div><div class="note">${S.users.toLocaleString()} users × ${usd(S.basket)}</div></div>
+    <div class="cell"><div class="k">Take @ 0.10%</div><div class="v bad">${money(straw.takeWk)}</div><div class="note">before any cost</div></div>
+    <div class="cell"><div class="k">Credit boost owed / wk</div><div class="v bad">${money(straw.boostCostWk)}</div><div class="note">2% subsidy (§3.4.2)</div></div>
+    <div class="cell"><div class="k">Contractor owed / wk</div><div class="v bad">${money(straw.contractorWk)}</div><div class="note">3% of volume (§3.1)</div></div>
+    <div class="cell"><div class="k">Net @ 0.10%</div><div class="v bad">${money(straw.netWk)}</div><div class="note">deeply negative</div></div>
+  `;
+  // refute box — compare the 10% net valuation against the MOST GENEROUS 0.10% reading
+  // (gross take, costs ignored): $100k/wk × 52 × 20 = ~$104M. Its true net is negative.
+  const strawGrossVal = straw.takeWk * CONFIG.scenario.weeksPerYear * CONFIG.scenario.valuationMultiple;
+  const missX = ten.valuation / Math.max(strawGrossVal, 1);
+  const boostGap = straw.boostCostWk - straw.takeWk;
+  document.getElementById('refute-box').innerHTML = `
+    <div class="big">At 0.10%, the take is ${money(straw.takeWk)}/wk — the credit boost alone owes ${money(straw.boostCostWk)}/wk.</div>
+    The take doesn't even cover the 2% boost: it is short by <b>${money(boostGap)}/wk before the contractor cut and before one dollar of opex</b> — net is <b>negative ${money(Math.abs(straw.netWk))}/wk</b>. There is no positive number to split with contractors, no growth capital, no valuation. Even giving 0.10% the benefit of ignoring every cost, its gross take capitalises at only <b>${money(strawGrossVal)}</b>. At 10% the same scenario nets ${money(ten.netWk)}/wk → <b>${money(ten.valuation)}</b> at ×20 — the map's figure. The 0.10% reading is <b>${missX.toFixed(0)}× short</b>.
+  `;
+  document.getElementById('miss-x').textContent = missX.toFixed(0)+'×';
+  // table
+  const rows = [
+    ['Gross volume', straw.grossWk, ten.grossWk, false],
+    ['Platform take', straw.takeWk, ten.takeWk, false],
+    ['− Contractor cut (3%)', -straw.contractorWk, -ten.contractorWk, false],
+    ['− Credit boost (2%)', -straw.boostCostWk, -ten.boostCostWk, false],
+    ['= Net / week', straw.netWk, ten.netWk, true],
+    ['= Net / year', straw.netAnnual, ten.netAnnual, true],
+    ['Valuation (×20)', straw.valuation, ten.valuation, true],
+  ];
+  const tb = document.querySelector('#tbl-refute tbody');
+  tb.innerHTML = rows.map(([l,a,b,tot])=>{
+    const cls = tot?'total':'';
+    const col=(v)=> `<td class="num" style="color:${v<0?'var(--rust-deep)':'inherit'}">${money(v)}</td>`;
+    return `<tr class="${cls}"><td>${l}</td>${col(a)}${col(b)}</tr>`;
+  }).join('');
+}
+
+/* ============================================================
+   SECTION 2 — sources
+   ============================================================ */
+const SOURCES = [
+  { lbl:"USDA ERS — Food Dollar Series (farm share)", url:"https://www.ers.usda.gov/data-products/food-dollar-series/summary-findings",
+    note:"2024 farm share 11.8¢/$ (all food); food-at-home 18.5¢; food-away 7.1¢; ~24.3¢ of the food-at-home dollar to farm establishments (2023, primary-factor series)." },
+  { lbl:"USDA ERS — Price Spreads from Farm to Consumer", url:"https://www.ers.usda.gov/data-products/price-spreads-from-farm-to-consumer",
+    note:"Fresh vegetables 20–29% farm share; fresh fruit 32–39%; retailing margins <25% of retail price for most items." },
+  { lbl:"Broadline / produce distributor & grocery retail margins", url:"https://www.localline.co/blog/how-to-sell-produce-to-distributors",
+    note:"Distributor 10–15% gross (2–5% net); specialty/organic 20–30%; markup ~18–20% (range 5–40%); retailer adds 30–50% on cost." },
+  { lbl:"American Farm Bureau — farmers' share of the food dollar", url:"https://www.fb.org/market-intel/farmers-receive-less-than-6-cents-of-the-food-dollar",
+    note:"~15¢ of the food dollar to farmers at traditional outlets; ~100% at a farmers market / CSA (no distributor or retail hop)." },
+];
+function renderSources(){
+  document.getElementById('src-list').innerHTML = SOURCES.map(s=>
+    `<li><span class="lbl">${s.lbl}</span> — ${s.note}<br><a href="${s.url}" target="_blank" rel="noopener">${s.url}</a></li>`).join('');
+}
+
+/* ============================================================
+   SECTION 3 — template cards
+   ============================================================ */
+function waterfallTable(m){
+  // per-$100 basket
+  const B=100;
+  const farmer=B*m.fShare, hops=B*m.hopTotal, take=B*m.take;
+  const contractor=B*m.contractor, boost=B*m.boost, wedge=B*m.wedge;
+  const boostFunded=B*(m.boostExternal?m.boostFundedOffTake:0);
+  const closes = Math.abs((m.fShare+m.hopTotal+m.take)-1)<1e-9;
+  const closeTag = closes
+    ? `<span class="tag good">closes to $100</span>`
+    : `<span class="tag bad">sums to ${usd2(farmer+hops+take)} — ${(farmer+hops+take)>100?'over':'under'} 100</span>`;
+  let rows = `
+    <tr><td>Farmer keep <span class="tag ${m.fShare>=0.44?'good':'bad'}">${pctf(m.fShare)}</span></td><td class="num">${usd2(farmer)}</td></tr>
+    <tr class="sub"><td>Intermediary hops (${m.hops} × ${pct(CONFIG.hops.perHopPct)})</td><td class="num">${usd2(hops)}</td></tr>
+    <tr><td>Platform take</td><td class="num">${usd2(take)}</td></tr>
+    <tr class="total"><td>Member pays for goods ${closeTag}</td><td class="num">${usd2(farmer+hops+take)}</td></tr>
+  `;
+  // platform's use of its take
+  const boostLine = m.boostExternal
+    ? `<tr class="sub"><td>2% credit boost — funded off-take (breakage ${pct(m.breakage)} + wedge ${pct(m.wedge)})</td><td class="num">${usd2(boostFunded)} <span class="tag good">DR-2 ✓</span></td></tr>`
+    : `<tr class="sub"><td>2% credit boost — eats into take (only ${pct(m.wedge)} wedge offsets)</td><td class="num" style="color:var(--rust-deep)">−${usd2(boost)} <span class="tag warn">DR-2 open</span></td></tr>`;
+  rows += `
+    <tr class="sub"><td>− Contractor cut (out of take, in-window)</td><td class="num" style="color:var(--rust-deep)">−${usd2(contractor)}</td></tr>
+    ${boostLine}
+    <tr class="sub"><td>+ 0.25% wedge (surcharge, on top)</td><td class="num">${usd2(wedge)}</td></tr>
+    <tr class="total"><td>Platform NET per $100 basket</td><td class="num">${usd2(B*m.netFrac)}</td></tr>
+  `;
+  return `<table><thead><tr><th>Per $100 basket</th><th class="num">amount</th></tr></thead><tbody>${rows}</tbody></table>
+    <p class="cite" style="margin:8px 0 0">On top of the $100, the member also pays the <b>${usd2(CONFIG.fees.txnSurcharge)}</b> per-txn surcharge + <b>${pct(CONFIG.fees.cartSurchargePct)}</b> cart surcharge (2.9% Stripe passthrough + 0.25% wedge). Stripe cost is covered there, not from the take (§3.1).</p>`;
+}
+
+function pnlStrip(m, m2){
+  // m2 optional (scale rate for T3)
+  const cells = [
+    ['Net / week', money(m.netWk), 'good'],
+    ['Net / year', money(m.netAnnual), 'good'],
+    ['Valuation ×20', money(m.valuation), 'good'],
+  ];
+  let html = cells.map(([k,v,c])=>`<div class="cell"><div class="k">${k}</div><div class="v ${c}">${v}</div></div>`).join('');
+  if(m2){
+    html += `<div class="cell"><div class="k">…at scale rate ${pct(m2.take)}</div><div class="v good">${money(m2.valuation)}</div><div class="note">${money(m2.netWk)}/wk net</div></div>`;
+  }
+  return `<div class="strip">${html}</div>`;
+}
+
+function checksRow(m){
+  const inc = CONFIG.incumbent.representativeGroceryFreshShare;
+  const dbl = inc*CONFIG.dr1.doubleTargetMultiple;
+  const passFarmer = m.fShare >= dbl;
+  const mp = memberPriceCheck(m.fShare);
+  const passMember = mp.ratio <= 1; // at/below incumbent retail
+  return `<div class="checks">
+    <div class="check ${passFarmer?'pass':'fail'}">
+      <div class="ck">Farmer share vs incumbent · ~2× test</div>
+      <div class="cv">${pctf(m.fShare)} vs ${pctf(inc)} <span class="tag ${passFarmer?'good':'bad'}">${mp.farmerMultiple.toFixed(1)}×</span></div>
+      <div class="cn">${passFarmer?`clears 2× (target ≥${pctf(dbl)}) — near the CSA ceiling, not merely double`:`below 2× target ${pctf(dbl)} — tension`}</div>
+    </div>
+    <div class="check ${passMember?'pass':'fail'}">
+      <div class="ck">Member price vs incumbent retail</div>
+      <div class="cv">${(mp.ratio*100).toFixed(0)}% of incumbent</div>
+      <div class="cn">${passMember?`≈ ${(mp.cheaperBy*100).toFixed(0)}% cheaper for the same farmer income (short chain). Idealised: assumes identical goods & farmgate value.`:`above incumbent retail — tension`}</div>
+    </div>
+  </div>`;
+}
+
+function renderTemplates(){
+  const wrap = document.getElementById('tcards');
+  wrap.innerHTML = CONFIG.templates.map(t=>{
+    const take = t.takePct;
+    const m = model(take, {hops:S.hops, basket:S.basket, users:S.users,
+                           boostExternal:!!t.boostFundedExternally, breakage:t.breakagePct||0});
+    let m2=null, takeBadge=`<span>take</span>${pct(take)}`;
+    if(t.id==='T3'){
+      m2 = model(t.takeScale, {hops:S.hops, basket:S.basket, users:S.users, boostExternal:true, breakage:t.breakagePct});
+      takeBadge = `<span>bootstrap → scale</span>${pct(t.takeBootstrap)} → ${pct(t.takeScale)}`;
+    }
+    return `<div class="tcard">
+      <div class="thead">
+        <div>
+          <div class="tid">${t.id} · Template</div>
+          <div class="tname">“${t.name} <span class="it">${t.nameIt}</span>”</div>
+        </div>
+        <div class="takebadge">${takeBadge}</div>
+      </div>
+      <div class="tbody">
+        <p class="oneliner">${t.oneLiner}</p>
+        <div class="tcols">
+          <div>${waterfallTable(m)}</div>
+          <div>
+            ${pnlStrip(m, m2)}
+            <p class="cite" style="margin:0 0 4px">P&amp;L at <b>${S.users.toLocaleString()}</b> users × <b>${usd(S.basket)}</b>/wk. Net = take − 3% contractor − credit-boost-hitting-take, ×52 ×20.</p>
+            ${checksRow(m)}
+          </div>
+        </div>
+        <div class="verdict"><span class="vk">Verdict</span><span>${t.verdict}</span></div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+/* ============================================================
+   SECTION 4 — drop score coupling visuals
+   ============================================================ */
+function renderDropScore(){
+  // Lever A: discovery weighting — illustrative volume share by score tier
+  const tiers = [['Score 90+ (regen leader)',0.46],['Score 70–89',0.30],['Score 50–69',0.16],['Score <50',0.08]];
+  document.getElementById('dsbar').innerHTML = tiers.map(([lab,v])=>`
+    <div class="dsrow"><div class="lab">${lab}</div>
+      <div class="bar"><div class="fill" style="width:${v*100}%"></div></div>
+      <div class="pct">${pctf(v,0)}</div></div>`).join('') +
+    `<p class="cite" style="margin:8px 0 0">Illustrative demand allocation — top-scoring drops win the ranking, so identical fixed cost spreads over more volume.</p>`;
+  // Lever B: T3 bootstrap vs scale farmer keep
+  const t3 = CONFIG.templates.find(t=>t.id==='T3');
+  const boot = model(t3.takeBootstrap,{boostExternal:true,breakage:t3.breakagePct});
+  const scale= model(t3.takeScale,{boostExternal:true,breakage:t3.breakagePct});
+  document.getElementById('ds-take').innerHTML = `
+    <div class="check pass"><div class="ck">Bootstrap · take ${pct(t3.takeBootstrap)}</div>
+      <div class="cv">farmer ${pctf(boot.fShare)}</div><div class="cn">high take → CAC + host-drop density</div></div>
+    <div class="check pass"><div class="ck">At scale · take ${pct(t3.takeScale)}</div>
+      <div class="cv">farmer ${pctf(scale.fShare)}</div><div class="cn">“fees fall as the network regenerates”</div></div>`;
+}
+
+/* ============================================================
+   CONTROLS
+   ============================================================ */
+function fmtUsers(n){ return n>=1e6 ? (n/1e6).toFixed(n%1e6?1:0)+'M' : (n/1e3).toFixed(0)+'k'; }
+function syncLabels(){
+  document.getElementById('v-take').textContent  = pct(S.take, S.take<0.01?3:1);
+  document.getElementById('v-hops').textContent  = S.hops+' × '+pct(CONFIG.hops.perHopPct)+' = '+pct(S.hops*CONFIG.hops.perHopPct);
+  document.getElementById('v-basket').textContent= usd(S.basket);
+  document.getElementById('v-users').textContent = fmtUsers(S.users);
+  document.getElementById('v-spend').textContent = usd(S.basket)+'/wk';
+}
+function renderAll(){ syncLabels(); renderRefute(); renderTemplates(); renderDropScore(); }
+
+function bind(){
+  const st=document.getElementById('s-take'), sh=document.getElementById('s-hops'),
+        sb=document.getElementById('s-basket'), su=document.getElementById('s-users'),
+        sp=document.getElementById('s-spend');
+  st.value=S.take; sh.value=S.hops; sb.value=S.basket; su.value=S.users; sp.value=S.basket;
+  st.addEventListener('input',e=>{S.take=+e.target.value; renderAll();});
+  sh.addEventListener('input',e=>{S.hops=+e.target.value; renderAll();});
+  sb.addEventListener('input',e=>{S.basket=+e.target.value; sp.value=S.basket; renderAll();});
+  su.addEventListener('input',e=>{S.users=+e.target.value; renderAll();});
+  sp.addEventListener('input',e=>{S.basket=+e.target.value; sb.value=S.basket; renderAll();});
+  document.getElementById('reset').addEventListener('click',()=>{
+    S.take=CONFIG.dr1.strawman; S.hops=CONFIG.hops.defaultCount;
+    S.basket=CONFIG.scenario.basketWeekly; S.users=CONFIG.scenario.usersScale;
+    st.value=S.take; sh.value=S.hops; sb.value=S.basket; su.value=S.users; sp.value=S.basket;
+    renderAll();
+  });
+}
+
+/* init */
+renderSources();
+bind();
+renderAll();
+</script>
+</body>
+</html>

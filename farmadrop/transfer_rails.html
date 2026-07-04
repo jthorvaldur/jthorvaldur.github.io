@@ -1,0 +1,524 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>FARMER DROP — Payment Rails: Stripe vs a Chain Transfer Coin</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,500;0,9..144,600;0,9..144,700;1,9..144,400&family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;0,6..72,600;1,6..72,400&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --parchment:#faf6ec; --parchment-2:#f3ecda; --parchment-3:#ece2c9;
+  --loam:#1e3a2a; --loam-soft:#3a5343; --ink-fade:#6c7b6a;
+  --honey:#d9930d; --honey-deep:#b8790a;
+  --rust:#b23a1e; --rust-deep:#8f2c14;
+  --line:#c9bd9c; --line-soft:#ddd2b4;
+  --paper-card:#fffdf6;
+  --conceptual:#2f6b4a; --business:#7a5b8f; --token:#d9930d; --data:#2b6d84;
+  --good:#2f6b4a; --warn:#b8790a; --bad:#8f2c14;
+}
+*{box-sizing:border-box}
+html,body{margin:0;background:var(--parchment);color:var(--loam);
+  font-family:"Newsreader",Georgia,serif;font-size:16px;line-height:1.5}
+
+/* textures */
+.grain{position:fixed;inset:0;pointer-events:none;z-index:0;opacity:.05;mix-blend-mode:multiply}
+.fieldrows{position:fixed;inset:0;pointer-events:none;z-index:0;opacity:.35;
+  background:
+    repeating-linear-gradient(115deg, transparent 0 46px, rgba(30,58,42,.028) 46px 47px),
+    radial-gradient(140% 120% at 12% 8%, #fdfbf3 0%, var(--parchment) 42%, var(--parchment-2) 100%);}
+
+#app{position:relative;z-index:1;max-width:1180px;margin:0 auto;padding:0 22px 90px}
+
+/* header */
+header{padding:22px 0 14px;border-bottom:1.5px solid var(--line);
+  display:flex;align-items:flex-end;justify-content:space-between;gap:24px;flex-wrap:wrap;
+  position:sticky;top:0;z-index:20;
+  background:linear-gradient(180deg, var(--parchment) 55%, rgba(250,246,236,.85));
+  backdrop-filter:blur(2px)}
+.brand h1{font-family:"Fraunces",serif;font-optical-sizing:auto;font-weight:600;
+  font-size:clamp(23px,3vw,38px);line-height:.96;margin:0;letter-spacing:-.01em}
+.brand h1 .drop{color:var(--honey-deep);font-style:italic}
+.brand .kicker{font-family:"IBM Plex Mono",monospace;font-size:11px;letter-spacing:.2em;
+  text-transform:uppercase;color:var(--ink-fade);margin-top:8px}
+nav{display:flex;gap:6px;align-items:center;flex-wrap:wrap}
+nav a{font-family:"IBM Plex Mono",monospace;font-size:12px;text-decoration:none;
+  color:var(--loam-soft);border:1px solid var(--line);border-radius:999px;
+  padding:7px 14px;background:var(--paper-card);transition:all .18s;white-space:nowrap}
+nav a:hover{background:var(--loam);color:var(--parchment);border-color:var(--loam)}
+nav a.here{background:var(--loam);color:var(--parchment);border-color:var(--loam)}
+
+/* banner */
+.banner{margin:20px 0 8px;border:2px solid var(--honey-deep);border-radius:8px;
+  background:linear-gradient(180deg,#fbf1dc,#f6e8c8);padding:15px 20px;
+  display:flex;gap:14px;align-items:flex-start;
+  box-shadow:0 14px 30px -22px rgba(184,121,10,.6)}
+.banner .flag{font-family:"IBM Plex Mono",monospace;font-weight:600;font-size:11px;
+  letter-spacing:.14em;color:#fff;background:var(--honey-deep);border-radius:5px;
+  padding:5px 9px;white-space:nowrap;margin-top:2px}
+.banner p{margin:0;font-size:15.5px;color:#6a4a08}
+.banner b{font-family:"Fraunces",serif;color:var(--loam)}
+
+/* sections */
+section{margin-top:44px;scroll-margin-top:110px}
+.sec-num{font-family:"IBM Plex Mono",monospace;font-size:11px;letter-spacing:.2em;
+  color:var(--honey-deep);text-transform:uppercase}
+h2.sec{font-family:"Fraunces",serif;font-weight:600;font-size:clamp(21px,2.6vw,30px);
+  margin:4px 0 6px;line-height:1.06;letter-spacing:-.01em}
+.lede{font-size:16px;color:var(--loam-soft);max-width:78ch;margin:0 0 16px}
+.lede b{color:var(--loam)}
+
+/* generic panel/card */
+.panel{background:var(--paper-card);border:1px solid var(--line);border-radius:8px;
+  box-shadow:0 1px 0 var(--line),0 16px 34px -28px rgba(30,58,42,.5);
+  padding:18px 20px;margin-bottom:16px}
+.panel h3{font-family:"IBM Plex Mono",monospace;font-size:10.5px;letter-spacing:.16em;
+  text-transform:uppercase;color:var(--ink-fade);margin:0 0 12px;
+  border-bottom:1px solid var(--line-soft);padding-bottom:6px}
+
+/* tables */
+table{width:100%;border-collapse:collapse;font-size:13.5px}
+th,td{text-align:right;padding:6px 8px;border-bottom:1px dotted var(--line-soft)}
+th:first-child,td:first-child{text-align:left}
+thead th{font-family:"IBM Plex Mono",monospace;font-size:10px;letter-spacing:.05em;
+  text-transform:uppercase;color:var(--ink-fade);border-bottom:1.5px solid var(--line)}
+td.num,th.num{font-family:"IBM Plex Mono",monospace}
+tr.total td{border-top:1.5px solid var(--line);border-bottom:none;font-weight:600;
+  font-family:"IBM Plex Mono",monospace}
+tr.sub td{color:var(--ink-fade);font-size:12.5px}
+tr.grouprow td{background:var(--parchment-2);font-family:"IBM Plex Mono",monospace;
+  font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:var(--loam-soft);
+  border-bottom:1.5px solid var(--line);padding-top:10px}
+tr.hl td{background:linear-gradient(90deg,#fbf1dc,rgba(251,241,220,.35));
+  box-shadow:inset 3px 0 0 var(--honey-deep)}
+tr.hl td:first-child{font-weight:600}
+.rate{font-family:"IBM Plex Mono",monospace;color:var(--loam);white-space:nowrap}
+.fnote{color:var(--ink-fade);font-size:12px}
+.tag{display:inline-block;font-family:"IBM Plex Mono",monospace;font-size:9.5px;
+  padding:1px 6px;border-radius:4px;letter-spacing:.04em;vertical-align:middle}
+.tag.good{background:#e5efe4;color:var(--good)}
+.tag.warn{background:#fbeecb;color:var(--warn)}
+.tag.bad{background:#f6d9cf;color:var(--bad)}
+.tag.fd{background:var(--honey-deep);color:#fff}
+
+/* big number strip */
+.strip{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:1px;
+  background:var(--line-soft);border:1px solid var(--line);border-radius:8px;overflow:hidden;margin:14px 0}
+.strip .cell{background:var(--paper-card);padding:13px 15px}
+.strip .k{font-family:"IBM Plex Mono",monospace;font-size:9.5px;letter-spacing:.1em;
+  text-transform:uppercase;color:var(--ink-fade)}
+.strip .v{font-family:"Fraunces",serif;font-weight:600;font-size:23px;line-height:1.1;margin-top:3px}
+.strip .v.bad{color:var(--rust-deep)} .strip .v.good{color:var(--good)} .strip .v.honey{color:var(--honey-deep)}
+.strip .note{font-size:11px;color:var(--ink-fade);margin-top:2px}
+
+/* control rail */
+.controls{margin:8px 0 6px;background:var(--paper-card);border:1.5px solid var(--line);
+  border-radius:10px;box-shadow:0 1px 0 var(--line),0 16px 34px -26px rgba(30,58,42,.5);padding:14px 18px}
+.controls .chead{font-family:"IBM Plex Mono",monospace;font-size:10px;letter-spacing:.16em;
+  text-transform:uppercase;color:var(--ink-fade);margin-bottom:11px;display:flex;
+  justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap}
+.ctrl-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:16px 22px}
+.ctrl label{display:block;font-family:"IBM Plex Mono",monospace;font-size:11px;
+  color:var(--loam-soft);letter-spacing:.03em;margin-bottom:5px}
+.ctrl input[type=number]{width:100%;font-family:"IBM Plex Mono",monospace;font-size:14px;
+  color:var(--loam);background:var(--parchment);border:1.5px solid var(--line);border-radius:6px;
+  padding:7px 10px;outline:none}
+.ctrl input[type=number]:focus{border-color:var(--honey)}
+.ctrl .sub{font-size:10px;color:var(--ink-fade);margin-top:4px;font-family:"IBM Plex Mono",monospace}
+.reset{font-family:"IBM Plex Mono",monospace;font-size:10.5px;cursor:pointer;
+  border:1px solid var(--line);background:var(--parchment-2);border-radius:6px;
+  padding:5px 10px;color:var(--loam-soft)}
+.reset:hover{border-color:var(--loam-soft)}
+
+/* refutation-style callout (honey) */
+.callout{border-left:4px solid var(--honey-deep);background:#fbf1dc;border-radius:0 8px 8px 0;
+  padding:14px 18px;margin:14px 0;font-size:15px;color:#6a4a08}
+.callout .big{font-family:"Fraunces",serif;font-weight:600;font-size:20px;color:var(--honey-deep)}
+.callout b{color:var(--loam)}
+
+/* honest-cost cards */
+.hcards{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:14px;margin-top:6px}
+.hcard{border:1px solid var(--line-soft);border-radius:8px;padding:12px 14px;background:var(--parchment)}
+.hcard .hk{font-family:"Fraunces",serif;font-weight:600;font-size:16px;margin-bottom:4px}
+.hcard .hd{font-size:13px;color:var(--loam-soft)}
+
+/* timeline */
+.timeline{display:grid;grid-template-columns:repeat(3,1fr);gap:0;margin-top:10px;
+  border:1px solid var(--line);border-radius:10px;overflow:hidden;background:var(--line-soft)}
+@media(max-width:820px){.timeline{grid-template-columns:1fr}}
+.tl{background:var(--paper-card);padding:16px 18px 20px;position:relative}
+.tl .ph{font-family:"IBM Plex Mono",monospace;font-size:10px;letter-spacing:.16em;
+  text-transform:uppercase;color:var(--ink-fade)}
+.tl .nm{font-family:"Fraunces",serif;font-weight:600;font-size:20px;line-height:1.05;margin:5px 0 3px}
+.tl .role{font-family:"IBM Plex Mono",monospace;font-size:11px;color:var(--honey-deep);margin-bottom:9px}
+.tl .st{display:inline-block;font-family:"IBM Plex Mono",monospace;font-size:9px;letter-spacing:.08em;
+  text-transform:uppercase;padding:2px 7px;border-radius:4px;margin-bottom:10px}
+.tl.p0 .st{background:#e5efe4;color:var(--good)}
+.tl.p1 .st{background:#fbeecb;color:var(--honey-deep)}
+.tl.p2 .st{background:#f6d9cf;color:var(--bad)}
+.tl .dt{font-size:13.5px;color:var(--loam-soft);line-height:1.45}
+.tl .wn{margin-top:11px;border-top:1px dotted var(--line);padding-top:9px;font-size:12.5px;
+  color:var(--rust-deep);position:relative;padding-left:20px}
+.tl .wn:before{content:"⚠";position:absolute;left:0;top:9px;color:var(--rust)}
+.tl.p0{box-shadow:inset 0 3px 0 var(--good)}
+.tl.p1{box-shadow:inset 0 3px 0 var(--honey-deep)}
+.tl.p2{box-shadow:inset 0 3px 0 var(--rust)}
+.tlarrow{text-align:center;font-family:"IBM Plex Mono",monospace;color:var(--ink-fade);
+  font-size:12px;margin:8px 0}
+
+/* sources */
+.srcs{list-style:none;padding:0;margin:10px 0 0}
+.srcs li{padding:8px 0;border-bottom:1px dotted var(--line-soft);font-size:13.5px}
+.srcs a{color:var(--business);text-decoration:none;font-family:"IBM Plex Mono",monospace;font-size:12px}
+.srcs a:hover{text-decoration:underline}
+.srcs .lbl{font-weight:600;color:var(--loam)}
+
+footer{margin-top:46px;padding:16px 0;border-top:1.5px solid var(--line);
+  font-family:"IBM Plex Mono",monospace;font-size:10.5px;color:var(--ink-fade);line-height:1.6}
+footer .warn{color:var(--rust-deep)}
+.mono{font-family:"IBM Plex Mono",monospace}
+.mininav{display:flex;gap:8px;flex-wrap:wrap;margin:16px 0 0}
+.mininav a{font-family:"IBM Plex Mono",monospace;font-size:11px;text-decoration:none;
+  color:var(--loam-soft);border:1px solid var(--line-soft);border-radius:6px;padding:5px 10px;
+  background:var(--paper-card)}
+.mininav a:hover{border-color:var(--honey);color:var(--honey-deep)}
+sup{font-size:.7em;color:var(--honey-deep)}
+</style>
+</head>
+<body>
+<svg class="grain"><filter id="grainf"><feTurbulence type="fractalNoise" baseFrequency="0.9" numOctaves="3" stitchTiles="stitch"/><feColorMatrix type="saturate" values="0"/></filter><rect width="100%" height="100%" filter="url(#grainf)"/></svg>
+<div class="fieldrows"></div>
+
+<div id="app">
+  <header>
+    <div class="brand">
+      <h1>FARMER <span class="drop">DROP</span> — Payment Rails</h1>
+      <div class="kicker">Stripe's full fee almanac · vs · a chain transfer coin (Base) · phased rail strategy</div>
+    </div>
+    <nav>
+      <a href="index.html">index</a>
+      <a href="farmer_drop.html">main graph</a>
+      <a href="take_rate_math.html">take-rate</a>
+      <a href="transfer_rails.html" class="here">rails</a>
+    </nav>
+  </header>
+
+  <div class="banner">
+    <div class="flag">FRAME · 2026-07-04</div>
+    <p><b>Stripe launches; a chain coin scales.</b> Stripe is the Phase-0 rail because people <b>know and trust it</b> — but it taxes every dollar (2.9% + $0.55). The <b>first deploy coin is a transfer-efficiency coin (CPDR-style)</b> for cheap peer transfers — <em>not</em> the asset-backed Honey Coin, which is <b>not ready</b> and comes later via the compadres asset-backed template. This page's only job: make the cost gap between the two rails legible.</p>
+  </div>
+
+  <div class="mininav">
+    <a href="#s1">1 · Stripe almanac</a>
+    <a href="#s2">2 · chain rail (Base)</a>
+    <a href="#s3">3 · worked comparison</a>
+    <a href="#s4">4 · phased plan</a>
+    <a href="#s5">5 · sources</a>
+  </div>
+
+  <!-- SECTION 1 -->
+  <section id="s1">
+    <div class="sec-num">Section 1</div>
+    <h2 class="sec">Stripe — the whole fee structure</h2>
+    <p class="lede">US-centric almanac, grouped by category (cite <span class="mono">stripe.com/pricing</span> &amp; docs). Highlighted rows are the ones the Farmer Drop fee model already <b>absorbs</b>: the <b>$0.55</b> per-txn surcharge covers Stripe's <b>$0.30 processing + $0.25 transfer</b> legs, and the <b>3.15%</b> cart surcharge = <b>2.9% Stripe passthrough + 0.25% strategic wedge</b> (§3.1). Every one of these lines is a cost the token rail can eventually remove.</p>
+    <div class="panel">
+      <h3>Stripe fee schedule — US, by category</h3>
+      <table id="tbl-stripe"><thead><tr>
+        <th>Line item</th><th class="num">Rate</th><th>Note</th>
+      </tr></thead><tbody></tbody></table>
+      <p class="fnote" style="margin:12px 0 0">Region note: %-based and USD-flat fees are identical US/CA. International-card (+1.5%), currency-conversion (+1%) and Instant-Payout minimum ($0.50) are US values. Radar per-screen figures ($0.05 / $0.07) are from a secondary source — verify from a US IP before publishing. <span class="tag fd">FD</span> = line the Farmer Drop fee model already absorbs.</p>
+    </div>
+  </section>
+
+  <!-- SECTION 2 -->
+  <section id="s2">
+    <div class="sec-num">Section 2</div>
+    <h2 class="sec">The chain rail — Base L2, honestly costed</h2>
+    <p class="lede">Base (Coinbase's OP-Stack L2). Post-EIP-4844 (blobs), the data-availability cost collapsed and a token transfer is <b>sub-cent</b>. But chain is <b>not free</b> — three real costs sit around the transfer, and this page counts them.</p>
+
+    <div class="strip">
+      <div class="cell"><div class="k">ERC-20 transfer · typical</div><div class="v good" id="b-typ">$0.006</div><div class="note">all-in gas · BaseScan tracker</div></div>
+      <div class="cell"><div class="k">Range</div><div class="v" id="b-range">$0.001–$0.02</div><div class="note">post-4844, gas-price dependent</div></div>
+      <div class="cell"><div class="k">Routed transfer</div><div class="v" id="b-router">~85k gas</div><div class="note">TransferRouter.send + clientOrderId</div></div>
+      <div class="cell"><div class="k">Toy AMM fee</div><div class="v honey">5 bps</div><div class="note">primary issuance: 0 bps</div></div>
+    </div>
+
+    <div class="panel">
+      <h3>Honest additional costs — don't present chain as free</h3>
+      <div class="hcards" id="hcards"></div>
+      <p class="fnote" style="margin:12px 0 0">The per-transfer gas is trivial; the <b>ramp</b> is a one-time crossing cost (modeled 0.1%), and <b>custody + compliance</b> are fixed monthly overhead amortized over volume. Base transfer cost rests mainly on BaseScan's gas tracker (l2fees.info did not list Base at fetch time); cross-check <span class="mono">l2beat.com/scaling/costs</span>.</p>
+    </div>
+  </section>
+
+  <!-- SECTION 3 -->
+  <section id="s3">
+    <div class="sec-num">Section 3</div>
+    <h2 class="sec">Worked comparison — Stripe vs CPDR-on-Base</h2>
+    <p class="lede">For three P2P transfers and a marketplace cart: Stripe's total cost vs the chain coin's, absolute and %. Two chain numbers are shown — <b>marginal</b> (gas only, once funds are on-chain) and <b>all-in</b> (gas + 0.1% amortized ramp). Numbers below are driven by the editable CONFIG; change the chain gas, ramp, or overhead and every table recomputes.</p>
+
+    <div class="controls" id="controls">
+      <div class="chead">
+        <span>Editable rail assumptions · tables recompute live ↓</span>
+        <button class="reset" id="reset">reset to defaults</button>
+      </div>
+      <div class="ctrl-grid">
+        <div class="ctrl"><label>Stripe card %</label><input type="number" id="c-spct" step="0.001"><div class="sub">default 0.029 (2.9%)</div></div>
+        <div class="ctrl"><label>Stripe fixed $ / txn</label><input type="number" id="c-sfix" step="0.01"><div class="sub">default 0.55 ($0.30 + $0.25)</div></div>
+        <div class="ctrl"><label>Base gas / transfer $</label><input type="number" id="c-gas" step="0.001"><div class="sub">default 0.006</div></div>
+        <div class="ctrl"><label>On/off-ramp %</label><input type="number" id="c-ramp" step="0.0005"><div class="sub">default 0.001 (0.1%)</div></div>
+        <div class="ctrl"><label>Chain monthly overhead $</label><input type="number" id="c-oh" step="50"><div class="sub">custody + compliance · default 500</div></div>
+      </div>
+    </div>
+
+    <div class="panel">
+      <h3>Cost per transaction — Stripe vs chain coin</h3>
+      <table id="tbl-cmp"><thead><tr>
+        <th>Scenario</th>
+        <th class="num">Stripe $</th><th class="num">Stripe %</th>
+        <th class="num">Chain all-in $</th><th class="num">Chain %</th>
+        <th class="num">Gap $</th><th class="num">Gap ×</th>
+      </tr></thead><tbody></tbody></table>
+      <p class="fnote" style="margin:12px 0 0" id="cmp-note"></p>
+    </div>
+
+    <div class="callout" id="crossover"></div>
+  </section>
+
+  <!-- SECTION 4 -->
+  <section id="s4">
+    <div class="sec-num">Section 4</div>
+    <h2 class="sec">The phased plan</h2>
+    <p class="lede">Bootstrap trust on Stripe, remove the card-rail cost with an efficient transfer coin, and only then — with counsel — reach for the asset-backed token. Each phase is a decision gate, not just a date.</p>
+    <div class="timeline" id="timeline"></div>
+    <div class="tlarrow">Phase 0 → Phase 1 → Phase 2 · gated, not automatic</div>
+    <p class="fnote" style="margin:6px 2px 0">Phase 1 is the <b>first real cost reduction</b> — the only mechanism that genuinely removes Stripe's fee (contrast with the PMA "fees-are-a-tax" framing, which is a legal characterization, not a mechanism; map §3.4.4). Phase 2 stays blocked on regulatory classification.</p>
+  </section>
+
+  <!-- SECTION 5 -->
+  <section id="s5">
+    <div class="sec-num">Section 5</div>
+    <h2 class="sec">Sources</h2>
+    <div class="panel">
+      <h3>Cited references</h3>
+      <ul class="srcs" id="src-list"></ul>
+    </div>
+  </section>
+
+  <footer>
+    <span class="warn">Rail comparison, not financial or legal advice.</span> Stripe figures: <span class="mono">stripe.com/pricing</span> &amp; docs (US-centric; region + Radar caveats in §1). Base transfer cost: <span class="mono">basescan.org/gastracker</span>, cross-check <span class="mono">l2beat.com/scaling/costs</span>. Fee model: <span class="mono">init_structure/Farmer_Drop__knowledge_map.md §3.1, §4</span>. CPDR harness confirmed at <span class="mono">~/GitHub/compadres</span> (TransferRouter · mock USDC · toy AMM · burn/redeem · fee measurement · reconciliation; asset-backed layer deferred behind <span class="mono">docs/06_asset_backed_template.md</span> + <span class="mono">IReserveAdapter</span>). Data: <span class="mono">transfer_rails_data.json</span>. Generated 2026-07-04.
+  </footer>
+</div>
+
+<script>
+/* ============================================================
+   CONFIG — single source of truth. Editable; drives every table.
+   Mirrors transfer_rails_data.json.
+   ============================================================ */
+const CONFIG = {
+  stripe: {
+    // rail cost per transaction that Farmer Drop actually incurs:
+    cardPct: 0.029, cardFixed: 0.30, transferFixed: 0.25,   // -> 2.9% + $0.55
+    wedgePct: 0.0025, cartSurchargePct: 0.0315, fdSurcharge: 0.55
+  },
+  base: {
+    gasTransferUsd: 0.006, gasLow: 0.001, gasHigh: 0.02,
+    routerGasUnits: 85000, rampSpreadPct: 0.001,
+    monthlyOverheadUsd: 500
+  },
+  scenarios: [
+    { id:'p2p-30',  label:'$30 P2P transfer',       amount:30,  kind:'p2p'  },
+    { id:'p2p-100', label:'$100 P2P transfer',      amount:100, kind:'p2p'  },
+    { id:'p2p-500', label:'$500 P2P transfer',      amount:500, kind:'p2p'  },
+    { id:'cart-100',label:'$100 marketplace cart',  amount:100, kind:'cart' }
+  ]
+};
+
+/* live, editable state */
+const S = {
+  spct: CONFIG.stripe.cardPct,
+  sfix: CONFIG.stripe.cardFixed + CONFIG.stripe.transferFixed,
+  gas:  CONFIG.base.gasTransferUsd,
+  ramp: CONFIG.base.rampSpreadPct,
+  oh:   CONFIG.base.monthlyOverheadUsd
+};
+
+/* ---------- formatting ---------- */
+const usd2 = x => (x<0?'−$':'$') + Math.abs(x).toFixed(2);
+const usd3 = x => '$' + x.toFixed(3);
+const pctf = (x,d=2) => (x*100).toFixed(d) + '%';
+const xf = n => n>=1000 ? Math.round(n).toLocaleString('en-US')+'×' : n.toFixed(n<10?1:0)+'×';
+
+/* ---------- core cost model ---------- */
+function stripeCost(amount){ return S.spct*amount + S.sfix; }         // 2.9% + $0.55
+function chainMarginal(){ return S.gas; }                             // gas only
+function chainAllIn(amount){ return S.gas + S.ramp*amount; }          // gas + amortized ramp
+
+/* ============================================================
+   SECTION 1 — Stripe almanac
+   ============================================================ */
+const STRIPE = [
+  { group:'Card processing', lines:[
+    { item:'Standard card — online / e-commerce', rate:'2.9% + $0.30', note:'Per successful charge. The core rail cost.', fd:true },
+    { item:'Manually keyed-in card', rate:'+0.5%', note:'Add-on when the card number is typed, not presented.' },
+    { item:'International cards', rate:'+1.5%', note:'US accounts. Added on non-domestic cards.' },
+    { item:'Currency conversion', rate:'+1%', note:'US accounts, when Stripe converts currency.' }
+  ]},
+  { group:'Bank debit & payouts', lines:[
+    { item:'ACH Direct Debit', rate:'0.8%, cap $5.00', note:'Cheaper rail, slow settlement, reversible ~60 days.' },
+    { item:'Standard payout to bank', rate:'Free', note:'Rolling basis, ~T+2 for US accounts.' },
+    { item:'Instant Payout', rate:'1%, min $0.50', note:'Funds in minutes instead of days.' }
+  ]},
+  { group:'Connect (platform / marketplace)', lines:[
+    { item:'Active connected account', rate:'$2 / mo active', note:'Express / Custom — per account that transacts that month.' },
+    { item:'Payout to connected account', rate:'0.25% + $0.25', note:'The transfer leg. FD $0.55 surcharge covers this $0.25.', fd:true }
+  ]},
+  { group:'Disputes & risk', lines:[
+    { item:'Dispute / chargeback', rate:'$15.00', note:'Refunded to you only if you win the dispute.' },
+    { item:'Radar (custom pricing)', rate:'$0.05 / screen', note:'Included free on standard pricing.' },
+    { item:'Radar for Fraud Teams', rate:'$0.07 / screen', note:'Adds rules, lists, review tooling.' }
+  ]},
+  { group:'Revenue tools', lines:[
+    { item:'Billing (recurring)', rate:'0.7% of volume', note:'0.67% for added volume on paid plans.' },
+    { item:'Invoicing', rate:'0.4% / paid invoice', note:'Starter tier; 0.5% on Plus.' },
+    { item:'Tax', rate:'0.5% / transaction', note:'Where registered; $0.50/txn on API tier.' }
+  ]},
+  { group:'Refunds', lines:[
+    { item:'Issue a refund', rate:'No extra fee — original kept', note:'The original 2.9% + $0.30 is NOT returned. A refunded $100 sale still cost ~$3.20.', fd:true }
+  ]}
+];
+function renderStripe(){
+  const tb = document.querySelector('#tbl-stripe tbody');
+  let h='';
+  STRIPE.forEach(g=>{
+    h += `<tr class="grouprow"><td colspan="3">${g.group}</td></tr>`;
+    g.lines.forEach(l=>{
+      h += `<tr class="${l.fd?'hl':''}">
+        <td>${l.item}${l.fd?' <span class="tag fd">FD</span>':''}</td>
+        <td class="num rate">${l.rate}</td>
+        <td class="fnote">${l.note}</td></tr>`;
+    });
+  });
+  tb.innerHTML = h;
+}
+
+/* ============================================================
+   SECTION 2 — chain honest costs
+   ============================================================ */
+const HONEST = [
+  { hk:'On / off-ramp', hd:'USDC mint/redeem (Circle 1:1 at size) or exchange spread ~0.1–0.5%. Modeled at 0.1% per crossing — this is where "chain is free" stops being true.' },
+  { hk:'Custody & keys', hd:'Seed-phrase safety, wallet UX, recovery, and a Safe multisig admin key for the platform. A real operating cost, not a per-transfer fee.' },
+  { hk:'Compliance', hd:'KYC/AML posture, whitelist-only pilot (compadres ENABLE_CPDR_WHITELIST), reconciliation, and legal classification. Fixed monthly, amortized across volume.' }
+];
+function renderHonest(){
+  document.getElementById('hcards').innerHTML = HONEST.map(c=>
+    `<div class="hcard"><div class="hk">${c.hk}</div><div class="hd">${c.hd}</div></div>`).join('');
+}
+
+/* ============================================================
+   SECTION 3 — comparison + crossover
+   ============================================================ */
+function renderCompare(){
+  const tb = document.querySelector('#tbl-cmp tbody');
+  tb.innerHTML = CONFIG.scenarios.map(sc=>{
+    const s = stripeCost(sc.amount);
+    const cAll = chainAllIn(sc.amount);
+    const gapUsd = s - cAll;
+    const gapX = s / cAll;
+    const sPct = s/sc.amount, cPct = cAll/sc.amount;
+    return `<tr>
+      <td>${sc.label}${sc.kind==='cart'?' <span class="tag warn">cart</span>':''}</td>
+      <td class="num" style="color:var(--rust-deep)">${usd2(s)}</td>
+      <td class="num">${pctf(sPct)}</td>
+      <td class="num" style="color:var(--good)">${cAll<0.1?usd3(cAll):usd2(cAll)}</td>
+      <td class="num">${pctf(cPct,3)}</td>
+      <td class="num">${usd2(gapUsd)}</td>
+      <td class="num"><span class="tag good">${xf(gapX)}</span></td>
+    </tr>`;
+  }).join('');
+
+  const s100 = stripeCost(100), cMarg = chainMarginal(), cAll100 = chainAllIn(100);
+  document.getElementById('cmp-note').innerHTML =
+    `On a <b>$100 transfer</b>: Stripe costs <b>${usd2(s100)}</b>; the chain coin costs <b>${usd3(cMarg)}</b> marginal (gas only) or <b>${usd3(cAll100)}</b> all-in with the 0.1% ramp — a gap of <b>${usd2(s100-cMarg)}</b> (~${xf(s100/cMarg)}) marginal, <b>${usd2(s100-cAll100)}</b> (~${xf(s100/cAll100)}) all-in. Stripe's <b>${usd2(S.sfix)}</b> fixed leg alone is ~${xf(S.sfix/cMarg)} a Base transfer. The chain undercuts from the first dollar.`;
+
+  // crossover: monthly overhead break-even at $100 transfers
+  const perTxnSaving = stripeCost(100) - chainAllIn(100);
+  const breakeven = Math.ceil(S.oh / perTxnSaving);
+  document.getElementById('crossover').innerHTML =
+    `<div class="big">Crossover: ~${breakeven.toLocaleString()} transfers / month at $100.</div>
+     On <b>marginal</b> cost the chain wins from the first dollar — so the real crossover is <b>fixed overhead</b>, not per-transfer. At a chain custody + compliance overhead of <b>${usd2(S.oh)}/mo</b> and a per-$100-transfer saving of <b>${usd2(perTxnSaving)}</b>, the chain rail pays for its own overhead above <b>~${breakeven.toLocaleString()} transfers/month</b>. Below that, Stripe's zero-setup trust wins — which is exactly why <b>Phase 0 is Stripe</b> and the chain waits until volume clears the bar.`;
+}
+
+/* ============================================================
+   SECTION 4 — phased timeline
+   ============================================================ */
+const PHASES = [
+  { cls:'p0', ph:'Phase 0 · now', nm:'Stripe rails', role:'Trust bootstrap', st:'live',
+    dt:'Fiat + credits ledger on Stripe. People know and trust it; onboarding is instant, no custody burden. Cost is high (2.9% + $0.55) but bounded, and the fee model absorbs it via $0.55 + 3.15%.',
+    wn:null },
+  { cls:'p1', ph:'Phase 1 · first deploy', nm:'CPDR transfer coin', role:'Efficient P2P', st:'first deploy',
+    dt:'The compadres harness (CPDR): TransferRouter for routed peer transfers with clientOrderId, mock USDC funding, primary issuance, toy AMM (5 bps), burn/redeem, fee measurement, and chain==event==DB==UI reconciliation. The first real card-rail cost removal.',
+    wn:'Whitelist-only mainnet pilot; admin key → Safe multisig; exact approvals; no asset-backing yet.' },
+  { cls:'p2', ph:'Phase 2 · deferred', nm:'Asset-backed Honey Coin', role:'Not ready', st:'blocked',
+    dt:'Enters through compadres docs/06_asset_backed_template.md + IReserveAdapter (reserveUnitsAvailable / reserveUnitsCommitted / canMint). A redeemable digital honey CREDIT — claim against specified inventory, burn-to-redeem, published snapshots. NOT an investment/profit-share token.',
+    wn:'Regulatory classification REQUIRED first: a USD-redeemable, food-spendable, USD-boosted token ≈ stored-value / money-transmission / possibly securities. Counsel before launch (map §4).' }
+];
+function renderPhases(){
+  document.getElementById('timeline').innerHTML = PHASES.map(p=>`
+    <div class="tl ${p.cls}">
+      <div class="ph">${p.ph}</div>
+      <div class="nm">${p.nm}</div>
+      <div class="role">${p.role}</div>
+      <span class="st">${p.st}</span>
+      <div class="dt">${p.dt}</div>
+      ${p.wn?`<div class="wn">${p.wn}</div>`:''}
+    </div>`).join('');
+}
+
+/* ============================================================
+   SECTION 5 — sources
+   ============================================================ */
+const SOURCES = [
+  { lbl:'Stripe — pricing', url:'https://stripe.com/pricing', note:'Card 2.9% + $0.30; ACH 0.8% cap $5; disputes $15; Instant Payout 1% min $0.50; keyed +0.5%; intl +1.5%; FX +1%. Refund keeps original fee.' },
+  { lbl:'Stripe — Connect pricing', url:'https://stripe.com/connect/pricing', note:'$2 / monthly active account (Express/Custom) + 0.25% + $0.25 per payout to a connected account.' },
+  { lbl:'Stripe — payouts / billing / invoicing / tax / radar', url:'https://docs.stripe.com/payouts', note:'Standard payout free (~T+2); Billing 0.7%; Invoicing 0.4%; Tax 0.5%; Radar $0.05 / Fraud Teams $0.07 per screen (verify from US IP).' },
+  { lbl:'BaseScan — gas tracker', url:'https://basescan.org/gastracker', note:'ERC-20 transfer ~$0.006 typical (range $0.001–$0.02) post-EIP-4844; base fee ~0.006 gwei.' },
+  { lbl:'L2BEAT — scaling costs', url:'https://l2beat.com/scaling/costs', note:'Cross-check for L2 per-transaction cost (l2fees.info did not list Base at fetch time).' },
+  { lbl:'compadres — CPDR test harness (~/GitHub/compadres)', url:'https://github.com/jthorvaldur', note:'TransferRouter, mock USDC, toy AMM (5 bps), burn/redeem, fee measurement, reconciliation. Asset-backed layer deferred behind docs/06_asset_backed_template.md + IReserveAdapter.' },
+  { lbl:'Farmer Drop knowledge map', url:'init_structure/Farmer_Drop__knowledge_map.md', note:'§3.1 fee model ($0.55 surcharge, 3.15% cart, 0.25% wedge); §4 token phases (Phase 0 fiat → Phase 1 alt-transfer → Phase 2 Honey Coin) + regulatory warning.' }
+];
+function renderSources(){
+  document.getElementById('src-list').innerHTML = SOURCES.map(s=>{
+    const link = /^https?:/.test(s.url) ? `<a href="${s.url}" target="_blank" rel="noopener">${s.url}</a>` : `<span class="mono">${s.url}</span>`;
+    return `<li><span class="lbl">${s.lbl}</span> — ${s.note}<br>${link}</li>`;
+  }).join('');
+}
+
+/* ============================================================
+   controls
+   ============================================================ */
+function bind(){
+  const map = [['c-spct','spct'],['c-sfix','sfix'],['c-gas','gas'],['c-ramp','ramp'],['c-oh','oh']];
+  map.forEach(([id,key])=>{
+    const el = document.getElementById(id);
+    el.value = S[key];
+    el.addEventListener('input', e=>{ const v=parseFloat(e.target.value); if(!isNaN(v)){ S[key]=v; renderCompare(); } });
+  });
+  document.getElementById('reset').addEventListener('click', ()=>{
+    S.spct=CONFIG.stripe.cardPct; S.sfix=CONFIG.stripe.cardFixed+CONFIG.stripe.transferFixed;
+    S.gas=CONFIG.base.gasTransferUsd; S.ramp=CONFIG.base.rampSpreadPct; S.oh=CONFIG.base.monthlyOverheadUsd;
+    map.forEach(([id,key])=> document.getElementById(id).value = S[key]);
+    renderCompare();
+  });
+}
+
+/* init */
+renderStripe();
+renderHonest();
+renderPhases();
+renderSources();
+bind();
+renderCompare();
+</script>
+</body>
+</html>

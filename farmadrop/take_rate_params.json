@@ -1,0 +1,139 @@
+{
+  "meta": {
+    "title": "Farmer Drop — DR-1 Take-Rate Working Parameters",
+    "purpose": "Single source of truth for the DR-1 (platform take-%) working analysis. Drives take_rate_math.html. The take-% is UNDECIDED; these are template solutions to decide it, not decided numbers.",
+    "dr1_status": "unresolved",
+    "generated": "2026-07-04",
+    "source_files": [
+      "init_structure/Farmer_Drop__knowledge_map.md (§3 fee model, §3.4 arithmetic audit)",
+      "init_structure/Glossary__ASR_uncertainties.md (Numbers section)"
+    ],
+    "audit_items_respected": [
+      "§3.4.1 100x ambiguity (0.10% vs 10%) is load-bearing — model halts until resolved.",
+      "§3.4.2 credit boost is a negative-margin subsidy — must show funding source (breakage / 0.25% wedge / token float).",
+      "§3.4.3 double-charging risk — Stripe % passthrough vs. platform's own %; kept explicit.",
+      "§3.4.4 PMA 'fees-are-a-tax' is a characterization, not a mechanism — only the token rail actually removes Stripe cost.",
+      "§3.4.5 two-hop haircut needs a worked example vs a real incumbent baseline — both columns shown.",
+      "§3.4.6 adoption (CAC, drop density) is the binding constraint, not throughput."
+    ],
+    "sources": [
+      {
+        "id": "usda_food_dollar",
+        "label": "USDA ERS Food Dollar Series — farm share",
+        "url": "https://www.ers.usda.gov/data-products/food-dollar-series/summary-findings",
+        "note": "2024: farm share 11.8 cents per $ of all domestically produced food; food-at-home farm share 18.5 cents; food-away-from-home 7.1 cents. Farm establishments received ~24.3 cents of each food-at-home dollar in 2023 (primary-factor series)."
+      },
+      {
+        "id": "usda_price_spreads",
+        "label": "USDA ERS Price Spreads from Farm to Consumer",
+        "url": "https://www.ers.usda.gov/data-products/price-spreads-from-farm-to-consumer",
+        "note": "Fresh-produce farm share: basket of 16 fresh vegetables 20–29% since 2010; basket of 13 fresh fruits 32–39%. Retailing margins <25% of retail price for most tracked items."
+      },
+      {
+        "id": "distributor_margins",
+        "label": "Broadline / produce distributor & retail margins",
+        "url": "https://www.localline.co/blog/how-to-sell-produce-to-distributors",
+        "note": "Broadline produce distributors: 10–15% gross margin, 2–5% net; specialty/organic 20–30%. Distributor markup ~18–20% (range 5–40%). Retailers add ~30–50% on distributor cost."
+      },
+      {
+        "id": "csa_farm_share",
+        "label": "CSA / farmers-market farm share",
+        "url": "https://www.fb.org/market-intel/farmers-receive-less-than-6-cents-of-the-food-dollar",
+        "note": "Traditional outlets return ~15 cents of the food dollar to farmers; at a farmers market / CSA effectively ~100% of the food dollar stays with the local farmer (no distributor or retail hop)."
+      }
+    ]
+  },
+
+  "scenario": {
+    "basketWeekly": 100,
+    "usersYear1": 100000,
+    "usersScale": 1000000,
+    "weeksPerYear": 52,
+    "valuationMultiple": 20
+  },
+
+  "fees": {
+    "txnSurcharge": 0.55,
+    "stripeTxnFixed": 0.30,
+    "stripeTransferFixed": 0.25,
+    "stripePct": 0.029,
+    "cartSurchargePct": 0.0315,
+    "wedgePct": 0.0025,
+    "creditBoostPct": 0.02
+  },
+
+  "hops": {
+    "perHopPct": 0.05,
+    "defaultCount": 2,
+    "minCount": 0,
+    "maxCount": 4
+  },
+
+  "contractor": {
+    "cutPct": 0.03,
+    "windowMonths": 6,
+    "inWindowFraction": 1.0,
+    "note": "3% of a host drop's volume, paid OUT of the platform take, for N months. inWindowFraction=1 models bootstrap (every drop in-window); at steady state most volume has aged out and the drag falls toward the fraction of volume in newly-recruited drops."
+  },
+
+  "incumbent": {
+    "farmShareAllFood2024": 0.118,
+    "farmShareFoodAtHome2024": 0.185,
+    "farmShareFreshVegLow": 0.20,
+    "farmShareFreshVegHigh": 0.29,
+    "farmShareFreshFruitLow": 0.32,
+    "farmShareFreshFruitHigh": 0.39,
+    "representativeGroceryFreshShare": 0.22,
+    "csaFarmShare": 0.98,
+    "distributorGrossLow": 0.10,
+    "distributorGrossHigh": 0.15,
+    "retailMarkupLow": 0.30,
+    "retailMarkupHigh": 0.50,
+    "note": "representativeGroceryFreshShare (22%) is the conservative midpoint used for the side-by-side 'double the farmer' check; csaFarmShare (~98%) is the direct-channel ceiling. Farmer Drop sits between them."
+  },
+
+  "farmerAspiration": 0.80,
+
+  "dr1": {
+    "strawman": 0.001,
+    "supportedLow": 0.07,
+    "supportedCenter": 0.10,
+    "supportedHigh": 0.12,
+    "doubleTargetMultiple": 2.0,
+    "note": "0.10% (strawman) is refuted below. Reproducing the map's $5M/wk net and $5.2B valuation requires ~5% NET, which given a 3% contractor drag + 2% credit boost implies a ~10% GROSS take. Any positive growth-capital + opex cushion needs take >= ~7%. Supported range: 7–12%, centered 10%."
+  },
+
+  "templates": [
+    {
+      "id": "T1",
+      "name": "Flat Ten",
+      "takePct": 0.10,
+      "hops": 2,
+      "boostFundedExternally": false,
+      "breakagePct": 0.0,
+      "oneLiner": "10% flat take. Closes exactly (80 farmer + 10 hops + 10 take = 100) and reproduces the map's $5M/wk net and $5.2B valuation. Credit boost eats into take unless breakage appears.",
+      "verdict": "Reproduces the stated valuation; farmer 80% (~3.6x incumbent grocery). Weakness: DR-2 credit boost is unfunded and quietly cuts net take to ~5%."
+    },
+    {
+      "id": "T2",
+      "name": "Lean Eight",
+      "takePct": 0.08,
+      "hops": 2,
+      "boostFundedExternally": true,
+      "breakagePct": 0.015,
+      "oneLiner": "8% take + 0.25% wedge; 2% credit boost explicitly funded by breakage (~1.5%) + wedge (~0.25%) so it never touches the take (DR-2 closed).",
+      "verdict": "Cleanest DR-2 story: boost funded off-take, farmer 82%. Smaller growth cushion (~5% net) and depends on breakage materializing (~1.5% of credit float)."
+    },
+    {
+      "id": "T3",
+      "name": "Tiered / Decaying",
+      "takeBootstrap": 0.12,
+      "takeScale": 0.07,
+      "hops": 2,
+      "boostFundedExternally": true,
+      "breakagePct": 0.015,
+      "oneLiner": "12% during bootstrap (funds CAC + host-drop density) decaying to 7% at scale, with the take falling as a host drop's Drop-Score-weighted volume grows. Member story: 'fees fall as the network regenerates.'",
+      "verdict": "Best growth-capital + member narrative and ties fees to the Drop Score. Costs: two rates to communicate and a governance rule for the decay schedule."
+    }
+  ]
+}
