@@ -1,0 +1,663 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>FARMER DROP — The Books: Six-Ledger Concept Structure</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,500;0,9..144,600;0,9..144,700;1,9..144,400&family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;0,6..72,600;1,6..72,400&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --parchment:#faf6ec; --parchment-2:#f3ecda; --parchment-3:#ece2c9;
+  --loam:#1e3a2a; --loam-soft:#3a5343; --ink-fade:#6c7b6a;
+  --honey:#d9930d; --honey-deep:#b8790a;
+  --rust:#b23a1e; --rust-deep:#8f2c14;
+  --line:#c9bd9c; --line-soft:#ddd2b4;
+  --paper-card:#fffdf6;
+  --conceptual:#2f6b4a; --business:#7a5b8f; --token:#d9930d; --data:#2b6d84;
+  --good:#2f6b4a; --warn:#b8790a; --bad:#8f2c14;
+}
+*{box-sizing:border-box}
+html,body{margin:0;background:var(--parchment);color:var(--loam);
+  font-family:"Newsreader",Georgia,serif;font-size:16px;line-height:1.5}
+.grain{position:fixed;inset:0;pointer-events:none;z-index:0;opacity:.05;mix-blend-mode:multiply}
+.fieldrows{position:fixed;inset:0;pointer-events:none;z-index:0;opacity:.35;
+  background:
+    repeating-linear-gradient(115deg, transparent 0 46px, rgba(30,58,42,.028) 46px 47px),
+    radial-gradient(140% 120% at 12% 8%, #fdfbf3 0%, var(--parchment) 42%, var(--parchment-2) 100%);}
+#app{position:relative;z-index:1;max-width:1180px;margin:0 auto;padding:0 22px 90px}
+header{padding:22px 0 14px;border-bottom:1.5px solid var(--line);
+  display:flex;align-items:flex-end;justify-content:space-between;gap:24px;flex-wrap:wrap;
+  position:sticky;top:0;z-index:20;
+  background:linear-gradient(180deg, var(--parchment) 55%, rgba(250,246,236,.85));
+  backdrop-filter:blur(2px)}
+.brand h1{font-family:"Fraunces",serif;font-optical-sizing:auto;font-weight:600;
+  font-size:clamp(23px,3vw,38px);line-height:.96;margin:0;letter-spacing:-.01em}
+.brand h1 .drop{color:var(--honey-deep);font-style:italic}
+.brand .kicker{font-family:"IBM Plex Mono",monospace;font-size:11px;letter-spacing:.2em;
+  text-transform:uppercase;color:var(--ink-fade);margin-top:8px}
+nav{display:flex;gap:6px;align-items:center;flex-wrap:wrap}
+nav a{font-family:"IBM Plex Mono",monospace;font-size:12px;text-decoration:none;
+  color:var(--loam-soft);border:1px solid var(--line);border-radius:999px;
+  padding:7px 14px;background:var(--paper-card);transition:all .18s;white-space:nowrap}
+nav a:hover{background:var(--loam);color:var(--parchment);border-color:var(--loam)}
+nav a.here{background:var(--loam);color:var(--parchment);border-color:var(--loam)}
+.banner{margin:20px 0 8px;border:2px solid var(--rust);border-radius:8px;
+  background:linear-gradient(180deg,#fbeee9,#f7ddd3);padding:15px 20px;
+  display:flex;gap:14px;align-items:flex-start;
+  box-shadow:0 14px 30px -22px rgba(143,44,20,.6)}
+.banner .flag{font-family:"IBM Plex Mono",monospace;font-weight:600;font-size:11px;
+  letter-spacing:.14em;color:#fff;background:var(--rust);border-radius:5px;
+  padding:5px 9px;white-space:nowrap;margin-top:2px}
+.banner p{margin:0;font-size:15.5px;color:var(--rust-deep)}
+.banner b{font-family:"Fraunces",serif}
+section{margin-top:40px;scroll-margin-top:110px}
+.sec-num{font-family:"IBM Plex Mono",monospace;font-size:11px;letter-spacing:.2em;
+  color:var(--honey-deep);text-transform:uppercase}
+h2.sec{font-family:"Fraunces",serif;font-weight:600;font-size:clamp(21px,2.6vw,30px);
+  margin:4px 0 6px;line-height:1.06;letter-spacing:-.01em}
+.lede{font-size:16px;color:var(--loam-soft);max-width:74ch;margin:0 0 16px}
+.lede b{color:var(--loam)}
+.panel{background:var(--paper-card);border:1px solid var(--line);border-radius:8px;
+  box-shadow:0 1px 0 var(--line),0 16px 34px -28px rgba(30,58,42,.5);
+  padding:18px 20px;margin-bottom:16px}
+.panel h3{font-family:"IBM Plex Mono",monospace;font-size:10.5px;letter-spacing:.16em;
+  text-transform:uppercase;color:var(--ink-fade);margin:0 0 12px;
+  border-bottom:1px solid var(--line-soft);padding-bottom:6px}
+table{width:100%;border-collapse:collapse;font-size:13.5px}
+th,td{text-align:right;padding:6px 8px;border-bottom:1px dotted var(--line-soft)}
+th:first-child,td:first-child{text-align:left}
+td.l,th.l{text-align:left}
+thead th{font-family:"IBM Plex Mono",monospace;font-size:10px;letter-spacing:.05em;
+  text-transform:uppercase;color:var(--ink-fade);border-bottom:1.5px solid var(--line)}
+td.num,th.num{font-family:"IBM Plex Mono",monospace}
+tr.total td{border-top:1.5px solid var(--line);border-bottom:none;font-weight:600;
+  font-family:"IBM Plex Mono",monospace}
+tr.sub td{color:var(--ink-fade);font-size:12.5px}
+.tag{display:inline-block;font-family:"IBM Plex Mono",monospace;font-size:9.5px;
+  padding:1px 6px;border-radius:4px;letter-spacing:.04em;vertical-align:middle}
+.tag.good{background:#e5efe4;color:var(--good)}
+.tag.warn{background:#fbeecb;color:var(--warn)}
+.tag.bad{background:#f6d9cf;color:var(--bad)}
+.tag.dim{background:var(--parchment-3);color:var(--ink-fade)}
+.strip{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:1px;
+  background:var(--line-soft);border:1px solid var(--line);border-radius:8px;overflow:hidden;margin:14px 0}
+.strip .cell{background:var(--paper-card);padding:13px 15px}
+.strip .k{font-family:"IBM Plex Mono",monospace;font-size:9.5px;letter-spacing:.1em;
+  text-transform:uppercase;color:var(--ink-fade)}
+.strip .v{font-family:"Fraunces",serif;font-weight:600;font-size:23px;line-height:1.1;margin-top:3px}
+.strip .v.bad{color:var(--rust-deep)} .strip .v.good{color:var(--good)}
+.strip .note{font-size:11px;color:var(--ink-fade);margin-top:2px}
+.refute{border-left:4px solid var(--rust);background:#fbeee9;border-radius:0 8px 8px 0;
+  padding:14px 18px;margin:14px 0;font-size:15px}
+.refute .big{font-family:"Fraunces",serif;font-weight:600;font-size:20px;color:var(--rust-deep)}
+.cite{font-family:"IBM Plex Mono",monospace;font-size:11.5px;color:var(--loam-soft)}
+.srcs{list-style:none;padding:0;margin:10px 0 0}
+.srcs li{padding:8px 0;border-bottom:1px dotted var(--line-soft);font-size:13.5px}
+.srcs a{color:var(--business);text-decoration:none;font-family:"IBM Plex Mono",monospace;font-size:12px}
+.srcs a:hover{text-decoration:underline}
+.srcs .lbl{font-weight:600;color:var(--loam)}
+ul.open{list-style:none;padding:0;margin:0}
+ul.open li{padding:10px 0 10px 30px;position:relative;border-bottom:1px dotted var(--line-soft);
+  font-size:14.5px;color:var(--loam-soft)}
+ul.open li:before{content:"?";position:absolute;left:0;top:8px;width:20px;height:20px;
+  font-family:"IBM Plex Mono",monospace;font-weight:600;font-size:12px;color:var(--rust-deep);
+  background:#f6d9cf;border-radius:50%;text-align:center;line-height:20px}
+ul.open li b{color:var(--loam)}
+.who{font-family:"IBM Plex Mono",monospace;font-size:10px;letter-spacing:.06em;
+  color:var(--honey-deep);text-transform:uppercase}
+footer{margin-top:46px;padding:16px 0;border-top:1.5px solid var(--line);
+  font-family:"IBM Plex Mono",monospace;font-size:10.5px;color:var(--ink-fade);line-height:1.6}
+footer .warn{color:var(--rust-deep)}
+.mono{font-family:"IBM Plex Mono",monospace}
+.mininav{display:flex;gap:8px;flex-wrap:wrap;margin:16px 0 0}
+.mininav a{font-family:"IBM Plex Mono",monospace;font-size:11px;text-decoration:none;
+  color:var(--loam-soft);border:1px solid var(--line-soft);border-radius:6px;padding:5px 10px;
+  background:var(--paper-card)}
+.mininav a:hover{border-color:var(--honey);color:var(--honey-deep)}
+/* ledger chips */
+.lchip{display:inline-block;font-family:"IBM Plex Mono",monospace;font-weight:600;font-size:10px;
+  padding:2px 7px;border-radius:5px;color:#fff;letter-spacing:.05em}
+.lchip.L1{background:var(--data)} .lchip.L2{background:var(--honey-deep)}
+.lchip.L3{background:var(--conceptual)} .lchip.L4{background:var(--business)}
+.lchip.L5{background:var(--rust)} .lchip.L6{background:var(--loam)}
+.lchip.span{background:var(--ink-fade)}
+/* principles */
+ol.prin{margin:0;padding-left:22px}
+ol.prin li{padding:7px 0;border-bottom:1px dotted var(--line-soft);font-size:15px;color:var(--loam-soft)}
+ol.prin li b{color:var(--loam);font-family:"Fraunces",serif}
+/* clocks */
+.clocks{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:14px}
+.clock{border:1px solid var(--line);border-radius:8px;background:var(--paper-card);padding:14px 16px}
+.clock .cname{font-family:"Fraunces",serif;font-weight:600;font-size:18px}
+.clock .cgate{font-size:13.5px;color:var(--loam-soft);margin-top:6px}
+.clock .cinv{margin-top:8px;font-family:"IBM Plex Mono",monospace;font-size:11px;color:var(--loam-soft);
+  border-left:3px solid var(--honey);padding-left:9px;line-height:1.55}
+/* hard cases */
+.hc{padding:9px 0;border-bottom:1px dotted var(--line-soft);font-size:14px;color:var(--loam-soft)}
+.hc b{color:var(--loam)}
+.hc .ans{display:block;margin-top:3px;font-size:13px}
+.hc .ans:before{content:"→ ";color:var(--honey-deep);font-family:"IBM Plex Mono",monospace}
+/* code block */
+pre.schema{background:var(--parchment-2);border:1px solid var(--line-soft);border-radius:7px;
+  padding:12px 14px;font-family:"IBM Plex Mono",monospace;font-size:12px;line-height:1.6;
+  overflow-x:auto;color:var(--loam)}
+@media(max-width:760px){table{font-size:12px}}
+</style>
+</head>
+<body>
+<svg class="grain"><filter id="grainf"><feTurbulence type="fractalNoise" baseFrequency="0.9" numOctaves="3" stitchTiles="stitch"/><feColorMatrix type="saturate" values="0"/></filter><rect width="100%" height="100%" filter="url(#grainf)"/></svg>
+<div class="fieldrows"></div>
+
+<div id="app">
+  <header>
+    <div class="brand">
+      <h1>FARMER <span class="drop">DROP</span> — The Books</h1>
+      <div class="kicker">Six-ledger concept structure · double-entry spec layer · reconcile against the .7 backend</div>
+    </div>
+    <nav>
+      <a href="index.html">index</a>
+      <a href="farmer_drop.html">main graph</a>
+      <a href="take_rate_math.html">take-rate</a>
+      <a href="transfer_rails.html">rails</a>
+      <a href="ledger_structure.html" class="here">the books</a>
+      <a href="ledger_simulator.html">simulator</a>
+    </nav>
+  </header>
+
+  <div class="banner">
+    <div class="flag">SIX LEDGERS · INFERRED</div>
+    <p>Magnus stated the count and the double-entry reconciliation <b>verbally</b>; Volkmar set the basis and holds the code. The enumeration below is our <b>best-guess mapping, built to survive being wrong</b>: the chart of <b>accounts</b> is primary, the six ledgers are a <b>partition over accounts</b>, and every posting rule is account-level — whichever six the .7 backend actually runs, reconciliation is a re-grouping, not a rewrite. The named pain this page exists for: <b>partial refunds — unwinding partially-paid taxes and reversing them in Stripe's tax reporting.</b></p>
+  </div>
+
+  <div class="mininav">
+    <a href="#s1">1 why six</a><a href="#s2">2 the six + accounts</a><a href="#s3">3 lifecycle</a>
+    <a href="#s4">4 unwind paths</a><a href="#s5">5 extensibility</a><a href="#s6">6 time</a>
+    <a href="#s7">7 what's hard</a><a href="#s8">8 questions</a><a href="#s9">9 challenges</a>
+  </div>
+
+  <section id="s1">
+    <div class="sec-num">§1</div>
+    <h2 class="sec">Why double-entry, why six</h2>
+    <p class="lede">Every dollar in the fee model is a <b>conservation law</b>: a member's $100 basket must land, to the cent, across farmer, hops, take, margin, surcharges and tax — and every unwind must land back. Double-entry is the proof mechanism: a transaction that doesn't balance can't be written. Separate books exist because the money has <b>structurally different lifecycles</b> — cash settles on Stripe's clock, credits are a standing liability, farmer payables release per delivery, commissions accrue over months, tax lives on the filing calendar. Reconciling six books against each other (and against Stripe's <span class="mono">balance_transactions</span>, and later chain==event==DB==UI on the token rail) is what turns "we think the money is right" into arithmetic.</p>
+    <div class="panel">
+      <h3>Design principles — the whole page in eight lines</h3>
+      <ol class="prin" id="principles"></ol>
+    </div>
+  </section>
+
+  <section id="s2">
+    <div class="sec-num">§2</div>
+    <h2 class="sec">The six-ledger hypothesis</h2>
+    <p class="lede"><b>H1</b> is the functional-six reading of the fee model. Two alternates are kept alive on purpose — each is a <b>re-tag of the same accounts</b>, so being wrong is cheap. RQ-1 asks Volkmar to name his six; everything below re-groups to match.</p>
+    <div class="panel">
+      <h3>H1 — primary hypothesis</h3>
+      <table id="tbl-h1"><thead><tr><th class="l">ledger</th><th class="l">name</th><th class="l">kind</th><th class="l">evidence in the fee model</th></tr></thead><tbody></tbody></table>
+    </div>
+    <div class="panel">
+      <h3>Alternates — kept alive, both are re-tags</h3>
+      <p style="font-size:14.5px;color:var(--loam-soft);margin:0 0 10px"><b>H2 — clearing variant.</b> Farmer and hop payables merge into one "everyone we owe" book; the sixth ledger is an <b>Orders / Receivables clearing</b> book (authorized-not-captured, undelivered orders). Supported by the test-app flow — "purchases with the Stripe card, no money withdrawn" is exactly a clearing-ledger state. Regroup: re-tag 2150 under the payables book, promote 1100.</p>
+      <p style="font-size:14.5px;color:var(--loam-soft);margin:0 0 10px"><b>H3 — rail-split variant.</b> The cash book splits fiat vs <b>token-rail wallet</b> (CPDR / Base), anticipating Phase 1 — per the compadres chain==event==DB==UI reconciliation doctrine. Regroup: split L1 on the rail dimension. Neither alternate changes a single posting rule.</p>
+      <p style="font-size:14.5px;color:var(--loam-soft);margin:0"><b>What "six reconcile" means in the partition view (C-3).</b> A partition is one journal with tags — an individual book does not balance on its own. What it <i>does</i> give you: each book's <b>net position is its implied due-to/due-from against the other books</b>, and the six nets <b>sum to zero</b> — that identity is the cross-book reconciliation, and the simulator displays it live per book and checks Σ = 0. Whether Volkmar's six instead balance <i>internally</i> via explicit due-to/due-from accounts is exactly what RQ-1 asks.</p>
+    </div>
+    <div class="panel">
+      <h3>Chart of accounts — 26 active · the ledgers are the colored tags</h3>
+      <table id="tbl-coa"><thead><tr><th class="l">code</th><th class="l">account</th><th class="l">type</th><th>normal</th><th>ledger</th><th class="l">purpose</th></tr></thead><tbody></tbody></table>
+      <p class="cite" style="margin:10px 0 0">Reserved (instantiate on first need): <b>2400</b> Chargeback/Dispute Reserve · <b>2500</b> Deferred Revenue · <b>2600</b> Refunds Payable. Partition tally: <span id="tally"></span>.<br>20 of 26 are exercised by the demo event set; 1000 / 1050 / 1100 / 4030 are chartered ahead of their flows (bank payout, token rail, clearing-tender variant, breakage sweep); 5010 / 5300 are the optional-disclosure and write-off branches (C-10).</p>
+    </div>
+  </section>
+
+  <section id="s3">
+    <div class="sec-num">§3</div>
+    <h2 class="sec">The order lifecycle, posted</h2>
+    <p class="lede">The canonical basket, walked forward. Every table below is <b>computed live from the same declarative event rules the simulator runs</b> — goods $<span class="mono" id="p-basket">100</span>, fixed surcharge $0.55, cart surcharge 3.15%, demonstration tax rate <span class="mono" id="p-tax">8%</span>, take <span class="mono" id="p-take">10%</span> <span class="tag warn">DR-1 OPEN · band 7–12%</span>. Authorization posts <b>nothing</b> — it is a two-phase hold, discarded or posted at capture, which is also how the test app demos "purchases with no money withdrawn."</p>
+    <div id="fwd-tables"></div>
+  </section>
+
+  <section id="s4">
+    <div class="sec-num">§4</div>
+    <h2 class="sec">The unwind paths</h2>
+    <p class="lede">This is the page's reason to exist. Three rules make unwinding survivable: <b>history is append-only</b> (every unwind is a new compensating entry — nothing is edited); <b>reverse at the original</b> (tax rate, jurisdiction, take-% are stamped on the line at capture and every reversal computes from the stamp); and <b>the legs are authoritative</b> (the customer refund amount is the sum of per-leg reversals, matching per-line Stripe Tax reversal amounts — not a re-derived percentage).</p>
+    <div class="refute">
+      <div class="big">The Stripe Tax partial-reversal caveat — the named pain, verified.</div>
+      Stripe Tax reverses a recorded <span class="mono">tax.Transaction</span> with <span class="mono">mode=full</span> or <span class="mono">mode=partial</span> (per-line <span class="mono">line_items[]</span> with negative <span class="mono">amount</span>/<span class="mono">amount_tax</span>, or a <span class="mono">flat_amount</span> distributed proportionally across remaining line items). But reversals <b>do not adjust taxable/nontaxable amounts in reports and carry no reversal reason</b> — Stripe itself recommends <b>fully reversing the transaction and re-creating a corrected one</b> when accuracy matters. Working strategy: <b>same-period, clean pro-rata → <span class="mono">mode=partial</span></b>, mirrored 1:1 in the ledger; <b>cross-period or mixed-taxability → full-reverse-and-recreate</b>, with the ledger booking the amended-return posture. Cap: 30 partial reversals per sale; over-reversal errors out. What the .7 backend does today is <b>RQ-3</b>.
+    </div>
+    <div id="unwind-tables"></div>
+  </section>
+
+  <section id="s5">
+    <div class="sec-num">§5</div>
+    <h2 class="sec">Extensibility — accounts stay stable, dimensions absorb variety</h2>
+    <p class="lede">Regional tomatoes, a neighbor's hot sauce, farmer #10,000, the Phase-1 transfer coin: <b>none of these are new accounts.</b> New accounts appear only when a genuinely new <i>kind</i> of money appears. Everything else rides one of three dimension axes.</p>
+    <div class="clocks">
+      <div class="clock"><div class="cname">Axis 1 — product tax code <span class="tag dim">on order lines</span></div>
+        <div class="cgate">Tomatoes are grocery-exempt in 37 states; shelf-stable hot sauce usually rides the exemption but candy/cottage-food carve-outs can flip it. Taxability is a <b>line-item property resolved against the pickup jurisdiction at capture</b>, and the resolved rate is stamped on the line.</div>
+        <div class="cinv">Encoding this as accounts would need product × jurisdiction combinatorics. As a dimension, a new product or state is a data row — and the partial-refund machinery already keys off the line stamp, so it just works.</div></div>
+      <div class="clock"><div class="cname">Axis 2 — party subaccount <span class="tag dim">control children</span></div>
+        <div class="cgate">New farmer → <span class="mono">2100.&lt;farmer_id&gt;</span>; new hop/driver → <span class="mono">2150.&lt;hop_id&gt;</span>; new contractor accrues under 2200. Control accounts and every posting rule stay fixed.</div>
+        <div class="cinv">Subaccounts give real-time per-entity balances (the Airbnb subledger pattern); party #10,000 posts to the same journal as party #1.</div></div>
+      <div class="clock"><div class="cname">Axis 3 — rail <span class="tag dim">10xx cash family</span></div>
+        <div class="cgate">Phase-1 transfer coin / Phase-2 Honey Coin = a new <span class="mono">10xx</span> cash account (1050 Rail Wallet). The allocation and refund journals are <b>byte-identical</b> — only the money account swaps. This is H3, achieved as a dimension instead of a fork.</div>
+        <div class="cinv">⚠ The one thing the rail axis does NOT absorb: tax on non-card rails — Stripe Tax is card-coupled. See hard case #6 and RQ-12.</div></div>
+    </div>
+  </section>
+
+  <section id="s6">
+    <div class="sec-num">§6</div>
+    <h2 class="sec">Time — the four clocks</h2>
+    <p class="lede">Refunds are hard because <b>four independent clocks</b> run over the same journal. Each clock gates different events and imposes its own invariant.</p>
+    <div class="clocks" id="clocks"></div>
+    <div class="panel" style="margin-top:16px">
+      <h3>The bitemporal verdict — phased, not all-or-nothing</h3>
+      <p style="font-size:14.5px;color:var(--loam-soft)">The trigger cases are genuinely bitemporal, not merely append-only: a <b>refund-after-filing</b> asserts a new truth about a past period while preserving what was filed as-known then (valid time ≠ transaction time — the textbook case); a <b>dispute lost on day 80</b> is effective at the charge's economic date but known two months later; a <b>retroactively misclassified product</b> (hot sauce reclassified taxable) is a corrected-timeline look-back; and <b>"the balance as the .7 backend believed it on date X"</b> is, definitionally, a transaction-time slice.</p>
+      <p style="font-size:14.5px;color:var(--loam-soft)"><b>Phase 0: carry both timestamps on every journal row; do not build the as-of query engine yet.</b> Two columns, near-zero cost, fully forward-compatible. Defer the full AUDIT/as-of layer until the first amended return forces it — that event is the concrete forcing function. Omitting the timestamps now is the only expensive mistake.</p>
+      <pre class="schema">journal_row: id, event_id (idempotency key), account, dr|cr, amount_cents,
+             effective_at,    -- valid time: the economic / pickup date
+             posted_at,       -- transaction time: system insert, immutable
+             corrects_row_id  -- nullable; links a contra to what it reverses</pre>
+      <p class="cite" style="margin:8px 0 0">⚠ Assumption: the .7 backend stores at least <span class="mono">posted_at</span> immutably. Implication if wrong: no past-as-believed balance is reconstructable, and RQ-2 / RQ-4 become blocking.</p>
+    </div>
+  </section>
+
+  <section id="s7">
+    <div class="sec-num">§7</div>
+    <h2 class="sec">What else is hard — beyond chargebacks</h2>
+    <p class="lede">Chargebacks are the known monster. The full catalog, ordered by severity — each with the working design answer or the open question it raises.</p>
+    <div class="panel"><h3>Blocker-design — resolve before the schema freezes</h3><div id="hc-blocker"></div></div>
+    <div class="panel"><h3>Hard — solvable with the patterns above, but must be deliberate</h3><div id="hc-hard"></div></div>
+    <div class="panel"><h3>Annoying — real, bounded, schedulable</h3><div id="hc-annoying"></div></div>
+  </section>
+
+  <section id="s8">
+    <div class="sec-num">§8</div>
+    <h2 class="sec">Reconciliation questions — the whiteboard's ask</h2>
+    <p class="lede">This spec reconciles against the .7 backend; it does not replace it. These are the questions that close the gap.</p>
+    <div class="panel"><ul class="open" id="rqs"></ul></div>
+  </section>
+
+  <section id="s9">
+    <div class="sec-num">§9</div>
+    <h2 class="sec">Answered challenges — the adversarial pass</h2>
+    <p class="lede">A critical reviewer was run against this page after it was built; every challenge is recorded with its answer and disposition. Nothing was quietly fixed.</p>
+    <div class="panel"><div id="challenges"><p class="cite">Adversarial pass pending — challenges will be recorded here verbatim.</p></div></div>
+  </section>
+
+  <section id="s10">
+    <div class="sec-num">Sources</div>
+    <h2 class="sec">Provenance</h2>
+    <div class="panel"><ul class="srcs" id="src-list"></ul></div>
+  </section>
+
+  <footer>
+    Spec layer only — the app code lives with Volkmar; this page reconciles against it, it does not replace it.
+    Data: <b>ledger_accounts.json</b> (chart, hypotheses, sources) · <b>ledger_events.json</b> (declarative posting rules — shared with the <a href="ledger_simulator.html" style="color:inherit">simulator</a>).
+    Stripe API facts as-of 2026-07-04, sourced from docs.stripe.com (fetches proxied; field-level items marked ⚠ where unverified).
+    <span class="warn">⚠ Six-ledger enumeration inferred · DR-1 take-% open (parametric throughout) · tax rules VARY-BY-STATE · PMA framing does NOT exempt sales-tax collection — NEEDS-COUNSEL before go-live. Spec research, not legal or tax advice.</span>
+  </footer>
+</div>
+
+<script>
+/* ============================================================
+   DATA — inline mirror of ledger_accounts.json / ledger_events.json
+   (canonical copies live in the JSON files; keep in sync)
+   ============================================================ */
+const PARAMS = {
+  basket: 100.0, taxRate: 0.08, refundFraction: 0.5, hopCount: 2,
+  farmerPct: 0.8, takePct: 0.1,
+  fees: { txnSurcharge: 0.55, stripePct: 0.029, stripeTxnFixed: 0.30,
+          stripeTransferFixed: 0.25, cartSurchargePct: 0.0315,
+          wedgePct: 0.0025, creditBoostPct: 0.02, disputeFee: 15.0 },
+  hops: { perHopPct: 0.05 }, contractor: { cutPct: 0.03, windowMonths: 6 }
+};
+const DERIVED = {
+  cartSurcharge: "round2(basket * fees.cartSurchargePct)",
+  tax: "round2(basket * taxRate)",
+  gross: "basket + fees.txnSurcharge + derived.cartSurcharge + derived.tax",
+  stripeFee: "round2(derived.gross * fees.stripePct + fees.stripeTxnFixed)",
+  farmerShare: "round2(basket * farmerPct)",
+  hopShare: "round2(basket * hops.perHopPct * hopCount)",
+  take: "round2(basket * takePct)",
+  distributionMargin: "basket - derived.farmerShare - derived.hopShare - derived.take",
+  creditsGross: "basket + fees.stripeTransferFixed + round2(basket * fees.wedgePct) + derived.tax",
+  loadFee: "round2(basket * fees.stripePct + fees.stripeTxnFixed)"
+};
+
+const LEDGERS = [
+  {id:"L1", name:"Cash & Stripe Balance", kind:"asset book", evidence:"Phase 0 = Stripe rails; T+2 payouts; $0.55 covers Stripe's $0.30 + $0.25 fixed legs; mirrors Stripe balance_transactions."},
+  {id:"L2", name:"Member Credits", kind:"stored-value book", evidence:"The one ledger the knowledge map names explicitly ('fiat rails + credits ledger'); DR-2 demands the 2% boost be a visible funded line."},
+  {id:"L3", name:"Farmer / Supplier Payables", kind:"AP book", evidence:"Farmer nets ~80%; released via Connect transfers (0.25% + $0.25 leg); per-supplier subaccounts are how variable suppliers scale."},
+  {id:"L4", name:"Platform Revenue & Fees", kind:"revenue/expense book", evidence:"The fee engine is a first-class concept node; the double-charging audit (§3.4.3) requires pass-through vs margin to be separable."},
+  {id:"L5", name:"Tax", kind:"liability book, per jurisdiction", evidence:"Magnus's stated pain — unwinding partially-paid taxes against Stripe Tax reporting — only exists as a pain if tax is its own reconciled ledger."},
+  {id:"L6", name:"Network Commissions & Hops", kind:"accrual book", evidence:"Contractor 3%-of-drop-volume × N months is a time-based accrual with aging — structurally unlike farmer payables."}
+];
+
+const ACCOUNTS = [
+  ["1000","Bank – Operating","asset","Dr","L1","Real settled cash; endpoint of Stripe payouts."],
+  ["1010","Stripe Balance – Available","asset","Dr","L1","Mirror of Stripe available balance. All refunds & disputes debit here — refunds always leave the PLATFORM balance."],
+  ["1020","Stripe Balance – Pending","asset","Dr","L1","Captures land here pre-settlement; available on a 2-day rolling basis (T+2, US cards)."],
+  ["1050","Rail Wallet – Token/USDC","asset","Dr","L1","Rail-agnostic settlement endpoint; the canonical 'new rail = new 10xx account' exemplar."],
+  ["1100","Orders Clearing / Suspense","asset","Dr","L1","Separates 'money arrived' from 'allocated'; entry point when credits are the tender. ⚠ H2 promotes this to the sixth ledger."],
+  ["1200","Farmer Payout Receivable","asset","Dr","L3","Clawback claim when a refund/chargeback lands AFTER the farmer was paid."],
+  ["1210","Dispute Receivable","asset","Dr","L1","Contingent asset for disputed funds withdrawn but possibly won back — withdrawn cash, so it lives in the cash book (re-tagged from L4 per C-3)."],
+  ["2000","Member Credits Liability","liability","Cr","L2","Stored value owed to members incl. the 2% boost. No tax at purchase; tax at redemption. ⚠ needs lot sub-tracking: cash-origin vs boost-origin."],
+  ["2100","Farmer Payable (control)","liability","Cr","L3","Owed to farmers; per-supplier subaccounts 2100.&lt;farmer_id&gt;."],
+  ["2150","Distributor / Hop Payable (control)","liability","Cr","L6","Owed to hops/drivers; subaccounts 2150.&lt;hop_id&gt;."],
+  ["2200","Contractor Commission Accrual","liability","Cr","L6","Time-accrued 3%-of-host-drop-volume, aged over N months."],
+  ["2300","Sales Tax Payable (control)","liability","Cr","L5","Collected tax owed; subaccounts 2300.&lt;jurisdiction&gt;; ORIGINAL rate stored per order line."],
+  ["3000","Retained Earnings","equity","Cr","span","Period-close bucket for net P&L."],
+  ["4000","Platform Take Revenue","revenue","Cr","L4","The ~10% take on goods (DR-1 open; parametric)."],
+  ["4010","Fixed Surcharge Revenue","revenue","Cr","L4","The $0.55 (card rail) / $0.25 (credits rail — transfer leg only). RETAINED on ANY refund: it covers Stripe's sunk fixed legs. Member-whole anyway = policy choice (RQ-7)."],
+  ["4011","Cart Surcharge Revenue","revenue","Cr","L4","3.15% on the card rail (2.9% passthrough + 0.25% wedge); wedge-only 0.25% on the credits rail — no passthrough where there is no Stripe cost. Refunded proportionally."],
+  ["4020","Distribution Margin Revenue","revenue","Cr","L4","The RESIDUAL of the goods split (absorbs rounding). Exactly $0 under canonical T1 two-hop (80+10+10=100) — exists for self-haul/one-hop drops and tiered templates, not a line to count on (C-4)."],
+  ["4030","Credits Breakage Revenue","revenue","Cr","L2","Expired/unspent credits, recognized proportional to redemptions (ASC 606)."],
+  ["4900","Refunds & Returns (contra-revenue)","contra","Dr","L4","Reverses recognized revenue WITHOUT mutating original rows — append-only journal."],
+  ["5000","Stripe Processing Fee Expense","expense","Dr","L4","2.9% + $0.30 recognized at settlement."],
+  ["5010","Stripe Refund Fee Loss","expense","Dr","L4","OPTIONAL net-zero disclosure reclass (5010←5000). Stripe keeps the ENTIRE original fee on any refund — fully expensed at capture, it stays in 5000 unless attribution is wanted (C-12). Who eats it → RQ-7."],
+  ["5020","Dispute Fee Expense","expense","Dr","L4","Non-refundable $15, expensed the moment the cardholder initiates."],
+  ["5100","Credits Boost Expense","expense","Dr","L2","The NAMED funding source of the 2% bonus — DR-2 closed by construction."],
+  ["5200","Contractor Commission Expense","expense","Dr","L6","P&L side of the monthly contractor accrual."],
+  ["5300","Clawback Write-off / Bad Debt","expense","Dr","L4","Write-off when a clawback receivable (1200) proves unrecoverable — the policy branch after a farmer-paid chargeback loss or refund; the revenue reversal itself runs through 4900 (C-10)."],
+  ["5310","Tax Bad-Debt Expense","expense","Dr","L5","Chargeback tax loss. A chargeback is NOT a refund — the bad-debt route, never the returned-merchandise credit."]
+];
+
+const PRINCIPLES = [
+  ["Accounts are the atoms; ledgers are a view.","The chart is primary; 'six ledgers' is a re-taggable partition — regrouping never changes a posting rule."],
+  ["History is append-only; corrections are new entries.","No posted row is ever mutated; reversals are contra postings (4900 / 5310), never edits."],
+  ["Every event balances by construction.","Each posting is a single balanced transfer; a plug posting absorbs rounding; the engine refuses anything else."],
+  ["Dimensions absorb variety; accounts stay stable.","Products, parties and rails are values on three axes (product tax code, party subaccount, rail) — new variety is data, not schema surgery."],
+  ["Store the original; reverse at the original.","Tax rate, jurisdiction and take-% are stamped on the line at capture; every unwind computes from the stamp, never the current value."],
+  ["Four clocks, four invariants.","Money (settlement/payout ordering), risk (window/lock admissibility), tax (current credit vs amended return), book (immutable close + trial balance) each gate the journal independently."],
+  ["The ledger is a mirror to be reconciled, not the source of truth for cash.","1010/1020 reconcile nightly against Stripe balance_transactions; drift is surfaced, not absorbed — this is where 'six ledgers reconcile' lives."],
+  ["Bitemporal-ready, not bitemporal-heavy.","Carry effective_at + posted_at from day one; defer the as-of engine until the first amended return forces it."]
+];
+
+const CLOCKS = [
+  {name:"Money clock", gate:"When cash is real. Auth posts no GL (two-phase hold); capture lands in 1020; settlement moves 1020→1010 net of fee (T+2); payout drains payables to 1000/1050 (first payout ~7 days).",
+   inv:"No payout before availability. 1020 must equal Stripe pending, 1010 equal Stripe available. Refunds always debit 1010, never 1020."},
+  {name:"Risk clock", gate:"Whether an unwind is still legal. Refund windows (ACH 180d; cards network-practical); dispute window ~120d cards / 180d LPM; evidence due in 7–21d; issuer decides in ~60–75d.",
+   inv:"An unwind event is admissible only if offsetDays ≤ window. While a dispute is open, refunds are LOCKED (double-credit risk). An un-evidenced dispute auto-posts the loss at due_by."},
+  {name:"Tax clock", gate:"Whether a tax reversal is a current-period returned-merchandise credit or an amended return. Accrue at capture per jurisdiction → file per period → amend within the 3–4yr SOL.",
+   inv:"Every 2300 line stores original rate + jurisdiction; reversals compute at the ORIGINAL rate, never current. ⚠ Some jurisdictions force remitting tax even on a full refund — the platform absorbs it."},
+  {name:"Book clock", gate:"When P&L is recognized vs deferred. Undelivered basket → deferred revenue (2500); contractor 3% → time accrual; breakage proportional to redemptions (ASC 606). Period close runs the trial balance.",
+   inv:"Period freeze; global Σdebits = Σcredits as the integrity proof; close rolls net P&L to 3000; no posted row is ever mutated."}
+];
+
+const HARD_CASES = {
+  blocker: [
+    ["Stripe partial-tax-reversal caveat","Partial reversals don't adjust taxable amounts in reports and carry no reason; Stripe recommends full-reverse-and-recreate.","Pick the strategy per RQ-3: mode=partial for clean same-period pro-rata; full-reverse-and-recreate for cross-period / mixed-taxability — and mirror the choice 1:1 in the ledger."],
+    ["Refund of a credit-funded purchase","Restore credits or pay cash? Changes the tax reversal, breakage, and the liability balance.","Policy switch; default: restore to 2000 credits at cash basis, no cash out. NEEDS-COUNSEL + RQ-6."],
+    ["The 2% boost refund asymmetry","Member bought $102 of credits for $100 — refunding $102 as cash returns the subsidy: a direct 2% leak.","Refund cash at COST BASIS ($100); the boost is restored only as credits, never converted to cash. RQ-6."],
+    ["Chargeback ≠ refund for tax","Remitted tax on a lost dispute is generally unrecoverable via the returned-merchandise credit.","Dedicated 5310 Tax Bad-Debt; never route chargeback tax back through 2300. Bad-debt relief varies and is limited (e.g. CA)."],
+    ["Simultaneous partial refund + open dispute","Refunding while a dispute is in flight risks the member being credited twice.","The money state machine LOCKS refund events while dispute_open; reconcile on resolution."],
+    ["Token-rail tax with no Stripe Tax","Phase-1/2 non-card sales still owe sales tax, but Stripe Tax is card-coupled.","Tax calculation must be rail-independent — decouple Tax.Calculation from the PaymentIntent or run an own engine. The rail axis does not absorb this. RQ-12."],
+    ["Hop/driver already performed a refunded delivery","The logistics service happened even though the sale reversed.","Open question: treat the hop fee as earned-on-performance (kept) rather than clawed by default — contractual; Magnus decides. RQ-9."]
+  ],
+  hard: [
+    ["Partial refund of a mixed exempt+taxable basket","A lump-sum refund must be allocated across lines; the allocation changes how much tax reverses.","Tie refunds to specific lines; if lump-sum, use proportional-remaining allocation and STORE the allocation."],
+    ["Refund after the filing period closed","The current-period credit is gone for that sale.","Tax clock routes to the amended-return workflow (3–4yr SOL); the bitemporal AUDIT slice is what makes it reconstructable."],
+    ["Refund crossing a rate change — or a take-% change","Reversals at today's rate/take are silently wrong.","Store original_tax_rate AND original_take_pct on the line (DR-1 template T3 makes the take time-varying by design)."],
+    ["Multi-jurisdiction pickup points","The same jar of hot sauce is exempt at one HostDrop and taxable at another (state + local divergence).","Resolve product_tax_code per pickup jurisdiction per line — Axis 1."],
+    ["Surcharge / delivery-fee taxability","Seller-charged fees follow the underlying sale; a single lumped delivery line can make the WHOLE fee taxable (e.g. NY).","Tax the $0.55 / 3.15% on the taxable percentage of the basket; per-state treatment NEEDS-COUNSEL."],
+    ["Product misclassification discovered retroactively","'Sauce' reclassified as taxable 'condiment/candy' triggers look-back liability across past lines AND their refunds.","The corrected-timeline (bitemporal) query; remediation posts as new compensating entries."],
+    ["Farmer paid before the refund/chargeback","The payable is empty; the money is on the farm.","farmer_paid branch: book 1200 receivable, net against the next payout cycle, or debit_negative_balances on the connected account."],
+    ["Contractor 3% clawback on refunded volume","Commission accrued (or paid) on volume that later refunded.","Reverse 2200/5200 pro-rata; if already paid, a contractor receivable — contractual policy, RQ-8."],
+    ["Credit-lot tracking","$100 cash-origin + $2 boost-origin spent across two orders, one refunded — which lot comes back?","Credit-lot dimension on 2000 with FIFO consumption; a refund restores the consumed lot."],
+    ["Stripe fee mirror drift","Our computed 5000 vs actual balance_transaction fee_details diverge (IC+ pricing, FX, rounding).","Nightly reconciliation against balance_transactions; post the delta as an explicit adjustment — never absorb silently."],
+    ["Webhook replay double-post","Stripe re-sends events; a naive consumer posts twice.","Stripe event.id / balance_transaction.id as the posting idempotency key; replay is a no-op."],
+    ["Connect partial-refund API incompatibility","Stripe does not support partial refunds with refund_application_fee=true or reverse_transfer=true (multicapture) — the atomic unwind is unavailable exactly on the named-pain workflow.","Partial refunds on Connect need MANUAL application-fee refunds + transfer reversals as separate calls; the ledger books them as separate legs anyway, so the posting model already matches (RQ-11)."],
+    ["Negative farmer balance on transfer reversal","Farmer withdrew before the refund; the connected account goes negative.","debit_negative_balances (US/CA) or Stripe reserve; else the 1200 clawback path."],
+    ["Jurisdiction forcing tax remittance on a full refund","Stripe documents states where the original tax must be retained and remitted even though the member was made whole.","Absorb to tax-loss expense, flagged by jurisdiction — a known cost of doing refunds, not a surprise."]
+  ],
+  annoying: [
+    ["Escheatment & breakage of dormant credits","Stored value can escheat after 3–5yr dormancy; ~37 states exempt gift-card-like value, usually conditioned on no expiry and no fees.","Recognize breakage proportional to redemptions (ASC 606); keep credits no-expiry/no-fee to hold the exemption; escheat domicile NEEDS-COUNSEL."],
+    ["Stripe Tax 30-reversal cap · refund before first payout","Max 30 partial reversals per sale; refunds can land before funds ever settle.","Batch reversals or full-reverse-and-recreate near the cap; allow 1010 to go negative pre-settlement (reserve covers)."],
+    ["SNAP / EBT tender","If ever accepted: federally exempt from sales tax regardless of state rules — a separate tender-level carve-out on top of line-level taxability.","A tender dimension next to the rail axis; exemption applied before line-tax resolution. Acceptance itself unconfirmed."],
+    ["Tips / gratuities to farmers at pickup","Voluntary vs mandatory gratuity taxability differs by state, and a tip is farmer income outside the 80% split.","Post tips as a pass-through payable leg (2100), never revenue; taxability per state — NEEDS-COUNSEL."]
+  ]
+};
+
+const RQS = [
+  ["RQ-1","Volkmar","Name your six.","List the six ledgers exactly and which accounts fall in each — the whole spec re-tags off the real partition (H1 vs H2 vs H3). And structurally: do the six balance INTERNALLY via explicit due-to/due-from accounts, or partition one journal (as this page assumes)?"],
+  ["RQ-2","Volkmar","Append-only or mutable?","Are posted rows ever UPDATEd/DELETEd, or are corrections new contra rows? Gates audit, bitemporality, and every as-of reconciliation."],
+  ["RQ-3","Volkmar","How do partial-refund tax reversals reach Stripe Tax today?","mode=partial line-items, flat_amount, or Stripe's recommended full-reverse-and-recreate? The #1 pain; determines what the ledger mirrors and how cross-period refunds behave."],
+  ["RQ-4","Volkmar","Effective vs posted dates.","Do rows carry an economic/effective date distinct from system time? If not, amended returns and dispute-timing P&L are unreconstructable."],
+  ["RQ-5","Volkmar","Webhook idempotency.","What key prevents double-posting on Stripe webhook replays? Silent balance corruption otherwise."],
+  ["RQ-6","Magnus","Credits restoration policy on refunds.","Refund a credit-funded purchase to cash or restore credits? Restore the 2% boost or only cash basis? The $102-vs-$100 leak is a direct margin decision."],
+  ["RQ-7","Magnus","Who eats Stripe's kept fee on refunds?","Stripe never returns the original 2.9% + $0.30 — platform, farmer, or member? Sets whether 5010 is a platform loss or a clawback."],
+  ["RQ-8","Magnus","Contractor clawback policy.","When a drop's volume refunds after the 3% commission accrued or paid, is it reversed? Contractual; affects 2200/5200."],
+  ["RQ-9","Magnus","Hop/driver on refunded deliveries.","Is the delivery fee earned-on-performance (kept) or refunded with the goods? Affects every partial-refund posting."],
+  ["RQ-10","Magnus + Volkmar","Stripe Tax registration status.","Which states are we registered in, and are we configured as 'Tax for marketplaces' (platform = merchant of record) or 'Tax for platforms'? Marketplace-facilitator law puts collection on the platform either way."],
+  ["RQ-11","Volkmar","Destination charges or separate charges+transfers?","And is reverse_transfer / refund_application_fee used on refunds? Note: Stripe does NOT support partial refunds with either flag set (multicapture) — partial unwinds need manual fee refunds + transfer reversals. Changes whether refunds unwind atomically and who covers the negative."],
+  ["RQ-12","Magnus + Volkmar","Token-rail tax.","For Phase-1/2 non-card rails, how is sales tax calculated and remitted with no Stripe Tax? Blocker for the rail transition."]
+];
+
+const SOURCES = [
+  ["Stripe — refunds & fee non-return","https://docs.stripe.com/refunds","Multiple partial refunds up to the captured total; the original processing fee is NOT returned; refunds always come from the platform balance."],
+  ["Stripe Connect — transfer reversals","https://docs.stripe.com/api/transfer_reversals","reverse_transfer is proportional on partial refunds; destination account keeps funds by default (platform covers the negative); debit_negative_balances (US/CA)."],
+  ["Stripe — dispute lifecycle","https://docs.stripe.com/disputes/how-disputes-work","$15 fee on initiation (non-refundable); evidence 7–21d; cardholder window ~120d cards / 180d LPM; funds_withdrawn / funds_reinstated; no refunds while a dispute is open."],
+  ["Stripe Tax — transaction reversals","https://docs.stripe.com/api/tax/transactions/create_reversal","mode=full | partial; line_items[] or flat_amount (proportional); 30-reversal cap; over-reversal errors."],
+  ["Stripe Tax — reports & the partial-reversal caveat","https://docs.stripe.com/tax/reports","Reversals don't adjust taxable amounts or carry a reason; Stripe recommends full-reverse-and-recreate; location reports aggregate transactions AND reversals per filing period."],
+  ["Stripe Tax for marketplaces","https://docs.stripe.com/tax/tax-for-marketplaces","Platform as taxpayer / merchant of record, vs Tax-for-platforms (connected account as taxpayer)."],
+  ["Stripe — balance transaction taxonomy","https://docs.stripe.com/api/balance_transactions/object","The canonical type list a mirror ledger maps; transfer reversals surface as transfer_refund; fee_details[] expands into separate postings."],
+  ["Modern Treasury — Accounting for Developers","https://www.moderntreasury.com/journal/accounting-for-developers-part-i","Debits/credits, account normality, marketplace chart-of-accounts; effective_at vs posted_at bitemporal fields."],
+  ["Modern Treasury — enforcing ledger immutability","https://www.moderntreasury.com/journal/enforcing-immutability-in-your-double-entry-ledger","Append-only; discard-and-recreate on pending→posted; never mutate posted rows."],
+  ["TigerBeetle — two-phase transfers","https://docs.tigerbeetle.com/coding/two-phase-transfers/","Pending/post/void; balanced-by-construction; auth-as-hold with no posted GL impact."],
+  ["Formance — Numscript","https://www.formance.com/blog/engineering/numscript","Declarative balanced money movement; integer math; deterministic rounding; marketplace fee splits."],
+  ["Stripe engineering — Ledger","https://stripe.dev/blog/ledger-stripe-system-for-tracking-and-validating-money-movement","Immutable log; money movement as an observable state machine; double-entry as proof; reconciliation at 5B events/day."],
+  ["Uber — LedgerStore / Gulfstream","https://www.uber.com/blog/how-ledgerstore-supports-trillions-of-indexes/","Immutable ledger; business/event timestamp distinct from system time; sealing."],
+  ["Airbnb — Tracking the Money","https://medium.com/airbnb-engineering/tracking-the-money-scaling-financial-reporting-at-airbnb-6d742b80f040","Event-based subledger generation; 'no money without a source'."],
+  ["Marketplace-facilitator laws (2026)","https://www.numeral.com/blog/marketplace-facilitator","The platform is the legal collector/remitter in effectively every sales-tax state; thresholds vary; aggregate facilitated sales count."],
+  ["Grocery taxability by state (2026)","https://taxhero.net/blog/sales-tax-on-food/","37 states + DC exempt unprepared groceries; ~13 tax them; prepared-food and candy/soda carve-outs; local divergence."],
+  ["Sales-tax refund mechanics","https://www.taxconnex.com/blog-/refunds-and-your-sales-tax-compliance","Returned-merchandise deduction in the current period vs amended return; reverse at the ORIGINAL rate; statutory windows."],
+  ["Bad-debt route for chargebacks","https://msdtaxlaw.com/multi-state-sales-and-use-tax/bad-debts-an-overlooked-sales-tax-exemption/","Chargeback tax recovery runs through the bad-debt deduction, not returned merchandise; limited in some states (CA)."],
+  ["ASC 606 breakage","https://blog.auditanalytics.com/gift-card-breakage-asc-606/","Breakage recognized proportional to actual redemptions."]
+];
+
+/* ============================================================
+   Tiny expression evaluator (same language as ledger_events.json)
+   ============================================================ */
+function round2(x){const s=x<0?-1:1;return s*Math.floor(Math.abs(x)*100+0.5)/100}
+function flat(o,p,out){out=out||{};p=p||'';for(const k in o){const v=o[k];
+  if(v&&typeof v==='object')flat(v,p+k+'.',out);else if(typeof v==='number')out[p+k]=v}return out}
+function makeEnv(params){const env=flat(params);
+  for(const k in DERIVED){env['derived.'+k]=evx(DERIVED[k],env)}return env}
+function evx(expr,env){
+  const js=expr.replace(/[A-Za-z_][A-Za-z0-9_.]*/g,t=>{
+    if(t==='min'||t==='max'||t==='round2')return '__'+t;
+    if(!(t in env))throw new Error('unknown param '+t+' in '+expr);
+    const v=Math.abs(env[t])<1e-9?0:env[t];   // clamp float residue (avoids 1e-15 sci-notation)
+    return '('+v+')';});
+  const chk=js.replace(/__min|__max|__round2/g,'');
+  if(/[^0-9eE+\-*(),.\s]/.test(chk))throw new Error('bad expr '+expr);
+  return Function('__min','__max','__round2','return '+js)(Math.min,Math.max,round2);
+}
+const usd=x=>(x<0?'−$':'$')+Math.abs(x).toFixed(2);
+const ACC={};ACCOUNTS.forEach(a=>ACC[a[0]]=a[1]);
+const accName=c=>c+' '+(ACC[c]||c);
+
+/* ============================================================
+   RENDER
+   ============================================================ */
+document.getElementById('principles').innerHTML =
+  PRINCIPLES.map(p=>`<li><b>${p[0]}</b> ${p[1]}</li>`).join('');
+
+document.querySelector('#tbl-h1 tbody').innerHTML =
+  LEDGERS.map(l=>`<tr><td class="l"><span class="lchip ${l.id}">${l.id}</span></td>
+  <td class="l"><b>${l.name}</b></td><td class="l">${l.kind}</td><td class="l" style="text-align:left">${l.evidence}</td></tr>`).join('');
+
+document.querySelector('#tbl-coa tbody').innerHTML =
+  ACCOUNTS.map(a=>`<tr><td class="l num">${a[0]}</td><td class="l">${a[1]}</td>
+  <td class="l">${a[2]}</td><td class="num">${a[3]}</td>
+  <td><span class="lchip ${a[4]}">${a[4]}</span></td>
+  <td class="l" style="text-align:left;font-size:12.5px;color:var(--ink-fade)">${a[5]}</td></tr>`).join('');
+const tally={};ACCOUNTS.forEach(a=>tally[a[4]]=(tally[a[4]]||0)+1);
+document.getElementById('tally').textContent =
+  Object.entries(tally).map(([k,v])=>`${k}:${v}`).join(' · ')+` · total ${ACCOUNTS.length}`;
+
+const env=makeEnv(PARAMS);
+document.getElementById('p-basket').textContent=PARAMS.basket.toFixed(0);
+document.getElementById('p-tax').textContent=(PARAMS.taxRate*100).toFixed(0)+'%';
+document.getElementById('p-take').textContent=(PARAMS.takePct*100).toFixed(0)+'%';
+
+/* worked posting tables — computed from the same rules the simulator runs */
+function postTable(title, note, rows, crossLabel, crossVal){
+  let dr=0;
+  const body=rows.map(r=>{const amt=evx(r[2],env);dr+=amt;
+    return `<tr><td class="l num">${accName(r[0])}</td><td class="l num">${accName(r[1])}</td>
+    <td class="num">${usd(amt)}</td><td class="l" style="text-align:left;font-size:12px;color:var(--ink-fade)">${r[3]}</td></tr>`}).join('');
+  return `<div class="panel"><h3>${title}</h3>
+  <table><thead><tr><th class="l">debit</th><th class="l">credit</th><th>amount</th><th class="l">memo</th></tr></thead>
+  <tbody>${body}<tr class="total"><td class="l" colspan="2">${crossLabel}</td><td class="num">${usd(crossVal!==undefined?crossVal:dr)}</td><td></td></tr></tbody></table>
+  ${note?`<p class="cite" style="margin:10px 0 0">${note}</p>`:''}</div>`;
+}
+const g=env['derived.gross'], fee=env['derived.stripeFee'], f=PARAMS.refundFraction;
+
+document.getElementById('fwd-tables').innerHTML =
+ postTable('E1 · Order captured & allocated — day 0 · money clock',
+  'One balanced event. Stripe creates the balance_transaction AT CAPTURE with amount/fee/net already split — so the fee is expensed here and <b>1020 mirrors Stripe pending at NET</b> (this is the reconciliation identity, fixed per challenge C-2). The gross is allocated to the cent; distribution margin is the residual plug — $0.00 under the canonical two-hop model, shown, not hidden (C-4). Tax is stamped per line with its original rate & jurisdiction.',
+  [["1020","2100","derived.farmerShare","farmer share (80%)"],
+   ["1020","2150","derived.hopShare","hop / haul share (5% × 2 hops)"],
+   ["1020","4000","derived.take","platform take — DR-1 parametric; the 3% contractor accrual comes OUT of this (E4)"],
+   ["1020","4020","derived.distributionMargin","distribution margin (plug — $0 at 2 hops + 10% take)"],
+   ["1020","4010","fees.txnSurcharge","fixed surcharge"],
+   ["1020","4011","derived.cartSurcharge","cart surcharge 3.15%"],
+   ["1020","2300","derived.tax","sales tax @ original rate"],
+   ["5000","1020","derived.stripeFee","Stripe fee recorded at capture (balance_transaction) — pending mirrors NET"]],
+  'net debit to 1020 = balance_transaction.net', g-fee)
++postTable('E2 · Stripe settles — day 2 (T+2) · money clock',
+  'A pure money-clock move of the NET (the fee was already recorded at capture): 1010 now mirrors Stripe available. Both mirrors reconcile nightly against balance_transactions (fee_details expands into separate postings).',
+  [["1010","1020","derived.gross - derived.stripeFee","net pending → available"]],
+  'crossfoot — pending fully drained', g-fee)
++postTable('E3 · Farmer payout — day 2+ · money clock',
+  'Connect transfer releases the payable. This sets farmer_paid — every unwind afterwards must claw back through a receivable (1200) instead of debiting an empty payable.',
+  [["2100","1010","derived.farmerShare","release farmer payable"]],
+  'farmer receives')
++postTable('E4 · Contractor commission accrues — monthly · book clock',
+  '3% of the HostDrop’s volume accrues to the recruiting contractor, aged over N months — a time-based accrual, structurally unlike farmer payables. This is why L6 is its own book. It is paid OUT of the platform take: at 10% gross the platform’s NET take is ~7% while a drop is in-window — read 4000 and 5200 together (C-13).',
+  [["5200","2200","round2(basket * contractor.cutPct)","3% of drop volume this month, out of the take"]],
+  'accrued this month')
++postTable('E5 · Member buys credits (+2% boost) · credits',
+  'No sales tax at load — stored value is taxed at redemption. The boost posts against its NAMED funding account (DR-2), and the card fee on the load is booked at capture like any charge: the program visibly costs ~5.2% of the load (2% boost + ~3.2% card fee) — fund it from wedge/breakage or it is a loss (C-5). Lots are tracked cash-origin vs boost-origin.',
+  [["1020","2000","basket","cash-origin credits lot"],
+   ["5100","2000","round2(basket * fees.creditBoostPct)","boost-origin lot — funded, visible"],
+   ["5000","1020","derived.loadFee","card fee on the load, recorded at capture"]],
+  'credits liability rises by', 102.00)
++postTable('E6 · Member spends credits · credits',
+  'Credits are FULL-CART TENDER (gift-card style: they pay goods, rail fee, and tax — respec’d per challenge C-1), and the rail is priced honestly: $0.25 transfer leg + 0.25% wedge, NO card components, because there is no card (C-5). <b>This is the Phase-1 fee drop as a posting rule</b>: the same basket costs the member exactly Stripe’s 2.9% + $0.30 less on credits. Tax still assesses at redemption, per line. The tender cannot overdraw the liability — spending requires sufficient balance.',
+  [["2000","2100","derived.farmerShare","farmer share"],
+   ["2000","2150","derived.hopShare","hop share"],
+   ["2000","4000","derived.take","platform take"],
+   ["2000","4020","derived.distributionMargin","distribution margin (plug)"],
+   ["2000","4010","fees.stripeTransferFixed","credits-rail fixed leg $0.25 — transfer only, no card leg"],
+   ["2000","4011","round2(basket * fees.wedgePct)","wedge 0.25% only — no 2.9% passthrough"],
+   ["2000","2300","derived.tax","tax at redemption, per line"]],
+  'crossfoot — credits consumed (creditsGross)', env['derived.creditsGross']);
+
+document.getElementById('unwind-tables').innerHTML =
+ postTable('U1 · Full refund — risk clock · window ≈180d',
+  `Member gets the cart back MINUS the $0.55 — retained on ANY refund, consistently (C-8): it covers Stripe's sunk fixed legs, and Stripe keeps the ENTIRE original ${usd(fee)} fee regardless (already expensed at capture — it simply stays sunk in 5000; the optional 5010 reclass is a net-zero disclosure, not refund economics, C-12). Making the member whole on the $0.55 anyway is a policy choice (RQ-7). Revenue reverses through contra 4900, never by editing originals. Tax reverses at the original rate: same period → returned-merchandise credit; period filed → amended return. If the farmer was already paid, the 2100 leg becomes a 1200 clawback receivable. LOCKED while a dispute is open.`,
+  [["2100","1010","derived.farmerShare","reverse farmer payable (or 1200 if farmer_paid)"],
+   ["2150","1010","derived.hopShare","reverse hop payable (earned-on-performance → RQ-9)"],
+   ["4900","1010","derived.take + derived.distributionMargin + derived.cartSurcharge","contra-revenue: take + margin + cart surcharge — $0.55 RETAINED"],
+   ["2300","1010","derived.tax","reverse tax @ ORIGINAL rate → Stripe Tax mode=full"]],
+  'member receives (gross − $0.55)', g-PARAMS.fees.txnSurcharge)
++postTable(`U2 · PARTIAL refund — the named pain · fraction ${Math.round(f*100)}%`,
+  `The $0.55 is retained (as on any refund — 4010 is never reversed; the rule is structural); everything proportional reverses at the fraction; tax reverses pro-rata AT THE ORIGINAL RATE and reaches Stripe Tax as mode=partial — or full-reverse-and-recreate per Stripe's own recommendation (see the caveat above). Stripe keeps its ENTIRE original fee whatever the fraction. The LEGS ARE AUTHORITATIVE: the customer refund is the sum of per-leg reversals (each rounds independently, matching per-line Stripe Tax amounts), ≈ fraction × (gross − $0.55) within ≤2¢; cumulative refunds are capped at the captured total. Mixed exempt+taxable baskets make the allocation choice load-bearing — a balanced posting is NOT a jurisdictionally correct one; tie refunds to lines (C-7).`,
+  [["2100","1010","round2(refundFraction * derived.farmerShare)","reverse farmer pro-rata (or 1200 if farmer_paid)"],
+   ["2150","1010","round2(refundFraction * derived.hopShare)","reverse hop pro-rata (RQ-9)"],
+   ["4900","1010","round2(refundFraction * (derived.take + derived.distributionMargin))","contra take + margin"],
+   ["4900","1010","round2(refundFraction * derived.cartSurcharge)","contra cart surcharge — fixed $0.55 retained"],
+   ["2300","1010","round2(refundFraction * derived.tax)","reverse tax pro-rata @ original rate → Stripe Tax mode=partial"]],
+  'member receives (Σ of the 1010 legs)',
+  ["round2(refundFraction * derived.farmerShare)","round2(refundFraction * derived.hopShare)",
+   "round2(refundFraction * (derived.take + derived.distributionMargin))",
+   "round2(refundFraction * derived.cartSurcharge)","round2(refundFraction * derived.tax)"]
+   .reduce((s,e)=>s+evx(e,env),0))
++postTable('U3 · Chargeback — funds withdrawn · day ~20 · window 120d',
+  'The network pulls the disputed gross immediately; the $15 fee is expensed on initiation and never comes back, win or lose. The pulled amount is a CONTINGENT RECEIVABLE, not yet a loss. Refunds lock while the dispute is open. Evidence due in 7–21 days; the issuer decides in ~60–75.',
+  [["1210","1010","derived.gross","contingent receivable — funds withdrawn"],
+   ["5020","1010","fees.disputeFee","dispute fee, expensed at initiation"]],
+  'pulled from available', g+PARAMS.fees.disputeFee)
++postTable('U4 · Chargeback — won · day ~80',
+  'Funds reinstated; the receivable clears; the $15 stays sunk. Note the clocks: the win is EFFECTIVE at the charge’s economic date but KNOWN two months later — valid time ≠ transaction time, which is exactly what the two journal timestamps are for.',
+  [["1010","1210","derived.gross","funds reinstated"]],
+  'reinstated', g)
++postTable('U5 · Chargeback — lost · day ~80',
+  'Unwinds like a refund with ONE crucial difference: the tax slice books to 5310 Tax Bad-Debt, never back through 2300 — a chargeback is not a refund, so the returned-merchandise credit is unavailable; the authority still gets paid and the platform eats the tax (bad-debt relief varies, limited in e.g. CA). Goods loss hits contra-revenue/expense; if the farmer was paid, their leg becomes the 1200 receivable.',
+  [["2100","1210","derived.farmerShare","reverse farmer payable (or 1200 if farmer_paid)"],
+   ["2150","1210","derived.hopShare","reverse hop payable"],
+   ["4900","1210","derived.take + derived.distributionMargin + fees.txnSurcharge + derived.cartSurcharge","contra-revenue"],
+   ["5310","1210","derived.tax","tax loss → BAD-DEBT route, not 2300"]],
+  'receivable written off', g)
++postTable('U6 · Clawback recovered — next payout cycle',
+  'The farmer-paid refund left a 1200 receivable; it nets in full against the farmer’s next payable cycle (or a debit_negative_balances bank pull on the connected account). If it proves unrecoverable, the write-off branch books to 5300.',
+  [["2100","1200","round2(refundFraction * derived.farmerShare)","net the receivable (here: from the partial refund) against next payable"]],
+  'recovered');
+
+document.getElementById('clocks').innerHTML =
+  CLOCKS.map(c=>`<div class="clock"><div class="cname">${c.name}</div>
+  <div class="cgate">${c.gate}</div><div class="cinv">${c.inv}</div></div>`).join('');
+
+function hcRow(h,sev){return `<div class="hc"><span class="tag ${sev}">${sev==='bad'?'BLOCKER-DESIGN':sev==='warn'?'HARD':'ANNOYING'}</span>
+  <b> ${h[0]}.</b> ${h[1]}<span class="ans">${h[2]}</span></div>`}
+document.getElementById('hc-blocker').innerHTML=HARD_CASES.blocker.map(h=>hcRow(h,'bad')).join('');
+document.getElementById('hc-hard').innerHTML=HARD_CASES.hard.map(h=>hcRow(h,'warn')).join('');
+document.getElementById('hc-annoying').innerHTML=HARD_CASES.annoying.map(h=>hcRow(h,'dim')).join('');
+
+document.getElementById('rqs').innerHTML =
+  RQS.map(q=>`<li><span class="who">${q[0]} · ${q[1]}</span> — <b>${q[2]}</b> ${q[3]}</li>`).join('');
+
+document.getElementById('src-list').innerHTML =
+  SOURCES.map(s=>`<li><span class="lbl">${s[0]}</span> — ${s[2]}<br><a href="${s[1]}">${s[1]}</a></li>`).join('');
+
+/* CHALLENGES — the adversarial pass, recorded verbatim with dispositions. */
+const CHALLENGES = [
+ {id:"C-1",sev:"blocker",disposition:"concede-and-fix",
+  q:"credits_spend drained the credits liability by full card-rail GROSS ($111.70), so $102 of credits 'bought' a $111.70 basket — economically incoherent, masked by the crossfoot invariant.",
+  a:"Respec'd. Credits are full-cart tender (gift-card style — they legitimately pay goods, fees, and tax), but the credits-rail cart is now priced honestly: goods + $0.25 transfer leg + 0.25% wedge + tax, NO card components — the credits rail IS the Phase-1 fee drop, as a posting rule. And the tender can no longer overdraw: spending requires sufficient balance."},
+ {id:"C-2",sev:"blocker",disposition:"concede-and-fix",
+  q:"1020 was defined at GROSS, but Stripe records amount/fee/net at capture — pending mirrors NET, so the page's own reconciliation premise (Principle 7) was self-contradicting.",
+  a:"Fixed. The fee is now expensed inside the capture event (Dr 5000 / Cr 1020), so 1020 nets to gross − fee = balance_transaction.net, and settle is a pure net move 1020→1010. The mirror invariant states the identity explicitly."},
+ {id:"C-3",sev:"major",disposition:"concede-partial-and-fix",
+  q:"'Six ledgers reconciled via double-entry' was never demonstrated — a partition is one book with colored tags; nothing checked per-ledger or inter-ledger balance; L4 holding 10 of 26 accounts looked gerrymandered.",
+  a:"What a partition CAN honestly demonstrate is now shown live: each book's net position is its implied due-to/due-from against the others, and the six nets sum to zero — displayed per book and checked as a strip invariant in the simulator. Whether Volkmar's six balance internally via explicit due-to/due-from accounts is precisely what RQ-1 now asks. 1210 was re-tagged L4→L1 (withdrawn cash belongs in the cash book), trimming the grab-bag to 9."},
+ {id:"C-4",sev:"major",disposition:"concede-and-fix",
+  q:"hopCount=1 contradicted the canonical 2-hop model; under the documented default the Distribution Margin (4020) is exactly $0 — a fabricated revenue line; the audit sweeps never varied hops.",
+  a:"Default is now the canonical 2 hops, under which 4020 posts $0.00 — shown, not hidden, and the account is re-annotated (exists for self-haul/one-hop and tiered templates). A hops control was added; infeasible combos (80% + hops + take > 100%) refuse to post — the same tension take_rate_math surfaces. Sweeps vary hop count."},
+ {id:"C-5",sev:"major",disposition:"concede-and-fix",
+  q:"The credits load's Stripe fee was never booked (a silent ~5% program cost), and the 2.9%-passthrough cart surcharge was still charged on the 'fee-free' credits rail.",
+  a:"Both fixed. credits_purchase books the card fee on the load at capture — the program visibly costs ~5.2% of load (2% boost + ~3.2% fee): fund it or it's a loss. credits_spend charges only $0.25 + 0.25% wedge — no passthrough where there is no Stripe cost."},
+ {id:"C-6",sev:"major",disposition:"concede-and-fix",
+  q:"The simulator over-refunded past the captured total (150%+ refunds) with the strip still green — balance ≠ correctness, contradicting Stripe's caps.",
+  a:"Cumulative refunded fraction is now tracked: partial posts min(slider, remaining) and disables at the cap; full refund requires an unrefunded charge; a fully-refunded charge can no longer be disputed. The strip now says what green means — and what it doesn't."},
+ {id:"C-7",sev:"major",disposition:"concede-partial-and-fix",
+  q:"A single tax rate reversed uniformly across the refund fraction is exactly the mixed-basket misallocation R3 warns about; the green ✓ blessed jurisdictionally wrong reversals.",
+  a:"Per-line, per-jurisdiction simulation is out of demo scope by design — the misleading part was the unqualified ✓. The strip and the refund controls now state: balanced ≠ tax-correct; real refunds tie to lines; refunding an exempt line reverses $0 tax. Line-tying with stored original rates was already the spec rule."},
+ {id:"C-8",sev:"major",disposition:"concede-and-fix",
+  q:"Full refund returned the $0.55 while a 100% partial retained it — a $0.55 cliff; and full refund both returned the surcharge AND wrote off the whole fee, double-eating the fixed leg.",
+  a:"The $0.55 is now retained on ANY refund, consistent with its rationale (it covers Stripe's sunk fixed legs — sunk on refund too). Full refund ≡ partial at 100% (modulo per-leg rounding). Making the member whole anyway is flagged as a policy choice for Magnus."},
+ {id:"C-9",sev:"major",disposition:"concede-and-fix",
+  q:"The hard-case catalog missed Stripe's multicapture incompatibility (no partial refunds with refund_application_fee / reverse_transfer — manual unwinds required), SNAP/EBT tender, and tips/gratuities.",
+  a:"All three added — the Connect partial-refund constraint as HARD (it sits directly on the named-pain workflow), SNAP/EBT and gratuities as ANNOYING. RQ-11 now surfaces the incompatibility explicitly. The catalog is 25 items."},
+ {id:"C-10",sev:"minor",disposition:"concede-partial-and-fix",
+  q:"Five 'active' accounts were never posted by any event, and 5300's stated purpose contradicted chargeback_lost, which routes goods loss through 4900.",
+  a:"5300's purpose was wrong and is now 'write-off when a clawback receivable proves unrecoverable' — the policy branch chargeback_lost now references. 1000/1050/1100/4030 are deliberately chartered ahead of their flows, and the chart now says which demo events exercise what."},
+ {id:"C-11",sev:"minor",disposition:"concede-partial-and-fix",
+  q:"The spec preaches effective_at + posted_at from day one, but the demo events carried no timestamps, and global farmer_paid/dispute_open flags conflate concurrent orders.",
+  a:"Conceded as a demo limitation, now practiced where cheap: every journal entry displays its effective day and posted sequence (visibly divergent on dispute outcomes), and the page states its scope — one canonical order per scenario, reset to restart. The §6 row schema remains the spec."},
+ {id:"C-12",sev:"minor",disposition:"concede-and-fix",
+  q:"The 5010/5000 reclass was a net-zero shuffle between two expense accounts presented as refund economics, and prorating it implied a fractional fee loss when Stripe keeps the whole original fee.",
+  a:"The reclass legs are removed from the refund events — the fee is fully expensed at capture (per C-2) and simply stays sunk; the narratives say so. 5010 remains chartered as an OPTIONAL net-zero disclosure reclass, labeled as exactly that."},
+ {id:"C-13",sev:"minor",disposition:"concede-and-fix",
+  q:"4000 read as a 10% take while the contractor 3% comes out of it — net ~7% was never shown next to it.",
+  a:"The capture take memo and the contractor-accrual narrative now cross-reference each other and state net take = 4000 − 5200 while a drop is in-window, matching take_rate_params."}
+];
+if(CHALLENGES.length){
+  document.getElementById('challenges').innerHTML = CHALLENGES.map(c=>
+    `<div class="hc"><span class="tag ${c.sev==='blocker'?'bad':c.sev==='major'?'warn':'dim'}">${c.id} · ${c.sev.toUpperCase()}</span>
+     <b> ${c.q}</b><span class="ans"><b>${c.disposition.toUpperCase()}</b> — ${c.a}</span></div>`).join('');
+}
+</script>
+</body>
+</html>

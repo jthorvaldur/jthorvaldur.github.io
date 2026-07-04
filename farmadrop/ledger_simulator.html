@@ -1,0 +1,566 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>FARMER DROP — Ledger Posting Simulator</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,500;0,9..144,600;0,9..144,700;1,9..144,400&family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;0,6..72,600;1,6..72,400&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --parchment:#faf6ec; --parchment-2:#f3ecda; --parchment-3:#ece2c9;
+  --loam:#1e3a2a; --loam-soft:#3a5343; --ink-fade:#6c7b6a;
+  --honey:#d9930d; --honey-deep:#b8790a;
+  --rust:#b23a1e; --rust-deep:#8f2c14;
+  --line:#c9bd9c; --line-soft:#ddd2b4;
+  --paper-card:#fffdf6;
+  --conceptual:#2f6b4a; --business:#7a5b8f; --token:#d9930d; --data:#2b6d84;
+  --good:#2f6b4a; --warn:#b8790a; --bad:#8f2c14;
+}
+*{box-sizing:border-box}
+html,body{margin:0;background:var(--parchment);color:var(--loam);
+  font-family:"Newsreader",Georgia,serif;font-size:16px;line-height:1.5}
+.grain{position:fixed;inset:0;pointer-events:none;z-index:0;opacity:.05;mix-blend-mode:multiply}
+.fieldrows{position:fixed;inset:0;pointer-events:none;z-index:0;opacity:.35;
+  background:
+    repeating-linear-gradient(115deg, transparent 0 46px, rgba(30,58,42,.028) 46px 47px),
+    radial-gradient(140% 120% at 12% 8%, #fdfbf3 0%, var(--parchment) 42%, var(--parchment-2) 100%);}
+#app{position:relative;z-index:1;max-width:1280px;margin:0 auto;padding:0 22px 90px}
+header{padding:22px 0 14px;border-bottom:1.5px solid var(--line);
+  display:flex;align-items:flex-end;justify-content:space-between;gap:24px;flex-wrap:wrap;
+  position:sticky;top:0;z-index:20;
+  background:linear-gradient(180deg, var(--parchment) 55%, rgba(250,246,236,.85));
+  backdrop-filter:blur(2px)}
+.brand h1{font-family:"Fraunces",serif;font-weight:600;
+  font-size:clamp(23px,3vw,38px);line-height:.96;margin:0;letter-spacing:-.01em}
+.brand h1 .drop{color:var(--honey-deep);font-style:italic}
+.brand .kicker{font-family:"IBM Plex Mono",monospace;font-size:11px;letter-spacing:.2em;
+  text-transform:uppercase;color:var(--ink-fade);margin-top:8px}
+nav{display:flex;gap:6px;align-items:center;flex-wrap:wrap}
+nav a{font-family:"IBM Plex Mono",monospace;font-size:12px;text-decoration:none;
+  color:var(--loam-soft);border:1px solid var(--line);border-radius:999px;
+  padding:7px 14px;background:var(--paper-card);transition:all .18s;white-space:nowrap}
+nav a:hover{background:var(--loam);color:var(--parchment);border-color:var(--loam)}
+nav a.here{background:var(--loam);color:var(--parchment);border-color:var(--loam)}
+.banner{margin:20px 0 8px;border:2px solid var(--honey-deep);border-radius:8px;
+  background:linear-gradient(180deg,#fdf6e4,#f8eccf);padding:13px 18px;
+  display:flex;gap:14px;align-items:flex-start}
+.banner .flag{font-family:"IBM Plex Mono",monospace;font-weight:600;font-size:11px;
+  letter-spacing:.14em;color:#fff;background:var(--honey-deep);border-radius:5px;
+  padding:5px 9px;white-space:nowrap;margin-top:2px}
+.banner p{margin:0;font-size:14.5px;color:var(--loam-soft)}
+.banner b{color:var(--loam)}
+.controls{position:sticky;top:78px;z-index:15;margin:16px 0 6px;
+  background:var(--paper-card);border:1.5px solid var(--line);border-radius:10px;
+  box-shadow:0 1px 0 var(--line),0 16px 34px -26px rgba(30,58,42,.5);
+  padding:13px 18px}
+.controls .chead{font-family:"IBM Plex Mono",monospace;font-size:10px;letter-spacing:.16em;
+  text-transform:uppercase;color:var(--ink-fade);margin-bottom:10px;display:flex;
+  justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap}
+.ctrl-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:12px 20px}
+.ctrl label{font-family:"IBM Plex Mono",monospace;font-size:11px;
+  color:var(--loam-soft);letter-spacing:.03em;margin-bottom:4px;
+  display:flex;justify-content:space-between;align-items:baseline}
+.ctrl label .val{font-weight:600;color:var(--honey-deep);font-size:13px}
+input[type=range]{width:100%;accent-color:var(--honey-deep);height:20px;cursor:pointer}
+.ctrl .sub{font-size:10px;color:var(--ink-fade);margin-top:1px;font-family:"IBM Plex Mono",monospace}
+.reset{font-family:"IBM Plex Mono",monospace;font-size:10.5px;cursor:pointer;
+  border:1px solid var(--line);background:var(--parchment-2);border-radius:6px;
+  padding:5px 10px;color:var(--loam-soft)}
+.reset:hover{border-color:var(--loam-soft)}
+.modelwarn{display:none;margin-top:9px;font-family:"IBM Plex Mono",monospace;font-size:11px;
+  color:var(--rust-deep);border-left:3px solid var(--rust);padding-left:9px}
+.modelwarn.on{display:block}
+/* invariant strip */
+.strip{display:grid;grid-template-columns:repeat(auto-fit,minmax(135px,1fr));gap:1px;
+  background:var(--line-soft);border:1px solid var(--line);border-radius:8px;overflow:hidden;margin:14px 0}
+.strip .cell{background:var(--paper-card);padding:11px 14px}
+.strip .k{font-family:"IBM Plex Mono",monospace;font-size:9.5px;letter-spacing:.1em;
+  text-transform:uppercase;color:var(--ink-fade)}
+.strip .v{font-family:"Fraunces",serif;font-weight:600;font-size:20px;line-height:1.1;margin-top:3px}
+.strip .v.bad{color:var(--rust-deep)} .strip .v.good{color:var(--good)}
+.strip .note{font-size:10px;color:var(--ink-fade);margin-top:2px;font-family:"IBM Plex Mono",monospace}
+.strip.fail{outline:3px solid var(--rust)}
+/* event buttons */
+.evgroups{display:flex;flex-direction:column;gap:10px;margin:14px 0}
+.evgroup{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.evgroup .glabel{font-family:"IBM Plex Mono",monospace;font-size:10px;letter-spacing:.14em;
+  text-transform:uppercase;color:var(--ink-fade);width:86px;flex:none}
+button.ev{font-family:"IBM Plex Mono",monospace;font-size:12px;cursor:pointer;
+  border:1.5px solid var(--loam-soft);background:var(--paper-card);color:var(--loam);
+  border-radius:8px;padding:8px 13px;transition:all .15s;box-shadow:0 2px 0 var(--line)}
+button.ev:hover:not(:disabled){background:var(--loam);color:var(--parchment)}
+button.ev:active:not(:disabled){transform:translateY(1px);box-shadow:none}
+button.ev:disabled{opacity:.38;cursor:not-allowed;border-style:dashed}
+button.ev.unwind{border-color:var(--rust);color:var(--rust-deep)}
+button.ev.unwind:hover:not(:disabled){background:var(--rust);color:#fff}
+button.ev.credits{border-color:var(--honey-deep);color:var(--honey-deep)}
+button.ev.credits:hover:not(:disabled){background:var(--honey-deep);color:#fff}
+button.ev .d{font-size:9.5px;color:var(--ink-fade)}
+button.ev:hover:not(:disabled) .d{color:inherit;opacity:.75}
+.taxnote{font-family:"IBM Plex Mono",monospace;font-size:10px;color:var(--warn);
+  letter-spacing:.02em;margin-left:86px}
+/* time ruler */
+.ruler{position:relative;height:64px;margin:18px 6px 6px;border-bottom:2px solid var(--line)}
+.ruler .tick{position:absolute;bottom:-2px;transform:translateX(-50%);text-align:center}
+.ruler .tick .stem{width:2px;height:12px;background:var(--line);margin:0 auto}
+.ruler .tick .lab{font-family:"IBM Plex Mono",monospace;font-size:9px;letter-spacing:.03em;
+  color:var(--ink-fade);white-space:nowrap;margin-top:3px}
+.ruler .tick.hot .stem{background:var(--rust);height:20px}
+.ruler .tick.hot .lab{color:var(--rust-deep);font-weight:600}
+.ruler .zone{position:absolute;bottom:0;height:7px;border-radius:3px;opacity:.5}
+.ruler .zlab{position:absolute;font-family:"IBM Plex Mono",monospace;font-size:8.5px;color:var(--ink-fade)}
+/* layout: ledgers + journal */
+.cols{display:grid;grid-template-columns:1.05fr .95fr;gap:16px;margin-top:8px}
+@media(max-width:980px){.cols{grid-template-columns:1fr}}
+.ledgers{display:grid;grid-template-columns:1fr 1fr;gap:12px;align-content:start}
+@media(max-width:620px){.ledgers{grid-template-columns:1fr}}
+.lbook{background:var(--paper-card);border:1px solid var(--line);border-radius:8px;overflow:hidden;
+  box-shadow:0 1px 0 var(--line),0 12px 26px -24px rgba(30,58,42,.5)}
+.lbook .lhead{display:flex;justify-content:space-between;align-items:center;gap:8px;
+  padding:8px 12px;border-bottom:1.5px solid var(--line);background:var(--parchment-2)}
+.lbook .lhead .nm{font-family:"Fraunces",serif;font-weight:600;font-size:15px;flex:1}
+.lbook .lhead .bal{font-family:"IBM Plex Mono",monospace;font-size:11px;font-weight:600;white-space:nowrap}
+.lbook .lhead .bal .lb{font-size:8.5px;color:var(--ink-fade);font-weight:400;display:block;text-align:right}
+.lbook table{width:100%;border-collapse:collapse;font-size:12px}
+.lbook td{padding:4px 12px;border-bottom:1px dotted var(--line-soft)}
+.lbook td.num{font-family:"IBM Plex Mono",monospace;text-align:right}
+.lbook td.zero{color:var(--ink-fade);opacity:.55}
+.lbook td.neg{color:var(--rust-deep);font-weight:600}
+.lchip{display:inline-block;font-family:"IBM Plex Mono",monospace;font-weight:600;font-size:10px;
+  padding:2px 7px;border-radius:5px;color:#fff;letter-spacing:.05em}
+.lchip.L1{background:var(--data)} .lchip.L2{background:var(--honey-deep)}
+.lchip.L3{background:var(--conceptual)} .lchip.L4{background:var(--business)}
+.lchip.L5{background:var(--rust)} .lchip.L6{background:var(--loam)}
+/* journal */
+.journal{background:var(--paper-card);border:1px solid var(--line);border-radius:8px;
+  box-shadow:0 1px 0 var(--line),0 12px 26px -24px rgba(30,58,42,.5);
+  display:flex;flex-direction:column;max-height:760px}
+.journal .jhead{padding:10px 14px;border-bottom:1.5px solid var(--line);
+  font-family:"IBM Plex Mono",monospace;font-size:10.5px;letter-spacing:.16em;
+  text-transform:uppercase;color:var(--ink-fade);display:flex;justify-content:space-between;background:var(--parchment-2)}
+.journal .jbody{overflow-y:auto;padding:6px 0}
+.jev{padding:8px 14px 4px;border-bottom:1px solid var(--line-soft)}
+.jev .jt{font-family:"Fraunces",serif;font-weight:600;font-size:14.5px;display:flex;gap:8px;align-items:baseline;flex-wrap:wrap}
+.jev .jt .meta{font-family:"IBM Plex Mono",monospace;font-weight:400;font-size:10px;color:var(--ink-fade)}
+.jev.unwind .jt{color:var(--rust-deep)}
+.jev table{width:100%;border-collapse:collapse;font-size:11.5px;margin:4px 0 6px}
+.jev td{padding:2px 4px;font-family:"IBM Plex Mono",monospace}
+.jev td.amt{text-align:right;white-space:nowrap}
+.jev td.memo{font-family:"Newsreader",serif;color:var(--ink-fade);font-size:12px}
+.jev.unwind td{color:var(--rust-deep)}
+.jempty{padding:30px 20px;text-align:center;color:var(--ink-fade);font-size:14px}
+footer{margin-top:46px;padding:16px 0;border-top:1.5px solid var(--line);
+  font-family:"IBM Plex Mono",monospace;font-size:10.5px;color:var(--ink-fade);line-height:1.6}
+footer .warn{color:var(--rust-deep)}
+.mono{font-family:"IBM Plex Mono",monospace}
+</style>
+</head>
+<body>
+<svg class="grain"><filter id="grainf"><feTurbulence type="fractalNoise" baseFrequency="0.9" numOctaves="3" stitchTiles="stitch"/><feColorMatrix type="saturate" values="0"/></filter><rect width="100%" height="100%" filter="url(#grainf)"/></svg>
+<div class="fieldrows"></div>
+
+<div id="app">
+  <header>
+    <div class="brand">
+      <h1>FARMER <span class="drop">DROP</span> — Posting Simulator</h1>
+      <div class="kicker">One canonical order · balanced entries across six books · history never mutates</div>
+    </div>
+    <nav>
+      <a href="index.html">index</a>
+      <a href="ledger_structure.html">the books</a>
+      <a href="ledger_simulator.html" class="here">simulator</a>
+      <a href="take_rate_math.html">take-rate</a>
+      <a href="transfer_rails.html">rails</a>
+    </nav>
+  </header>
+
+  <div class="banner">
+    <div class="flag">LIVE · SELF-AUDITING</div>
+    <p>Every button appends <b>balanced double-entries</b> interpreted from the declarative rules in <span class="mono">ledger_events.json</span> — the same rules rendered as tables on <a href="ledger_structure.html" style="color:inherit"><b>The Books</b></a>. Unwinds post <b style="color:var(--rust-deep)">reversing entries in rust</b>; nothing is ever edited. The scenario tracks <b>one canonical order</b> (reset to restart); refunds are <b>capped at the captured total</b>; Stripe's fee is recorded <b>at capture</b>, so the 1020/1010 books mirror Stripe pending/available exactly. Each book header shows its <b>net position — the implied due-to/due-from vs the other books; the six nets sum to zero</b>. Take-% is DR-1-open and parametric; the six-ledger grouping is ⚠ inferred. Adversarial pass C-1…C-13 answered on <a href="ledger_structure.html#s9" style="color:inherit"><b>The Books §9</b></a>.</p>
+  </div>
+
+  <div class="controls">
+    <div class="chead"><span>Scenario parameters — postings recompute; the journal keeps history</span>
+      <button class="reset" id="reset">reset scenario &amp; clear journal</button></div>
+    <div class="ctrl-grid">
+      <div class="ctrl"><label>Basket $ <span class="val" id="v-basket"></span></label>
+        <input type="range" id="s-basket" min="20" max="250" step="5">
+        <div class="sub">goods only; surcharges &amp; tax on top</div></div>
+      <div class="ctrl"><label>Tax rate <span class="val" id="v-tax"></span></label>
+        <input type="range" id="s-tax" min="0" max="0.12" step="0.0025">
+        <div class="sub">demo rate — real tax is per line, per jurisdiction</div></div>
+      <div class="ctrl"><label>Take % (DR-1) <span class="val" id="v-take"></span></label>
+        <input type="range" id="s-take" min="0.07" max="0.12" step="0.005">
+        <div class="sub">band 7–12% · centered 10% · UNDECIDED</div></div>
+      <div class="ctrl"><label>Hops <span class="val" id="v-hops"></span></label>
+        <input type="range" id="s-hops" min="0" max="2" step="1">
+        <div class="sub">canonical 2 — at 2 hops + 10% take, margin = $0</div></div>
+      <div class="ctrl"><label>Refund fraction <span class="val" id="v-frac"></span></label>
+        <input type="range" id="s-frac" min="0.05" max="1" step="0.05">
+        <div class="sub">partial posts min(slider, remaining cap)</div></div>
+    </div>
+    <div class="modelwarn" id="modelwarn">model does not close: farmer 80% + hops + take &gt; 100% — capture refuses to post (see take-rate page for the two-hop tension)</div>
+  </div>
+
+  <div class="strip" id="strip">
+    <div class="cell"><div class="k">Σ debits</div><div class="v" id="i-dr">$0.00</div></div>
+    <div class="cell"><div class="k">Σ credits</div><div class="v" id="i-cr">$0.00</div></div>
+    <div class="cell"><div class="k">Books balance</div><div class="v" id="i-bal">—</div><div class="note">balanced ≠ tax-correct — lines rule</div></div>
+    <div class="cell"><div class="k">Σ book nets</div><div class="v" id="i-nets">—</div><div class="note">six due-to/due-froms ≡ 0</div></div>
+    <div class="cell"><div class="k">Refunded</div><div class="v" id="i-ref">0%</div><div class="note">capped at captured total</div></div>
+    <div class="cell"><div class="k">farmer_paid</div><div class="v" id="i-fp">no</div><div class="note">unwinds claw via 1200 when yes</div></div>
+    <div class="cell"><div class="k">dispute_open</div><div class="v" id="i-do">no</div><div class="note">refunds lock while open</div></div>
+    <div class="cell"><div class="k">Self-audit</div><div class="v" id="i-audit">…</div><div class="note" id="i-audit-n"></div></div>
+  </div>
+
+  <div class="evgroups">
+    <div class="evgroup"><span class="glabel">forward</span>
+      <button class="ev" data-ev="capture">1 · capture &amp; allocate <span class="d">day 0 · fee at capture</span></button>
+      <button class="ev" data-ev="settle">2 · settle <span class="d">T+2 · net only</span></button>
+      <button class="ev" data-ev="farmer_payout">3 · farmer payout <span class="d">sets farmer_paid</span></button>
+      <button class="ev" data-ev="contractor_accrual">4 · contractor accrual <span class="d">out of the take</span></button>
+    </div>
+    <div class="evgroup"><span class="glabel">credits</span>
+      <button class="ev credits" data-ev="credits_purchase">buy credits <span class="d">+2% boost · load fee booked</span></button>
+      <button class="ev credits" data-ev="credits_spend">spend credits <span class="d">wedge-only rail · needs balance</span></button>
+    </div>
+    <div class="evgroup"><span class="glabel">unwind</span>
+      <button class="ev unwind" data-ev="full_refund">full refund <span class="d">$0.55 retained</span></button>
+      <button class="ev unwind" data-ev="partial_refund">partial refund <span class="d">the named pain</span></button>
+      <button class="ev unwind" data-ev="clawback_recovery">clawback recovery <span class="d">drains 1200</span></button>
+      <button class="ev unwind" data-ev="chargeback_funds_withdrawn">chargeback <span class="d">locks refunds</span></button>
+      <button class="ev unwind" data-ev="chargeback_won">dispute won <span class="d">day ~80</span></button>
+      <button class="ev unwind" data-ev="chargeback_lost">dispute lost <span class="d">tax → bad debt</span></button>
+    </div>
+    <div class="taxnote">⚠ uniform pro-rata demo — real refunds tie to LINES: refunding an exempt line (tomatoes) reverses $0 tax; a balanced posting is not a jurisdictionally correct one.</div>
+  </div>
+
+  <div class="ruler" id="ruler"></div>
+
+  <div class="cols">
+    <div class="ledgers" id="ledgers"></div>
+    <div class="journal">
+      <div class="jhead"><span>Journal — append-only</span><span id="j-count">0 events</span></div>
+      <div class="jbody" id="jbody"><div class="jempty">Fire <b>capture</b> to start the canonical order, then walk it forward — or straight into the unwinds. Try: capture → settle → farmer payout → partial refund (watch the 1200 clawback receivable), or capture → chargeback → lost (watch tax route to 5310, not 2300).</div></div>
+    </div>
+  </div>
+
+  <footer>
+    Interpreter over <b>ledger_events.json</b> v0.2 — declarative postings {dr, cr, amount_expr}; spec engine mandates integer cents (round2 = nearest cent, ties away from zero).
+    Journal entries show <b>eff dN</b> (effective/economic day) and <b>#N</b> (posted sequence) — the two clocks of §6.
+    The refund the member receives is the Σ of per-leg reversals — legs are authoritative, matching per-line Stripe Tax reversal amounts.
+    Companion spec + answered adversarial challenges: <a href="ledger_structure.html" style="color:inherit">ledger_structure.html</a>.
+    <span class="warn">⚠ six-ledger grouping inferred (RQ-1) · DR-1 take-% open · one canonical order per scenario · demo tax rate stands in for per-line jurisdiction resolution.</span>
+  </footer>
+</div>
+
+<script>
+/* ============ shared with ledger_structure.html / ledger_events.json (v0.2) ============ */
+const PARAMS_DEFAULT = {
+  basket: 100.0, taxRate: 0.08, refundFraction: 0.5, hopCount: 2,
+  farmerPct: 0.8, takePct: 0.1,
+  fees: { txnSurcharge: 0.55, stripePct: 0.029, stripeTxnFixed: 0.30,
+          stripeTransferFixed: 0.25, cartSurchargePct: 0.0315,
+          wedgePct: 0.0025, creditBoostPct: 0.02, disputeFee: 15.0 },
+  hops: { perHopPct: 0.05 }, contractor: { cutPct: 0.03, windowMonths: 6 }
+};
+const DERIVED = {
+  cartSurcharge: "round2(basket * fees.cartSurchargePct)",
+  tax: "round2(basket * taxRate)",
+  gross: "basket + fees.txnSurcharge + derived.cartSurcharge + derived.tax",
+  stripeFee: "round2(derived.gross * fees.stripePct + fees.stripeTxnFixed)",
+  farmerShare: "round2(basket * farmerPct)",
+  hopShare: "round2(basket * hops.perHopPct * hopCount)",
+  take: "round2(basket * takePct)",
+  distributionMargin: "basket - derived.farmerShare - derived.hopShare - derived.take",
+  creditsGross: "basket + fees.stripeTransferFixed + round2(basket * fees.wedgePct) + derived.tax",
+  loadFee: "round2(basket * fees.stripePct + fees.stripeTxnFixed)"
+};
+const ACCOUNTS = {
+  "1000":["Bank – Operating","Dr","L1"], "1010":["Stripe Available","Dr","L1"],
+  "1020":["Stripe Pending","Dr","L1"], "1050":["Rail Wallet (token)","Dr","L1"],
+  "1100":["Orders Clearing","Dr","L1"], "1210":["Dispute Receivable","Dr","L1"],
+  "1200":["Farmer Clawback Recv.","Dr","L3"], "2000":["Member Credits","Cr","L2"],
+  "2100":["Farmer Payable","Cr","L3"], "2150":["Hop Payable","Cr","L6"],
+  "2200":["Contractor Accrual","Cr","L6"], "2300":["Sales Tax Payable","Cr","L5"],
+  "4000":["Platform Take Rev","Cr","L4"], "4010":["Fixed Surcharge Rev","Cr","L4"],
+  "4011":["Cart Surcharge Rev","Cr","L4"], "4020":["Distribution Margin","Cr","L4"],
+  "4030":["Credits Breakage Rev","Cr","L2"], "4900":["Refunds & Returns ⊖","Dr","L4"],
+  "5000":["Stripe Fee Exp","Dr","L4"], "5010":["Refund Fee Loss (opt.)","Dr","L4"],
+  "5020":["Dispute Fee Exp","Dr","L4"], "5100":["Credits Boost Exp","Dr","L2"],
+  "5200":["Contractor Comm. Exp","Dr","L6"], "5300":["Clawback Write-off","Dr","L4"],
+  "5310":["Tax Bad-Debt Exp","Dr","L5"]
+};
+const LEDGER_META = {
+  L1:{name:"L1 · Cash & Stripe Balance", accs:["1000","1010","1020","1050","1100","1210"]},
+  L2:{name:"L2 · Member Credits", accs:["2000","5100","4030"]},
+  L3:{name:"L3 · Farmer Payables", accs:["2100","1200"]},
+  L4:{name:"L4 · Platform Revenue & Fees", accs:["4000","4010","4011","4020","4900","5000","5010","5020","5300"]},
+  L5:{name:"L5 · Tax", accs:["2300","5310"]},
+  L6:{name:"L6 · Commissions & Hops", accs:["2150","2200","5200"]}
+};
+/* postings: [dr, cr, amount_expr, memo]; branches(farmer_paid) for flag-dependent legs */
+const EVENTS = {
+  capture:{label:"Order captured & allocated",phase:"forward",day:0,singleShot:true,needsClose:true,
+    postings:[["1020","2100","derived.farmerShare","farmer share"],
+      ["1020","2150","derived.hopShare","hop share"],
+      ["1020","4000","derived.take","platform take (DR-1) — contractor 3% comes out of this"],
+      ["1020","4020","derived.distributionMargin","distribution margin (plug — $0 at 2 hops + 10%)"],
+      ["1020","4010","fees.txnSurcharge","fixed surcharge"],
+      ["1020","4011","derived.cartSurcharge","cart surcharge 3.15%"],
+      ["1020","2300","derived.tax","tax @ original rate"],
+      ["5000","1020","derived.stripeFee","Stripe fee AT CAPTURE — 1020 mirrors pending NET"]],
+    cross:(e,env)=>[round2(sumSide(e,'dr','1020')-sumSide(e,'cr','1020')),'derived.gross - derived.stripeFee']},
+  settle:{label:"Stripe settles (T+2)",phase:"forward",day:2,singleShot:true,requiresPrior:"capture",
+    postings:[["1010","1020","derived.gross - derived.stripeFee","net pending → available"]],
+    cross:(e,env)=>[sumSide(e,'cr','1020'),'derived.gross - derived.stripeFee']},
+  farmer_payout:{label:"Farmer payout (Connect)",phase:"forward",day:2,singleShot:true,requiresPrior:"settle",sets:{farmer_paid:true},
+    postings:[["2100","1010","derived.farmerShare","release farmer payable"]]},
+  contractor_accrual:{label:"Contractor commission accrues",phase:"forward",day:30,
+    postings:[["5200","2200","round2(basket * contractor.cutPct)","3% of drop volume, OUT of the take — net take = 4000 − 5200"]]},
+  credits_purchase:{label:"Member buys credits (+2%)",phase:"credits",day:0,
+    postings:[["1020","2000","basket","cash-origin credits lot"],
+      ["5100","2000","round2(basket * fees.creditBoostPct)","boost lot — funded (DR-2)"],
+      ["5000","1020","derived.loadFee","card fee on the load — the program's honest cost"]]},
+  credits_spend:{label:"Member spends credits",phase:"credits",day:0,needsClose:true,
+    needsBalance:{acc:"2000",expr:"derived.creditsGross"},
+    postings:[["2000","2100","derived.farmerShare","farmer share"],
+      ["2000","2150","derived.hopShare","hop share"],
+      ["2000","4000","derived.take","platform take"],
+      ["2000","4020","derived.distributionMargin","distribution margin (plug)"],
+      ["2000","4010","fees.stripeTransferFixed","credits-rail fixed $0.25 — transfer leg only"],
+      ["2000","4011","round2(basket * fees.wedgePct)","wedge 0.25% only — no 2.9% passthrough"],
+      ["2000","2300","derived.tax","tax at redemption"]],
+    cross:(e,env)=>[sumSide(e,'dr','2000'),'derived.creditsGross']},
+  full_refund:{label:"Full refund",phase:"unwind",day:5,lockedBy:"dispute_open",refundCap:"full",requiresPrior:"capture",
+    branches:f=>[[f?"1200":"2100","1010","derived.farmerShare",f?"farmer paid → clawback receivable":"reverse farmer payable"],
+      ["2150","1010","derived.hopShare","reverse hop payable (RQ-9)"],
+      ["4900","1010","derived.take + derived.distributionMargin + derived.cartSurcharge","contra-revenue — $0.55 RETAINED"],
+      ["2300","1010","derived.tax","reverse tax @ original rate → Stripe Tax mode=full"]],
+    cross:(e,env)=>[sumSide(e,'cr','1010'),'derived.gross - fees.txnSurcharge']},
+  partial_refund:{label:"Partial refund",phase:"unwind",day:5,lockedBy:"dispute_open",refundCap:"partial",requiresPrior:"capture",
+    branches:f=>[[f?"1200":"2100","1010","round2(refundFraction * derived.farmerShare)",f?"farmer paid → clawback, pro-rata":"reverse farmer, pro-rata"],
+      ["2150","1010","round2(refundFraction * derived.hopShare)","reverse hop, pro-rata"],
+      ["4900","1010","round2(refundFraction * (derived.take + derived.distributionMargin))","contra take+margin"],
+      ["4900","1010","round2(refundFraction * derived.cartSurcharge)","contra cart surcharge — $0.55 retained"],
+      ["2300","1010","round2(refundFraction * derived.tax)","reverse tax @ original rate → mode=partial"]]},
+  clawback_recovery:{label:"Clawback recovered",phase:"unwind",day:9,needsBalance:{acc:"1200",expr:"0.01"},
+    postings:[["2100","1200","bal1200","net the full receivable against next payable"]]},
+  chargeback_funds_withdrawn:{label:"Chargeback — funds withdrawn",phase:"unwind",day:20,requiresPrior:"capture",
+    requiresNot:"dispute_open",notFullyRefunded:true,sets:{dispute_open:true},
+    postings:[["1210","1010","derived.gross","contingent receivable — funds pulled"],
+      ["5020","1010","fees.disputeFee","$15 dispute fee, expensed"]]},
+  chargeback_won:{label:"Chargeback — won",phase:"unwind",day:80,requires:"dispute_open",sets:{dispute_open:false},
+    postings:[["1010","1210","derived.gross","funds reinstated ($15 stays sunk)"]]},
+  chargeback_lost:{label:"Chargeback — lost",phase:"unwind",day:80,requires:"dispute_open",sets:{dispute_open:false},
+    branches:f=>[[f?"1200":"2100","1210","derived.farmerShare",f?"farmer paid → clawback receivable (unrecoverable → 5300)":"reverse farmer payable"],
+      ["2150","1210","derived.hopShare","reverse hop payable"],
+      ["4900","1210","derived.take + derived.distributionMargin + fees.txnSurcharge + derived.cartSurcharge","contra-revenue (receivable writes off at gross)"],
+      ["5310","1210","derived.tax","tax loss → BAD-DEBT, not 2300"]],
+    cross:(e,env)=>[sumSide(e,'cr','1210'),'derived.gross']}
+};
+
+/* ============ evaluator ============ */
+function round2(x){const s=x<0?-1:1;return s*Math.floor(Math.abs(x)*100+0.5)/100}
+function flat(o,p,out){out=out||{};p=p||'';for(const k in o){const v=o[k];
+  if(v&&typeof v==='object')flat(v,p+k+'.',out);else if(typeof v==='number')out[p+k]=v}return out}
+function makeEnv(params,extra){const env=flat(params);Object.assign(env,extra||{});
+  for(const k in DERIVED){env['derived.'+k]=evx(DERIVED[k],env)}return env}
+function evx(expr,env){
+  const js=expr.replace(/[A-Za-z_][A-Za-z0-9_.]*/g,t=>{
+    if(t==='min'||t==='max'||t==='round2')return '__'+t;
+    if(!(t in env))throw new Error('unknown param '+t+' in '+expr);
+    const v=Math.abs(env[t])<1e-9?0:env[t];   // clamp float residue (avoids 1e-15 sci-notation)
+    return '('+v+')';});
+  const chk=js.replace(/__min|__max|__round2/g,'');
+  if(/[^0-9eE+\-*(),.\s]/.test(chk))throw new Error('bad expr '+expr);
+  return Function('__min','__max','__round2','return '+js)(Math.min,Math.max,round2);
+}
+const usd=x=>(x<0?'−$':'$')+Math.abs(x).toFixed(2);
+function resolvePostings(ev,flags,env){
+  return (ev.branches?ev.branches(flags.farmer_paid):ev.postings)
+    .map(p=>({dr:p[0],cr:p[1],amt:round2(evx(p[2],env)),memo:p[3]}));
+}
+function sumSide(entries,side,acc){return round2(entries.filter(p=>p[side]===acc).reduce((s,p)=>s+p.amt,0))}
+
+/* ============ state ============ */
+let S={basket:100,taxRate:0.08,takePct:0.10,hopCount:2,refundFraction:0.5};
+let flags={farmer_paid:false,dispute_open:false};
+let fired={};             // event id -> count (single-shot & ordering)
+let refunded=0;           // cumulative refunded fraction, capped at 1
+let journal=[];           // append-only: {id,label,phase,day,seq,postings}
+let bal={};               // account -> {dr,cr}
+function curParams(over){const p=JSON.parse(JSON.stringify(PARAMS_DEFAULT));
+  p.basket=S.basket;p.taxRate=S.taxRate;p.takePct=S.takePct;p.hopCount=S.hopCount;
+  p.refundFraction=over!==undefined?over:S.refundFraction;return p}
+function balanceOf(acc){const b=bal[acc]||{dr:0,cr:0};
+  return ACCOUNTS[acc][1]==='Dr'? round2(b.dr-b.cr) : round2(b.cr-b.dr)}
+function rawNet(acc){const b=bal[acc]||{dr:0,cr:0};return round2(b.dr-b.cr)}
+function marginCloses(){const env=makeEnv(curParams(),{bal1200:0});
+  return env['derived.distributionMargin']>=-0.0001}
+
+/* ============ self-audit at load ============ */
+function selfAudit(){
+  let checks=0;
+  const sweeps=[ // [basket, tax, take, hops, refundFraction] — feasible combos only (margin >= 0)
+    [100,0.08,0.10,2,0.5],[100,0.08,0.10,1,0.5],[20,0,0.07,0,0.05],
+    [250,0.12,0.12,1,1.0],[55,0.03,0.08,2,0.9],[143,0.0725,0.10,2,0.33],[100,0.08,0.07,2,0.75]];
+  for(const [b,t,k,h,f] of sweeps){
+    const p=JSON.parse(JSON.stringify(PARAMS_DEFAULT));
+    p.basket=b;p.taxRate=t;p.takePct=k;p.hopCount=h;p.refundFraction=f;
+    const env=makeEnv(p,{bal1200:9999});
+    if(env['derived.distributionMargin']<-0.0001)throw new Error('infeasible sweep combo included');
+    for(const id in EVENTS){const ev=EVENTS[id];
+      for(const fp of (ev.branches?[false,true]:[false])){
+        const entries=resolvePostings(ev,{farmer_paid:fp},env);
+        for(const e of entries){
+          if(e.dr===e.cr)throw new Error(id+': dr==cr');
+          if(e.amt<-0.0001)throw new Error(id+': negative amount '+e.amt);
+          checks++;
+        }
+        if(ev.cross){const [got,expr]=ev.cross(entries,env);
+          const want=round2(evx(expr,env));
+          if(Math.abs(got-want)>0.0101)throw new Error(id+': crossfoot '+got+' != '+want);
+          checks++;}
+      }
+    }
+  }
+  return checks;
+}
+
+/* ============ render ============ */
+function renderLedgers(){
+  document.getElementById('ledgers').innerHTML=Object.entries(LEDGER_META).map(([lid,m])=>{
+    const net=round2(m.accs.reduce((s,a)=>s+rawNet(a),0));
+    const rows=m.accs.map(a=>{
+      const v=balanceOf(a);const n=ACCOUNTS[a];
+      return `<tr><td class="num" style="text-align:left;width:44px;color:var(--ink-fade)">${a}</td>
+        <td>${n[0]} <span style="color:var(--ink-fade);font-size:10px">(${n[1]})</span></td>
+        <td class="num ${v===0?'zero':''} ${v<0?'neg':''}">${usd(v)}</td></tr>`}).join('');
+    return `<div class="lbook"><div class="lhead"><span class="lchip ${lid}">${lid}</span>
+      <span class="nm">${m.name.slice(5)}</span>
+      <span class="bal">${net===0?'0.00':usd(net)}<span class="lb">net · due-to/from other books</span></span></div>
+      <table>${rows}</table></div>`}).join('');
+}
+function renderStrip(){
+  let dr=0,cr=0,n=0;
+  journal.forEach(j=>j.postings.forEach(p=>{dr+=p.amt;cr+=p.amt;n++}));
+  dr=round2(dr);cr=round2(cr);
+  document.getElementById('i-dr').textContent=usd(dr);
+  document.getElementById('i-cr').textContent=usd(cr);
+  const ok=Math.abs(dr-cr)<0.005;
+  const bl=document.getElementById('i-bal');bl.textContent=ok?'✓':'✗';bl.className='v '+(ok?'good':'bad');
+  const nets=round2(Object.values(LEDGER_META).reduce((s,m)=>s+m.accs.reduce((t,a)=>t+rawNet(a),0),0));
+  const nz=Math.abs(nets)<0.005;
+  const ne=document.getElementById('i-nets');ne.textContent=nz?'✓ $0.00':usd(nets);ne.className='v '+(nz?'good':'bad');
+  document.getElementById('strip').classList.toggle('fail',!(ok&&nz));
+  document.getElementById('i-ref').textContent=Math.round(refunded*100)+'%';
+  const fp=document.getElementById('i-fp');fp.textContent=flags.farmer_paid?'yes':'no';
+  fp.className='v '+(flags.farmer_paid?'bad':'good');
+  const dd=document.getElementById('i-do');dd.textContent=flags.dispute_open?'OPEN':'no';
+  dd.className='v '+(flags.dispute_open?'bad':'good');
+  document.getElementById('j-count').textContent=journal.length+' events';
+}
+function renderButtons(){
+  const env=makeEnv(curParams(),{bal1200:balanceOf('1200')});
+  document.querySelectorAll('button.ev').forEach(b=>{
+    const ev=EVENTS[b.dataset.ev];let dis=false,why='';
+    if(ev.singleShot&&fired[b.dataset.ev]){dis=true;why='already fired — one canonical order; reset to restart'}
+    if(!dis&&ev.requiresPrior&&!fired[ev.requiresPrior]){dis=true;why='needs '+ev.requiresPrior+' first'}
+    if(!dis&&ev.lockedBy&&flags[ev.lockedBy]){dis=true;why='locked: dispute open (double-credit risk)'}
+    if(!dis&&ev.requires&&!flags[ev.requires]){dis=true;why='needs open dispute'}
+    if(!dis&&ev.requiresNot&&flags[ev.requiresNot]){dis=true;why='dispute already open'}
+    if(!dis&&ev.notFullyRefunded&&refunded>=0.999){dis=true;why='charge fully refunded — nothing left to dispute'}
+    if(!dis&&ev.refundCap==='full'&&refunded>0){dis=true;why='already partially refunded — use partial for the remainder'}
+    if(!dis&&ev.refundCap==='partial'&&refunded>=0.999){dis=true;why='refund cap reached (captured total)'}
+    if(!dis&&ev.needsBalance){const need=evx(ev.needsBalance.expr,env);
+      if(balanceOf(ev.needsBalance.acc)<need-0.0001){dis=true;
+        why=ev.needsBalance.acc==='2000'?('needs credits ≥ '+usd(need)+' — buy credits first (tender cannot overdraw)'):'no clawback receivable'}}
+    if(!dis&&ev.needsClose&&!marginCloses()){dis=true;why='model does not close: 80% + hops + take > 100%'}
+    b.disabled=dis;b.title=why;
+  });
+  document.getElementById('modelwarn').classList.toggle('on',!marginCloses());
+}
+function renderJournal(){
+  const jb=document.getElementById('jbody');
+  if(!journal.length){jb.innerHTML='<div class="jempty">Fire <b>capture</b> to start the canonical order, then walk it forward — or straight into the unwinds. Try: capture → settle → farmer payout → partial refund (watch the 1200 clawback receivable), or capture → chargeback → lost (watch tax route to 5310, not 2300).</div>';return}
+  jb.innerHTML=journal.map(j=>{
+    const rows=j.postings.map(p=>`<tr><td>Dr ${p.dr}</td><td>Cr ${p.cr}</td>
+      <td class="amt">${usd(p.amt)}</td><td class="memo">${p.memo}</td></tr>`).join('');
+    return `<div class="jev ${j.phase==='unwind'?'unwind':''}">
+      <div class="jt">#${j.seq} ${j.label}<span class="meta">eff d${j.day} · posted #${j.seq}${j.phase==='unwind'?' · reversing entries — originals untouched':''}</span></div>
+      <table>${rows}</table></div>`}).join('');
+  jb.scrollTop=jb.scrollHeight;
+}
+const RULER=[["0","capture",0],["2","settle · payout",2],["5","refund",5],["20","dispute lands",20],
+  ["41","evidence due",41],["80","issuer decides",80],["90","tax filing (quarter)",90],
+  ["120","card dispute limit",120],["180","ACH refund limit",180]];
+function renderRuler(hotDay){
+  const max=190, x=d=>3+94*Math.sqrt(d/max);
+  document.getElementById('ruler').innerHTML=
+    `<div class="zone" style="left:${x(0)}%;width:${x(120)-x(0)}%;background:var(--rust)"></div>
+     <div class="zlab" style="left:${x(30)}%;bottom:10px">dispute exposure window</div>`+
+    RULER.map(t=>`<div class="tick ${t[2]===hotDay?'hot':''}" style="left:${x(t[2])}%">
+      <div class="stem"></div><div class="lab">d${t[0]}<br>${t[1]}</div></div>`).join('');
+}
+
+/* ============ actions ============ */
+function fire(id){
+  const ev=EVENTS[id];
+  let effFraction;
+  if(ev.refundCap==='partial'){effFraction=Math.min(S.refundFraction, round2(1-refunded));
+    if(effFraction<=0.0001)return;}
+  if(ev.refundCap==='full'&&refunded>0)return;
+  const env=makeEnv(curParams(effFraction),{bal1200:balanceOf('1200')});
+  const postings=resolvePostings(ev,flags,env);
+  postings.forEach(p=>{
+    bal[p.dr]=bal[p.dr]||{dr:0,cr:0};bal[p.cr]=bal[p.cr]||{dr:0,cr:0};
+    bal[p.dr].dr=round2(bal[p.dr].dr+p.amt);bal[p.cr].cr=round2(bal[p.cr].cr+p.amt);
+  });
+  if(ev.sets)Object.assign(flags,ev.sets);
+  if(ev.refundCap==='partial')refunded=round2(Math.min(1,refunded+effFraction));
+  if(ev.refundCap==='full')refunded=1;
+  fired[id]=(fired[id]||0)+1;
+  const label=ev.refundCap==='partial'?ev.label+' ('+Math.round(effFraction*100)+'%)':ev.label;
+  journal.push({id,label,phase:ev.phase,day:ev.day,seq:journal.length+1,postings});
+  renderAll(ev.day);
+}
+function renderAll(hotDay){renderLedgers();renderStrip();renderButtons();renderJournal();renderRuler(hotDay===undefined?-1:hotDay)}
+document.querySelectorAll('button.ev').forEach(b=>b.addEventListener('click',()=>fire(b.dataset.ev)));
+
+/* sliders */
+function bind(id,key,fmt){const el=document.getElementById('s-'+id),lab=document.getElementById('v-'+id);
+  el.value=S[key];lab.textContent=fmt(S[key]);
+  el.addEventListener('input',()=>{S[key]=parseFloat(el.value);lab.textContent=fmt(S[key]);renderButtons()});}
+function bindAll(){
+  bind('basket','basket',v=>'$'+v.toFixed(0));
+  bind('tax','taxRate',v=>(v*100).toFixed(2)+'%');
+  bind('take','takePct',v=>(v*100).toFixed(1)+'%');
+  bind('hops','hopCount',v=>v+' × 5%');
+  bind('frac','refundFraction',v=>Math.round(v*100)+'%');
+}
+document.getElementById('reset').addEventListener('click',()=>{
+  S={basket:100,taxRate:0.08,takePct:0.10,hopCount:2,refundFraction:0.5};
+  flags={farmer_paid:false,dispute_open:false};fired={};refunded=0;journal=[];bal={};
+  bindAll();renderAll();
+});
+
+/* ============ boot ============ */
+bindAll();
+try{
+  const n=selfAudit();
+  document.getElementById('i-audit').textContent='✓';
+  document.getElementById('i-audit').className='v good';
+  document.getElementById('i-audit-n').textContent=n+' checks · events × branches × 7 param sets';
+}catch(e){
+  document.getElementById('i-audit').textContent='✗';
+  document.getElementById('i-audit').className='v bad';
+  document.getElementById('i-audit-n').textContent=e.message;
+  document.getElementById('strip').classList.add('fail');
+}
+renderAll();
+</script>
+</body>
+</html>

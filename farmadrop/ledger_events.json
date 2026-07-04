@@ -1,0 +1,295 @@
+{
+  "meta": {
+    "title": "Farmer Drop — Ledger Posting Simulator Events",
+    "purpose": "Declarative posting rules interpreted by ledger_simulator.html. Each posting is one balanced transfer {dr, cr, amount_expr} — an event balances by construction; the page self-audits events × branches × parameter sweeps at load and paints the invariant strip red on any imbalance. Spec engine mandate: integer cents, round2 = nearest cent ties-away-from-zero; the demo page uses cent-rounded floats.",
+    "version": "0.2",
+    "generated": "2026-07-04",
+    "basis": "Spec layer; reconciles against Volkmar's .7 backend. Fee constants mirror take_rate_params.json. v0.2 incorporates the adversarial-pass fixes (see challenges[]): fee recorded at capture so 1020 mirrors Stripe pending NET; credits respec'd as full-cart tender on a wedge-only rail with the load fee booked; $0.55 retained on ANY refund; refunds capped at the captured total; hopCount canonical 2.",
+    "demo_scope": "The simulator tracks ONE canonical order per scenario (reset to restart) — a single farmer_paid / dispute_open flag pair cannot represent concurrent orders. Real postings carry effective_at + posted_at per journal row (§6 of the spec page); the demo stamps each entry with its effective day and posted sequence.",
+    "amount_expr_language": "expr := term (('+'|'-') term)* ; term := factor ('*' factor)* ; factor := NUMBER | param | min(a,b) | max(a,b) | round2(x) | '(' expr ')' | '-' factor. Params are whitelist-checked (typos are validation errors, never silent zeros). No division — deterministic cent math."
+  },
+
+  "params": {
+    "basket": 100.0,
+    "taxRate": 0.08,
+    "refundFraction": 0.5,
+    "hopCount": 2,
+    "farmerPct": 0.8,
+    "takePct": 0.1,
+    "fees": {
+      "txnSurcharge": 0.55,
+      "stripePct": 0.029,
+      "stripeTxnFixed": 0.3,
+      "stripeTransferFixed": 0.25,
+      "cartSurchargePct": 0.0315,
+      "wedgePct": 0.0025,
+      "creditBoostPct": 0.02,
+      "disputeFee": 15.0
+    },
+    "hops": {"perHopPct": 0.05},
+    "contractor": {"cutPct": 0.03, "windowMonths": 6},
+    "notes": {
+      "takePct": "DR-1 OPEN — supported band 7–12%, centered 10%. Parametric everywhere; slider-driven in the simulator.",
+      "hopCount": "Canonical default 2 (take_rate_params hops.defaultCount). At 2 hops + 10% take the distribution margin is EXACTLY $0 (T1 Flat-Ten closes at 80+10+10=100) — 4020 exists for self-haul/one-hop drops and tiered templates, not as a revenue line to count on. Combinations where farmer 80% + hops + take exceed 100% do not close; the simulator refuses to post them (the same tension take_rate_math shows).",
+      "taxRate": "Demonstration rate. Real tax is a LINE-ITEM property resolved per pickup jurisdiction (tomatoes grocery-exempt in 37 states; hot sauce varies) — the single rate here stands in for the per-line calculation, and a balanced posting is NOT evidence the tax split is jurisdictionally correct (challenge C-7)."
+    }
+  },
+
+  "derived": {
+    "cartSurcharge": "round2(basket * fees.cartSurchargePct)",
+    "tax": "round2(basket * taxRate)",
+    "gross": "basket + fees.txnSurcharge + derived.cartSurcharge + derived.tax",
+    "stripeFee": "round2(derived.gross * fees.stripePct + fees.stripeTxnFixed)",
+    "farmerShare": "round2(basket * farmerPct)",
+    "hopShare": "round2(basket * hops.perHopPct * hopCount)",
+    "take": "round2(basket * takePct)",
+    "distributionMargin": "basket - derived.farmerShare - derived.hopShare - derived.take",
+    "creditsGross": "basket + fees.stripeTransferFixed + round2(basket * fees.wedgePct) + derived.tax",
+    "loadFee": "round2(basket * fees.stripePct + fees.stripeTxnFixed)",
+    "note": "distributionMargin is the RESIDUAL (plug) of the goods split — rounding of farmer/hop/take can never unbalance the goods leg; it must be ≥ 0 or the model does not close. creditsGross is the credits-rail cart: goods + $0.25 transfer leg + 0.25% wedge + tax — NO card components (no $0.30, no 2.9%): the credits rail is the Phase-1 fee drop, priced accordingly."
+  },
+
+  "state_flags": {
+    "farmer_paid": {"default": false, "set_by": "farmer_payout", "note": "when true, refund/chargeback farmer legs post to the 1200 clawback receivable instead of the 2100 payable"},
+    "dispute_open": {"default": false, "set_by": "chargeback_funds_withdrawn", "unset_by": ["chargeback_won", "chargeback_lost"], "locks": ["full_refund", "partial_refund"], "lock_reason": "R1: cannot refund outside the dispute process while a dispute is open — double-credit risk."},
+    "refunded_fraction": {"default": 0, "note": "cumulative; refunds are CAPPED at the captured total (Stripe: multiple partial refunds up to the total; tax cannot be over-reversed). partial_refund posts min(slider, remaining); full_refund requires 0 refunded and consumes the whole cap; chargeback is disabled once fully refunded."}
+  },
+
+  "events": [
+    {
+      "id": "capture",
+      "label": "Order captured & allocated",
+      "phase": "forward",
+      "time": {"clock": "money", "offsetDays": 0, "window": null},
+      "narrative": "Member pays basket + $0.55 + 3.15% + tax by card. Stripe creates the balance_transaction AT CAPTURE with amount/fee/net already split — so the fee is expensed here and 1020 mirrors Stripe pending at NET. The gross is allocated in the same balanced event: farmer, hops, take, margin (plug, ≥0 or the model doesn't close), both surcharges, tax at the ORIGINAL per-line rate. Authorization posts nothing — a two-phase hold, discarded or posted at capture.",
+      "single_shot": true,
+      "postings": [
+        {"dr": "1020", "cr": "2100", "amount_expr": "derived.farmerShare", "memo": "farmer share"},
+        {"dr": "1020", "cr": "2150", "amount_expr": "derived.hopShare", "memo": "hop / haul share"},
+        {"dr": "1020", "cr": "4000", "amount_expr": "derived.take", "memo": "platform take (DR-1 parametric; the 3% contractor accrual comes OUT of this — see contractor_accrual)"},
+        {"dr": "1020", "cr": "4020", "amount_expr": "derived.distributionMargin", "memo": "distribution margin (plug — $0 at 2 hops + 10% take)", "plug": true},
+        {"dr": "1020", "cr": "4010", "amount_expr": "fees.txnSurcharge", "memo": "fixed surcharge $0.55"},
+        {"dr": "1020", "cr": "4011", "amount_expr": "derived.cartSurcharge", "memo": "cart surcharge 3.15%"},
+        {"dr": "1020", "cr": "2300", "amount_expr": "derived.tax", "memo": "sales tax @ original rate, stored on line"},
+        {"dr": "5000", "cr": "1020", "amount_expr": "derived.stripeFee", "memo": "Stripe fee recorded at capture (balance_transaction amount/fee/net) — pending mirrors NET"}
+      ],
+      "invariant": "net debit to 1020 == derived.gross - derived.stripeFee == balance_transaction.net (the mirror)"
+    },
+    {
+      "id": "settle",
+      "label": "Stripe settles (T+2)",
+      "phase": "forward",
+      "time": {"clock": "money", "offsetDays": 2, "window": null},
+      "narrative": "Pending becomes available — a pure money-clock move of the NET (the fee was already recorded at capture). 1010 now mirrors Stripe available.",
+      "single_shot": true,
+      "requires_prior": "capture",
+      "postings": [
+        {"dr": "1010", "cr": "1020", "amount_expr": "derived.gross - derived.stripeFee", "memo": "net pending → available"}
+      ],
+      "invariant": "sum(cr==1020) == derived.gross - derived.stripeFee; 1020 returns to zero"
+    },
+    {
+      "id": "farmer_payout",
+      "label": "Farmer payout (Connect transfer)",
+      "phase": "forward",
+      "time": {"clock": "money", "offsetDays": 2, "window": null},
+      "narrative": "Farmer payable released to the connected account. Sets farmer_paid — every unwind after this point must claw back via the 1200 receivable instead of debiting an empty payable.",
+      "single_shot": true,
+      "requires_prior": "settle",
+      "sets": {"farmer_paid": true},
+      "postings": [
+        {"dr": "2100", "cr": "1010", "amount_expr": "derived.farmerShare", "memo": "release farmer payable"}
+      ],
+      "invariant": "payout cannot precede availability (money clock)"
+    },
+    {
+      "id": "contractor_accrual",
+      "label": "Contractor commission accrues (monthly)",
+      "phase": "accrual",
+      "time": {"clock": "book", "offsetDays": 30, "window": null},
+      "narrative": "3% of the host drop's volume accrues to the recruiting contractor, aged over N months — a time-based accrual, structurally unlike farmer payables (why L6 is its own book). Paid OUT of the platform take: at 10% gross take the platform's NET take is ~7% while a drop is in-window — 4000 and 5200 must be read together.",
+      "postings": [
+        {"dr": "5200", "cr": "2200", "amount_expr": "round2(basket * contractor.cutPct)", "memo": "3% of drop volume this month, out of the take (window: contractor.windowMonths)"}
+      ],
+      "invariant": "self-balancing accrual pair; net take = 4000 − 5200 while in-window"
+    },
+    {
+      "id": "credits_purchase",
+      "label": "Member buys credits (+2% boost)",
+      "phase": "credits",
+      "time": {"clock": "money", "offsetDays": 0, "window": null},
+      "narrative": "Cash in by card, $102 of tender out. No sales tax at load — stored value is taxed at redemption. The 2% boost posts against its NAMED funding account (DR-2), and the card fee on the load is booked at capture like any charge: the program costs ~5% of the load (2% boost + ~3.2% card fee) — fund it from wedge/breakage or it is a loss. Credits lots are tracked cash-origin vs boost-origin.",
+      "postings": [
+        {"dr": "1020", "cr": "2000", "amount_expr": "basket", "memo": "cash-origin credits lot"},
+        {"dr": "5100", "cr": "2000", "amount_expr": "round2(basket * fees.creditBoostPct)", "memo": "boost-origin lot — funded, not silent (DR-2)"},
+        {"dr": "5000", "cr": "1020", "amount_expr": "derived.loadFee", "memo": "card fee on the load, recorded at capture — the honest cost of the credits program"}
+      ],
+      "invariant": "credits liability rises by basket*(1+boost); platform nets basket − loadFee cash for it"
+    },
+    {
+      "id": "credits_spend",
+      "label": "Member spends credits on a basket",
+      "phase": "credits",
+      "time": {"clock": "money", "offsetDays": 0, "window": null},
+      "narrative": "Credits are FULL-CART TENDER (gift-card style: they pay goods, rail fee, and tax). The rail is priced honestly: $0.25 transfer leg + 0.25% wedge — NO card components, because there is no card. This is the Phase-1 fee drop as a posting rule: the member's cart is cheaper by exactly Stripe's 2.9% + $0.30. Tax still assesses at redemption, per line. Requires sufficient credits balance — the tender cannot overdraw the liability.",
+      "requires_balance": {"account": "2000", "at_least": "derived.creditsGross"},
+      "postings": [
+        {"dr": "2000", "cr": "2100", "amount_expr": "derived.farmerShare", "memo": "farmer share"},
+        {"dr": "2000", "cr": "2150", "amount_expr": "derived.hopShare", "memo": "hop share"},
+        {"dr": "2000", "cr": "4000", "amount_expr": "derived.take", "memo": "platform take"},
+        {"dr": "2000", "cr": "4020", "amount_expr": "derived.distributionMargin", "memo": "distribution margin (plug)", "plug": true},
+        {"dr": "2000", "cr": "4010", "amount_expr": "fees.stripeTransferFixed", "memo": "credits-rail fixed leg $0.25 — transfer only, no card leg"},
+        {"dr": "2000", "cr": "4011", "amount_expr": "round2(basket * fees.wedgePct)", "memo": "wedge 0.25% only — no 2.9% passthrough on the credits rail"},
+        {"dr": "2000", "cr": "2300", "amount_expr": "derived.tax", "memo": "tax at redemption, per line"}
+      ],
+      "invariant": "crossfoot: sum(dr==2000) == derived.creditsGross; member saves the card components vs the same basket on Stripe"
+    },
+    {
+      "id": "full_refund",
+      "label": "Full refund",
+      "phase": "unwind",
+      "time": {"clock": "risk", "offsetDays": 5, "window": 180},
+      "narrative": "Member gets the cart back MINUS the $0.55 fixed surcharge — retained on ANY refund, consistently, because it covers Stripe's sunk fixed legs (the fee, already expensed at capture, is never returned by Stripe). Making the member whole on the $0.55 anyway is a policy choice (RQ-7). Revenue reverses through contra 4900; history is never mutated. Tax reverses at the ORIGINAL rate: same period → returned-merchandise credit; period filed → amended return. Requires nothing refunded yet; locked while a dispute is open.",
+      "locked_by": "dispute_open",
+      "requires_refund_cap": "full",
+      "branches": [
+        {
+          "when": [{"flag": "farmer_paid", "is": false}],
+          "postings": [
+            {"dr": "2100", "cr": "1010", "amount_expr": "derived.farmerShare", "memo": "reverse farmer payable"},
+            {"dr": "2150", "cr": "1010", "amount_expr": "derived.hopShare", "memo": "reverse hop payable (earned-on-performance → RQ-9)"},
+            {"dr": "4900", "cr": "1010", "amount_expr": "derived.take + derived.distributionMargin + derived.cartSurcharge", "memo": "contra-revenue: take + margin + cart surcharge — $0.55 RETAINED"},
+            {"dr": "2300", "cr": "1010", "amount_expr": "derived.tax", "memo": "reverse tax @ ORIGINAL rate → Stripe Tax mode=full"}
+          ]
+        },
+        {
+          "when": [{"flag": "farmer_paid", "is": true}],
+          "postings": [
+            {"dr": "1200", "cr": "1010", "amount_expr": "derived.farmerShare", "memo": "farmer already paid → clawback receivable"},
+            {"dr": "2150", "cr": "1010", "amount_expr": "derived.hopShare", "memo": "reverse hop payable"},
+            {"dr": "4900", "cr": "1010", "amount_expr": "derived.take + derived.distributionMargin + derived.cartSurcharge", "memo": "contra-revenue — $0.55 retained"},
+            {"dr": "2300", "cr": "1010", "amount_expr": "derived.tax", "memo": "reverse tax @ original rate"}
+          ]
+        }
+      ],
+      "invariant": "crossfoot: sum(cr==1010) == derived.gross - fees.txnSurcharge == Stripe refund.amount. Stripe's entire original fee stays sunk in 5000 (expensed at capture); an optional 5010 disclosure reclass may attribute it to refund losses — net-zero P&L, so it is NOT a posting leg here."
+    },
+    {
+      "id": "partial_refund",
+      "label": "Partial refund (slider fraction)",
+      "phase": "unwind",
+      "time": {"clock": "risk", "offsetDays": 5, "window": 180},
+      "narrative": "THE named pain. The $0.55 is retained (as on any refund — the rule is structural: 4010 is never reversed); everything proportional reverses at the EFFECTIVE fraction = min(slider, remaining cap); tax reverses proportionally AT THE ORIGINAL RATE and must reach Stripe Tax as a mode=partial reversal (flat_amount distributes proportionally across remaining line items) — or, per Stripe's own recommendation for accuracy, as a full-reverse-and-recreate. Cross-period: amended return. Stripe keeps its ENTIRE original fee regardless of the fraction (already sunk at capture). Mixed exempt+taxable baskets make the allocation choice load-bearing — a balanced posting is NOT a jurisdictionally correct one; real refunds tie to lines.",
+      "locked_by": "dispute_open",
+      "requires_refund_cap": "partial",
+      "branches": [
+        {
+          "when": [{"flag": "farmer_paid", "is": false}],
+          "postings": [
+            {"dr": "2100", "cr": "1010", "amount_expr": "round2(refundFraction * derived.farmerShare)", "memo": "reverse farmer, pro-rata"},
+            {"dr": "2150", "cr": "1010", "amount_expr": "round2(refundFraction * derived.hopShare)", "memo": "reverse hop, pro-rata (RQ-9)"},
+            {"dr": "4900", "cr": "1010", "amount_expr": "round2(refundFraction * (derived.take + derived.distributionMargin))", "memo": "contra take + margin"},
+            {"dr": "4900", "cr": "1010", "amount_expr": "round2(refundFraction * derived.cartSurcharge)", "memo": "contra cart surcharge — $0.55 retained"},
+            {"dr": "2300", "cr": "1010", "amount_expr": "round2(refundFraction * derived.tax)", "memo": "reverse tax pro-rata @ ORIGINAL rate → Stripe Tax mode=partial"}
+          ]
+        },
+        {
+          "when": [{"flag": "farmer_paid", "is": true}],
+          "postings": [
+            {"dr": "1200", "cr": "1010", "amount_expr": "round2(refundFraction * derived.farmerShare)", "memo": "farmer already paid → clawback receivable, pro-rata"},
+            {"dr": "2150", "cr": "1010", "amount_expr": "round2(refundFraction * derived.hopShare)", "memo": "reverse hop, pro-rata"},
+            {"dr": "4900", "cr": "1010", "amount_expr": "round2(refundFraction * (derived.take + derived.distributionMargin))", "memo": "contra take + margin"},
+            {"dr": "4900", "cr": "1010", "amount_expr": "round2(refundFraction * derived.cartSurcharge)", "memo": "contra cart surcharge — $0.55 retained"},
+            {"dr": "2300", "cr": "1010", "amount_expr": "round2(refundFraction * derived.tax)", "memo": "reverse tax @ original rate"}
+          ]
+        }
+      ],
+      "invariant": "refund.amount := sum(cr==1010) — the per-leg reversals are AUTHORITATIVE (each leg rounds independently, matching per-line Stripe Tax reversal amounts), ≈ fraction × (gross − $0.55) within ≤2¢. Cumulative refunds are capped at the captured total; tax cannot be over-reversed."
+    },
+    {
+      "id": "clawback_recovery",
+      "label": "Clawback recovered from next cycle",
+      "phase": "unwind",
+      "time": {"clock": "money", "offsetDays": 9, "window": null},
+      "narrative": "The farmer-paid refund left a receivable; it nets in full against the farmer's next payable cycle (or a debit_negative_balances bank pull on the connected account).",
+      "requires_balance": {"account": "1200", "at_least": "0.01"},
+      "postings": [
+        {"dr": "2100", "cr": "1200", "amount_expr": "bal1200", "memo": "net the full receivable against next payable"}
+      ],
+      "invariant": "1200 drains to zero"
+    },
+    {
+      "id": "chargeback_funds_withdrawn",
+      "label": "Chargeback — funds withdrawn",
+      "phase": "unwind",
+      "time": {"clock": "risk", "offsetDays": 20, "window": 120},
+      "narrative": "The network pulls the disputed gross immediately and the $15 fee is expensed on initiation (non-refundable even if won). The pulled amount is a CONTINGENT RECEIVABLE, not a loss — yet. Refunds LOCK while the dispute is open; a fully-refunded charge can no longer be disputed here. Evidence due in 7–21 days; issuer decides in ~60–75.",
+      "requires_not_fully_refunded": true,
+      "sets": {"dispute_open": true},
+      "postings": [
+        {"dr": "1210", "cr": "1010", "amount_expr": "derived.gross", "memo": "contingent receivable — funds withdrawn"},
+        {"dr": "5020", "cr": "1010", "amount_expr": "fees.disputeFee", "memo": "$15 dispute fee, expensed at initiation"}
+      ],
+      "invariant": "crossfoot: sum(cr==1010) == derived.gross + fees.disputeFee"
+    },
+    {
+      "id": "chargeback_won",
+      "label": "Chargeback — won",
+      "phase": "unwind",
+      "time": {"clock": "risk", "offsetDays": 80, "window": null},
+      "narrative": "Funds reinstated; the receivable clears. The $15 stays sunk. Note the clocks: the win is EFFECTIVE at the charge's economic date but KNOWN two months later — valid time ≠ transaction time, which is exactly what the two journal timestamps are for.",
+      "requires": [{"flag": "dispute_open", "is": true}],
+      "sets": {"dispute_open": false},
+      "postings": [
+        {"dr": "1010", "cr": "1210", "amount_expr": "derived.gross", "memo": "funds reinstated"}
+      ],
+      "invariant": "1210 returns to zero"
+    },
+    {
+      "id": "chargeback_lost",
+      "label": "Chargeback — lost",
+      "phase": "unwind",
+      "time": {"clock": "risk", "offsetDays": 80, "window": null},
+      "narrative": "Unwinds like a refund but the tax slice is DIFFERENT: a chargeback is not a refund, so remitted tax is generally unrecoverable via the returned-merchandise credit — it books to Tax Bad-Debt (5310), never back through 2300. The tax authority still gets paid; the platform eats it (bad-debt relief varies, limited in e.g. CA). If the farmer/hop clawback later proves unrecoverable, the write-off branch books to 5300.",
+      "requires": [{"flag": "dispute_open", "is": true}],
+      "sets": {"dispute_open": false},
+      "branches": [
+        {
+          "when": [{"flag": "farmer_paid", "is": false}],
+          "postings": [
+            {"dr": "2100", "cr": "1210", "amount_expr": "derived.farmerShare", "memo": "reverse farmer payable"},
+            {"dr": "2150", "cr": "1210", "amount_expr": "derived.hopShare", "memo": "reverse hop payable"},
+            {"dr": "4900", "cr": "1210", "amount_expr": "derived.take + derived.distributionMargin + fees.txnSurcharge + derived.cartSurcharge", "memo": "contra-revenue (whole revenue leg incl. $0.55 — the receivable writes off at gross)"},
+            {"dr": "5310", "cr": "1210", "amount_expr": "derived.tax", "memo": "tax loss → BAD-DEBT, not 2300"}
+          ]
+        },
+        {
+          "when": [{"flag": "farmer_paid", "is": true}],
+          "postings": [
+            {"dr": "1200", "cr": "1210", "amount_expr": "derived.farmerShare", "memo": "farmer already paid → clawback receivable (unrecoverable → write off to 5300)"},
+            {"dr": "2150", "cr": "1210", "amount_expr": "derived.hopShare", "memo": "reverse hop payable"},
+            {"dr": "4900", "cr": "1210", "amount_expr": "derived.take + derived.distributionMargin + fees.txnSurcharge + derived.cartSurcharge", "memo": "contra-revenue"},
+            {"dr": "5310", "cr": "1210", "amount_expr": "derived.tax", "memo": "tax loss → bad-debt route"}
+          ]
+        }
+      ],
+      "invariant": "crossfoot: sum(cr==1210) == derived.gross; 1210 returns to zero"
+    }
+  ],
+
+  "challenges": [
+    {"id": "C-1", "sev": "blocker", "q": "credits_spend drained the credits liability by full card-rail GROSS ($111.70), so $102 of credits 'bought' a $111.70 basket — economically incoherent, masked by the crossfoot.", "a": "Conceded and respec'd. Credits are full-cart tender (gift-card style — they legitimately pay goods, fees, and tax), but the cart on the credits rail is now priced honestly: goods + $0.25 transfer leg + 0.25% wedge + tax (creditsGross ≈ $108.50 on the canonical basket) with NO card components — the credits rail IS the Phase-1 fee drop, as a posting rule. And the tender can no longer overdraw: credits_spend requires sufficient 2000 balance.", "disposition": "concede-and-fix"},
+    {"id": "C-2", "sev": "blocker", "q": "1020 was defined at GROSS but Stripe records amount/fee/net at capture — pending mirrors NET, so the page's own reconciliation premise (Principle 7) was self-contradicting.", "a": "Conceded and fixed. The Stripe fee is now expensed at capture inside the capture event (Dr 5000 / Cr 1020), so 1020 nets to gross − fee = balance_transaction.net, and settle is a pure net move 1020→1010. The mirror invariant now states the balance_transaction identity explicitly.", "disposition": "concede-and-fix"},
+    {"id": "C-3", "sev": "major", "q": "'Six ledgers reconciled via double-entry' was never demonstrated — the partition is one book with colored tags; nothing checks per-ledger or inter-ledger balance; L4 with 10 of 26 accounts looks gerrymandered.", "a": "Partially conceded. What a partition CAN honestly demonstrate is now shown live: each book's net position is its implied due-to/due-from against the other books, and the six nets sum to zero — the simulator displays per-book nets and checks Σ(book nets) ≡ 0 as a strip invariant. Whether Volkmar's six balance INTERNALLY via explicit due-to/due-from accounts is precisely what we cannot know without the code — RQ-1 now asks that directly. 1210 was re-tagged from L4 to L1 (it is withdrawn cash, not platform-risk bric-a-brac), trimming the grab-bag.", "disposition": "concede-partial-and-fix"},
+    {"id": "C-4", "sev": "major", "q": "hopCount=1 contradicted the canonical 2-hop model; under the documented default the Distribution Margin (4020) is exactly $0 — a fabricated revenue line; sweeps never varied hops.", "a": "Conceded and fixed. Default is now the canonical 2 hops, under which 4020 posts $0.00 — shown, not hidden, with the account re-annotated: it exists for self-haul/one-hop drops and tiered templates, not as a line to count on. A hops control (0–2) was added; infeasible combinations (farmer 80% + hops + take > 100%) refuse to post — the same tension take_rate_math surfaces. Self-audit sweeps now vary hop count.", "disposition": "concede-and-fix"},
+    {"id": "C-5", "sev": "major", "q": "The credits load's Stripe fee was never booked (a ~5% silent program cost), and the 2.9%-passthrough cart surcharge was still charged on the 'fee-free' credits rail.", "a": "Conceded and fixed, both halves. credits_purchase now books the card fee on the load at capture (the program visibly costs ~5.2% of load: 2% boost + ~3.2% fee — fund it or it's a loss, DR-2 adjacent). credits_spend now charges only $0.25 + 0.25% wedge — no passthrough where there is no Stripe cost.", "disposition": "concede-and-fix"},
+    {"id": "C-6", "sev": "major", "q": "The simulator over-refunded past the captured total (150%+ refunds) with the invariant strip green — balance ≠ correctness, contradicting Stripe's own caps.", "a": "Conceded and fixed. Cumulative refunded fraction is tracked; partial_refund posts min(slider, remaining) and disables at the cap; full_refund requires an unrefunded charge; a fully-refunded charge can no longer be disputed. The invariant strip now also says what green means — and what it doesn't.", "disposition": "concede-and-fix"},
+    {"id": "C-7", "sev": "major", "q": "A single tax rate reversed uniformly across the refund fraction is exactly the mixed-basket misallocation R3 warns about; the green ✓ blesses jurisdictionally wrong reversals.", "a": "Partially conceded. A per-line, per-jurisdiction simulation is out of demo scope by design — but the misleading part was the unqualified ✓. The strip and the refund controls now state explicitly: balanced ≠ tax-correct; real refunds tie to lines; refunding an exempt line reverses $0 tax. The spec rule (line-tying, stored original rate) was already the page's position.", "disposition": "concede-partial-and-fix"},
+    {"id": "C-8", "sev": "major", "q": "Full refund returned the $0.55 while a 100% partial retained it — a $0.55 cliff; and full refund both returned the surcharge AND wrote the whole fee off, double-eating the fixed leg.", "a": "Conceded and fixed. The $0.55 is now retained on ANY refund, consistently with its stated rationale (it covers Stripe's sunk fixed legs, which are sunk on refund too). full_refund ≡ partial at 100% (modulo per-leg rounding). Making the member whole on the $0.55 anyway is flagged as a policy choice for Magnus.", "disposition": "concede-and-fix"},
+    {"id": "C-9", "sev": "major", "q": "The hard-case catalog missed Stripe's multicapture incompatibility (no partial refunds with refund_application_fee/reverse_transfer — manual fee refunds + transfer reversals required), SNAP/EBT tender, and tips/gratuities.", "a": "Conceded. All three added (the Connect partial-refund API constraint as HARD — it sits directly on the named-pain workflow; SNAP/EBT and gratuities as ANNOYING). RQ-11 now surfaces the incompatibility explicitly. Catalog is 25 items.", "disposition": "concede-and-fix"},
+    {"id": "C-10", "sev": "minor", "q": "Five 'active' accounts are never posted by any event, and 5300's stated purpose (goods loss on lost disputes) contradicted chargeback_lost, which routes through 4900.", "a": "Conceded in part. 5300's purpose was wrong and is now 'write-off when a clawback receivable proves unrecoverable' — the policy branch after chargeback_lost/farmer-paid, which the event now references. 1000/1050/1100/4030 are deliberately chartered ahead of their flows (bank payout, token rail, clearing-tender variant, breakage sweep) and the chart now says which demo events exercise what.", "disposition": "concede-partial-and-fix"},
+    {"id": "C-11", "sev": "minor", "q": "The spec preaches effective_at + posted_at from day one, but the demo events carry no timestamps, and global farmer_paid/dispute_open flags conflate concurrent orders.", "a": "Conceded as a demo limitation, now practiced where cheap: every journal entry displays its effective day and posted sequence (the two clocks, visibly divergent on dispute outcomes), and the page states its scope — one canonical order per scenario, reset to restart. The row schema in §6 remains the spec.", "disposition": "concede-partial-and-fix"},
+    {"id": "C-12", "sev": "minor", "q": "The 5010/5000 reclass is a net-zero shuffle between two expense accounts presented as refund economics, and prorating it implied a fractional fee loss when Stripe keeps the whole original fee.", "a": "Conceded. The reclass legs are removed from the refund events — the fee is fully expensed at capture (per C-2) and simply stays sunk; the narratives now say so. 5010 remains chartered as an OPTIONAL net-zero disclosure reclass for attributing sunk fees to refund losses, clearly labeled as such.", "disposition": "concede-and-fix"},
+    {"id": "C-13", "sev": "minor", "q": "4000 reads as a 10% take while the contractor 3% comes out of it — net ~7% is never shown next to it.", "a": "Conceded. The capture take memo and the contractor_accrual narrative now cross-reference each other and state net take = 4000 − 5200 while a drop is in-window, matching take_rate_params.", "disposition": "concede-and-fix"}
+  ]
+}

@@ -1,0 +1,112 @@
+{
+  "meta": {
+    "title": "Farmer Drop — The Books: Six-Ledger Concept Structure",
+    "purpose": "Spec-layer reconstruction of the backend ledger. Magnus stated (verbally, 2026-07) that the backend runs SIX separate ledgers reconciled via double-entry, built on the basis Volkmar laid (.7 backend). The enumeration below is INFERRED from the documented fee model and marketplace-ledger practice — built to survive being wrong: the chart of ACCOUNTS is primary, the six ledgers are a partition over accounts, and every posting rule is account-level so any regrouping is a re-tag, not a rewrite.",
+    "status": "six-ledger enumeration ⚠ INFERRED — reconcile against Volkmar's .7 backend (RQ-1)",
+    "generated": "2026-07-04",
+    "named_pain": "Refunds and partial refunds: unwinding partially-paid taxes and reversing them in Stripe's tax reporting (Magnus, verbal).",
+    "in_repo_evidence": [
+      "TRANSCRIPTS_full.md 00:21:28 — 'the ledger system, the way it has been done, is offering that flexibility to us'",
+      "Farmer_Drop__knowledge_map.md §8 — 'Ledger system chosen for flexibility; a .7 backend prevents the expansion-vs-tech bottleneck'",
+      "Farmer_Drop__knowledge_map.md §4 Phase 0 — 'fiat rails (Stripe) + credits ledger'"
+    ],
+    "source_files": [
+      "graphs/take_rate_params.json (canonical fee constants — mirrored here)",
+      "init_structure/Farmer_Drop__knowledge_map.md (§3 fee model, §3.4 audit)"
+    ],
+    "decision_rules_respected": [
+      "DR-1: take-% UNDECIDED (band 7–12%, centered 10%) — all take-derived amounts parametric, never hardcoded.",
+      "DR-2: the 2% credit boost is a cost line with a NAMED funding account (5100), never a silent loss."
+    ]
+  },
+
+  "hypotheses": {
+    "H1": {
+      "label": "Primary — functional six",
+      "ledgers": [
+        {"id": "L1", "name": "Cash & Stripe Balance", "kind": "asset book", "evidence": "Phase 0 = Stripe rails; T+2 payouts; $0.55 covers Stripe's $0.30 + $0.25 fixed legs; mirrors Stripe balance_transactions."},
+        {"id": "L2", "name": "Member Credits", "kind": "stored-value book", "evidence": "The one ledger the knowledge map names explicitly ('fiat rails + credits ledger'); DR-2 demands the 2% boost be a visible funded line."},
+        {"id": "L3", "name": "Farmer / Supplier Payables", "kind": "AP book", "evidence": "Farmer nets ~80%; released via Connect transfers (0.25% + $0.25 leg); per-supplier subaccounts are how variable suppliers scale."},
+        {"id": "L4", "name": "Platform Revenue & Fees", "kind": "revenue/expense book", "evidence": "The fee engine is a first-class concept node; §3.4.3 requires pass-through vs margin to be separable."},
+        {"id": "L5", "name": "Tax", "kind": "liability book, per jurisdiction", "evidence": "Magnus's stated pain — unwinding partially-paid taxes against Stripe Tax reporting — only exists as a pain if tax is its own reconciled ledger."},
+        {"id": "L6", "name": "Network Commissions & Hops", "kind": "accrual book", "evidence": "Contractor 3%-of-drop-volume × N months is a time-based accrual with aging — structurally unlike farmer payables."}
+      ]
+    },
+    "H2": {
+      "label": "Alternate — clearing variant",
+      "note": "L3+L6 merge into one payables book ('everyone we owe'); the sixth ledger is an Orders/Receivables CLEARING book (authorized-not-captured, undelivered orders). Supported by the test-app flow — 'purchases with the Stripe card, no money withdrawn' is exactly a clearing-ledger state. Regrouping = re-tag 2150 under the payables book and promote 1100; zero posting-rule changes."
+    },
+    "H3": {
+      "label": "Alternate — rail-split variant",
+      "note": "L1 splits fiat cash vs token-rail wallet (CPDR / Base), anticipating Phase 1 — per the compadres chain==event==DB==UI reconciliation doctrine already cited in transfer_rails_data.json. Regrouping = split L1 on the rail dimension; zero posting-rule changes."
+    },
+    "design_rule": "Accounts are the atoms; ledgers are a view. Whichever six Volkmar actually has, reconciliation is a re-grouping exercise, not a rewrite. In the partition view, each book's NET POSITION is its implied due-to/due-from against the other books, and the six nets sum to zero — that identity is the cross-book reconciliation, and the simulator checks it live. Whether Volkmar's six instead balance INTERNALLY via explicit due-to/due-from accounts is part of RQ-1."
+  },
+
+  "accounts": [
+    {"code": "1000", "name": "Bank – Operating", "type": "asset", "normal": "Dr", "ledger": "L1", "purpose": "Real settled cash; endpoint of Stripe payouts."},
+    {"code": "1010", "name": "Stripe Balance – Available", "type": "asset", "normal": "Dr", "ledger": "L1", "purpose": "Mirror of Stripe available balance. All refunds & disputes debit here — refunds always leave the PLATFORM balance (R1)."},
+    {"code": "1020", "name": "Stripe Balance – Pending", "type": "asset", "normal": "Dr", "ledger": "L1", "purpose": "Captures land here pre-settlement; available on a 2-day rolling basis (T+2, US cards)."},
+    {"code": "1050", "name": "Rail Wallet – Token/USDC", "type": "asset", "normal": "Dr", "ledger": "L1", "purpose": "Rail-agnostic settlement endpoint; the canonical 'new rail = new 10xx account' exemplar. Phase-1 CPDR coin posts identical journals here."},
+    {"code": "1100", "name": "Orders Clearing / Suspense", "type": "asset", "normal": "Dr", "ledger": "L1", "purpose": "Separates 'money arrived' from 'allocated'; entry point when credits are the tender. ⚠ H2 promotes this to the standalone sixth ledger."},
+    {"code": "1200", "name": "Farmer Payout Receivable", "type": "asset", "normal": "Dr", "ledger": "L3", "purpose": "Clawback claim when a refund/chargeback lands AFTER the farmer was paid (negative-balance case)."},
+    {"code": "1210", "name": "Dispute Receivable", "type": "asset", "normal": "Dr", "ledger": "L1", "purpose": "Contingent asset for disputed funds Stripe has withdrawn but the platform may win back — withdrawn cash, so it lives in the cash book (re-tagged from L4 per challenge C-3)."},
+    {"code": "2000", "name": "Member Credits Liability", "type": "liability", "normal": "Cr", "ledger": "L2", "purpose": "Stored value owed to members incl. the 2% boost. No sales tax at purchase; tax at redemption (R3). ⚠ needs lot sub-tracking: cash-origin vs boost-origin."},
+    {"code": "2100", "name": "Farmer Payable (control)", "type": "liability", "normal": "Cr", "ledger": "L3", "purpose": "Owed to farmers; per-supplier subaccounts 2100.<farmer_id>."},
+    {"code": "2150", "name": "Distributor / Hop Payable (control)", "type": "liability", "normal": "Cr", "ledger": "L6", "purpose": "Owed to hops/drivers; subaccounts 2150.<hop_id>."},
+    {"code": "2200", "name": "Contractor Commission Accrual", "type": "liability", "normal": "Cr", "ledger": "L6", "purpose": "Time-accrued 3%-of-host-drop-volume owed to independent contractors, aged over N months."},
+    {"code": "2300", "name": "Sales Tax Payable (control)", "type": "liability", "normal": "Cr", "ledger": "L5", "purpose": "Collected tax owed to authorities; subaccounts 2300.<jurisdiction>; ORIGINAL rate stored per order line (R3)."},
+    {"code": "3000", "name": "Retained Earnings", "type": "equity", "normal": "Cr", "ledger": "span", "purpose": "Period-close bucket for net P&L."},
+    {"code": "4000", "name": "Platform Take Revenue", "type": "revenue", "normal": "Cr", "ledger": "L4", "purpose": "The ~10% take on goods (DR-1 open; parametric)."},
+    {"code": "4010", "name": "Fixed Surcharge Revenue", "type": "revenue", "normal": "Cr", "ledger": "L4", "purpose": "The $0.55 (card rail) / $0.25 (credits rail — transfer leg only). Retained on ANY refund, consistently: it covers Stripe's sunk fixed legs, which are sunk on refund too. Making the member whole anyway is a policy choice (RQ-7). A separate account makes the rule structural."},
+    {"code": "4011", "name": "Cart Surcharge Revenue", "type": "revenue", "normal": "Cr", "ledger": "L4", "purpose": "The 3.15% (2.9% Stripe passthrough + 0.25% wedge). Refunded proportionally on partial refund."},
+    {"code": "4020", "name": "Distribution Margin Revenue", "type": "revenue", "normal": "Cr", "ledger": "L4", "purpose": "The RESIDUAL of the goods split (absorbs rounding by construction). Exactly $0 under the canonical T1 Flat-Ten with two hops (80+10+10=100) — it exists for self-haul/one-hop drops and tiered templates, not as a revenue line to count on (challenge C-4)."},
+    {"code": "4030", "name": "Credits Breakage Revenue", "type": "revenue", "normal": "Cr", "ledger": "L2", "purpose": "Expired/unspent credits recognized proportional to redemptions (ASC 606)."},
+    {"code": "4900", "name": "Refunds & Returns (contra-revenue)", "type": "contra", "normal": "Dr", "ledger": "L4", "purpose": "Reverses recognized revenue on refunds/lost disputes WITHOUT mutating original rows — append-only journal."},
+    {"code": "5000", "name": "Stripe Processing Fee Expense", "type": "expense", "normal": "Dr", "ledger": "L4", "purpose": "2.9% + $0.30 recognized at settlement."},
+    {"code": "5010", "name": "Stripe Refund Fee Loss", "type": "expense", "normal": "Dr", "ledger": "L4", "purpose": "OPTIONAL net-zero disclosure reclass (5010←5000) attributing already-sunk fees to refund losses. Stripe keeps the ENTIRE original fee on any refund; it is fully expensed at capture and stays in 5000 unless management wants this attribution (challenge C-12). Who ultimately eats it is RQ-7."},
+    {"code": "5020", "name": "Dispute Fee Expense", "type": "expense", "normal": "Dr", "ledger": "L4", "purpose": "Non-refundable $15, expensed the moment the cardholder initiates."},
+    {"code": "5100", "name": "Credits Boost Expense", "type": "expense", "normal": "Dr", "ledger": "L2", "purpose": "The NAMED funding source of the 2% bonus ($100 → $102) — DR-2 closed by construction."},
+    {"code": "5200", "name": "Contractor Commission Expense", "type": "expense", "normal": "Dr", "ledger": "L6", "purpose": "P&L side of the monthly contractor accrual."},
+    {"code": "5300", "name": "Clawback Write-off / Bad Debt", "type": "expense", "normal": "Dr", "ledger": "L4", "purpose": "Write-off when a clawback receivable (1200) proves unrecoverable — the policy branch after a farmer-paid chargeback loss or refund. The goods-side revenue reversal itself runs through 4900 (challenge C-10)."},
+    {"code": "5310", "name": "Tax Bad-Debt Expense", "type": "expense", "normal": "Dr", "ledger": "L5", "purpose": "Chargeback tax loss. A chargeback is NOT a refund — remitted tax is generally unrecoverable via the returned-merchandise credit; only the bad-debt route, which varies and is limited (e.g. CA) (R3)."}
+  ],
+
+  "reserved_accounts": [
+    {"code": "2400", "name": "Chargeback / Dispute Reserve", "ledger": "L4", "note": "Provision for expected dispute losses; instantiate when dispute volume justifies provisioning."},
+    {"code": "2500", "name": "Deferred Revenue (unearned)", "ledger": "span", "note": "Paid-but-undelivered baskets, if recognition is deferred to fulfillment (book clock)."},
+    {"code": "2600", "name": "Refunds Payable", "ledger": "L4", "note": "Refunds owed but not yet disbursed, if disbursement is async."}
+  ],
+
+  "partition_tally": {"L1": 6, "L2": 3, "L3": 2, "L4": 9, "L5": 2, "L6": 3, "span": 1, "total": 26, "note": "20 of 26 are exercised by the demo event set; 1000/1050/1100/4030 are chartered ahead of their flows (bank payout, token rail, clearing-tender variant, breakage sweep); 5010/5300 are the optional-disclosure and write-off branches."},
+
+  "stripe_tax_unwind": {
+    "recording": "Tax.Calculation at checkout → tax.Transaction.create_from_calculation records the taxable transaction (calculations expire after 90 days; reference must be unique across ALL transactions incl. reversals).",
+    "reversal_api": "tax.Transaction reversal with mode=full, or mode=partial two ways: line_items[] each carrying original_line_item + reference + negative amount + negative amount_tax; or flat_amount — a single negative after-tax amount distributed PROPORTIONALLY across line items and shipping by remaining refundable amount. Max 30 partial reversals per sale; over-reversing errors out.",
+    "reporting_caveat": "Reversals do NOT auto-adjust taxable/nontaxable amounts and carry no reversal reason. Stripe RECOMMENDS not refunding partial line-item tax — instead FULLY REVERSE the transaction and CREATE A NEW corrected one for an accurate calculation (docs.stripe.com/tax/reports). This is the exact friction behind the named pain.",
+    "strategy": "Same-period partial refunds: mode=partial (flat_amount for lump-sum, line_items when tied to lines) mirrored 1:1 in the ledger. Cross-period or mixed-taxability refunds: full-reverse-and-recreate, with the ledger booking the amended-return posture (tax clock). Which one Volkmar's code does today is RQ-3.",
+    "liability_model": "Stripe Tax for MARKETPLACES = platform is taxpayer/merchant of record (collects, files, remits). Consistent with marketplace-facilitator law: the platform, not the farmer, is the legal collector in effectively every sales-tax state (R3). Which model is configured is RQ-10."
+  },
+
+  "sources": [
+    {"id": "stripe_refunds", "label": "Stripe — refunds & fee non-return", "url": "https://docs.stripe.com/refunds", "note": "Multiple partial refunds up to captured total; original processing fee NOT returned (support.stripe.com/questions/understanding-fees-for-refunded-payments); refunds always from platform balance."},
+    {"id": "stripe_transfer_reversals", "label": "Stripe Connect — transfer reversals", "url": "https://docs.stripe.com/api/transfer_reversals", "note": "reverse_transfer proportional on partial refunds; destination account keeps funds by default, platform covers negative; debit_negative_balances (US/CA)."},
+    {"id": "stripe_disputes", "label": "Stripe — dispute lifecycle", "url": "https://docs.stripe.com/disputes/how-disputes-work", "note": "$15 fee on initiation (non-refundable); evidence 7–21d; cardholder window ~120d cards / 180d LPM; funds_withdrawn/funds_reinstated; no refunds while dispute open."},
+    {"id": "stripe_tax_reversal", "label": "Stripe Tax — transaction reversals", "url": "https://docs.stripe.com/api/tax/transactions/create_reversal", "note": "mode=full|partial; line_items or flat_amount (proportional); 30-reversal cap; cannot over-reverse."},
+    {"id": "stripe_tax_reports", "label": "Stripe Tax — reports & the partial-reversal caveat", "url": "https://docs.stripe.com/tax/reports", "note": "Reversals don't adjust taxable amounts or carry reason; Stripe recommends full-reverse-and-recreate; location reports aggregate transactions AND reversals per jurisdiction filing period."},
+    {"id": "stripe_tax_marketplaces", "label": "Stripe Tax for marketplaces", "url": "https://docs.stripe.com/tax/tax-for-marketplaces", "note": "Platform as taxpayer/merchant of record vs Tax-for-platforms (connected account as taxpayer)."},
+    {"id": "stripe_balance_txns", "label": "Stripe — balance transaction taxonomy", "url": "https://docs.stripe.com/api/balance_transactions/object", "note": "Canonical type list the mirror ledger maps; transfer reversals surface as transfer_refund; fee_details[] expands into separate postings."},
+    {"id": "mt_accounting", "label": "Modern Treasury — Accounting for Developers", "url": "https://www.moderntreasury.com/journal/accounting-for-developers-part-i", "note": "Debits/credits, account normality, marketplace chart-of-accounts pattern; effective_at vs posted_at bitemporal fields."},
+    {"id": "mt_immutability", "label": "Modern Treasury — enforcing ledger immutability", "url": "https://www.moderntreasury.com/journal/enforcing-immutability-in-your-double-entry-ledger", "note": "Append-only; discard-and-recreate on pending→posted; never mutate posted rows."},
+    {"id": "tigerbeetle", "label": "TigerBeetle — two-phase transfers", "url": "https://docs.tigerbeetle.com/coding/two-phase-transfers/", "note": "Pending/post/void transfers; balanced-by-construction; auth-as-hold with no posted GL impact."},
+    {"id": "formance", "label": "Formance — Numscript & programmable ledger", "url": "https://www.formance.com/blog/engineering/numscript", "note": "Declarative balanced money movement; integer math; deterministic rounding; marketplace fee splits."},
+    {"id": "stripe_ledger_blog", "label": "Stripe engineering — Ledger", "url": "https://stripe.dev/blog/ledger-stripe-system-for-tracking-and-validating-money-movement", "note": "Immutable log; money movement as observable state machine; double-entry as proof; reconciliation at 5B events/day."},
+    {"id": "uber_ledgerstore", "label": "Uber — LedgerStore / Gulfstream", "url": "https://www.uber.com/blog/how-ledgerstore-supports-trillions-of-indexes/", "note": "Immutable ledger, business/event timestamp distinct from system time, sealing."},
+    {"id": "airbnb_finance", "label": "Airbnb — Tracking the Money", "url": "https://medium.com/airbnb-engineering/tracking-the-money-scaling-financial-reporting-at-airbnb-6d742b80f040", "note": "Event-based subledger generation; 'no money without a source'."},
+    {"id": "mpf_laws", "label": "Marketplace-facilitator laws (2026)", "url": "https://www.numeral.com/blog/marketplace-facilitator", "note": "Platform is the legal collector/remitter in effectively every sales-tax state; thresholds vary; aggregate facilitated sales count."},
+    {"id": "food_tax", "label": "Grocery taxability by state (2026)", "url": "https://taxhero.net/blog/sales-tax-on-food/", "note": "37 states + DC exempt unprepared groceries; ~13 tax them (full or reduced); prepared-food and candy/soda carve-outs; local divergence."},
+    {"id": "refund_tax", "label": "Sales-tax refund mechanics", "url": "https://www.taxconnex.com/blog-/refunds-and-your-sales-tax-compliance", "note": "Returned-merchandise deduction in the current period vs amended return; reverse at ORIGINAL rate; statutory windows."},
+    {"id": "bad_debt", "label": "Bad-debt route for chargebacks", "url": "https://msdtaxlaw.com/multi-state-sales-and-use-tax/bad-debts-an-overlooked-sales-tax-exemption/", "note": "Chargeback tax recovery runs through bad-debt deduction, not returned merchandise; limited in some states (CA)."},
+    {"id": "breakage", "label": "ASC 606 breakage", "url": "https://blog.auditanalytics.com/gift-card-breakage-asc-606/", "note": "Breakage recognized proportional to actual redemptions."}
+  ]
+}
