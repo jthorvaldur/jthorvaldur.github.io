@@ -1,0 +1,350 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>FARMER DROP — Prediction Engine · The Structure</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,500;0,9..144,600;0,9..144,700;1,9..144,400&family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;0,6..72,600;1,6..72,400&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --parchment:#faf6ec; --parchment-2:#f3ecda; --parchment-3:#ece2c9;
+  --loam:#1e3a2a; --loam-soft:#3a5343; --ink-fade:#6c7b6a;
+  --honey:#d9930d; --honey-deep:#b8790a;
+  --rust:#b23a1e; --rust-deep:#8f2c14;
+  --line:#c9bd9c; --line-soft:#ddd2b4;
+  --paper-card:#fffdf6;
+  --good:#2f6b4a; --warn:#b8790a; --bad:#8f2c14; --teal:#2b6d84;
+}
+*{box-sizing:border-box}
+html,body{margin:0;background:var(--parchment);color:var(--loam);
+  font-family:"Newsreader",Georgia,serif;font-size:16px;line-height:1.5}
+.grain{position:fixed;inset:0;pointer-events:none;z-index:0;opacity:.05;mix-blend-mode:multiply}
+.fieldrows{position:fixed;inset:0;pointer-events:none;z-index:0;opacity:.35;
+  background:
+    repeating-linear-gradient(115deg, transparent 0 46px, rgba(30,58,42,.028) 46px 47px),
+    radial-gradient(140% 120% at 12% 8%, #fdfbf3 0%, var(--parchment) 42%, var(--parchment-2) 100%);}
+#app{position:relative;z-index:1;max-width:1180px;margin:0 auto;padding:0 22px 90px}
+header{padding:22px 0 14px;border-bottom:1.5px solid var(--line);
+  display:flex;align-items:flex-end;justify-content:space-between;gap:24px;flex-wrap:wrap;
+  position:sticky;top:0;z-index:20;
+  background:linear-gradient(180deg, var(--parchment) 55%, rgba(250,246,236,.85));
+  backdrop-filter:blur(2px)}
+.brand h1{font-family:"Fraunces",serif;font-weight:600;font-size:clamp(23px,3vw,38px);line-height:.96;margin:0;letter-spacing:-.01em}
+.brand h1 .drop{color:var(--honey-deep);font-style:italic}
+.brand .kicker{font-family:"IBM Plex Mono",monospace;font-size:11px;letter-spacing:.2em;text-transform:uppercase;color:var(--ink-fade);margin-top:8px}
+nav{display:flex;gap:6px;align-items:center;flex-wrap:wrap}
+nav a{font-family:"IBM Plex Mono",monospace;font-size:12px;text-decoration:none;color:var(--loam-soft);
+  border:1px solid var(--line);border-radius:999px;padding:7px 14px;background:var(--paper-card);transition:all .18s;white-space:nowrap}
+nav a:hover{background:var(--loam);color:var(--parchment);border-color:var(--loam)}
+nav a.here{background:var(--loam);color:var(--parchment);border-color:var(--loam)}
+.banner{margin:20px 0 8px;border:2px solid var(--teal);border-radius:8px;
+  background:linear-gradient(180deg,#e9f2f5,#dcebf0);padding:15px 20px;display:flex;gap:14px;align-items:flex-start;
+  box-shadow:0 14px 30px -22px rgba(43,109,132,.55)}
+.banner .flag{font-family:"IBM Plex Mono",monospace;font-weight:600;font-size:11px;letter-spacing:.14em;color:#fff;
+  background:var(--teal);border-radius:5px;padding:5px 9px;white-space:nowrap;margin-top:2px}
+.banner p{margin:0;font-size:15.5px;color:var(--loam)}
+.banner b{font-family:"Fraunces",serif}
+section{margin-top:40px;scroll-margin-top:120px}
+.sec-num{font-family:"IBM Plex Mono",monospace;font-size:11px;letter-spacing:.2em;color:var(--honey-deep);text-transform:uppercase}
+h2.sec{font-family:"Fraunces",serif;font-weight:600;font-size:clamp(21px,2.6vw,30px);margin:4px 0 6px;line-height:1.06;letter-spacing:-.01em}
+.lede{font-size:16px;color:var(--loam-soft);max-width:74ch;margin:0 0 16px}
+.lede b{color:var(--loam)}
+.panel{background:var(--paper-card);border:1px solid var(--line);border-radius:8px;
+  box-shadow:0 1px 0 var(--line),0 16px 34px -28px rgba(30,58,42,.5);padding:18px 20px;margin-bottom:16px}
+.panel h3{font-family:"IBM Plex Mono",monospace;font-size:10.5px;letter-spacing:.16em;text-transform:uppercase;color:var(--ink-fade);
+  margin:0 0 12px;border-bottom:1px solid var(--line-soft);padding-bottom:6px}
+table{width:100%;border-collapse:collapse;font-size:13.5px}
+th,td{text-align:right;padding:6px 8px;border-bottom:1px dotted var(--line-soft)}
+th:first-child,td:first-child{text-align:left}
+thead th{font-family:"IBM Plex Mono",monospace;font-size:10px;letter-spacing:.05em;text-transform:uppercase;color:var(--ink-fade);border-bottom:1.5px solid var(--line)}
+td.num,th.num{font-family:"IBM Plex Mono",monospace}
+.tag{display:inline-block;font-family:"IBM Plex Mono",monospace;font-size:9.5px;padding:1px 6px;border-radius:4px;letter-spacing:.04em;vertical-align:middle}
+.tag.good{background:#e5efe4;color:var(--good)}
+.tag.warn{background:#fbeecb;color:var(--warn)}
+.tag.bad{background:#f6d9cf;color:var(--bad)}
+.tag.teal{background:#dcebf0;color:var(--teal)}
+.cite{font-family:"IBM Plex Mono",monospace;font-size:11.5px;color:var(--loam-soft)}
+footer{margin-top:46px;padding:16px 0;border-top:1.5px solid var(--line);
+  font-family:"IBM Plex Mono",monospace;font-size:10.5px;color:var(--ink-fade);line-height:1.6}
+.mono{font-family:"IBM Plex Mono",monospace}
+.mininav{display:flex;gap:8px;flex-wrap:wrap;margin:16px 0 0}
+.mininav a{font-family:"IBM Plex Mono",monospace;font-size:11px;text-decoration:none;color:var(--loam-soft);
+  border:1px solid var(--line-soft);border-radius:6px;padding:5px 10px;background:var(--paper-card)}
+.mininav a:hover{border-color:var(--honey);color:var(--honey-deep)}
+.maplegend{display:flex;gap:16px;flex-wrap:wrap;font-family:"IBM Plex Mono",monospace;font-size:11px;color:var(--loam-soft);margin-top:10px}
+.maplegend span{display:inline-flex;align-items:center;gap:6px}
+.sw{display:inline-block;width:14px;height:14px;border-radius:3px;border:1px solid var(--line)}
+svg text{font-family:"IBM Plex Mono",monospace}
+.twocol{display:grid;grid-template-columns:1.2fr .8fr;gap:18px}
+@media(max-width:860px){.twocol{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<svg class="grain"><filter id="grainf"><feTurbulence type="fractalNoise" baseFrequency="0.9" numOctaves="3" stitchTiles="stitch"/><feColorMatrix type="saturate" values="0"/></filter><rect width="100%" height="100%" filter="url(#grainf)"/></svg>
+<div class="fieldrows"></div>
+
+<div id="app">
+  <header>
+    <div class="brand">
+      <h1>FARMER <span class="drop">DROP</span> — Prediction Engine · Structure</h1>
+      <div class="kicker">The flow graph on a synthetic world · every number computed by the engine, none real yet</div>
+    </div>
+    <nav>
+      <a href="index.html">index</a>
+      <a href="fees_taxes.html">as built</a>
+      <a href="predict_structure.html" class="here">structure</a>
+      <a href="predict_math.html">the math</a>
+    </nav>
+  </header>
+
+  <div class="banner">
+    <div class="flag">SYNTHETIC · SEEDED</div>
+    <p>This is the prediction engine running on the <b>demo-fixture world</b> — 8 farmers × 8 HostDrops × 64 products,
+    36 demand cells, 104 weeks of simulated seasonal orders. No real data exists yet; that is the point.
+    The <b>data contract is agnostic</b>, so when the LocalHarvest export lands the same graph, the same
+    metrics and the same guidance run unchanged. Spec: <span class="mono">predict/SPEC.md</span> on the
+    <span class="mono">predict-engine</span> branch. The math behind every number here is taught on
+    <a href="predict_math.html">the math page</a>.</p>
+  </div>
+
+  <div class="mininav">
+    <a href="#s1">1 · the map</a>
+    <a href="#s2">2 · the graph model</a>
+    <a href="#s3">3 · lanes: two views of flow</a>
+    <a href="#s4">4 · contractor packets</a>
+    <a href="#s5">5 · driver bundles</a>
+    <a href="#s6">6 · seasonality</a>
+  </div>
+
+  <!-- 1 THE MAP -->
+  <section id="s1">
+    <div class="sec-num">Section 1</div>
+    <h2 class="sec">The map — supply, demand, and the lanes between</h2>
+    <p class="lede">One picture of the whole graph. <b>Cells</b> shade by locality score (darker = better
+    place for the next HostDrop; the five recommended cells are ringed). <b>Farmers</b> are green circles,
+    <b>HostDrops</b> honey squares. <b>Lanes</b> (farmer → HostDrop hauls) draw with width proportional to
+    their average flow and color by their current state — <span class="tag bad">hot</span> lanes run above
+    their own history, <span class="tag teal">cold</span> below, judged by Laplace surprise (§3). Hover
+    anything for its numbers.</p>
+    <div class="panel">
+      <div id="map"></div>
+      <div class="maplegend">
+        <span><span class="sw" style="background:#2f6b4a"></span> farmer</span>
+        <span><span class="sw" style="background:#d9930d"></span> hostdrop</span>
+        <span><span class="sw" style="background:linear-gradient(90deg,#f3ecda,#7a9e87)"></span> cell locality score</span>
+        <span><span class="sw" style="background:#fff;border:2px solid #b23a1e"></span> recommended cell</span>
+        <span><span class="sw" style="background:#8f2c14"></span> hot lane</span>
+        <span><span class="sw" style="background:#2b6d84"></span> cold lane</span>
+        <span><span class="sw" style="background:#7c8a7a"></span> steady lane</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- 2 GRAPH MODEL -->
+  <section id="s2">
+    <div class="sec-num">Section 2</div>
+    <h2 class="sec">The graph model — what the engine actually stores</h2>
+    <p class="lede">The domain is a heterogeneous graph plus time. Every question the engine answers —
+    <i>where do we plant the next HostDrop, which lanes need a driver this week, what will move in
+    October</i> — is a query over these nodes and edges and their weekly series.</p>
+    <div class="panel">
+      <table>
+        <thead><tr><th>Element</th><th>Type</th><th>Carries</th><th>Predicted quantity</th></tr></thead>
+        <tbody>
+          <tr><td><span class="mono">farmer</span></td><td>node</td><td>location, products, Drop Score</td><td>supply capacity</td></tr>
+          <tr><td><span class="mono">hostdrop</span></td><td>node</td><td>location, box capacity</td><td>weekly throughput</td></tr>
+          <tr><td><span class="mono">demand_cell</span></td><td>node</td><td>centroid, population</td><td>locality score, basket $</td></tr>
+          <tr><td><span class="mono">product</span></td><td>node</td><td>category, price</td><td>seasonal factor (§6)</td></tr>
+          <tr><td><span class="mono">driver</span></td><td>node</td><td>home, haul capacity</td><td>utilization</td></tr>
+          <tr><td><span class="mono">supplies</span> (farmer→hostdrop)</td><td>edge</td><td>weekly $ / boxes series</td><td>average + real-time flow (§3)</td></tr>
+          <tr><td><span class="mono">serves</span> (hostdrop→cell)</td><td>edge</td><td>weekly catchment $</td><td>member demand</td></tr>
+          <tr><td><span class="mono">near</span> (farmer↔cell)</td><td>edge</td><td>distance</td><td>candidate-lane potential (§4)</td></tr>
+          <tr><td><span class="mono">hauls</span> (driver→lane)</td><td>edge</td><td>boxes moved</td><td>bundling opportunity (§5)</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <!-- 3 LANES -->
+  <section id="s3">
+    <div class="sec-num">Section 3</div>
+    <h2 class="sec">Lanes — two views of the same flow</h2>
+    <p class="lede">Each lane keeps an <b>average flow</b> (its learned baseline) and a <b>real-time flow</b>
+    (this week). Two ways to judge them, shown side by side: the naive <b>fixed ratio</b> (hot if &gt;1.25×
+    baseline) and the engine's <b>Laplace surprise</b> — how many of the lane's <i>own</i> typical
+    deviations this week is. A ratio that looks alarming on a jittery lane can be ordinary; the same ratio
+    on a metronomic lane is an event. That distinction is exactly what the robust math buys —
+    <a href="predict_math.html">see it derived</a>.</p>
+    <div class="panel">
+      <h3>All lanes, sorted by baseline · $/week</h3>
+      <table id="tbl-lanes"><thead><tr>
+        <th>Lane</th><th class="num">baseline (EWMA)</th><th class="num">robust level</th>
+        <th class="num">Laplace b</th><th class="num">this week</th>
+        <th class="num">surprise (nats)</th><th>ratio view</th><th>surprise view</th>
+      </tr></thead><tbody></tbody></table>
+      <p class="cite" style="margin:10px 0 0">surprise = |this week − robust level| ÷ b. Under Laplace noise
+      P(surprise ≥ s) = e<sup>−s</sup>: a lane at 3.0 nats is a ≈1-in-20-weeks event <i>for that lane</i>.
+      Disagreements between the two views (tagged <span class="tag warn">≠</span>) are the whole argument.</p>
+    </div>
+  </section>
+
+  <!-- 4 PACKETS -->
+  <section id="s4">
+    <div class="sec-num">Section 4</div>
+    <h2 class="sec">Contractor packets — "do this area, not that one"</h2>
+    <p class="lede">The site-selection output. Score = demand proxy × farmer coverage × cannibalization
+    guard; the top cells become <b>packets</b> — everything a contractor needs to walk into an area:
+    predicted weekly dollars, the farmers in proximity to link, what's in season right now, and how far the
+    nearest existing HostDrop is.</p>
+    <div class="panel">
+      <h3>Top recommended cells (ringed on the map)</h3>
+      <table id="tbl-packets"><thead><tr>
+        <th>Cell</th><th class="num">predicted $/wk</th><th>farmers in proximity</th>
+        <th>in season now</th><th class="num">nearest hostdrop</th>
+      </tr></thead><tbody></tbody></table>
+    </div>
+  </section>
+
+  <!-- 5 BUNDLES -->
+  <section id="s5">
+    <div class="sec-num">Section 5</div>
+    <h2 class="sec">Driver coordination — bundle the corridor</h2>
+    <p class="lede">Lanes into the same HostDrop whose farmers sit near each other are <b>bundle
+    candidates</b>: one driver, one run, two pickups. v0 flags them; v1 turns flags into routes priced
+    against the 5% haul.</p>
+    <div class="panel">
+      <h3>Top lanes with bundling hints</h3>
+      <table id="tbl-bundles"><thead><tr>
+        <th>Lane</th><th class="num">baseline $/wk</th><th>state</th><th>bundle with</th>
+      </tr></thead><tbody></tbody></table>
+    </div>
+  </section>
+
+  <!-- 6 SEASONALITY -->
+  <section id="s6">
+    <div class="sec-num">Section 6</div>
+    <h2 class="sec">Seasonality — the curves the engine recovered</h2>
+    <p class="lede">The generator hides a true seasonal curve inside each category's demand; the engine
+    fits annual + semi-annual harmonics to the noisy weekly totals and must <b>recover the peak</b>. Fitted
+    curve in honey, true peak as the dashed line. This is the forward-scaling layer: baselines × these
+    factors = what next month's lanes look like.</p>
+    <div class="panel">
+      <div id="seasongrid" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:14px"></div>
+    </div>
+  </section>
+
+  <footer>
+    Synthetic world · seeded · generated by <span class="mono">python -m predict.export</span> from the
+    <span class="mono">predict-engine</span> branch. Data: <span class="mono">predict_world.json</span> ·
+    <span class="mono">predict_series.json</span>. Robust-flow concepts adapted from
+    <a href="https://github.com/microprediction/skaters" style="color:var(--teal)">microprediction/skaters</a>.
+    Generated 2026-07-07.
+  </footer>
+</div>
+
+<script>
+const G = { good:"#2f6b4a", honey:"#d9930d", rust:"#8f2c14", teal:"#2b6d84", steady:"#7c8a7a" };
+const esc = (s)=>String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;");
+
+fetch("predict_world.json").then(r=>r.json()).then(render);
+
+function render(W){
+  renderMap(W); renderLanes(W); renderPackets(W); renderBundles(W); renderSeasons(W);
+}
+
+/* ---------- §1 the map ---------- */
+function renderMap(W){
+  const side = W.meta.grid_side, S = 96, PAD = 26;
+  const px = (x)=>PAD + x*S, py = (y)=>PAD + y*S;
+  const maxScore = Math.max(...W.cells.map(c=>c.score), 1);
+  let svg = `<svg viewBox="0 0 ${side*S+2*PAD} ${side*S+2*PAD}" style="width:100%;height:auto">`;
+  for(const c of W.cells){
+    const t = c.score/maxScore;
+    const shade = mix([243,236,218],[92,138,111], Math.pow(t,0.8));
+    svg += `<rect x="${px(c.x-0.5)}" y="${py(c.y-0.5)}" width="${S}" height="${S}"
+      fill="rgb(${shade})" stroke="${c.recommended ? '#b23a1e' : '#c9bd9c'}"
+      stroke-width="${c.recommended?3:1}" rx="6"><title>cell ${c.id} · score ${c.score}
+pop ${c.population} · predicted $${c.predicted_weekly_dollars}/wk
+farmers near: [${c.nearby_farmers}] · nearest hostdrop ${c.nearest_hostdrop_dist}</title></rect>`;
+    if(c.recommended) svg += `<text x="${px(c.x)}" y="${py(c.y-0.32)}" text-anchor="middle" font-size="11" fill="#8f2c14" font-weight="600">★ ${c.id}</text>`;
+  }
+  const hd = Object.fromEntries(W.hostdrops.map(h=>[h.id,h]));
+  const fm = Object.fromEntries(W.farmers.map(f=>[f.id,f]));
+  const maxBase = Math.max(...W.lanes.map(l=>l.baseline),1);
+  for(const l of W.lanes){
+    const f=fm[l.farmer], h=hd[l.hostdrop];
+    const col = l.state_surprise==="hot" ? G.rust : l.state_surprise==="cold" ? G.teal : G.steady;
+    svg += `<line x1="${px(f.x)}" y1="${py(f.y)}" x2="${px(h.x)}" y2="${py(h.y)}"
+      stroke="${col}" stroke-opacity="0.75" stroke-linecap="round"
+      stroke-width="${1.5 + 6*l.baseline/maxBase}"><title>lane farmer ${l.farmer} → hostdrop ${l.hostdrop}
+baseline $${l.baseline}/wk · now $${l.current}
+surprise ${l.surprise} nats → ${l.state_surprise}</title></line>`;
+  }
+  for(const h of W.hostdrops)
+    svg += `<rect x="${px(h.x)-9}" y="${py(h.y)-9}" width="18" height="18" rx="4" fill="${G.honey}" stroke="#8a5f06" stroke-width="1.5"><title>${esc(h.name)} · capacity ${h.capacity_boxes} boxes/wk</title></rect>`;
+  for(const f of W.farmers)
+    svg += `<circle cx="${px(f.x)}" cy="${py(f.y)}" r="9" fill="${G.good}" stroke="#17301f" stroke-width="1.5"><title>${esc(f.name)} · Drop Score ${f.drop_score}</title></circle>`;
+  svg += `</svg>`;
+  document.getElementById("map").innerHTML = svg;
+}
+function mix(a,b,t){ return a.map((v,i)=>Math.round(v+(b[i]-v)*t)).join(","); }
+
+/* ---------- §3 lanes ---------- */
+function renderLanes(W){
+  const tb = document.querySelector("#tbl-lanes tbody");
+  tb.innerHTML = W.lanes.map(l=>{
+    const tag = (s)=>`<span class="tag ${s==='hot'?'bad':s==='cold'?'teal':'good'}">${s}</span>`;
+    const disagree = l.state_ratio!==l.state_surprise ? ` <span class="tag warn">≠</span>` : "";
+    return `<tr><td>farmer ${l.farmer} → hostdrop ${l.hostdrop}</td>
+      <td class="num">$${l.baseline.toFixed(2)}</td><td class="num">$${l.robust_level.toFixed(2)}</td>
+      <td class="num">$${l.laplace_b.toFixed(2)}</td><td class="num">$${l.current.toFixed(2)}</td>
+      <td class="num">${l.surprise.toFixed(2)}</td><td>${tag(l.state_ratio)}</td><td>${tag(l.state_surprise)}${disagree}</td></tr>`;
+  }).join("");
+}
+
+/* ---------- §4 packets ---------- */
+function renderPackets(W){
+  const tb = document.querySelector("#tbl-packets tbody");
+  tb.innerHTML = W.packets.map(p=>`<tr>
+    <td>★ cell ${p.cell}</td><td class="num">$${p.predicted_weekly_dollars.toFixed(2)}</td>
+    <td class="num">[${p.farmers_in_proximity.join(", ")}]</td>
+    <td>${p.top_categories_now.join(" · ")}</td>
+    <td class="num">${p.nearest_existing_hostdrop_dist}</td></tr>`).join("");
+}
+
+/* ---------- §5 bundles ---------- */
+function renderBundles(W){
+  const tb = document.querySelector("#tbl-bundles tbody");
+  tb.innerHTML = W.bundles.slice(0,10).map(a=>{
+    const tag = `<span class="tag ${a.state==='hot'?'bad':a.state==='cold'?'teal':'good'}">${a.state}</span>`;
+    const bw = a.bundle_with.length ? a.bundle_with.map(b=>`(${b[0]}→${b[1]})`).join(" ") : "—";
+    return `<tr><td>farmer ${a.lane[0]} → hostdrop ${a.lane[1]}</td>
+      <td class="num">$${a.baseline.toFixed(2)}</td><td>${tag}</td><td class="num">${bw}</td></tr>`;
+  }).join("");
+}
+
+/* ---------- §6 seasonality small multiples ---------- */
+function renderSeasons(W){
+  const wrap = document.getElementById("seasongrid");
+  wrap.innerHTML = Object.entries(W.seasonality).map(([cat,s])=>{
+    const wpx=220, hpx=90, pad=8;
+    const ys = s.fitted_factors, ymax = Math.max(...ys, 1.05), ymin = Math.min(...ys, 0.95);
+    const X = (w)=>pad + w*(wpx-2*pad)/51;
+    const Y = (v)=>hpx-pad - (v-ymin)*(hpx-2*pad)/(ymax-ymin);
+    const path = ys.map((v,w)=>`${w?'L':'M'}${X(w).toFixed(1)},${Y(v).toFixed(1)}`).join("");
+    const ok = Math.abs(((s.fitted_peak - s.truth_peak + 26 + 52) % 52) - 26) <= 2;
+    return `<div>
+      <div class="cite" style="margin-bottom:4px">${cat} · fit wk ${s.fitted_peak} / truth wk ${s.truth_peak}
+        <span class="tag ${ok?'good':(s.truth_amp<0.2?'warn':'bad')}">${ok?'recovered':(s.truth_amp<0.2?'near-flat':'off')}</span></div>
+      <svg viewBox="0 0 ${wpx} ${hpx}" style="width:100%;height:auto;background:var(--parchment-2);border:1px solid var(--line-soft);border-radius:6px">
+        <line x1="${X(s.truth_peak)}" y1="${pad}" x2="${X(s.truth_peak)}" y2="${hpx-pad}" stroke="#8f2c14" stroke-dasharray="3,3"/>
+        <line x1="${pad}" y1="${Y(1)}" x2="${wpx-pad}" y2="${Y(1)}" stroke="#c9bd9c" stroke-dasharray="2,3"/>
+        <path d="${path}" fill="none" stroke="#b8790a" stroke-width="2"/>
+      </svg></div>`;
+  }).join("");
+}
+</script>
+</body>
+</html>

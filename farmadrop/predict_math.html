@@ -1,0 +1,595 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>FARMER DROP — Prediction Engine · The Math</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,500;0,9..144,600;0,9..144,700;1,9..144,400&family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;0,6..72,600;1,6..72,400&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --parchment:#faf6ec; --parchment-2:#f3ecda; --parchment-3:#ece2c9;
+  --loam:#1e3a2a; --loam-soft:#3a5343; --ink-fade:#6c7b6a;
+  --honey:#d9930d; --honey-deep:#b8790a;
+  --rust:#b23a1e; --rust-deep:#8f2c14;
+  --line:#c9bd9c; --line-soft:#ddd2b4;
+  --paper-card:#fffdf6;
+  --good:#2f6b4a; --warn:#b8790a; --bad:#8f2c14; --teal:#2b6d84; --plum:#7a5b8f;
+}
+*{box-sizing:border-box}
+html,body{margin:0;background:var(--parchment);color:var(--loam);
+  font-family:"Newsreader",Georgia,serif;font-size:16px;line-height:1.5}
+.grain{position:fixed;inset:0;pointer-events:none;z-index:0;opacity:.05;mix-blend-mode:multiply}
+.fieldrows{position:fixed;inset:0;pointer-events:none;z-index:0;opacity:.35;
+  background:
+    repeating-linear-gradient(115deg, transparent 0 46px, rgba(30,58,42,.028) 46px 47px),
+    radial-gradient(140% 120% at 12% 8%, #fdfbf3 0%, var(--parchment) 42%, var(--parchment-2) 100%);}
+#app{position:relative;z-index:1;max-width:1180px;margin:0 auto;padding:0 22px 90px}
+header{padding:22px 0 14px;border-bottom:1.5px solid var(--line);
+  display:flex;align-items:flex-end;justify-content:space-between;gap:24px;flex-wrap:wrap;
+  position:sticky;top:0;z-index:20;
+  background:linear-gradient(180deg, var(--parchment) 55%, rgba(250,246,236,.85));backdrop-filter:blur(2px)}
+.brand h1{font-family:"Fraunces",serif;font-weight:600;font-size:clamp(23px,3vw,38px);line-height:.96;margin:0;letter-spacing:-.01em}
+.brand h1 .drop{color:var(--honey-deep);font-style:italic}
+.brand .kicker{font-family:"IBM Plex Mono",monospace;font-size:11px;letter-spacing:.2em;text-transform:uppercase;color:var(--ink-fade);margin-top:8px}
+nav{display:flex;gap:6px;align-items:center;flex-wrap:wrap}
+nav a{font-family:"IBM Plex Mono",monospace;font-size:12px;text-decoration:none;color:var(--loam-soft);
+  border:1px solid var(--line);border-radius:999px;padding:7px 14px;background:var(--paper-card);transition:all .18s;white-space:nowrap}
+nav a:hover{background:var(--loam);color:var(--parchment);border-color:var(--loam)}
+nav a.here{background:var(--loam);color:var(--parchment);border-color:var(--loam)}
+.banner{margin:20px 0 8px;border:2px solid var(--plum);border-radius:8px;
+  background:linear-gradient(180deg,#f0eaf4,#e6dded);padding:15px 20px;display:flex;gap:14px;align-items:flex-start;
+  box-shadow:0 14px 30px -22px rgba(122,91,143,.55)}
+.banner .flag{font-family:"IBM Plex Mono",monospace;font-weight:600;font-size:11px;letter-spacing:.14em;color:#fff;
+  background:var(--plum);border-radius:5px;padding:5px 9px;white-space:nowrap;margin-top:2px}
+.banner p{margin:0;font-size:15.5px;color:var(--loam)}
+.banner b{font-family:"Fraunces",serif}
+section{margin-top:40px;scroll-margin-top:120px}
+.sec-num{font-family:"IBM Plex Mono",monospace;font-size:11px;letter-spacing:.2em;color:var(--honey-deep);text-transform:uppercase}
+h2.sec{font-family:"Fraunces",serif;font-weight:600;font-size:clamp(21px,2.6vw,30px);margin:4px 0 6px;line-height:1.06;letter-spacing:-.01em}
+.lede{font-size:16px;color:var(--loam-soft);max-width:76ch;margin:0 0 16px}
+.lede b{color:var(--loam)}
+.panel{background:var(--paper-card);border:1px solid var(--line);border-radius:8px;
+  box-shadow:0 1px 0 var(--line),0 16px 34px -28px rgba(30,58,42,.5);padding:18px 20px;margin-bottom:16px}
+.panel h3{font-family:"IBM Plex Mono",monospace;font-size:10.5px;letter-spacing:.16em;text-transform:uppercase;color:var(--ink-fade);
+  margin:0 0 12px;border-bottom:1px solid var(--line-soft);padding-bottom:6px}
+.ctrls{display:flex;gap:18px 26px;flex-wrap:wrap;margin:2px 0 12px}
+.ctrl{min-width:170px;flex:1 1 170px;max-width:260px}
+.ctrl label{display:flex;justify-content:space-between;align-items:baseline;font-family:"IBM Plex Mono",monospace;
+  font-size:11px;color:var(--loam-soft);margin-bottom:4px}
+.ctrl label .val{font-weight:600;color:var(--honey-deep);font-size:12.5px}
+input[type=range]{width:100%;accent-color:var(--honey-deep);height:20px;cursor:pointer}
+select{font-family:"IBM Plex Mono",monospace;font-size:12px;padding:5px 8px;border:1px solid var(--line);
+  border-radius:6px;background:var(--paper-card);color:var(--loam)}
+.legend{display:flex;gap:14px;flex-wrap:wrap;font-family:"IBM Plex Mono",monospace;font-size:11px;color:var(--loam-soft);margin-top:8px}
+.legend span{display:inline-flex;align-items:center;gap:6px}
+.sw{display:inline-block;width:16px;height:4px;border-radius:2px}
+.dotsw{display:inline-block;width:8px;height:8px;border-radius:50%}
+.cite{font-family:"IBM Plex Mono",monospace;font-size:11.5px;color:var(--loam-soft)}
+.callout{border-left:4px solid var(--honey);background:#fdf6e3;border-radius:0 8px 8px 0;padding:14px 18px;margin:14px 0;font-size:15px}
+.callout .big{font-family:"Fraunces",serif;font-weight:600;font-size:19px;color:var(--honey-deep)}
+.contract{font-family:"IBM Plex Mono",monospace;font-size:13px;background:var(--parchment-2);
+  border:1px solid var(--line-soft);border-radius:8px;padding:14px 18px;line-height:1.9;overflow-x:auto}
+footer{margin-top:46px;padding:16px 0;border-top:1.5px solid var(--line);
+  font-family:"IBM Plex Mono",monospace;font-size:10.5px;color:var(--ink-fade);line-height:1.6}
+.mono{font-family:"IBM Plex Mono",monospace}
+.mininav{display:flex;gap:8px;flex-wrap:wrap;margin:16px 0 0}
+.mininav a{font-family:"IBM Plex Mono",monospace;font-size:11px;text-decoration:none;color:var(--loam-soft);
+  border:1px solid var(--line-soft);border-radius:6px;padding:5px 10px;background:var(--paper-card)}
+.mininav a:hover{border-color:var(--honey);color:var(--honey-deep)}
+.twocol{display:grid;grid-template-columns:1fr 1fr;gap:18px}
+@media(max-width:860px){.twocol{grid-template-columns:1fr}}
+svg text{font-family:"IBM Plex Mono",monospace;font-size:10px;fill:#6c7b6a}
+.tag{display:inline-block;font-family:"IBM Plex Mono",monospace;font-size:9.5px;padding:1px 6px;border-radius:4px;letter-spacing:.04em}
+.tag.good{background:#e5efe4;color:var(--good)} .tag.bad{background:#f6d9cf;color:var(--bad)} .tag.teal{background:#dcebf0;color:var(--teal)}
+</style>
+</head>
+<body>
+<svg class="grain"><filter id="grainf"><feTurbulence type="fractalNoise" baseFrequency="0.9" numOctaves="3" stitchTiles="stitch"/><feColorMatrix type="saturate" values="0"/></filter><rect width="100%" height="100%" filter="url(#grainf)"/></svg>
+<div class="fieldrows"></div>
+
+<div id="app">
+  <header>
+    <div class="brand">
+      <h1>FARMER <span class="drop">DROP</span> — Prediction Engine · The Math</h1>
+      <div class="kicker">Every chart recomputes live · same formulas as the code · drag the sliders until it's obvious</div>
+    </div>
+    <nav>
+      <a href="index.html">index</a>
+      <a href="fees_taxes.html">as built</a>
+      <a href="predict_structure.html">structure</a>
+      <a href="predict_math.html" class="here">the math</a>
+    </nav>
+  </header>
+
+  <div class="banner">
+    <div class="flag">INSTRUCTIVE · LIVE</div>
+    <p>Six ideas carry the whole engine: <b>a state-in/state-out tracker</b>, <b>exponential forgetting</b>,
+    <b>outliers seen-but-not-believed</b>, <b>Laplace (not Gaussian) tails</b>, <b>two speeds blended by
+    recent skill</b>, and <b>seasonality as harmonics</b>. Each section shows one idea on the same synthetic
+    lane data the <a href="predict_structure.html">structure page</a> maps. Robust concepts adapted from
+    <a href="https://github.com/microprediction/skaters"><span class="mono">microprediction/skaters</span></a>.</p>
+  </div>
+
+  <div class="mininav">
+    <a href="#s1">1 · the tracker contract</a>
+    <a href="#s2">2 · forgetting (EWMA)</a>
+    <a href="#s3">3 · outliers</a>
+    <a href="#s4">4 · laplace vs gaussian</a>
+    <a href="#s5">5 · fast &amp; slow</a>
+    <a href="#s6">6 · seasonality</a>
+    <a href="#s7">7 · hot / cold</a>
+    <a href="#s8">8 · what's next</a>
+  </div>
+
+  <!-- 1 CONTRACT -->
+  <section id="s1">
+    <div class="sec-num">Section 1</div>
+    <h2 class="sec">The tracker contract — state in, state out</h2>
+    <p class="lede">Every forecaster in the engine is a <b>skater</b>: a pure function fed one observation
+    and its own previous state, returning a forecast and the next state. No history buffer, no refitting
+    job — a lane's entire model is a handful of numbers that can be stored in a row and replayed
+    deterministically. That is what makes 10,000 lanes as cheap as one.</p>
+    <div class="panel">
+      <div class="contract">f(y<sub>t</sub>, state<sub>t−1</sub>) → (forecast<sub>t</sub>, state<sub>t</sub>)<br>
+state = { level, b, n }   <span style="color:var(--ink-fade)">// robust tracker: level + Laplace scale + age</span><br>
+<span style="color:var(--ink-fade)">// two rules adopted from skaters:</span><br>
+<span style="color:var(--ink-fade)">// 1. residual = y − PRIOR level (post-update centering leaks y into its own residual)</span><br>
+<span style="color:var(--ink-fade)">// 2. cold start: scale rate = max(α, 1/n) — equal-weight young, exponential mature</span></div>
+    </div>
+  </section>
+
+  <!-- 2 EWMA -->
+  <section id="s2">
+    <div class="sec-num">Section 2</div>
+    <h2 class="sec">Forgetting — the EWMA baseline</h2>
+    <p class="lede">The <b>average flow</b> of a lane is an exponentially weighted moving average:
+    <span class="mono">level += α · (y − level)</span>. One knob, α, sets the memory: weight on a week that
+    is w weeks old decays like (1−α)<sup>w</sup>, so the "effective window" is ≈ 1/α weeks. Drag α and watch
+    the trade: small α is smooth but late; large α is current but jumpy.</p>
+    <div class="panel">
+      <h3>A real lane from the synthetic world · weekly $</h3>
+      <div class="ctrls">
+        <div class="ctrl"><label>α (memory ≈ 1/α wk) <span class="val" id="v2-alpha"></span></label>
+          <input type="range" id="s2-alpha" min="0.02" max="0.6" step="0.01" value="0.15"></div>
+        <div class="ctrl"><label>lane <span class="val" id="v2-lane"></span></label>
+          <select id="s2-lane"></select></div>
+      </div>
+      <div id="c2"></div>
+      <div class="legend">
+        <span><span class="dotsw" style="background:#9aa694"></span> weekly $</span>
+        <span><span class="sw" style="background:var(--honey-deep)"></span> EWMA level</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- 3 OUTLIERS -->
+  <section id="s3">
+    <div class="sec-num">Section 3</div>
+    <h2 class="sec">Outliers — seen, not believed</h2>
+    <p class="lede">Inject a few spike weeks (a festival, a glitch) into the same lane. The <b>plain EWMA
+    swallows the spike</b> — the baseline jumps and takes ~1/α weeks to recover, mis-stating the lane the
+    whole way down. The <b>robust tracker clips the residual at k·b before believing it</b> (huberization):
+    the level barely moves, while the raw residual still fires the anomaly score. Turn the spike size up —
+    the gap between the two lines is the cost of trusting outliers.</p>
+    <div class="panel">
+      <h3>Plain vs robust under injected spikes</h3>
+      <div class="ctrls">
+        <div class="ctrl"><label>spike size <span class="val" id="v3-mult"></span></label>
+          <input type="range" id="s3-mult" min="1" max="12" step="0.5" value="6"></div>
+        <div class="ctrl"><label>spikes <span class="val" id="v3-n"></span></label>
+          <input type="range" id="s3-n" min="0" max="8" step="1" value="3"></div>
+        <div class="ctrl"><label>clip k (·b) <span class="val" id="v3-k"></span></label>
+          <input type="range" id="s3-k" min="1" max="8" step="0.5" value="3"></div>
+      </div>
+      <div id="c3"></div>
+      <div class="legend">
+        <span><span class="dotsw" style="background:#9aa694"></span> weekly $ (spikes ringed)</span>
+        <span><span class="sw" style="background:#8f2c14"></span> plain EWMA</span>
+        <span><span class="sw" style="background:#2f6b4a"></span> robust (huberized)</span>
+        <span><span class="sw" style="background:#c9b98a"></span> robust ± k·b tolerance</span>
+      </div>
+      <p class="cite" id="c3-stats" style="margin:10px 0 0"></p>
+    </div>
+  </section>
+
+  <!-- 4 LAPLACE -->
+  <section id="s4">
+    <div class="sec-num">Section 4</div>
+    <h2 class="sec">Why Laplace, not Gaussian</h2>
+    <p class="lede">Two choices hide inside every "average ± spread" statement: the <b>loss</b> (squared
+    error → mean &amp; variance; absolute error → median &amp; mean-absolute-deviation) and the <b>tail
+    story</b>. Squared errors make one 10× week matter 100×, so a Gaussian tracker's spread explodes on a
+    single spike. The Laplace choice is the L1 version of the same machinery: scale
+    <span class="mono">b = EWMA of |residual|</span>, linear in outliers — and its tail probability has a
+    form you can do in your head.</p>
+    <div class="twocol">
+      <div class="panel">
+        <h3>The shapes · same scale, different tails</h3>
+        <div id="c4a"></div>
+        <div class="legend">
+          <span><span class="sw" style="background:#2b6d84"></span> Gaussian</span>
+          <span><span class="sw" style="background:#b8790a"></span> Laplace — peakier AND fatter-tailed</span>
+        </div>
+      </div>
+      <div class="panel">
+        <h3>Surprise = −log P(|resid| ≥ r) · in nats</h3>
+        <div id="c4b"></div>
+        <div class="legend">
+          <span><span class="sw" style="background:#2b6d84"></span> Gaussian — quadratic: far things look impossible</span>
+          <span><span class="sw" style="background:#b8790a"></span> Laplace — LINEAR: surprise = r / b</span>
+        </div>
+      </div>
+    </div>
+    <div class="callout">
+      <div class="big">Under Laplace, surprise IS the normalized residual: |y − level| ÷ b, in nats.</div>
+      3 nats ⇒ e<sup>−3</sup> ≈ a 1-in-20-weeks tail event <i>for that lane's own noise</i>. A Gaussian model calls
+      the same week a 1-in-thousands event, cries wolf on every fat-tailed series, and then gets ignored.
+      Heavy tails are what lane data actually has — Laplace prices them honestly.
+      <span class="cite">(skaters goes one step further: a Gaussian scale <i>mixture</i> — a Student-t built from
+      components at 0.7/1/1.6/3/6 × σ — so the tail shape survives ensembling. That's our v1.)</span>
+    </div>
+  </section>
+
+  <!-- 5 FAST & SLOW -->
+  <section id="s5">
+    <div class="sec-num">Section 5</div>
+    <h2 class="sec">Thinking fast and slow — two speeds, blended by skill</h2>
+    <p class="lede">One α can't be right on both sides of a regime change — a new HostDrop opens nearby and
+    a lane's true level jumps. So run <b>two trackers</b>: fast (α=0.4, believes recent weeks) and slow
+    (α=0.05, believes the long run), and blend them by <b>inverse recent error</b>. In calm times the slow
+    tracker wins the weight and the blend is smooth; right after the break the fast tracker is simply more
+    correct, takes the weight, and hands it back once the slow one catches up. Nobody decides "regime
+    change" — the weights just follow the errors.</p>
+    <div class="panel">
+      <h3>Synthetic lane with a level break at week 60</h3>
+      <div class="ctrls">
+        <div class="ctrl"><label>jump size <span class="val" id="v5-jump"></span></label>
+          <input type="range" id="s5-jump" min="0" max="150" step="5" value="80"></div>
+        <div class="ctrl"><label>noise (Laplace b) <span class="val" id="v5-noise"></span></label>
+          <input type="range" id="s5-noise" min="2" max="40" step="1" value="12"></div>
+      </div>
+      <div id="c5"></div>
+      <div id="c5w"></div>
+      <div class="legend">
+        <span><span class="dotsw" style="background:#9aa694"></span> weekly $</span>
+        <span><span class="sw" style="background:#b23a1e"></span> fast (α=.4)</span>
+        <span><span class="sw" style="background:#2b6d84"></span> slow (α=.05)</span>
+        <span><span class="sw" style="background:#2f6b4a"></span> blend</span>
+        <span><span class="sw" style="background:#7a5b8f"></span> weight on fast (0–1, lower strip)</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- 6 SEASONALITY -->
+  <section id="s6">
+    <div class="sec-num">Section 6</div>
+    <h2 class="sec">Seasonality — demand as harmonics</h2>
+    <p class="lede">Each category's weekly totals hide a yearly rhythm. Project the series onto
+    <span class="mono">cos</span>/<span class="mono">sin</span> waves at the annual and semi-annual
+    frequencies — four least-squares coefficients, closed form, no optimizer — and you get a smooth curve
+    that scales baselines <i>forward</i>. The dashed line is the generator's hidden true peak: the fit has
+    to find it through the noise. Toggle the second harmonic to see why one wave isn't always enough.</p>
+    <div class="panel">
+      <h3>Pooled weekly $ by category · fit vs truth</h3>
+      <div class="ctrls">
+        <div class="ctrl"><label>category <span class="val" id="v6-cat"></span></label>
+          <select id="s6-cat"></select></div>
+        <div class="ctrl"><label>harmonics <span class="val" id="v6-h"></span></label>
+          <input type="range" id="s6-h" min="1" max="2" step="1" value="2"></div>
+      </div>
+      <div id="c6"></div>
+      <div class="legend">
+        <span><span class="dotsw" style="background:#9aa694"></span> weekly $ (104 wk)</span>
+        <span><span class="sw" style="background:var(--honey-deep)"></span> harmonic fit</span>
+        <span><span class="sw" style="background:#8f2c14"></span> true peak (hidden from the fit)</span>
+      </div>
+      <p class="cite" id="c6-stats" style="margin:10px 0 0"></p>
+    </div>
+  </section>
+
+  <!-- 7 HOT/COLD -->
+  <section id="s7">
+    <div class="sec-num">Section 7</div>
+    <h2 class="sec">Hot / cold — thresholds you can say out loud</h2>
+    <p class="lede">Put it together: the robust tracker gives every lane a level and a personal noise scale
+    b. A week is <b>hot</b> when its residual exceeds the surprise threshold in its OWN units —
+    <span class="mono">|y − level| / b ≥ s</span> nats ⇒ a ≤ e<sup>−s</sup> tail week. Compare that with the
+    fixed-ratio rule (hot if &gt; 1.25 × baseline): on a jittery lane the ratio cries constantly; on a quiet
+    lane it misses real events. Surprise adapts because b is the lane's own history.</p>
+    <div class="panel">
+      <h3>Flags on the real lane · surprise vs fixed ratio</h3>
+      <div class="ctrls">
+        <div class="ctrl"><label>surprise threshold (nats) <span class="val" id="v7-s"></span></label>
+          <input type="range" id="s7-s" min="1" max="6" step="0.25" value="3"></div>
+        <div class="ctrl"><label>lane <span class="val" id="v7-lane"></span></label>
+          <select id="s7-lane"></select></div>
+      </div>
+      <div id="c7"></div>
+      <div class="legend">
+        <span><span class="dotsw" style="background:#8f2c14"></span> hot (surprise ≥ s)</span>
+        <span><span class="dotsw" style="background:#2b6d84"></span> cold (≤ −s)</span>
+        <span><span class="sw" style="background:#c9b98a"></span> level ± s·b band</span>
+        <span><span class="dotsw" style="background:#fff;border:2px solid #b8790a"></span> fixed-ratio flag disagrees</span>
+      </div>
+      <p class="cite" id="c7-stats" style="margin:10px 0 0"></p>
+    </div>
+  </section>
+
+  <!-- 8 NEXT -->
+  <section id="s8">
+    <div class="sec-num">Section 8</div>
+    <h2 class="sec">What's next — the rest of the skaters toolbox</h2>
+    <div class="panel">
+      <table style="width:100%;border-collapse:collapse;font-size:13.5px">
+        <thead><tr>
+          <th style="text-align:left;font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:.05em;text-transform:uppercase;color:var(--ink-fade);border-bottom:1.5px solid var(--line);padding:6px 8px">Concept</th>
+          <th style="text-align:left;font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:.05em;text-transform:uppercase;color:var(--ink-fade);border-bottom:1.5px solid var(--line);padding:6px 8px">What it buys the engine</th>
+        </tr></thead>
+        <tbody>
+          <tr><td style="padding:6px 8px;border-bottom:1px dotted var(--line-soft)"><b>PIT / z calibration</b></td>
+              <td style="padding:6px 8px;border-bottom:1px dotted var(--line-soft)">Is the model honest about its own uncertainty? Feed each realized week back through the predictive CDF — the results should be uniform. Systematic skew = fix the model, not the threshold. Anomaly flag at |z| &gt; 4.</td></tr>
+          <tr><td style="padding:6px 8px;border-bottom:1px dotted var(--line-soft)"><b>Periodicity detection</b></td>
+              <td style="padding:6px 8px;border-bottom:1px dotted var(--line-soft)">An online EWMA-autocorrelation scan over candidate lags. We assumed the 52-week rhythm; real demand may carry biweekly pay-cycles or monthly patterns — detect them, don't assume them.</td></tr>
+          <tr><td style="padding:6px 8px;border-bottom:1px dotted var(--line-soft)"><b>Gaussian scale mixtures</b></td>
+              <td style="padding:6px 8px;border-bottom:1px dotted var(--line-soft)">Student-t tails built from Gaussian components (0.7/1/1.6/3/6 × σ) with online likelihood weights — heavier-than-Laplace tails that survive ensemble averaging.</td></tr>
+          <tr><td style="padding:6px 8px;border-bottom:1px dotted var(--line-soft)"><b>Log-evidence ensembles with forgetting</b></td>
+              <td style="padding:6px 8px;border-bottom:1px dotted var(--line-soft)">Upgrade our inverse-error blend: weight every candidate tracker by exponentially-discounted log-likelihood (forget ≈ 0.99) minus a complexity penalty. Regime shifts re-weight in weeks, automatically.</td></tr>
+          <tr><td style="padding:6px 8px"><b>One-scorer benchmarking</b></td>
+              <td style="padding:6px 8px">Every forecaster — including naive last-value — scores through the same logpdf + CRPS scorer after a burn-in. A predictor earns its complexity on the synthetic world before it touches real lanes.</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <footer>
+    All charts computed in-page from <span class="mono">predict_series.json</span> (synthetic, seeded) with
+    the same formulas as <span class="mono">predict/robust.py · seasonality.py · flow.py</span> on the
+    <span class="mono">predict-engine</span> branch. Robust concepts adapted from
+    <a href="https://github.com/microprediction/skaters">microprediction/skaters</a> (skater contract,
+    prior-mean centering, Welford→EWMA cold start, fast/slow composition, calibration &amp; benchmarking
+    discipline). Generated 2026-07-07.
+  </footer>
+</div>
+
+<script>
+/* ---------- tiny chart helper (SVG, no deps) ---------- */
+function chart(el, {w=1080, h=260, pad=34, xmax, ymin, ymax, layers, xlabel}){
+  const X = x => pad + x*(w-2*pad)/xmax;
+  const Y = y => h-pad - (y-ymin)*(h-2*pad)/(ymax-ymin || 1);
+  let s = `<svg viewBox="0 0 ${w} ${h}" style="width:100%;height:auto">`;
+  const fmt = (ymax-ymin) < 5 ? (v)=>v.toFixed(1) : (v)=>Math.round(v);
+  for(let i=0;i<=4;i++){
+    const yv = ymin + i*(ymax-ymin)/4;
+    s += `<line x1="${pad}" y1="${Y(yv)}" x2="${w-pad}" y2="${Y(yv)}" stroke="#ddd2b4" stroke-dasharray="2,4"/>
+          <text x="${pad-6}" y="${Y(yv)+3}" text-anchor="end">${fmt(yv)}</text>`;
+  }
+  for(let x=0;x<=xmax;x+=Math.ceil(xmax/8)) s += `<text x="${X(x)}" y="${h-pad+14}" text-anchor="middle">${x}</text>`;
+  if(xlabel) s += `<text x="${w-pad}" y="${h-6}" text-anchor="end">${xlabel}</text>`;
+  for(const L of layers){
+    if(L.type==="band"){
+      const up = L.hi.map((v,i)=>`${i?'L':'M'}${X(i).toFixed(1)},${Y(v).toFixed(1)}`).join("");
+      const dn = L.lo.map((v,i)=>`L${X(L.lo.length-1-i).toFixed(1)},${Y(L.lo[L.lo.length-1-i]).toFixed(1)}`).join("");
+      s += `<path d="${up}${dn}Z" fill="${L.color}" fill-opacity="${L.opacity??0.25}" stroke="none"/>`;
+    } else if(L.type==="dots"){
+      for(let i=0;i<L.pts.length;i++){
+        const p = L.pts[i]; if(p==null) continue;
+        const style = L.style ? L.style(i) : {};
+        s += `<circle cx="${X(i)}" cy="${Y(p)}" r="${style.r??2.4}" fill="${style.fill??L.color}"
+              ${style.stroke?`stroke="${style.stroke}" stroke-width="2"`:''}/>`;
+      }
+    } else if(L.type==="vline"){
+      s += `<line x1="${X(L.x)}" y1="${pad-6}" x2="${X(L.x)}" y2="${h-pad}" stroke="${L.color}" stroke-dasharray="4,3" stroke-width="1.5"/>`;
+    } else {
+      const d = L.pts.map((v,i)=>v==null?'':`${(i===0||L.pts[i-1]==null)?'M':'L'}${X(i).toFixed(1)},${Y(v).toFixed(1)}`).join("");
+      s += `<path d="${d}" fill="none" stroke="${L.color}" stroke-width="${L.width??2}" ${L.dash?`stroke-dasharray="${L.dash}"`:''}/>`;
+    }
+  }
+  s += `</svg>`;
+  el.innerHTML = s;
+}
+const bounds = arrs => {
+  let lo=Infinity, hi=-Infinity;
+  for(const a of arrs) for(const v of a) if(v!=null){ lo=Math.min(lo,v); hi=Math.max(hi,v); }
+  const m = (hi-lo)*0.08 || 1; return [Math.max(0,lo-m), hi+m];
+};
+
+/* ---------- the same math as predict/*.py ---------- */
+function ewmaPath(ys, alpha){
+  const out=[ys[0]]; for(let i=1;i<ys.length;i++) out.push(out[i-1]+alpha*(ys[i]-out[i-1])); return out;
+}
+function robustPath(ys, alpha, k, alphaScale=0.05){
+  let level=ys[0], b=Math.max(Math.abs(ys[0])*0.2,1e-9), n=1;
+  const levels=[level], bs=[b];
+  for(let i=1;i<ys.length;i++){
+    const r = ys[i]-level;                       // prior-mean centering
+    const clipped = Math.max(-k*b, Math.min(k*b, r));
+    level += alpha*clipped;
+    const a = Math.max(alphaScale, 1/(n+1));     // Welford→EWMA cold start
+    b = Math.max((1-a)*b + a*Math.min(Math.abs(r), k*b), 1e-9);
+    n++; levels.push(level); bs.push(b);
+  }
+  return {levels, bs};
+}
+function harmonicFit(ys, nh){
+  const n=ys.length, mean=ys.reduce((a,b)=>a+b,0)/n, P=52;
+  const co=[];
+  for(let kk=1;kk<=nh;kk++){
+    let ac=0,bs=0;
+    for(let w=0;w<n;w++){ const t=2*Math.PI*kk*w/P; ac+=(ys[w]-mean)*Math.cos(t); bs+=(ys[w]-mean)*Math.sin(t); }
+    co.push([2*ac/n, 2*bs/n]);
+  }
+  const at = w => { let v=mean; for(let kk=1;kk<=nh;kk++){ const t=2*Math.PI*kk*w/P; v+=co[kk-1][0]*Math.cos(t)+co[kk-1][1]*Math.sin(t);} return v; };
+  let peak=0; for(let w=1;w<52;w++) if(at(w)>at(peak)) peak=w;
+  return {at, peak, mean};
+}
+function mulberry32(seed){ return function(){ let t=seed+=0x6D2B79F5; t=Math.imul(t^t>>>15,t|1); t^=t+Math.imul(t^t>>>7,t|61); return ((t^t>>>14)>>>0)/4294967296; }; }
+const laplaceNoise = (rng,b)=>{ const u=rng()-0.5; return -b*Math.sign(u)*Math.log(1-2*Math.abs(u)); };
+
+/* ---------- page state ---------- */
+let D=null;
+fetch("predict_series.json").then(r=>r.json()).then(d=>{ D=d; init(); });
+
+function fillLaneSelect(sel){
+  sel.innerHTML = Object.keys(D.lanes).map(k=>`<option value="${k}">${k.replace("->"," → ")}</option>`).join("");
+}
+const val=(id)=>document.getElementById(id);
+function bindAll(ids, fn){ ids.forEach(id=>val(id).addEventListener("input",fn)); fn(); }
+
+function init(){
+  fillLaneSelect(val("s2-lane")); fillLaneSelect(val("s7-lane"));
+  val("s6-cat").innerHTML = Object.keys(D.categories).map(c=>`<option>${c}</option>`).join("");
+  val("s6-cat").value = "fruit";
+  bindAll(["s2-alpha","s2-lane"], s2);
+  bindAll(["s3-mult","s3-n","s3-k"], s3);
+  s4();
+  bindAll(["s5-jump","s5-noise"], s5);
+  bindAll(["s6-cat","s6-h"], s6);
+  bindAll(["s7-s","s7-lane"], s7);
+}
+
+/* §2 EWMA */
+function s2(){
+  const alpha=+val("s2-alpha").value, lane=val("s2-lane").value;
+  val("v2-alpha").textContent = alpha.toFixed(2)+" (~"+Math.round(1/alpha)+" wk)";
+  val("v2-lane").textContent = lane.replace("->"," → ");
+  const ys=D.lanes[lane], [ymin,ymax]=bounds([ys]);
+  chart(document.getElementById("c2"), {xmax:ys.length-1, ymin, ymax, xlabel:"week",
+    layers:[{type:"dots",pts:ys,color:"#9aa694"},{pts:ewmaPath(ys,alpha),color:"#b8790a",width:2.5}]});
+}
+
+/* §3 outliers */
+function s3(){
+  const mult=+val("s3-mult").value, n=+val("s3-n").value, k=+val("s3-k").value;
+  val("v3-mult").textContent="×"+mult.toFixed(1); val("v3-n").textContent=n; val("v3-k").textContent=k.toFixed(1);
+  const lane=Object.keys(D.lanes)[0], base=D.lanes[lane].slice();
+  const rng=mulberry32(11), spikeIdx=new Set();
+  while(spikeIdx.size<n) spikeIdx.add(20+Math.floor(rng()*(base.length-30)));
+  const ys=base.map((v,i)=>spikeIdx.has(i)? v*mult : v);
+  const alpha=0.15;
+  const plain=ewmaPath(ys,alpha), rob=robustPath(ys,alpha,k);
+  const [ymin,ymax]=bounds([ys]);
+  chart(document.getElementById("c3"), {xmax:ys.length-1, ymin, ymax, xlabel:"week", h:300,
+    layers:[
+      {type:"band", lo:rob.levels.map((l,i)=>l-k*rob.bs[i]), hi:rob.levels.map((l,i)=>l+k*rob.bs[i]), color:"#c9b98a"},
+      {type:"dots",pts:ys,color:"#9aa694",style:i=>spikeIdx.has(i)?{r:4,fill:"#faf6ec",stroke:"#8f2c14"}:{}},
+      {pts:plain,color:"#8f2c14",width:2},
+      {pts:rob.levels,color:"#2f6b4a",width:2.5},
+    ]});
+  // How wrong is each tracker on NON-spike weeks after the first spike?
+  const first=Math.min(...spikeIdx, ys.length);
+  let ep=0, er=0, m=0;
+  for(let i=first;i<ys.length;i++){ if(spikeIdx.has(i))continue; ep+=Math.abs(plain[i]-base[i]); er+=Math.abs(rob.levels[i]-base[i]); m++; }
+  document.getElementById("c3-stats").innerHTML = n===0 ? "no spikes — the two trackers agree." :
+    `mean |error| vs the true (un-spiked) lane on normal weeks after the first spike: plain EWMA <b>$${(ep/m).toFixed(2)}</b> · robust <b>$${(er/m).toFixed(2)}</b> — the spike still SCORES as an anomaly (surprise ${(ys[[...spikeIdx][0]] ? ((ys[[...spikeIdx][0]]-rob.levels[[...spikeIdx][0]])/rob.bs[[...spikeIdx][0]]).toFixed(1):"—")} nats), it just doesn't bend the baseline.`;
+}
+
+/* §4 laplace vs gaussian */
+function s4(){
+  const N=200, xmax=5;
+  const gs=[], ls=[];
+  for(let i=0;i<=N;i++){ const x=-xmax+2*xmax*i/N;
+    gs.push(Math.exp(-x*x/2)/Math.sqrt(2*Math.PI));
+    ls.push(Math.exp(-Math.abs(x)*Math.SQRT2)/ (2/Math.SQRT2) /2 * 2); // b = 1/√2 → same variance
+  }
+  chart(document.getElementById("c4a"), {xmax:N, ymin:0, ymax:Math.max(...ls)*1.1, h:230, xlabel:"σ from level (−5…5)",
+    layers:[{pts:gs,color:"#2b6d84",width:2},{pts:ls,color:"#b8790a",width:2.5}]});
+  const M=120, rmax=6, sg=[], sl=[];
+  for(let i=0;i<=M;i++){ const r=rmax*i/M;
+    const q=r/Math.SQRT2, erfc=1-erf(q); // Gaussian tail via erf
+    sg.push(-Math.log(Math.max(erfc,1e-12)));
+    sl.push(r*Math.SQRT2); // Laplace with same variance: −log P(|X|≥r) = r√2/… (b=1/√2): r/b = r√2
+  }
+  chart(document.getElementById("c4b"), {xmax:M, ymin:0, ymax:Math.max(...sg,...sl)*1.05, h:230, xlabel:"residual r (0…6σ)",
+    layers:[{pts:sg,color:"#2b6d84",width:2},{pts:sl,color:"#b8790a",width:2.5}]});
+}
+function erf(x){ const s=x<0?-1:1; x=Math.abs(x);
+  const t=1/(1+0.3275911*x);
+  const y=1-(((((1.061405429*t-1.453152027)*t)+1.421413741)*t-0.284496736)*t+0.254829592)*t*Math.exp(-x*x);
+  return s*y; }
+
+/* §5 fast & slow */
+function s5(){
+  const jump=+val("s5-jump").value, noise=+val("s5-noise").value;
+  val("v5-jump").textContent="+$"+jump; val("v5-noise").textContent="$"+noise;
+  const rng=mulberry32(23), n=120, brk=60, ys=[];
+  for(let i=0;i<n;i++) ys.push(120 + (i>=brk?jump:0) + laplaceNoise(rng,noise));
+  const fast=robustPath(ys,0.4,3), slow=robustPath(ys,0.05,3);
+  const errA=0.1; let ef=noise, es=noise; const blend=[], wts=[];
+  for(let i=0;i<n;i++){
+    const pf=1/Math.max(ef,1e-9), ps=1/Math.max(es,1e-9), w=pf/(pf+ps);
+    blend.push(w*fast.levels[i]+(1-w)*slow.levels[i]); wts.push(w);
+    ef=(1-errA)*ef+errA*Math.abs(ys[i]-fast.levels[i]);
+    es=(1-errA)*es+errA*Math.abs(ys[i]-slow.levels[i]);
+  }
+  const [ymin,ymax]=bounds([ys]);
+  chart(document.getElementById("c5"), {xmax:n-1, ymin, ymax, h:260,
+    layers:[{type:"vline",x:brk,color:"#8f2c14"},
+      {type:"dots",pts:ys,color:"#9aa694"},
+      {pts:fast.levels,color:"#b23a1e",width:1.6,dash:"5,3"},
+      {pts:slow.levels,color:"#2b6d84",width:1.6,dash:"5,3"},
+      {pts:blend,color:"#2f6b4a",width:2.8}]});
+  chart(document.getElementById("c5w"), {xmax:n-1, ymin:0, ymax:1, h:110, xlabel:"week (weight on fast)",
+    layers:[{type:"vline",x:brk,color:"#8f2c14"},{pts:wts,color:"#7a5b8f",width:2.2}]});
+}
+
+/* §6 seasonality */
+function s6(){
+  const cat=val("s6-cat").value, nh=+val("s6-h").value;
+  val("v6-cat").textContent=cat; val("v6-h").textContent=nh;
+  const ys=D.categories[cat], fit=harmonicFit(ys,nh);
+  const truth=D.season_truth[cat];
+  const fitted=ys.map((_,w)=>fit.at(w));
+  const [ymin,ymax]=bounds([ys]);
+  chart(document.getElementById("c6"), {xmax:ys.length-1, ymin, ymax, h:280, xlabel:"week",
+    layers:[
+      {type:"vline",x:truth.peak,color:"#8f2c14"},{type:"vline",x:truth.peak+52,color:"#8f2c14"},
+      {type:"dots",pts:ys,color:"#9aa694"},
+      {pts:fitted,color:"#b8790a",width:2.6}]});
+  const off=Math.abs(((fit.peak-truth.peak+26+52)%52)-26);
+  document.getElementById("c6-stats").innerHTML =
+    `fitted peak <b>week ${fit.peak}</b> · true peak <b>week ${truth.peak}</b> (amplitude ${truth.amp}) — off by ${off} wk ` +
+    (truth.amp<0.2 ? `<span class="tag teal">near-flat category: the peak barely exists</span>`
+      : off<=2 ? `<span class="tag good">recovered</span>` : `<span class="tag bad">missed</span>`) +
+    ` · forward factor for next month: ×${(fit.at((ys.length+4)%52)/Math.max(fit.mean,1e-9)).toFixed(2)}`;
+}
+
+/* §7 hot/cold */
+function s7(){
+  const s=+val("s7-s").value, lane=val("s7-lane").value;
+  val("v7-s").textContent = s.toFixed(2)+" (≈1-in-"+Math.round(Math.exp(s))+" wk)";
+  val("v7-lane").textContent = lane.replace("->"," → ");
+  const ys=D.lanes[lane], alpha=0.15, k=3;
+  const rob=robustPath(ys,alpha,k);
+  const plainB=ewmaPath(ys,alpha);
+  let hots=0, colds=0, ratioFlags=0, disagree=0;
+  const style=i=>{
+    if(i===0) return {};
+    const z=(ys[i]-rob.levels[i-1])/rob.bs[i-1];
+    const ratioHot = ys[i] > 1.25*plainB[i-1], ratioCold = ys[i] < 0.75*plainB[i-1];
+    const surpHot = z>=s, surpCold = z<=-s;
+    if(ratioHot||ratioCold) ratioFlags++;
+    const dis = (ratioHot||ratioCold) !== (surpHot||surpCold);
+    if(dis) disagree++;
+    if(surpHot){hots++; return {r:4.5,fill:"#8f2c14"};}
+    if(surpCold){colds++; return {r:4.5,fill:"#2b6d84"};}
+    if(dis) return {r:4,fill:"#faf6ec",stroke:"#b8790a"};
+    return {};
+  };
+  const lo=rob.levels.map((l,i)=>l-s*rob.bs[i]), hi=rob.levels.map((l,i)=>l+s*rob.bs[i]);
+  const [ymin,ymax]=bounds([ys,hi,lo]);
+  chart(document.getElementById("c7"), {xmax:ys.length-1, ymin, ymax, h:300, xlabel:"week",
+    layers:[
+      {type:"band", lo, hi, color:"#c9b98a", opacity:0.3},
+      {pts:rob.levels,color:"#2f6b4a",width:2},
+      {type:"dots",pts:ys,color:"#9aa694",style},
+    ]});
+  document.getElementById("c7-stats").innerHTML =
+    `at ${s.toFixed(2)} nats the surprise rule flags <b>${hots} hot</b> + <b>${colds} cold</b> weeks of ${ys.length}` +
+    ` (expected by chance ≈ ${(2*Math.exp(-s)*ys.length).toFixed(1)}); the fixed 1.25×/0.75× ratio rule flags <b>${ratioFlags}</b> — ` +
+    `the two disagree on <b>${disagree}</b> weeks (honey-ringed). The ratio rule has no idea how noisy THIS lane is; b does.`;
+}
+</script>
+</body>
+</html>
