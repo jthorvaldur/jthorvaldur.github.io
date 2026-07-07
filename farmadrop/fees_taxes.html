@@ -368,9 +368,9 @@ sup{font-size:.7em;color:var(--honey-deep)}
         <p class="cite" style="margin:8px 0 0">Conservation proven pre-payout, post-handover <i>and</i> post-payout in three dedicated test suites — the post-payout case books a clawback receivable exactly as the simulator page modeled.</p>
       </div>
       <div class="panel">
-        <h3>Partial refund — queued 🟨</h3>
-        <p style="font-size:14px;color:var(--loam-soft);margin:0 0 8px">The math is shipped (<span class="mono">compute_refund(order, fraction)</span> prorates every percentage fee and keeps the fixed fee), but the DropSpot issue-resolution flow does not yet call Stripe, reverse tax, or post ledger entries for partial amounts. Blocked behind a ledger migration (work item <b>CL → D2</b>).</p>
-        <p style="font-size:14px;color:var(--loam-soft);margin:0">Until then, partial resolutions are operationally handled as needs-resolution placeholders — visible, not lost, just not yet money-moving.</p>
+        <h3>Partial refund — shipped ✓ (D2/D3, PR #167)</h3>
+        <p style="font-size:14px;color:var(--loam-soft);margin:0 0 8px">A DropSpot <span class="mono">delivered_with_refund</span> now moves real money: <span class="mono">refundOrder(refundAmount ÷ subtotal)</span> prorates every percentage fee (the $0.55 stays), reverses the tax share partial-mode, books prorated per-party reversals, and flips the order to <b>partially_refunded</b> — atomically with its ledger legs.</p>
+        <p style="font-size:14px;color:var(--loam-soft);margin:0">The hard cases close too: a refund that fails at Stripe is <b>retried by the 5-minute loop</b> from the persisted resolution (same cents → same idempotency key → the original attempt completes), and a later full cancel <b>nets the prior partial</b> — Stripe is asked for exactly the remainder, reversals cap at what each party still holds, and every book closes to the cent.</p>
       </div>
     </div>
   </section>
@@ -385,8 +385,7 @@ sup{font-size:.7em;color:var(--honey-deep)}
     </div>
     <div class="panel">
       <ul class="open">
-        <li><b>Partial refunds (D2).</b> Wire <span class="mono">refundOrder(fraction)</span> into DropSpot issue resolution — Stripe call, tax reversal, ledger entries. Blocked by the ledger migration CL. <span class="who">next up</span></li>
-        <li><b>Outbox state-machine completion (E).</b> The unknown / abandoned / backoff states and roll-backward path are deferred to a focused PR. <span class="who">deferred by decision</span></li>
+        <li><b>Outbox state-machine completion (E).</b> The unknown / backoff states and roll-backward path are deferred to a focused PR (the terminal <span class="mono">abandoned</span> status shipped with D2/D3 and is forward-compatible). <span class="who">deferred by decision</span></li>
         <li><b>Express account monthly fee.</b> Stripe may bill $2/mo per active Express account; not yet tracked in the ledger. <span class="who">minor</span></li>
         <li><b>Tax authority sync.</b> Authorities are seeded by migration; no dynamic sync from Stripe yet. <span class="who">minor</span></li>
         <li><b>Multi-currency.</b> Schema is ready, logic is single-USD. <span class="who">later</span></li>
@@ -395,8 +394,8 @@ sup{font-size:.7em;color:var(--honey-deep)}
   </section>
 
   <footer>
-    Status: fees, taxes, full-cancel refunds, transfer-fee remittance, admin fee schedules — <b>shipped &amp; green</b> (803 passing tests, 26 money-path suites).
-    <span class="warn">Open: partial refunds (D2), outbox states (E), pending-fee matcher.</span><br>
+    Status: fees, taxes, full + partial refunds (D2/D3 incl. retry &amp; full-after-partial netting), transfer-fee remittance, admin fee schedules — <b>shipped &amp; green</b> (807 passing tests, 28 money-path suites).
+    <span class="warn">Open: outbox states (E), pending-fee matcher.</span><br>
     Source of truth: the LocalHarvest repo — <span class="mono">shared/schema.ts · migrations/0018+0022+0027 · server/storage.ts · server/receiving-ledger.ts · docs/fees-and-taxes*.md · docs/transfer-fee-remittance-design.md</span>. Generated 2026-07-07.
   </footer>
 </div>
