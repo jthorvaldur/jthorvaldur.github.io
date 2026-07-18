@@ -1,0 +1,255 @@
+{
+  "meta": {
+    "title": "Farmer Onboarding → Drop Score Factor Mapping",
+    "purpose": "Defines how LocalHarvest farmer-onboarding answers map into the Drop Score regenerative factor tree. Onboarding text and structured selections are EVIDENCE; the score is derived from mapped claims and their evidence strength — never from the raw text itself.",
+    "source_repo": "LocalHarvest",
+    "score_repo": "kg_farmadrop",
+    "onboarding_surface": "test.farmerdrop.com/apply/farmer",
+    "factor_graph": "graphs/drop_score_graph.json",
+    "node_id_note": "Every key under `factor_evidence_terms` is a REAL tier-2 factor id from drop_score_graph.json (19 factors across 5 domains). No new node ids are introduced here.",
+    "no_weights_note": "Consistent with the Drop Score graph: there are no weights and no single opaque number. This file maps onboarding evidence onto named, evidenceable indicators."
+  },
+
+  "onboarding_fields": {
+    "farm_description": {
+      "form_field": "description",
+      "purpose": "public identity + summary",
+      "feeds_scoring": false
+    },
+    "practices_text": {
+      "form_field": "farmingPractices",
+      "purpose": "regenerative-practice evidence (free text, keyword + semantic mapped)",
+      "feeds_scoring": true
+    },
+    "product_categories": {
+      "form_field": "specialty",
+      "purpose": "marketplace browsing labels; only indirect scoring via mapped practices",
+      "feeds_scoring": "indirect"
+    },
+    "product_attributes": {
+      "form_field": "farmingPractices (appended sentence)",
+      "purpose": "packaging / perishability / processing / sourcing evidence",
+      "feeds_scoring": true
+    },
+    "certifications": {
+      "form_field": "certifications",
+      "purpose": "evidence-strength upgrade (third_party) where present",
+      "feeds_scoring": true
+    }
+  },
+
+  "product_categories": {
+    "note": "Mirror of LocalHarvest shared/product-categories.ts. Keep in sync.",
+    "fresh_fruit": { "label": "Fresh fruit", "examples": ["papaya", "citrus", "berries", "apples"] },
+    "tropical_fruit": { "label": "Tropical fruit", "examples": ["papaya", "mango", "banana"] },
+    "vegetables": { "label": "Vegetables", "examples": ["leafy greens", "roots", "tomatoes"] },
+    "peppers": { "label": "Peppers", "examples": ["habanero", "chili", "sweet pepper"] },
+    "herbs": { "label": "Herbs", "examples": ["basil", "parsley", "cilantro"] },
+    "hot_sauce": { "label": "Hot sauce", "examples": ["habanero sauce", "fermented chili sauce"] },
+    "sauces_condiments": { "label": "Sauces & condiments", "examples": ["hot sauce", "salsa", "chutney"] },
+    "preserves_pantry": { "label": "Preserves & pantry", "examples": ["jams", "pickles", "shelf-stable jars"] },
+    "eggs": { "label": "Eggs" },
+    "dairy": { "label": "Dairy" },
+    "meat": { "label": "Meat" },
+    "honey": { "label": "Honey" },
+    "flowers": { "label": "Flowers" },
+    "seedlings": { "label": "Seedlings & plants" }
+  },
+
+  "product_attributes": [
+    "perishable",
+    "shelf_stable",
+    "refrigerated",
+    "frozen",
+    "value_added",
+    "glass_packaging",
+    "reusable_packaging",
+    "certified_organic",
+    "locally_sourced"
+  ],
+
+  "factor_evidence_terms": {
+    "soil_carbon": {
+      "domain": "d_soil",
+      "label": "Soil organic matter & carbon",
+      "evidence_terms": ["compost", "manure", "mulch", "organic matter", "soil test", "carbon", "humus"]
+    },
+    "soil_cover": {
+      "domain": "d_soil",
+      "label": "Soil cover / armor",
+      "evidence_terms": ["mulch", "cover crop", "crop residue", "living cover", "bare soil reduction"]
+    },
+    "tillage": {
+      "domain": "d_soil",
+      "label": "Tillage / disturbance",
+      "evidence_terms": ["no-till", "reduced tillage", "minimum tillage", "hand tools", "low disturbance"]
+    },
+    "living_roots": {
+      "domain": "d_soil",
+      "label": "Living roots",
+      "evidence_terms": ["cover crops", "perennial roots", "living roots", "year-round cover"]
+    },
+    "water_infiltration": {
+      "domain": "d_soil",
+      "label": "Water infiltration & structure",
+      "evidence_terms": ["infiltration", "soil structure", "swales", "contour planting", "water retention"]
+    },
+    "crop_diversity": {
+      "domain": "d_diversity",
+      "label": "Crop & rotational diversity",
+      "evidence_terms": ["rotation", "intercropping", "polyculture", "companion planting", "multiple crops"]
+    },
+    "genetic_diversity": {
+      "domain": "d_diversity",
+      "label": "Genetic / varietal diversity",
+      "evidence_terms": ["heirloom", "local variety", "seed saving", "multiple cultivars", "landrace"]
+    },
+    "income_diversity": {
+      "domain": "d_diversity",
+      "label": "Enterprise / income diversity",
+      "evidence_terms": ["fresh produce", "value-added", "sauces", "preserves", "agritourism", "CSA"]
+    },
+    "habitat_diversity": {
+      "domain": "d_diversity",
+      "label": "Habitat / non-crop biodiversity",
+      "evidence_terms": ["hedgerow", "pollinator strip", "beneficial insects", "wildflower", "bird habitat", "non-crop habitat"]
+    },
+    "market_diversity": {
+      "domain": "d_diversity",
+      "label": "Market channel diversity",
+      "evidence_terms": ["farmers market", "direct sales", "restaurant", "CSA", "online marketplace", "local shops"]
+    },
+    "input_reduction": {
+      "domain": "d_practices",
+      "label": "Input use / chemical reduction",
+      "evidence_terms": ["no synthetic pesticides", "reduced chemical use", "organic inputs", "biological control", "observation-based pest management"]
+    },
+    "nutrient_mgmt": {
+      "domain": "d_practices",
+      "label": "Nutrient management",
+      "evidence_terms": ["compost", "soil test", "nutrient plan", "manure management", "foliar feed", "mineral balancing"]
+    },
+    "grazing_integration": {
+      "domain": "d_practices",
+      "label": "Grazing / livestock integration",
+      "evidence_terms": ["rotational grazing", "mob grazing", "pasture rotation", "animals integrated with crops"]
+    },
+    "water_stewardship": {
+      "domain": "d_practices",
+      "label": "Water stewardship",
+      "evidence_terms": ["drip irrigation", "rainwater capture", "mulching", "irrigation timing", "water retention", "reduced evaporation"]
+    },
+    "waste_energy": {
+      "domain": "d_practices",
+      "label": "Waste / energy",
+      "evidence_terms": ["compost waste", "reusable packaging", "glass jars", "solar", "low energy", "food waste reduction"]
+    },
+    "pasture_access": {
+      "domain": "d_animal",
+      "label": "Pasture access / living conditions",
+      "evidence_terms": ["pasture access", "outdoor access", "rotational grazing", "shade", "shelter", "stocking density"]
+    },
+    "animal_health": {
+      "domain": "d_animal",
+      "label": "Animal health / low-stress handling",
+      "evidence_terms": ["low-stress handling", "veterinary care", "humane handling", "no routine antibiotics", "breed-appropriate care"]
+    },
+    "fair_labor": {
+      "domain": "d_community",
+      "label": "Fair labor / worker wellbeing",
+      "evidence_terms": ["fair wages", "safe working conditions", "family farm", "worker wellbeing", "seasonal worker housing"]
+    },
+    "local_economy": {
+      "domain": "d_community",
+      "label": "Local economy access",
+      "evidence_terms": ["local sales", "local sourcing", "direct-to-consumer", "community market", "food access", "local restaurants"]
+    }
+  },
+
+  "template_weighting": {
+    "note": "TEMPLATE weights + a sigmoid scale that turn matched evidence into a formal Drop Score in [0,1]. The knowledge graph itself is weightless; this is an overlay for scoring, tunable and non-final. The running implementation is LocalHarvest shared/drop-score.ts — keep the two in sync. Iterate on the numbers here first.",
+    "intake_model": "One checkbox per subcategory (factor) => 0 or 1. Non-applicable domains are excluded from the denominator, never scored zero.",
+    "domain_weights": {
+      "d_soil": 0.25,
+      "d_diversity": 0.2,
+      "d_practices": 0.25,
+      "d_animal": 0.15,
+      "d_community": 0.15
+    },
+    "factor_weighting": "Equal within each domain by default (weight 1 each), normalized by domain factor count.",
+    "coverage_formula": "coverage = sum over applicable domains [ domain_weight * (matched_factor_weight / total_factor_weight) ] / sum(applicable domain_weight). Range [0,1].",
+    "sigmoid": {
+      "form": "normalized logistic: score(c) = (L(k(c-m)) - L(k(0-m))) / (L(k(1-m)) - L(k(0-m))), L(x)=1/(1+e^-x)",
+      "steepness_k": 6,
+      "midpoint_m": 0.5,
+      "endpoints": "score(0)=0, score(0.5)=0.5, score(1)=1; S-shaped between (below midpoint compresses, above expands)"
+    },
+    "worked_example_score": {
+      "farm_id": "example_papaya_habanero_mallorca",
+      "selected_factors": ["soil_carbon", "soil_cover", "tillage", "market_diversity", "nutrient_mgmt", "water_stewardship"],
+      "coverage": 0.29,
+      "score": 0.1917
+    }
+  },
+
+  "factor_status": {
+    "claimed": "Farmer states a relevant practice.",
+    "verified": "Claim supported by certification, uploaded evidence, inspection, lab test, photo record, or trusted-partner confirmation.",
+    "missing": "Relevant but not described.",
+    "not_applicable": "Not relevant to this farm type or product model. NEVER scored as zero — excluded / neutralized instead."
+  },
+
+  "evidence_strength": {
+    "none": "No evidence supplied.",
+    "claim": "Farmer states the practice.",
+    "record": "Farmer has logs, dates, photos, input receipts, or process notes.",
+    "third_party": "Certification, inspection, lab report, or outside verification."
+  },
+
+  "data_contract": {
+    "boundary": "LocalHarvest owns onboarding UX + profile content and MUST NOT hard-code scoring weights. It sends structured claims + product metadata; kg_farmadrop owns taxonomy, node definitions, mapping, confidence, not-applicable handling, and explanations.",
+    "request_localharvest_to_kg_farmadrop": {
+      "farm_id": "farm_123",
+      "source": "LocalHarvest.onboarding",
+      "farm_description": "string",
+      "practices_text": "string",
+      "product_categories_normalized": ["fresh_fruit", "tropical_fruit", "peppers", "hot_sauce", "preserves_pantry"],
+      "product_attributes": ["shelf_stable", "glass_packaging", "value_added", "locally_sourced"],
+      "not_applicable": [{ "node": "d_animal", "reason": "No livestock products sold." }],
+      "farmer_claims": [{ "node": "soil_cover", "claim": "mulch and crop residues", "evidence_strength": "claim" }]
+    },
+    "response_kg_farmadrop_to_localharvest": {
+      "drop_score": null,
+      "score_status": "draft_insufficient_evidence",
+      "mapped_nodes": [],
+      "missing_evidence_prompts": [],
+      "not_applicable_nodes": [],
+      "public_explanation": ""
+    }
+  },
+
+  "worked_example": {
+    "farm_id": "example_papaya_habanero_mallorca",
+    "product_categories_normalized": ["fresh_fruit", "tropical_fruit", "peppers", "vegetables", "hot_sauce", "preserves_pantry"],
+    "product_attributes": ["shelf_stable", "glass_packaging", "value_added", "locally_sourced"],
+    "farmer_claims": [
+      { "node": "soil_cover", "claim": "mulch, crop residues, soil cover", "evidence_strength": "claim" },
+      { "node": "soil_carbon", "claim": "compost additions, organic residues", "evidence_strength": "claim" },
+      { "node": "tillage", "claim": "reduced soil disturbance", "evidence_strength": "claim" },
+      { "node": "water_stewardship", "claim": "irrigation timing, mulch, soil moisture protection", "evidence_strength": "claim" },
+      { "node": "input_reduction", "claim": "avoid routine synthetic chemical use", "evidence_strength": "claim" },
+      { "node": "waste_energy", "claim": "organic waste composted; sauces in glass jars", "evidence_strength": "claim" },
+      { "node": "income_diversity", "claim": "fresh crops + value-added sauces", "evidence_strength": "claim" },
+      { "node": "habitat_diversity", "claim": "pollinator habitat where possible", "evidence_strength": "claim" },
+      { "node": "local_economy", "claim": "local ingredients and local marketplace", "evidence_strength": "claim" }
+    ],
+    "partial": [
+      { "node": "crop_diversity", "reason": "papaya, habanero, supporting plantings — only if documented" }
+    ],
+    "not_applicable": [
+      { "node": "d_animal", "reason": "No livestock described." },
+      { "node": "grazing_integration", "reason": "Crop and sauce producer; no grazing animals." },
+      { "node": "pasture_access", "reason": "No livestock." }
+    ]
+  }
+}

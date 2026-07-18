@@ -1,0 +1,63 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Schema Comparison · FarmerDrop Recon Atlas</title>
+  <link rel="stylesheet" href="static/app.css">
+  
+</head>
+<body data-api-root="api" data-static-mode="true">
+  <header class="site-header">
+    <div class="container header-inner">
+      <a class="brand" href="index.html" aria-label="FarmerDrop Recon Atlas home">
+        <span class="brand-mark" aria-hidden="true">FD</span>
+        <span>Farmer<span>Drop</span> <small>recon atlas</small></span>
+      </a>
+      <nav aria-label="Primary navigation">
+        <a href="index.html">Home</a>
+        <a href="reconcile.html">Recon Lab</a>
+        <a href="stripe-case.html">Stripe trace</a>
+        <a href="portfolio.html">All scenarios</a>
+        <a href="manifests.html">Manifests</a>
+        <a href="schema.html">Schema</a>
+        <a href="technical-schema.html">Tech spec</a>
+        <a href="localharvest-dev.html">LH Dev</a>
+        <a href="graphs/index.html">Legacy graphs</a>
+      </nav>
+    </div>
+  </header>
+  <main id="top" class="container">
+<section class="hero compact-hero"><p class="eyebrow">Exploratory comparison · not migration-ready</p><h1>Three structures, one <em>decision boundary.</em></h1><p>This page records the lab's current view beside current LocalHarvest and <code>graphs/ledger_structure.html</code>. It is evidence for validation, not a production database adjustment proposal.</p></section>
+
+<aside class="schema-warning"><b>Production adjustment status: not ready.</b><span>Responsibility/adjudication grain, double-entry shape, and uniform dual timestamps still need validation against real LocalHarvest workflows and Stripe observations.</span></aside>
+<div class="actions"><a class="button primary" href="technical-schema.html">Open Volk's technical schema and SQL diff</a></div>
+
+<section class="sim-section">
+  <div class="section-heading"><div><p class="eyebrow">Structure inventory</p><h2>What each model stores today</h2></div><p>LocalHarvest is read-only here. The graph structure is a regroupable hypothesis; the simulator is a deliberately normalized proof model.</p></div>
+  <div class="schema-columns">
+  <article><p class="eyebrow">simulator</p><h3>Recon Lab fact model</h3><p class="source-note">src/farmerdrop_reconciliation/persistence.py</p><span class="badge warn">Implemented reference model; not a production migration proposal</span><div class="schema-table-list"><div><b>scenario_runs</b><span>Immutable input/result snapshot and aggregate version</span><small>time · created_at</small></div><div><b>line_observations</b><span>Ordered, packed, handoff, manifest, allocation, and receipt facts</span><small>time · stage order</small></div><div><b>responsibility_allocations</b><span>Versioned participant fault/adjudication</span></div><div><b>remedy_lines</b><span>Original line economics and refund legs</span></div><div><b>tax_components</b><span>Jurisdiction/rate/basis stamps for exact reversal</span></div><div><b>journal_entries + journal_lines</b><span>Balanced append-only postings and provenance</span><small>time · effective_order · posted state</small></div><div><b>processor_commands + processor_events</b><span>Durable Stripe intent and observed event identity</span><small>time · created_order</small></div><div><b>money_checkpoints</b><span>Sources, uses, processor cash, and funding gap at every stage</span><small>time · checkpoint stage</small></div></div></article><article><p class="eyebrow">localharvest</p><h3>Current LocalHarvest</h3><p class="source-note">../shared_work/LocalHarvest/shared/schema.ts (inspected 2026-07-18)</p><span class="badge warn">Current adjacent application source; read-only in this work</span><div class="schema-table-list"><div><b>orders + order_items</b><span>Multi-farmer checkout, fee/tax snapshots, and item status</span><small>time · delivery_date · paid_at · created_at · status_updated_at</small></div><div><b>packing_orders + packing_items</b><span>Direct/bulk packing and source packing-item lineage</span><small>time · claimed_at · completed_at · created_at</small></div><div><b>shipments + delivery_boxes</b><span>Farmer-to-drop physical movement and box identity</span><small>time · delivery_date · departed_at · packed_at · created_at</small></div><div><b>box_scans</b><span>Append-only physical scan evidence with deliberate dual clocks</span><small>time · scanned_at · created_at</small></div><div><b>dropspot_order_fulfillment</b><span>Box/source allocation to customer order item</span><small>time · fulfilled_at</small></div><div><b>delivery_issues + pickup_resolutions</b><span>Operational issue and customer resolution</span><small>time · created_at · resolved_at</small></div><div><b>fee_schedules + tax_authorities</b><span>Effective-dated fees and tax remittance target</span><small>time · effective_from · created_at</small></div><div><b>stripe_transactions</b><span>Durable external call outbox with idempotency and retry</span><small>time · next_retry_at · created_at · updated_at</small></div><div><b>ledger_entries</b><span>Party-oriented payment, earning, refund, adjustment, and payout rows</span><small>time · settlement_date · created_at · updated_at</small></div></div></article><article><p class="eyebrow">ledger_graph</p><h3>graphs/ledger_structure.html</h3><p class="source-note">graphs/ledger_structure.html + ledger_accounts.json + ledger_events.json</p><span class="badge warn">Concept structure / hypothesis, deliberately regroupable</span><div class="schema-table-list"><div><b>journal_event</b><span>One idempotent business event</span></div><div><b>journal_row</b><span>Account, debit/credit, amount, rail, party, and correction link</span><small>time · effective_at · posted_at</small></div><div><b>account + ledger tag</b><span>Stable chart of accounts partitioned into six book views</span></div><div><b>tax_line_stamp</b><span>Original jurisdiction, tax code, rate, and refundable legs</span><small>time · economic period · filing period</small></div></div></article>
+  </div>
+</section>
+
+<section class="sim-section">
+  <div class="section-heading"><div><p class="eyebrow">Concept-by-concept</p><h2>Alignment, gaps, and current read</h2></div><p>The rightmost column is the simulator team's current interpretation, not a committed schema decision.</p></div>
+  <div class="table-wrap"><table><thead><tr><th>Concept</th><th>Recon Lab</th><th>LocalHarvest current</th><th>The Books</th><th>Current read</th></tr></thead><tbody><tr><td><b>Order and source line</b></td><td>scenario_runs + line_observations</td><td>orders + order_items</td><td>event/source dimensions</td><td>Strong alignment; preserve immutable source-line identity.</td></tr><tr><td><b>Bulk allocation lineage</b></td><td>manifest input/results</td><td>packing_items.source_packing_item_id + dropspot_order_fulfillment</td><td>party/product dimensions</td><td>LocalHarvest has the physical joins; the lab makes conservation explicit.</td></tr><tr><td><b>Responsibility</b></td><td>responsibility_allocations (versioned)</td><td>delivery_issues + pickup_resolutions</td><td>correction / receivable postings</td><td>A versioned adjudication fact is not yet a direct LocalHarvest table analogue.</td></tr><tr><td><b>Customer remedy</b></td><td>remedy_lines + remedy batch</td><td>pickup_resolutions + ledger_entries</td><td>append-only refund/tax reversal entries</td><td>Keep physical resolution, economic calculation, and external execution distinct.</td></tr><tr><td><b>Stripe lifecycle</b></td><td>processor_commands + processor_events</td><td>stripe_transactions</td><td>Stripe pending/available accounts + event rules</td><td>The durable intent/outbox pattern aligns; observed balance transactions remain authoritative.</td></tr><tr><td><b>Double entry</b></td><td>journal_entries + journal_lines</td><td>ledger_entries (party-oriented rows)</td><td>journal rows across a stable chart of accounts</td><td>Current structures are not identical; do not infer a production migration yet.</td></tr><tr><td><b>Economic / valid time</b></td><td>effective_order (ordinal)</td><td>domain dates plus box_scans.scanned_at</td><td>effective_at</td><td>Promote to an explicit timestamp before cross-period correction work.</td></tr><tr><td><b>System / transaction time</b></td><td>persist/create order + processor created_order</td><td>created_at / updated_at; box_scans.created_at</td><td>posted_at (immutable)</td><td>Dual clocks exist clearly for box scans but are not uniform on financial rows.</td></tr><tr><td><b>Total-money proof</b></td><td>money_checkpoints</td><td>derived views + ledger/Stripe reconciliation</td><td>six book nets sum to zero</td><td>Checkpoint facts are useful observability; storage shape remains open.</td></tr></tbody></table></div>
+</section>
+
+<section class="sim-section">
+  <div class="section-heading"><div><p class="eyebrow">Double accounting for time</p><h2>Append-only is necessary; two clocks make it replayable</h2></div><p>A late dispute or amended tax return is economically about the past and systemically known later.</p></div>
+  <div class="time-schema">
+    <div><code>effective_at</code><b>Valid / economic time</b><span>When the sale, pickup, shortage, or correction is true in the business timeline.</span></div>
+    <div class="time-link">same journal row</div>
+    <div><code>posted_at</code><b>Transaction / knowledge time</b><span>When the immutable row was inserted and became part of what the system believed.</span></div>
+    <div class="time-link">correction edge</div>
+    <div><code>corrects_row_id</code><b>Append-only relationship</b><span>Links the new contra/correction to the prior assertion without editing history.</span></div>
+  </div>
+  <div class="actions"><a class="button" href="graphs/ledger_structure.html#s6">Open The Books §6</a><a class="button" href="portfolio.html">See both clocks in data</a></div>
+</section>
+</main>
+  <footer><div class="container"><strong>FarmerDrop reconciliation reference model</strong><span>Exploratory simulator · no production database migration proposed</span></div></footer>
+  
+</body>
+</html>

@@ -1,0 +1,251 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>FarmerDrop Reconciliation Simulator</title>
+  <link rel="stylesheet" href="static/app.css">
+</head>
+<body data-api-root="api" data-static-mode="true">
+  <header class="site-header">
+    <div class="container header-inner">
+      <a class="brand" href="index.html" aria-label="FarmerDrop Recon Atlas home">
+        <span class="brand-mark" aria-hidden="true">FD</span>
+        <span>Farmer<span>Drop</span> <small>reconciliation lab</small></span>
+      </a>
+      <nav aria-label="Primary navigation">
+        <a href="index.html">Home</a>
+        <a href="portfolio.html">All scenarios</a>
+        <a href="stripe-case.html?scenario=S04">Stripe trace</a>
+        <a href="manifests.html">Manifests</a>
+        <a href="schema.html">Schema</a>
+      </nav>
+      <nav class="lab-nav" aria-label="Simulator sections">
+        <a href="#custody">Custody</a>
+        <a href="#money">Money</a>
+        <a href="#ledger">Ledger</a>
+        <a href="#processor">Processor</a>
+        <a href="#invariants">Invariants</a>
+      </nav>
+    </div>
+  </header>
+
+  <main id="top" class="container">
+    <section class="hero">
+      <p class="eyebrow">Reference model · deterministic Python engine</p>
+      <h1>Trace every missing unit to <em>every cent.</em></h1>
+      <p>Order snapshots, custody observations, responsibility decisions, remedies, participant settlements, journal entries, and processor events stay linked without rewriting history.</p>
+    </section>
+
+    <section class="builder" aria-labelledby="builder-title">
+      <div class="section-heading">
+        <div><p class="eyebrow">01 · Scenario builder</p><h2 id="builder-title">Set the physical facts</h2></div>
+        <p id="scenario-description"></p>
+      </div>
+      <div class="builder-grid">
+        <label><span>Golden scenario</span>
+          <select id="scenario-select">
+            
+              <option value="S01" >S01 · Exact fulfillment and delivery</option>
+            
+              <option value="S02" >S02 · Farmer underpacks only</option>
+            
+              <option value="S03" >S03 · Host loses goods after handoff</option>
+            
+              <option value="S04" selected>S04 · Mixed farmer and host fault</option>
+            
+              <option value="S05" >S05 · Platform absorbs all</option>
+            
+              <option value="S06" >S06 · Mixed platform and participant fault</option>
+            
+              <option value="S07" >S07 · Five farmers to one customer</option>
+            
+              <option value="S08" >S08 · One farmer bulk order to many customers</option>
+            
+              <option value="S09" >S09 · Multiple farmers and customers in one manifest</option>
+            
+              <option value="S10" >S10 · Mixed taxable and non-taxable lines</option>
+            
+              <option value="S11" >S11 · Order-level discount and partial refund</option>
+            
+              <option value="S12" >S12 · Fractional measured quantity</option>
+            
+              <option value="S13" >S13 · Damaged rather than missing</option>
+            
+              <option value="S14" >S14 · Substitution accepted and rejected</option>
+            
+              <option value="S15" >S15 · Handoff count disputed</option>
+            
+              <option value="S16" >S16 · Responsibility decision corrected</option>
+            
+              <option value="S17" >S17 · Two partial refunds</option>
+            
+              <option value="S18" >S18 · Repeated refund request</option>
+            
+              <option value="S19" >S19 · Webhook repeated and out of order</option>
+            
+              <option value="S20" >S20 · Refund unknown at processor</option>
+            
+              <option value="S21" >S21 · Participant settlement cannot cover liability</option>
+            
+              <option value="S22" >S22 · Overage at a custody stage</option>
+            
+              <option value="S23" >S23 · Cancellation after packing</option>
+            
+              <option value="S24" >S24 · Chargeback after settlement</option>
+            
+          </select>
+        </label>
+        <label><span>Source line</span><select id="line-select"></select></label>
+        <label><span>Ordered</span><input id="ordered" type="number" min="0.001" step="0.001"></label>
+        <label><span>Packed</span><input id="packed" type="number" min="0" step="0.001"></label>
+        <label><span>Handoff accepted</span><input id="handoff" type="number" min="0" step="0.001"></label>
+        <label><span>Manifested</span><input id="manifested" type="number" min="0" step="0.001"></label>
+        <label><span>Delivery allocated</span><input id="allocated" type="number" min="0" step="0.001"></label>
+        <label><span>Customer accepted</span><input id="accepted" type="number" min="0" step="0.001"></label>
+        <label><span>Unit price (minor units)</span><input id="unit-price" type="number" min="0" step="1"></label>
+        <label><span>Line discount (minor units)</span><input id="discount" type="number" min="0" step="1"></label>
+        <label><span>Original tax component</span><input id="tax-amount" type="number" min="0" step="1"></label>
+        <label><span>Liability policy</span>
+          <select id="liability-mode"><option value="full_value">Full merchandise value</option><option value="entitlement_only">Entitlement only</option></select>
+        </label>
+      </div>
+      <div class="allocation-builder">
+        <div><span>Farmer responsibility</span><input id="farmer-resp" type="number" min="0" step="0.001"></div>
+        <div><span>Host responsibility</span><input id="host-resp" type="number" min="0" step="0.001"></div>
+        <div><span>Platform absorption</span><input id="platform-resp" type="number" min="0" step="0.001"></div>
+        <div><span>Liability cap (minor units)</span><input id="liability-cap" type="number" min="0" step="1" placeholder="No cap"></div>
+      </div>
+      <details class="advanced">
+        <summary>Advanced scenario JSON</summary>
+        <textarea id="scenario-json" spellcheck="false" aria-label="Advanced scenario JSON"></textarea>
+      </details>
+      <div class="actions">
+        <button id="simulate" class="button primary" type="button">Reconcile scenario</button>
+        <button id="save-run" class="button" type="button">Freeze run</button>
+        <a id="stripe-case-link" class="button" href="stripe-case.html?scenario=S04">Trace this case through Stripe</a>
+        <span id="run-status" role="status" aria-live="polite"></span>
+      </div>
+    </section>
+
+    <section class="metric-strip" aria-label="Current scenario totals">
+      <div><span>Ordered</span><strong id="metric-ordered">—</strong></div>
+      <div><span>Customer accepted</span><strong id="metric-accepted">—</strong></div>
+      <div><span>Shortage</span><strong id="metric-shortage">—</strong></div>
+      <div><span>Customer remedy</span><strong id="metric-remedy">—</strong></div>
+      <div><span>Platform absorption</span><strong id="metric-absorption">—</strong></div>
+      <div><span>Settlement</span><strong id="metric-settlement">—</strong></div>
+    </section>
+
+    <section id="custody" class="sim-section">
+      <div class="section-heading"><div><p class="eyebrow">02 · Operational timeline</p><h2>Custody chain</h2></div><p>Frozen observations remain separate from the later fault decision.</p></div>
+      <div id="timeline" class="timeline"></div>
+    </section>
+
+    <section class="sim-section">
+      <div class="section-heading"><div><p class="eyebrow">03 · Manifest allocator</p><h2>Bulk in, delivery lines out</h2></div><p>Remaining stock and every downstream allocation stay attached to their source.</p></div>
+      <div class="table-wrap"><table><thead><tr><th>Manifest / source</th><th>Farmer</th><th>Product</th><th class="num">In</th><th class="num">Allocated</th><th class="num">Remaining</th><th>Status</th></tr></thead><tbody id="manifest-table"></tbody></table></div>
+    </section>
+
+    <section class="sim-section">
+      <div class="section-heading"><div><p class="eyebrow">04 · Discrepancy workbench</p><h2>Where the facts diverge</h2></div><p>Shortage, damage, rejection, substitution, and overage never collapse into one note.</p></div>
+      <div class="table-wrap"><table><thead><tr><th>Source line</th><th>Boundary</th><th>Kind</th><th class="num">Expected</th><th class="num">Observed</th><th class="num">Delta</th><th>Reason</th></tr></thead><tbody id="discrepancy-table"></tbody></table></div>
+    </section>
+
+    <section class="sim-section">
+      <div class="section-heading"><div><p class="eyebrow">05 · Responsibility allocator</p><h2>Adjudication, versioned</h2></div><p>Quantity allocation drives—but is not identical to—the eventual recovery.</p></div>
+      <div id="responsibility-grid" class="card-grid"></div>
+    </section>
+
+    <div id="money" class="anchor"></div>
+    <section class="sim-section split-section">
+      <div>
+        <div class="section-heading compact"><div><p class="eyebrow">06 · Customer remedy</p><h2>Original line economics</h2></div></div>
+        <div id="remedy-list" class="stack"></div>
+      </div>
+      <div>
+        <div class="section-heading compact"><div><p class="eyebrow">07 · Settlement</p><h2>Entitlement vs recovery</h2></div></div>
+        <div id="settlement-list" class="stack"></div>
+      </div>
+    </section>
+
+    <section id="ledger" class="sim-section">
+      <div class="section-heading"><div><p class="eyebrow">08 · Ledger explorer</p><h2>Append-only, balanced, attributable</h2></div><p>Open an entry to follow every debit and credit to its operational source.</p></div>
+      <div id="journal" class="journal"></div>
+      <details id="legacy" class="legacy-panel">
+        <summary>Legacy ledger compatibility rails</summary>
+        <p>The original basket, tax, take, hop, refund, credits, payout, clawback, and chargeback events remain executable through the Python compatibility adapter.</p>
+        <div class="legacy-controls">
+          <label><span>Basket (dollars)</span><input id="legacy-basket" type="number" min="20" max="250" step="5" value="100"></label>
+          <label><span>Tax rate</span><input id="legacy-tax" type="number" min="0" max="0.12" step="0.0025" value="0.08"></label>
+          <label><span>Take rate</span><input id="legacy-take" type="number" min="0.07" max="0.12" step="0.005" value="0.10"></label>
+          <label><span>Hops</span><input id="legacy-hops" type="number" min="0" max="2" step="1" value="2"></label>
+          <label><span>Refund fraction</span><input id="legacy-refund" type="number" min="0.05" max="1" step="0.05" value="0.5"></label>
+        </div>
+        <div class="legacy-events" aria-label="Legacy ledger events">
+          <button type="button" data-legacy-event="capture">Capture</button><button type="button" data-legacy-event="settle">Settle</button><button type="button" data-legacy-event="farmer_payout">Farmer payout</button><button type="button" data-legacy-event="contractor_accrual">Contractor accrual</button>
+          <button type="button" data-legacy-event="credits_purchase">Buy credits</button><button type="button" data-legacy-event="credits_spend">Spend credits</button><button type="button" data-legacy-event="full_refund">Full refund</button><button type="button" data-legacy-event="partial_refund">Partial refund</button>
+          <button type="button" data-legacy-event="clawback_recovery">Clawback recovery</button><button type="button" data-legacy-event="chargeback_funds_withdrawn">Chargeback</button><button type="button" data-legacy-event="chargeback_won">Dispute won</button><button type="button" data-legacy-event="chargeback_lost">Dispute lost</button>
+          <button id="legacy-reset" class="unwind" type="button">Reset legacy journal</button>
+        </div>
+        <div id="legacy-status" role="status" aria-live="polite"></div>
+        <div id="legacy-proof" class="metric-strip legacy-proof" aria-label="Legacy invariant proof"></div>
+        <div class="table-wrap"><table><thead><tr><th>Legacy book</th><th class="num">Net due-to / due-from</th></tr></thead><tbody id="legacy-books"></tbody></table></div>
+        <div id="legacy-journal" class="legacy-journal"></div>
+      </details>
+    </section>
+
+    <section class="sim-section" aria-labelledby="money-proof-title">
+      <div class="section-heading"><div><p class="eyebrow">09 · Total-money proof</p><h2 id="money-proof-title">Sources equal cash and every external use</h2></div><p>Observed capture/refund stages are kept separate from projected transfers, Express payout fees, and Texas remittance. Negative cash is surfaced as a funding gap.</p></div>
+      <div class="table-wrap"><table><thead><tr><th>Checkpoint</th><th>Status</th><th class="num">Collected</th><th class="num">Processor cash</th><th class="num">Fees</th><th class="num">Refunds</th><th class="num">Transfers</th><th class="num">Tax remitted</th><th class="num">Gap</th><th>Proof</th></tr></thead><tbody id="money-checkpoints"></tbody></table></div>
+      <div class="tax-lab">
+        <div><p class="eyebrow">Texas reference quote</p><h3>6.25% state + up to 2% local</h3><p>Ordinary groceries are exempt; prepared food, taxable non-food, candy and soft drinks are taxable. Delivery follows its explicitly associated line.</p></div>
+        <label><span>Category</span><select id="texas-category"><option value="exempt_grocery">Exempt grocery</option><option value="taxable_prepared_food">Prepared food</option><option value="taxable_nonfood">Taxable non-food</option><option value="taxable_candy_or_soft_drink">Candy / soft drink</option></select></label>
+        <label><span>Merchandise (dollars)</span><input id="texas-merchandise" type="number" min="0" step="0.01" value="8.71"></label>
+        <label><span>Delivery (dollars)</span><input id="texas-delivery" type="number" min="0" step="0.01" value="0"></label>
+        <label><span>Local rate</span><input id="texas-local-rate" type="number" min="0" max="0.02" step="0.0001" value="0.02"></label>
+        <button id="texas-quote" class="button" type="button">Calculate Texas tax</button>
+        <div id="texas-result" role="status" aria-live="polite"></div>
+      </div>
+    </section>
+
+    <section id="processor" class="sim-section split-section">
+      <div>
+        <div class="section-heading compact"><div><p class="eyebrow">10 · Processor simulator</p><h2>Intent before execution</h2></div></div>
+        <div id="processor-commands" class="stack"></div>
+      </div>
+      <aside class="exception-panel">
+        <p class="eyebrow">Reconciliation queue</p>
+        <div id="processor-queue"></div>
+        <a id="stripe-processor-link" class="button" href="stripe-case.html?scenario=S04">Open full Stripe event trace</a>
+      </aside>
+    </section>
+
+    <section id="invariants" class="sim-section">
+      <div class="section-heading"><div><p class="eyebrow">11 · Invariant dashboard</p><h2>Proof before confidence</h2></div><p>Green checks come from the Python result, including exact Decimal and integer-money assertions.</p></div>
+      <div id="invariant-grid" class="invariant-grid"></div>
+    </section>
+
+    <section class="sim-section">
+      <div class="section-heading"><div><p class="eyebrow">12 · Before / after</p><h2>The economic transformation</h2></div><p>The comparison keeps customer remedy, participant entitlement, tax reversal, and platform absorption distinct.</p></div>
+      <div class="table-wrap"><table><thead><tr><th>Measure</th><th class="num">Original</th><th class="num">Reconciled</th><th class="num">Change</th></tr></thead><tbody id="comparison-table"></tbody></table></div>
+    </section>
+
+    <section class="sim-section export-section">
+      <div class="section-heading"><div><p class="eyebrow">13 · Export / import</p><h2>Replay the exact case</h2></div><p>Scenario files are deterministic inputs; audit reports are human-readable explanations.</p></div>
+      <div class="actions">
+        <button id="export-scenario" class="button" type="button">Export scenario JSON</button>
+        <button id="export-report" class="button" type="button">Export audit report</button>
+        <label class="button file-button">Import scenario<input id="import-scenario" type="file" accept="application/json,.json"></label>
+      </div>
+      <pre id="audit-report"></pre>
+    </section>
+  </main>
+
+  <footer><div class="container"><strong>FarmerDrop reconciliation reference model</strong><span>Physical facts · responsibility · accounting · processor execution</span></div></footer>
+
+  <script id="initial-scenario" type="application/json">{"allocations": [{"actor_id": "farmer-1", "decision_version": 1, "evidence": ["scan:simulated"], "id": "a-s04-f", "order_line_id": "line-eggs", "policy_version": "liability-v1", "quantity": "5", "reason": "farmer underpacked", "role": "farmer", "status": "adjudicated", "supersedes": null}, {"actor_id": "host-1", "decision_version": 1, "evidence": ["scan:simulated"], "id": "a-s04-h", "order_line_id": "line-eggs", "policy_version": "liability-v1", "quantity": "3", "reason": "host/drop loss or damage", "role": "host", "status": "adjudicated", "supersedes": null}], "currency": "USD", "description": "Reference case: ten ordered, five packed, two received; fault splits five/three.", "expected_aggregate_version": 0, "id": "S04", "lines": [{"allocated": "2", "assigned": "10", "cancelled_after": null, "condition_reason": null, "customer_accepted": "2", "customer_id": "customer-1", "damaged": "0", "delivery_id": "delivery-customer-1", "discount_minor": 0, "farmer_id": "farmer-1", "handoff_accepted": "5", "id": "line-eggs", "manifested": "5", "ordered": "10", "packed": "5", "product": "Egg packs", "rejected": "0", "returned": "0", "substituted": "0", "substitution_accepted": false, "tax_components": [{"amount_minor": 200, "id": "gst-ab", "jurisdiction": "CA-AB", "name": "GST", "rate": "0.05", "tax_code": "general_tangible_goods", "taxable_basis_minor": 4000}], "unit": "unit", "unit_price_minor": 400}], "manifests": [], "policy": {"farmer_bps": 8000, "fixed_fee_minor": 55, "fixed_fee_refundable_on_full": true, "host_bps": 1000, "liability_mode": "full_value", "participant_liability_cap_minor": null, "policy_version": "reimbursement-v1", "provisional_disputed_settlement": false, "refund_method": "original_tender"}, "processor_steps": [], "remedy_batches": [], "title": "Mixed farmer and host fault"}</script>
+  <script id="initial-result" type="application/json">{"aggregate_version": 1, "audit_report": "FarmerDrop reconciliation report \u2014 S04: Mixed farmer and host fault\nPolicy: reimbursement-v1; currency: USD\n\nPhysical facts\n- line-eggs Egg packs: ordered 10, packed 5, handoff 5, allocated 2, customer accepted 2, shortage 8 unit.\n\nResponsibility\n- farmer-1 (farmer) bears 5 units / $20.00 because farmer underpacked [adjudicated, decision v1].\n- host-1 (host) bears 3 units / $12.00 because host/drop loss or damage [adjudicated, decision v1].\n\nCustomer remedy\n- line-eggs: 8 unit \u00d7 original line economics; $32.00 gross \u2212 $0.00 discount + $1.60 original tax + $0.00 refundable fee = $33.60.\n\nParticipant settlement\n- farmer-1: original $32.00, offset $20.00, recoverable $0.00, net payout $12.00.\n- host-1: original $4.00, offset $4.00, recoverable $8.00, net payout $0.00.\n\nAccounting: 2 append-only entries; every entry balances.\nProcessor reconciliation queue: clear.", "comparison": [{"delta_minor": -3360, "label": "Customer paid", "original_minor": 4255, "reconciled_minor": 895}, {"delta_minor": -2000, "label": "Farmer payout", "original_minor": 3200, "reconciled_minor": 1200}, {"delta_minor": -400, "label": "Host / carrier payout", "original_minor": 400, "reconciled_minor": 0}, {"delta_minor": -160, "label": "Tax liability", "original_minor": 200, "reconciled_minor": 40}, {"delta_minor": 0, "label": "Platform revenue after absorption", "original_minor": 455, "reconciled_minor": 455}], "currency": "USD", "discrepancies": [{"expected": "10", "id": "disc:line-eggs:farmer", "kind": "shortage", "observed": "5", "order_line_id": "line-eggs", "quantity": "5", "reason": "farmer underpacked", "stage": "farmer", "status": "detected"}, {"expected": "5", "id": "disc:line-eggs:allocation", "kind": "shortage", "observed": "2", "order_line_id": "line-eggs", "quantity": "3", "reason": "manifest misallocation", "stage": "allocation", "status": "detected"}, {"expected": "10", "id": "disc:line-eggs:customer", "kind": "remedy_basis", "observed": "2", "order_line_id": "line-eggs", "quantity": "8", "reason": "customer remedy quantity across all custody stages", "stage": "customer_total", "status": "detected"}], "invariants": [{"code": "QTY-STAGE", "detail": "Every accepted/returned quantity is backed by an allocation; all stage deltas are explicit discrepancies.", "label": "Physical observations are conserved", "passed": true}, {"code": "MANIFEST", "detail": "1 manifest source line(s) checked.", "label": "Manifest allocations do not over-consume source", "passed": true}, {"code": "RESP", "detail": "Approved allocations close exactly; disputed allocations remain visibly held.", "label": "Responsibility equals adjudicated shortage", "passed": true}, {"code": "LEDGER", "detail": "2 append-only journal entry or entries checked in integer minor units.", "label": "Every posted journal entry balances", "passed": true}, {"code": "REFUND-CAP", "detail": "No line remedy exceeds its frozen net merchandise amount.", "label": "Cumulative merchandise refund is capped", "passed": true}, {"code": "TAX-CAP", "detail": "Each reversed component is bounded by the accepted-order snapshot.", "label": "Tax reversals use and respect original components", "passed": true}, {"code": "LINEAGE", "detail": "Order, fulfillment, custody, manifest, delivery, and receipt events carry source line ids.", "label": "Every physical observation retains source-line lineage", "passed": true}, {"code": "IDEMPOTENCY", "detail": "2 unique command key(s); repeated submissions did not duplicate execution.", "label": "Processor commands are idempotent", "passed": true}, {"code": "PROCESSOR-DIFF", "detail": "0 action(s) in the reconciliation queue.", "label": "Unknown and failed processor actions remain visible", "passed": true}, {"code": "TOTAL-MONEY", "detail": "Customer net $8.95; farmer/host payouts + platform residual + tax liability \u2212 participant recoverables $8.95; delta $0.00.", "label": "Customer net equals every final economic allocation", "passed": true}], "journal": [{"effective_order": 1, "event_type": "order_capture", "id": "je:S04:capture", "idempotency_key": "capture:S04", "lines": [{"account": "1020.processor_pending", "amount_minor": 4255, "provenance": "order:S04:economic_snapshot", "side": "debit"}, {"account": "2100.farmer_payable", "amount_minor": 3200, "provenance": "fulfillment:original_entitlement", "side": "credit"}, {"account": "2150.host_payable", "amount_minor": 400, "provenance": "delivery:original_entitlement", "side": "credit"}, {"account": "4000.platform_revenue", "amount_minor": 455, "provenance": "order:fee_policy_snapshot", "side": "credit"}, {"account": "2300.tax_liability", "amount_minor": 200, "provenance": "order:tax_components", "side": "credit"}], "source_reference": "order:S04", "state": "posted"}, {"effective_order": 3, "event_type": "customer_remedy", "id": "je:S04:remedy", "idempotency_key": "refund:S04:1", "lines": [{"account": "2100.farmer_payable", "amount_minor": 2000, "provenance": "responsibility:farmer-1", "side": "debit"}, {"account": "2150.host_payable", "amount_minor": 400, "provenance": "responsibility:host-1", "side": "debit"}, {"account": "1200.participant_recoverable:host-1", "amount_minor": 800, "provenance": "responsibility:host-1:negative_balance", "side": "debit"}, {"account": "2300.tax_liability", "amount_minor": 160, "provenance": "remedy:original_tax_components", "side": "debit"}, {"account": "1030.processor_refund_pending", "amount_minor": 3360, "provenance": "remedy:S04", "side": "credit"}], "source_reference": "remedy:S04", "state": "posted"}], "manifests": [{"allocated_quantity": "2", "allocation_count": 1, "conserved": true, "farmer_id": "farmer-1", "manifest_id": "manifest:delivery-customer-1", "manifest_line_id": "manifest-line:line-eggs", "product": "Egg packs", "remaining_quantity": "3", "source_quantity": "5"}], "money_checkpoints": [{"conservation_delta_minor": 0, "customer_collected_minor": 4255, "customer_refunds_minor": 0, "dispute_withdrawals_minor": 0, "funding_gap_minor": 0, "participant_transfers_minor": 0, "passed": true, "platform_funding_minor": 0, "processor_cash_minor": 4102, "processor_fees_minor": 153, "source_total_minor": 4255, "stage": "stripe_charge_captured", "status": "observed", "tax_remitted_minor": 0, "use_total_minor": 4255}, {"conservation_delta_minor": 0, "customer_collected_minor": 4255, "customer_refunds_minor": 3360, "dispute_withdrawals_minor": 0, "funding_gap_minor": 0, "participant_transfers_minor": 0, "passed": true, "platform_funding_minor": 0, "processor_cash_minor": 742, "processor_fees_minor": 153, "source_total_minor": 4255, "stage": "customer_refund_completed", "status": "observed", "tax_remitted_minor": 0, "use_total_minor": 4255}, {"conservation_delta_minor": 0, "customer_collected_minor": 4255, "customer_refunds_minor": 3360, "dispute_withdrawals_minor": 0, "funding_gap_minor": 458, "participant_transfers_minor": 1200, "passed": true, "platform_funding_minor": 0, "processor_cash_minor": -458, "processor_fees_minor": 153, "source_total_minor": 4255, "stage": "participant_transfers", "status": "projected", "tax_remitted_minor": 0, "use_total_minor": 4255}, {"conservation_delta_minor": 0, "customer_collected_minor": 4255, "customer_refunds_minor": 3360, "dispute_withdrawals_minor": 0, "funding_gap_minor": 486, "participant_transfers_minor": 1200, "passed": true, "platform_funding_minor": 0, "processor_cash_minor": -486, "processor_fees_minor": 181, "source_total_minor": 4255, "stage": "express_payout_fees_reconciled", "status": "projected", "tax_remitted_minor": 0, "use_total_minor": 4255}, {"conservation_delta_minor": 0, "customer_collected_minor": 4255, "customer_refunds_minor": 3360, "dispute_withdrawals_minor": 0, "funding_gap_minor": 526, "participant_transfers_minor": 1200, "passed": true, "platform_funding_minor": 0, "processor_cash_minor": -526, "processor_fees_minor": 181, "source_total_minor": 4255, "stage": "tax_liability_remitted", "status": "projected", "tax_remitted_minor": 40, "use_total_minor": 4255}], "processor": {"commands": [{"action": "capture", "idempotency_key": "capture:S04", "processor_id": "sim_5237c95dc80be2", "status": "succeeded", "submission_count": 1}, {"action": "refund", "idempotency_key": "refund:S04:1", "processor_id": "sim_62beb72631896a", "status": "succeeded", "submission_count": 1}], "duplicate_events": 0, "event_ids": ["evt:S04:capture", "evt:S04:refund"], "reconciliation_queue": []}, "remedies": [{"derivation": "8 unit \u00d7 original line economics; $32.00 gross \u2212 $0.00 discount + $1.60 original tax + $0.00 refundable fee", "discount_share_minor": 0, "fee_minor": 0, "merchandise_minor": 3200, "order_line_id": "line-eggs", "original_merchandise_minor": 3200, "product": "Egg packs", "quantity": "8", "tax_components": {"gst-ab": 160}, "tax_minor": 160, "total_minor": 3360}], "responsibilities": [{"actor_id": "farmer-1", "allocation_id": "a-s04-f", "decision_version": 1, "merchandise_minor": 2000, "order_line_id": "line-eggs", "quantity": "5", "reason": "farmer underpacked", "role": "farmer", "status": "adjudicated", "supersedes": null}, {"actor_id": "host-1", "allocation_id": "a-s04-h", "decision_version": 1, "merchandise_minor": 1200, "order_line_id": "line-eggs", "quantity": "3", "reason": "host/drop loss or damage", "role": "host", "status": "adjudicated", "supersedes": null}], "scenario_id": "S04", "settlements": [{"actor_id": "farmer-1", "applied_offset_minor": 2000, "net_payout_minor": 1200, "original_entitlement_minor": 3200, "policy": "full_value", "recoverable_minor": 0, "responsibility_minor": 2000, "role": "farmer"}, {"actor_id": "host-1", "applied_offset_minor": 400, "net_payout_minor": 0, "original_entitlement_minor": 400, "policy": "full_value", "recoverable_minor": 800, "responsibility_minor": 1200, "role": "host"}], "timeline": [{"actor": "customer-1", "label": "Customer order accepted", "quantity": "10", "source_line_id": "line-eggs", "stage": "order", "state": "accepted"}, {"actor": "farmer-1", "label": "Farmer assignment frozen", "quantity": "10", "source_line_id": "line-eggs", "stage": "fulfillment", "state": "released"}, {"actor": "farmer-1", "label": "Farmer pack confirmed", "quantity": "5", "source_line_id": "line-eggs", "stage": "packing", "state": "packed"}, {"actor": null, "label": "Next custodian acknowledged", "quantity": "5", "source_line_id": "line-eggs", "stage": "handoff", "state": "accepted"}, {"actor": null, "label": "Manifest closed", "quantity": "5", "source_line_id": "line-eggs", "stage": "manifest", "state": "closed"}, {"actor": "customer-1", "label": "Customer delivery allocated", "quantity": "2", "source_line_id": "line-eggs", "stage": "delivery", "state": "dispatched"}, {"actor": "customer-1", "label": "Customer accepted usable quantity", "quantity": "2", "source_line_id": "line-eggs", "stage": "receipt", "state": "confirmed"}], "title": "Mixed farmer and host fault", "totals": {"accepted_quantity": "2", "allocation_delta_minor": 0, "allocation_total_minor": 895, "captured_minor": 4255, "customer_net_minor": 895, "executed_remedy_total_minor": 3360, "modeled_card_fee_minor": 153, "ordered_quantity": "10", "original_tax_minor": 200, "participant_recoverable_minor": 800, "platform_absorption_minor": 0, "platform_economic_residual_minor": 455, "projected_final_processor_cash_minor": -526, "projected_platform_funding_gap_minor": 526, "remedy_fee_minor": 0, "remedy_merchandise_minor": 3200, "remedy_tax_minor": 160, "remedy_total_minor": 3360, "settlement_state": "calculated", "shortage_quantity": "8", "subtotal_minor": 4000}}</script>
+  <script src="static/app.js" defer></script>
+</body>
+</html>

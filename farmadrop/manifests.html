@@ -1,0 +1,55 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Participant Manifests · FarmerDrop Recon Atlas</title>
+  <link rel="stylesheet" href="static/app.css">
+  
+</head>
+<body data-api-root="api" data-static-mode="true">
+  <header class="site-header">
+    <div class="container header-inner">
+      <a class="brand" href="index.html" aria-label="FarmerDrop Recon Atlas home">
+        <span class="brand-mark" aria-hidden="true">FD</span>
+        <span>Farmer<span>Drop</span> <small>recon atlas</small></span>
+      </a>
+      <nav aria-label="Primary navigation">
+        <a href="index.html">Home</a>
+        <a href="reconcile.html">Recon Lab</a>
+        <a href="stripe-case.html">Stripe trace</a>
+        <a href="portfolio.html">All scenarios</a>
+        <a href="manifests.html">Manifests</a>
+        <a href="schema.html">Schema</a>
+        <a href="technical-schema.html">Tech spec</a>
+        <a href="localharvest-dev.html">LH Dev</a>
+        <a href="graphs/index.html">Legacy graphs</a>
+      </nav>
+    </div>
+  </header>
+  <main id="top" class="container">
+<section class="hero compact-hero"><p class="eyebrow">Operational structure</p><h1>One lineage, <em>six views.</em></h1><p>A manifest is not one document shared unchanged. Each participant sees the slice needed to act, while source-line identity and quantity conservation remain global.</p></section>
+
+<section class="sim-section">
+  <div class="section-heading"><div><p class="eyebrow">Canonical lineage</p><h2>From demand to accepted goods</h2></div><p>Every arrow carries the source order-line or fulfillment-line key. Observations append; responsibility comes later.</p></div>
+  <div class="lineage-diagram" role="img" aria-label="Order to fulfillment to packing to shipment to HostDrop allocation to customer receipt">
+    <div><b>Order line</b><span>customer demand</span></div><i>→</i><div><b>Fulfillment line</b><span>farmer source</span></div><i>→</i><div><b>Packing item / box</b><span>physical lot</span></div><i>→</i><div><b>Shipment manifest</b><span>custody route</span></div><i>→</i><div><b>Drop allocation</b><span>source → customer</span></div><i>→</i><div><b>Receipt</b><span>accepted / rejected</span></div>
+  </div>
+</section>
+
+<section class="sim-section">
+  <div class="section-heading"><div><p class="eyebrow">Participant projections</p><h2>What each party owns and sees</h2></div><p>The platform view joins the projections; it does not overwrite their evidence.</p></div>
+  <div class="participant-grid">
+  <article class="participant-card"><p class="eyebrow">1</p><h3>Customer / member</h3><dl><dt>Owns</dt><dd>order, order line, receipt decision</dd><dt>Contributes</dt><dd>quantity ordered, substitution acceptance, quantity accepted or returned</dd><dt>Reads</dt><dd>delivery line, source farmer, refund/remedy status</dd><dt>Decides</dt><dd>accept, reject, return, request remedy</dd></dl></article><article class="participant-card"><p class="eyebrow">2</p><h3>Farmer / supplier</h3><dl><dt>Owns</dt><dd>fulfillment line, packing item, source lot</dd><dt>Contributes</dt><dd>assigned quantity, packed quantity, box/lot identity</dd><dt>Reads</dt><dd>orders by product, route and drop, payable and clawback</dd><dt>Decides</dt><dd>pack, substitute, short, handoff</dd></dl></article><article class="participant-card"><p class="eyebrow">3</p><h3>Carrier / dropper</h3><dl><dt>Owns</dt><dd>shipment, handoff evidence</dd><dt>Contributes</dt><dd>accepted box count, scan time, condition evidence</dd><dt>Reads</dt><dd>route manifest, box identities, drop destination</dd><dt>Decides</dt><dd>accept custody, flag damage, report missing</dd></dl></article><article class="participant-card"><p class="eyebrow">4</p><h3>HostDrop</h3><dl><dt>Owns</dt><dd>drop inventory, bulk allocation, pickup handoff</dd><dt>Contributes</dt><dd>received quantity, customer allocation, pickup confirmation</dd><dt>Reads</dt><dd>source manifest, customer delivery lines, open discrepancy</dd><dt>Decides</dt><dd>allocate, hold, resolve, escalate</dd></dl></article><article class="participant-card"><p class="eyebrow">5</p><h3>Platform operations</h3><dl><dt>Owns</dt><dd>canonical lineage, responsibility decision, remedy batch</dd><dt>Contributes</dt><dd>policy version, adjudication, idempotency keys</dd><dt>Reads</dt><dd>every observation, money checkpoints, processor exceptions</dd><dt>Decides</dt><dd>freeze, adjudicate, refund, recover</dd></dl></article><article class="participant-card"><p class="eyebrow">6</p><h3>Stripe / tax / payout rail</h3><dl><dt>Owns</dt><dd>external object/event, balance transaction, tax transaction</dd><dt>Contributes</dt><dd>processor time, actual fee, external status</dd><dt>Reads</dt><dd>amount intent, idempotency key, tax reversal legs</dd><dt>Decides</dt><dd>succeed, fail, settle, reverse</dd></dl></article>
+  </div>
+</section>
+
+<section class="sim-section">
+  <div class="section-heading"><div><p class="eyebrow">Manifest topologies</p><h2>The shapes the model must preserve</h2></div><p>All shapes reduce to explicit source allocations; none permits cross-source netting.</p></div>
+  <div class="table-wrap"><table><thead><tr><th>Shape</th><th>Type</th><th>Flow</th><th>Source key</th><th>Allocation</th><th>Conservation rule</th></tr></thead><tbody><tr><td><span class="badge good">1:1</span></td><td><b>Direct packed order</b></td><td>one order line → one packing item → one customer delivery line</td><td><code>order_line_id</code></td><td>single delivery allocation</td><td>Conserve quantity: accepted + shortage = ordered (after accepted substitutions and returns)</td></tr><tr><td><span class="badge good">1:N</span></td><td><b>Farmer bulk to many customers</b></td><td>one source fulfillment line → one bulk manifest line → many customer delivery lines</td><td><code>source_fulfillment_line_id</code></td><td>explicit quantity per order_line_id</td><td>Conserve the source: sum(allocations) + remaining = bulk source quantity</td></tr><tr><td><span class="badge good">N:1</span></td><td><b>Many farmers to one customer</b></td><td>many source lines → farmer packing items → one customer order</td><td><code>farmer_id + order_line_id</code></td><td>one delivery can contain several immutable source lines</td><td>Conserve per farmer: never net one source&#39;s shortage against another source&#39;s overage</td></tr><tr><td><span class="badge good">N:M</span></td><td><b>Multi-farmer drop assembly</b></td><td>many farmers → shipments/boxes → HostDrop inventory → many customer pickups</td><td><code>source line + box/lot lineage</code></td><td>HostDrop records the exact source used for each customer line</td><td>Conserve each source independently, then conserve the assembled delivery</td></tr><tr><td><span class="badge good">T+</span></td><td><b>Recurring / future delivery</b></td><td>subscription intent → dated order line → ordinary fulfillment lineage</td><td><code>source_subscription_id + source_delivery_date</code></td><td>a materialized dated line follows one of the physical topologies</td><td>Conserve intent by idempotently materializing at most one line per subscription and delivery date</td></tr></tbody></table></div>
+</section>
+</main>
+  <footer><div class="container"><strong>FarmerDrop reconciliation reference model</strong><span>Exploratory simulator · no production database migration proposed</span></div></footer>
+  
+</body>
+</html>

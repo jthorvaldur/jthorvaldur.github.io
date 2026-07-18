@@ -1,0 +1,113 @@
+/* ============================================================================
+   kg_farmadrop — shared visual language ("parchment / loam / honey")
+   ----------------------------------------------------------------------------
+   Extracted from farmer_drop.html, ledger_simulator.html, predict_math.html,
+   drop_score.html, index.html. Framework-free: drop this <link> in <head>,
+   no build step. Pair with the Google Fonts + D3 tags below.
+
+   <head> boilerplate expected by this kit:
+   <link rel="preconnect" href="https://fonts.googleapis.com">
+   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+   <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600;9..144,700&family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;1,6..72,400&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+   <script src="https://cdn.jsdelivr.net/npm/d3@7"></script>   <!-- only for graph pages -->
+   <link rel="stylesheet" href="_kit.css">
+   ============================================================================ */
+
+:root{
+  /* --- surfaces (parchment) --- */
+  --parchment:#faf6ec; --parchment-2:#f3ecda; --parchment-3:#ece2c9;
+  --paper-card:#fffdf6;
+
+  /* --- ink (loam) --- */
+  --loam:#1e3a2a; --loam-soft:#3a5343; --ink-fade:#6c7b6a;
+
+  /* --- accents --- */
+  --honey:#d9930d; --honey-deep:#b8790a;   /* primary highlight */
+  --rust:#b23a1e;  --rust-deep:#8f2c14;    /* alert / unwind    */
+
+  /* --- lines --- */
+  --line:#c9bd9c; --line-soft:#ddd2b4;
+
+  /* --- semantic (status) --- */
+  --good:#2f6b4a; --warn:#b8790a; --bad:#8f2c14;
+
+  /* --- domain / category palette (graph node coloring) --- */
+  --conceptual:#2f6b4a; --business:#7a5b8f; --token:#d9930d; --data:#2b6d84;
+  --plum:#7a5b8f; --teal:#2b6d84;
+
+  /* --- type stack --- */
+  --serif:"Newsreader",Georgia,serif;      /* body / node labels   */
+  --display:"Fraunces",serif;              /* headings             */
+  --mono:"IBM Plex Mono",monospace;        /* kickers / chips / UI */
+}
+
+*{box-sizing:border-box}
+html,body{margin:0;background:var(--parchment);color:var(--loam);
+  font-family:var(--serif);font-size:16px}
+/* graph/simulator pages that own the viewport add: html,body{height:100%;overflow:hidden} */
+
+/* ---- textures : lay these as fixed, non-interactive layers under #app ----
+   <svg class="grain"><filter id="grainf"><feTurbulence type="fractalNoise"
+     baseFrequency="0.9" numOctaves="3" stitchTiles="stitch"/>
+     <feColorMatrix type="saturate" values="0"/></filter>
+     <rect width="100%" height="100%" filter="url(#grainf)"/></svg>
+   <div class="fieldrows"></div>                                            */
+.grain{position:fixed;inset:0;pointer-events:none;z-index:0;opacity:.05;mix-blend-mode:multiply}
+.fieldrows{position:fixed;inset:0;pointer-events:none;z-index:0;opacity:.35;
+  background:
+    repeating-linear-gradient(115deg, transparent 0 46px, rgba(30,58,42,.028) 46px 47px),
+    radial-gradient(140% 120% at 12% 8%, #fdfbf3 0%, var(--parchment) 42%, var(--parchment-2) 100%);}
+/* scrolling-document alternative (see index.html): use body::before/::after instead */
+
+/* ---- typography ---- */
+h1,.brand h1{font-family:var(--display);font-optical-sizing:auto;font-weight:600;
+  line-height:.95;letter-spacing:-.01em;margin:0;
+  font-size:clamp(26px,3.4vw,44px);color:var(--loam)}
+.brand h1 .drop{color:var(--honey-deep);font-style:italic}   /* accented word in a title */
+.kicker{font-family:var(--mono);font-size:11px;letter-spacing:.22em;
+  text-transform:uppercase;color:var(--ink-fade)}
+.panel h3{font-family:var(--mono);font-size:10.5px;letter-spacing:.16em;
+  text-transform:uppercase;color:var(--ink-fade);margin:0 0 10px}
+
+/* ---- nav ---- */
+nav a{font-family:var(--mono);font-size:12px;text-decoration:none;color:var(--loam-soft)}
+nav a:hover{color:var(--honey-deep)}
+
+/* ---- chip / pill (filters, tags) ---- */
+.chip{font-family:var(--mono);font-size:11px;letter-spacing:.04em;
+  border:1px solid var(--line);border-radius:999px;padding:7px 14px;
+  background:var(--paper-card);transition:all .18s;cursor:pointer}
+.chip:hover,.chip.active{border-color:var(--honey);color:var(--honey-deep)}
+
+/* ---- panel / card ---- */
+.panel,.card{background:var(--paper-card);border:1px solid var(--line);border-radius:8px;
+  box-shadow:0 1px 0 var(--line),0 16px 34px -28px rgba(30,58,42,.5);
+  padding:18px 20px;margin-bottom:16px}
+
+/* ---- buttons ---- */
+button{font-family:var(--mono);border:1px solid var(--line);border-radius:6px;
+  background:var(--paper-card);color:var(--loam);padding:7px 12px;cursor:pointer;transition:all .18s}
+button:hover:not(:disabled){border-color:var(--honey);color:var(--honey-deep)}
+button:disabled{opacity:.4;cursor:default}
+button.unwind{border-color:var(--rust);color:var(--rust-deep)}
+button.unwind:hover:not(:disabled){background:var(--rust);color:#fff}
+button.pulse{animation:startpulse 1.6s ease-out infinite}
+
+/* ---- inputs ---- */
+input{font-family:var(--serif);font-size:14px;color:var(--loam);
+  border:1px solid var(--line);border-radius:6px;background:var(--paper-card);padding:6px 10px}
+
+/* ---- SVG graph label classes (used by _graph.js) ---- */
+.nodelabel{font-family:var(--serif);font-size:11.5px;fill:var(--loam)}
+.linklabel{font-family:var(--mono);font-size:9px;fill:var(--loam-soft)}
+.badge{font-family:var(--mono);font-size:12px;fill:var(--rust-deep)}
+
+/* ---- motion ---- */
+.rise{opacity:0;transform:translateY(10px);
+  animation:rise .8s .05s cubic-bezier(.2,.7,.2,1) forwards}
+@keyframes rise{to{opacity:1;transform:none}}
+@keyframes startpulse{
+  0%,100%{box-shadow:0 0 0 0 rgba(184,121,10,.45)}
+  50%    {box-shadow:0 0 0 7px rgba(184,121,10,0)}}
+@media (prefers-reduced-motion:reduce){
+  .rise,.pulse{animation:none;opacity:1;transform:none}}

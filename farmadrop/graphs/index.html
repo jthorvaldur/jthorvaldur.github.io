@@ -1,0 +1,242 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Farmer Drop — Iteration-1 Whiteboard</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,600;0,9..144,900;1,9..144,400&family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;1,6..72,400&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet" />
+<style>
+  :root{
+    --parchment:#faf6ec; --parchment-2:#f3edda; --loam:#1e3a2a; --loam-soft:#4a6152;
+    --honey:#d9930d; --honey-deep:#a86f06; --rust:#b34a2e; --line:#d8d0b8;
+    --plum:#6d4a7c; --teal:#2e6b73;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{
+    font-family:"Newsreader",Georgia,serif;background:var(--parchment);color:var(--loam);
+    min-height:100vh;position:relative;overflow-x:hidden;
+  }
+  body::before{
+    content:"";position:fixed;inset:0;pointer-events:none;opacity:.5;
+    background:repeating-linear-gradient(0deg,transparent 0 26px,rgba(30,58,42,.045) 26px 27px);
+  }
+  body::after{
+    content:"";position:fixed;inset:0;pointer-events:none;opacity:.35;mix-blend-mode:multiply;
+    background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='120'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2'/%3E%3CfeColorMatrix values='0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0.05 0'/%3E%3C/filter%3E%3Crect width='120' height='120' filter='url(%23n)'/%3E%3C/svg%3E");
+  }
+  .wrap{max-width:1080px;margin:0 auto;padding:64px 32px 80px;position:relative}
+
+  .kicker{
+    font-family:"IBM Plex Mono",monospace;font-size:10.5px;letter-spacing:.46em;
+    text-transform:uppercase;color:var(--honey-deep);
+    animation:rise .8s .05s cubic-bezier(.2,.7,.2,1) both;
+  }
+  h1{
+    font-family:"Fraunces",serif;font-weight:900;font-size:clamp(42px,7vw,84px);
+    line-height:.98;margin:14px 0 20px;animation:rise .8s .12s cubic-bezier(.2,.7,.2,1) both;
+  }
+  h1 em{font-style:italic;color:var(--honey);}
+  .thesis{
+    font-size:clamp(16px,1.6vw,20px);line-height:1.6;max-width:44em;color:var(--loam-soft);
+    animation:rise .8s .2s cubic-bezier(.2,.7,.2,1) both;
+  }
+  .thesis b{color:var(--loam)}
+  .note{
+    margin-top:22px;font-family:"IBM Plex Mono",monospace;font-size:11px;letter-spacing:.06em;
+    line-height:1.8;color:var(--loam-soft);border-left:3px solid var(--honey);
+    padding:8px 0 8px 16px;max-width:70ch;
+    animation:rise .8s .28s cubic-bezier(.2,.7,.2,1) both;
+  }
+
+  .cards{
+    display:grid;grid-template-columns:repeat(2,1fr);gap:18px;margin-top:52px;
+  }
+  .card{
+    display:block;text-decoration:none;color:var(--loam);position:relative;
+    background:rgba(255,253,246,.72);border:1px solid var(--line);border-radius:6px;
+    padding:26px 26px 22px;transition:transform .25s ease, box-shadow .25s ease, border-color .25s;
+    animation:rise .8s cubic-bezier(.2,.7,.2,1) both;
+  }
+  .card:nth-child(1){animation-delay:.34s}.card:nth-child(2){animation-delay:.4s}
+  .card:nth-child(3){animation-delay:.46s}.card:nth-child(4){animation-delay:.52s}
+  .card:nth-child(5){animation-delay:.58s}.card:nth-child(6){animation-delay:.64s}
+  .card:nth-child(7){animation-delay:.7s}.card:nth-child(8){animation-delay:.76s}
+  .card:nth-child(9){animation-delay:.82s}.card:nth-child(10){animation-delay:.88s}
+  .card:hover{transform:translateY(-4px);box-shadow:0 14px 34px -18px rgba(30,58,42,.45);border-color:var(--honey)}
+  .card .tag{
+    font-family:"IBM Plex Mono",monospace;font-size:9.5px;letter-spacing:.34em;
+    text-transform:uppercase;color:var(--honey-deep);
+  }
+  .card h2{font-family:"Fraunces",serif;font-weight:600;font-size:26px;margin:10px 0 8px}
+  .card p{font-size:15px;line-height:1.55;color:var(--loam-soft)}
+  .card .facts{
+    margin-top:14px;font-family:"IBM Plex Mono",monospace;font-size:10.5px;
+    letter-spacing:.05em;color:var(--loam-soft);line-height:1.8;
+  }
+  .card .facts .warn{color:var(--rust)}
+  .card .go{
+    position:absolute;top:24px;right:22px;font-family:"IBM Plex Mono",monospace;
+    font-size:13px;color:var(--honey-deep);transition:transform .25s;
+  }
+  .card:hover .go{transform:translateX(4px)}
+  .card.accent-soil{border-top:4px solid var(--loam)}
+  .card.accent-honey{border-top:4px solid var(--honey)}
+  .card.accent-rust{border-top:4px solid var(--rust)}
+  .card.accent-teal{border-top:4px solid var(--teal)}
+  .card.accent-plum{border-top:4px solid var(--plum)}
+  .card.accent-wheat{border-top:4px solid var(--honey-deep)}
+
+  .openq{
+    margin-top:56px;background:rgba(179,74,46,.06);border:1px solid rgba(179,74,46,.35);
+    border-radius:6px;padding:22px 26px;animation:rise .8s .6s cubic-bezier(.2,.7,.2,1) both;
+  }
+  .openq .tag{font-family:"IBM Plex Mono",monospace;font-size:10px;letter-spacing:.34em;
+    text-transform:uppercase;color:var(--rust)}
+  .openq ul{margin:12px 0 0 18px;font-size:15px;line-height:1.75;color:var(--loam-soft)}
+  .openq b{color:var(--loam)}
+
+  footer{
+    margin-top:56px;font-family:"IBM Plex Mono",monospace;font-size:10px;
+    letter-spacing:.1em;line-height:1.8;color:#8a8172;max-width:90ch;
+    animation:rise .8s .68s cubic-bezier(.2,.7,.2,1) both;
+  }
+  @keyframes rise{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:none}}
+  @media (max-width:720px){.cards{grid-template-columns:1fr}.wrap{padding:44px 20px 60px}}
+</style>
+</head>
+<body>
+  <main class="wrap">
+    <div class="kicker">Iteration 1 · Whiteboard · Critique Welcome</div>
+    <h1>FARMER <em>DROP</em><br/>Knowledge Base</h1>
+    <p class="thesis">A <b>decentralized distribution network for food</b> — farmers, HostDrops,
+    drivers, and members each capture the margin centralized retail extracts. This is the
+    working <b>spec &amp; economics whiteboard</b>: the concept graph, the Drop Score factor tree,
+    the take-rate math, and the payment-rail plan. Mark it up — every number and definition
+    here is meant to be challenged.</p>
+    <div class="note">
+      Built from the June voice-note sessions → machine transcription → structured maps.
+      Numbers flagged ⚠ are deliberately unresolved and block downstream work until confirmed.
+      The app code itself lives with Volkmar — this layer reconciles against it, it does not replace it.
+    </div>
+
+    <div class="cards">
+      <a class="card accent-soil" href="farmer_drop.html">
+        <span class="tag">The Map</span><span class="go">→</span>
+        <h2>Knowledge Graph</h2>
+        <p>Conceptual × business × token × data layers as one linked graph — members, farmers,
+        HostDrops, contractors, drivers, the fee engine, and the phased coin plan. Click any
+        node for metrics, failure modes, and source references.</p>
+        <div class="facts">31 nodes · 51 edges · 4 layers<br/>
+        <span class="warn">⚠ DR-1: the take-% node is the loudest thing on the canvas — on purpose</span></div>
+      </a>
+      <a class="card accent-honey" href="drop_score.html">
+        <span class="tag">The Asset</span><span class="go">→</span>
+        <h2>Drop Score — Guidance Tree</h2>
+        <p>The world's-first drop score as a factor model: what <i>regenerative</i> and
+        <i>diversity</i> really mean, decomposed into evaluable indicators a small producer can
+        actually evidence. Definitions and evidence only — no weights, not a black box.</p>
+        <div class="facts">5 domains · 19 factors · 38 indicators<br/>
+        grounded: USDA NRCS · Soil Health Institute · ROC · Savory EOV · Regenified · FAO</div>
+      </a>
+      <a class="card accent-rust" href="take_rate_math.html">
+        <span class="tag">The Economics</span><span class="go">→</span>
+        <h2>Take-Rate Math (DR-1)</h2>
+        <p>Why 0.10% cannot work, what the valuation math actually implies, and three template
+        solutions that fund growth while leaving farmers ~78–82% of the basket — roughly 3.6×
+        the incumbent grocery farm share. Live sliders; every table recomputes.</p>
+        <div class="facts"><span class="warn">take-% UNDECIDED — supported band 7–12%, centered 10%</span><br/>
+        incumbent baseline: USDA ERS food-dollar &amp; price-spread series</div>
+      </a>
+      <a class="card accent-teal" href="transfer_rails.html">
+        <span class="tag">The Rails</span><span class="go">→</span>
+        <h2>Payment Rails — Stripe vs Chain</h2>
+        <p>Stripe's complete fee structure (the rail everyone trusts, and what it really costs)
+        against a CPDR-style transfer coin on Base. Phase 0 Stripe → Phase 1 transfer coin →
+        Phase 2 asset-backed Honey Coin, deferred behind the regulatory gate.</p>
+        <div class="facts">$100 transfer: $3.45 (Stripe) vs ~$0.006–0.11 (chain)<br/>
+        first deploy = transfer coin · Honey Coin = asset-backed, later</div>
+      </a>
+      <a class="card accent-plum" href="drop_host.html">
+        <span class="tag">The Atom</span><span class="go">→</span>
+        <h2>HostDrop — the Network's Atom</h2>
+        <p>Where members actually pick up the food. The $100 basket, two ways: the farmer
+        self-hauls and keeps 85%, or an Uber-style driver earns the 5% haul. Hosts earn 5% —
+        the church parish-hall fundraiser framing, with honest math on what that pays.</p>
+        <div class="facts">host 5% · haul 5% · platform take (DR-1)<br/>
+        <span class="warn">two-hop variant breaks 100% — the tension is shown, not hidden</span></div>
+      </a>
+      <a class="card accent-wheat" href="propagation.html">
+        <span class="tag">The Spread</span><span class="go">→</span>
+        <h2>Propagation — One Church to a Network</h2>
+        <p>A Bass-diffusion growth model over a church network, grounded in the Angel Food
+        Ministries precedent (5,000 host churches, 500k families/month) and real network sizes.
+        Sliders for seeds, contagion rate, ceiling, participation — with honest verdicts.</p>
+        <div class="facts"><span class="warn">⚠ which "12,000 churches"? AoG 12,651 (top-down) vs Churches of Christ 11,776 (autonomous, TX-heartland)</span><br/>
+        finding: big churches are load-bearing; the bottleneck is central logistics, not hosts</div>
+      </a>
+      <a class="card accent-soil" href="ledger_structure.html">
+        <span class="tag">The Books</span><span class="go">→</span>
+        <h2>The Books — Six-Ledger Concept</h2>
+        <p>The backend ledger as a spec: our best-guess reconstruction of the six ledgers, a
+        26-account chart, double-entry postings for the whole order lifecycle, and the unwind
+        paths that actually hurt — partial refunds, tax reversal against Stripe's reporting,
+        chargebacks, clawbacks. Built to survive being wrong.</p>
+        <div class="facts"><span class="warn">⚠ 6 ledgers INFERRED — Magnus stated the count verbally; reconcile vs the .7 backend</span><br/>
+        26 accounts · 4 clocks · 25 hard cases · 12 questions · 13 adversarial challenges answered</div>
+      </a>
+      <a class="card accent-honey" href="ledger_simulator.html">
+        <span class="tag">The Books · Live</span><span class="go">→</span>
+        <h2>Posting Simulator</h2>
+        <p>Fire the lifecycle — capture, settle, payout, credits, then the unwinds: partial
+        refund at any fraction, chargeback won or lost. Watch balanced entries post across the
+        six books, refunds lock while a dispute is open, and the clawback receivable appear
+        when the farmer was already paid. History never mutates.</p>
+        <div class="facts">append-only journal · Σdr = Σcr self-audited at load · take-% slider (DR-1)<br/>
+        <span class="warn">tax reverses at the ORIGINAL rate; lost disputes route tax to bad-debt, not the tax ledger</span></div>
+      </a>
+      <a class="card accent-teal" href="fees_taxes.html">
+        <span class="tag">The Build · As Shipped</span><span class="go">→</span>
+        <h2>Fees &amp; Taxes — As Built</h2>
+        <p>The money path that actually shipped: DR-1 resolved at 10/10/80, versioned fee
+        schedules with SQL temporal gates, the netBase carve (Stripe absorbed pro-rata, not
+        surcharged), US sales tax via Stripe Tax, full <em>and</em> partial refunds with
+        prorated tax reversal, transfer-fee remittance, and the single 5-minute reconcile loop.</p>
+        <div class="facts">live waterfall · conservation check to the cent · 28 money-path test suites<br/>
+        <span class="warn">open: outbox states (E) · pending-fee matcher</span></div>
+      </a>
+      <a class="card accent-plum" href="predict_structure.html">
+        <span class="tag">The Engine · Forecasts</span><span class="go">→</span>
+        <h2>Prediction Engine — Structure &amp; Math</h2>
+        <p>The locality / flow engine on a synthetic 8×8×64 world: the supply–demand map with
+        live hot/cold lanes, contractor packets ("do this area, not that one"), driver bundling —
+        and a <a href="predict_math.html" style="color:inherit;text-decoration:underline">math page</a>
+        where every idea (robust EWMA, Laplace surprise, fast/slow, harmonics) recomputes under
+        your sliders until it's obvious.</p>
+        <div class="facts">36 cells · 24 lanes · 104 synthetic weeks · robust concepts from microprediction/skaters<br/>
+        <span class="warn">synthetic by design — the data contract is agnostic; real lanes slot in at M6</span></div>
+      </a>
+    </div>
+
+    <div class="openq">
+      <span class="tag">Open Questions — the whiteboard's ask</span>
+      <ul>
+        <li><b>The platform take:</b> <span style="color:var(--teal)">RESOLVED — the build shipped 10% platform / 10% host / 80% farmer</span> (see <a href="fees_taxes.html" style="color:var(--teal)">Fees &amp; Taxes — As Built</a>). The 0.10% reading was a transcription slip, as the take-rate page argued.</li>
+        <li><b>Volkmar's repo:</b> what does the test app / ledger / ".7 backend" actually cover vs. what this map assumes?</li>
+        <li><b>The six ledgers:</b> name them (RQ-1 on The Books page). The whole ledger spec is a partition over accounts — regrouping to the real six is cheap, guessing wrong silently is not. And: how do partial-refund tax reversals reach Stripe Tax today?</li>
+        <li><b>Credit boost funding:</b> the 2% boost needs a named source — breakage, the 0.25% wedge, or float.</li>
+        <li><b>Incumbent baseline:</b> sanity-check the two-hop economics against real Alberta / Texas farmgate numbers.</li>
+        <li><b>Drop Score tree:</b> which indicators are wrong, missing, or ungameable in practice?</li>
+        <li><b>The church network:</b> which "12,000 churches" is it — Assemblies of God (districts, top-down) or Churches of Christ (autonomous, one-at-a-time)? The go-to-market motion depends on it.</li>
+      </ul>
+    </div>
+
+    <footer>
+      Provenance: voice-note sessions → whisper.cpp transcription → structured knowledge maps → this whiteboard.
+      Proper nouns and numbers from machine transcription are confidence-flagged; ⚠ items are unresolved by design.
+      Data files: farmer_drop_graph.json · drop_score_graph.json · take_rate_params.json · transfer_rails_data.json · ledger_accounts.json · ledger_events.json
+    </footer>
+  </main>
+</body>
+</html>

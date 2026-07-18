@@ -1,0 +1,148 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Technical Schema Proposal · FarmerDrop Recon Atlas</title>
+  <link rel="stylesheet" href="static/app.css">
+  
+</head>
+<body data-api-root="api" data-static-mode="true">
+  <header class="site-header">
+    <div class="container header-inner">
+      <a class="brand" href="index.html" aria-label="FarmerDrop Recon Atlas home">
+        <span class="brand-mark" aria-hidden="true">FD</span>
+        <span>Farmer<span>Drop</span> <small>recon atlas</small></span>
+      </a>
+      <nav aria-label="Primary navigation">
+        <a href="index.html">Home</a>
+        <a href="reconcile.html">Recon Lab</a>
+        <a href="stripe-case.html">Stripe trace</a>
+        <a href="portfolio.html">All scenarios</a>
+        <a href="manifests.html">Manifests</a>
+        <a href="schema.html">Schema</a>
+        <a href="technical-schema.html">Tech spec</a>
+        <a href="localharvest-dev.html">LH Dev</a>
+        <a href="graphs/index.html">Legacy graphs</a>
+      </nav>
+    </div>
+  </header>
+  <main id="top" class="container">
+<section class="hero compact-hero"><p class="eyebrow">Volk review surface · candidate migration v0.1</p><h1>Keep the clearing ledger. Add the <em>missing proof.</em></h1><p>This is the implementation-grade schema suggestion: current LocalHarvest objects, exact proposed additions, and concrete PostgreSQL/Drizzle shapes. It is reviewable technical input, not an approved migration.</p></section>
+
+<aside class="schema-warning"><b>Recommendation: extend, do not replace.</b><span>LocalHarvest already implements <code>holding</code>, <code>stripe</code>, and <code>stripe_fee</code> parties plus an external-action outbox. Add event grouping, dual time, actual balance-transaction facts, and line-level remedy provenance. Do not create six physical ledger tables.</span></aside>
+
+<section class="sim-section">
+  <div class="section-heading"><div><p class="eyebrow">Proposed diff</p><h2>Object-by-object decision</h2></div><p>The recommendation column distinguishes capabilities already present from genuinely missing schema.</p></div>
+  <div class="table-wrap"><table><thead><tr><th>Object</th><th>LocalHarvest current</th><th>Proposed change</th><th>Reason</th><th>Decision</th></tr></thead><tbody><tr><td><code>ledger_entries</code></td><td>Signed party-oriented rows with order/packing/shipment references, adjusts_entry_id, settlement_date, and created_at.</td><td>Add nullable ledger_event_id, line_number, account_code, effective_at, and immutable posted_at; backfill before NOT NULL enforcement.</td><td>Group atomic legs, make double-entry machine-checkable, and preserve economic versus knowledge time.</td><td><span class="badge warn">extend</span></td></tr><tr><td><code>ledger_events</code></td><td>No event header; idempotency is split across payment references and payout/outbox keys.</td><td>New idempotent event header with event_key, event_type, status, source identity, correction link, effective_at, and posted_at.</td><td>One durable identity for every balanced posting batch and correction.</td><td><span class="badge warn">add</span></td></tr><tr><td><code>stripe_transactions</code></td><td>Durable outbound intent/outbox already exists.</td><td>Keep it; link successful/failed intent rows to ledger_events and observed Stripe objects.</td><td>Intent and observed cash movement are different facts.</td><td><span class="badge good">retain</span></td></tr><tr><td><code>stripe_balance_transactions</code></td><td>Admin reads Stripe activity, but no normalized local fact table is authoritative for observed fees/cash.</td><td>Add an idempotent mirror keyed by Stripe balance transaction id, with gross, fee, net, available_on, source object, and raw snapshot.</td><td>Reconcile internal cash and fee entries to actual Stripe facts rather than modeled percentages.</td><td><span class="badge warn">add</span></td></tr><tr><td><code>holding / stripe / stripe_fee parties</code></td><td>Implemented by migrations 0025–0027 and escrow-ledger helpers.</td><td>Keep these primitives and map them to account_code/book views; do not create competing cash ledgers.</td><td>The missing clearing capability is already present in current code.</td><td><span class="badge good">retain</span></td></tr><tr><td><code>responsibility_decisions</code></td><td>Delivery issues and pickup resolutions record outcomes, but no versioned per-source participant allocation fact.</td><td>Add versioned decision rows only after liability roles/caps are approved.</td><td>A refund amount and a participant recovery decision must remain separate.</td><td><span class="badge warn">add-after-policy</span></td></tr><tr><td><code>remedy_lines</code></td><td>pickup_resolutions stores order-level refund/credit amounts; ledger rows store economic consequences.</td><td>Add immutable per-source remedy legs with merchandise, tax component, fixed-fee, method, and supersession provenance.</td><td>Exact partial refunds and tax reversals need line-level source identity.</td><td><span class="badge warn">add-after-policy</span></td></tr><tr><td><code>six ledger tables</code></td><td>One ledger_entries table plus party types and clearing helpers.</td><td>Do not add six physical ledger tables; derive book/account views from account_code and party dimensions.</td><td>The six-book grouping remains a hypothesis and should be re-taggable without rewriting postings.</td><td><span class="badge bad">do-not-add</span></td></tr></tbody></table></div>
+</section>
+
+<section class="sim-section">
+  <div class="section-heading"><div><p class="eyebrow">PostgreSQL candidate</p><h2>DDL for review</h2></div><p>Rollout must be staged: add nullable links, backfill/group historical rows, validate balances, then enforce requirements.</p></div>
+  <pre class="schema-code"><code>-- Candidate migration v0.1 for Volk review; not approved for production.
+CREATE EXTENSION IF NOT EXISTS pgcrypto;
+
+CREATE TABLE ledger_events (
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  event_key text NOT NULL UNIQUE,
+  event_type text NOT NULL,
+  status text NOT NULL CHECK (status IN (&#39;pending&#39;,&#39;posted&#39;,&#39;reversed&#39;,&#39;failed&#39;)),
+  order_id integer REFERENCES orders(id),
+  source_type text NOT NULL,
+  source_id text NOT NULL,
+  effective_at timestamptz NOT NULL,
+  posted_at timestamptz NOT NULL DEFAULT now(),
+  corrects_event_id uuid REFERENCES ledger_events(id),
+  metadata jsonb NOT NULL DEFAULT &#39;{}&#39;::jsonb
+);
+
+ALTER TABLE ledger_entries
+  ADD COLUMN ledger_event_id uuid REFERENCES ledger_events(id),
+  ADD COLUMN line_number integer,
+  ADD COLUMN account_code text,
+  ADD COLUMN effective_at timestamptz,
+  ADD COLUMN posted_at timestamptz NOT NULL DEFAULT now();
+
+CREATE UNIQUE INDEX uq_ledger_event_line
+  ON ledger_entries (ledger_event_id, line_number)
+  WHERE ledger_event_id IS NOT NULL;
+CREATE INDEX idx_ledger_effective_at ON ledger_entries (effective_at);
+CREATE INDEX idx_ledger_posted_at ON ledger_entries (posted_at);
+
+CREATE TABLE stripe_balance_transactions (
+  stripe_id text PRIMARY KEY,
+  source_object_id text,
+  source_type text NOT NULL,
+  currency text NOT NULL,
+  gross_minor bigint NOT NULL,
+  fee_minor bigint NOT NULL,
+  net_minor bigint NOT NULL,
+  status text NOT NULL,
+  available_on timestamptz,
+  observed_at timestamptz NOT NULL DEFAULT now(),
+  raw_snapshot jsonb NOT NULL,
+  CHECK (gross_minor - fee_minor = net_minor)
+);
+
+CREATE TABLE responsibility_decisions (
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  order_item_id integer NOT NULL REFERENCES order_items(id),
+  actor_type text NOT NULL,
+  actor_id text NOT NULL,
+  quantity numeric(14,3) NOT NULL CHECK (quantity &gt;= 0),
+  reason text NOT NULL,
+  status text NOT NULL,
+  decision_version integer NOT NULL CHECK (decision_version &gt; 0),
+  supersedes_id uuid REFERENCES responsibility_decisions(id),
+  effective_at timestamptz NOT NULL,
+  posted_at timestamptz NOT NULL DEFAULT now(),
+  evidence jsonb NOT NULL DEFAULT &#39;[]&#39;::jsonb,
+  UNIQUE (order_item_id, actor_type, actor_id, decision_version)
+);
+
+CREATE TABLE remedy_lines (
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  resolution_id integer NOT NULL REFERENCES pickup_resolutions(id),
+  order_item_id integer NOT NULL REFERENCES order_items(id),
+  quantity numeric(14,3) NOT NULL CHECK (quantity &gt; 0),
+  merchandise_minor bigint NOT NULL CHECK (merchandise_minor &gt;= 0),
+  tax_minor bigint NOT NULL CHECK (tax_minor &gt;= 0),
+  fixed_fee_minor bigint NOT NULL CHECK (fixed_fee_minor &gt;= 0),
+  method text NOT NULL CHECK (method IN (&#39;original_tender&#39;,&#39;credit&#39;,&#39;replacement&#39;)),
+  tax_components jsonb NOT NULL DEFAULT &#39;[]&#39;::jsonb,
+  effective_at timestamptz NOT NULL,
+  posted_at timestamptz NOT NULL DEFAULT now()
+);
+</code></pre>
+</section>
+
+<section class="sim-section">
+  <div class="section-heading"><div><p class="eyebrow">Drizzle candidate</p><h2>Shape of the TypeScript diff</h2></div><p>The full migration still needs LocalHarvest-specific relations, indexes, and backfill tests.</p></div>
+  <pre class="schema-code"><code>// Candidate additions to shared/schema.ts (shape only).
+export const ledgerEvents = pgTable(&#39;ledger_events&#39;, {
+  id: uuid(&#39;id&#39;).defaultRandom().primaryKey(),
+  eventKey: text(&#39;event_key&#39;).notNull().unique(),
+  eventType: text(&#39;event_type&#39;).notNull(),
+  status: text(&#39;status&#39;).notNull(),
+  orderId: integer(&#39;order_id&#39;).references(() =&gt; orders.id),
+  sourceType: text(&#39;source_type&#39;).notNull(),
+  sourceId: text(&#39;source_id&#39;).notNull(),
+  effectiveAt: timestamp(&#39;effective_at&#39;, { withTimezone: true }).notNull(),
+  postedAt: timestamp(&#39;posted_at&#39;, { withTimezone: true }).defaultNow().notNull(),
+  correctsEventId: uuid(&#39;corrects_event_id&#39;),
+  metadata: jsonb(&#39;metadata&#39;).notNull().default({}),
+});
+
+// Extend ledgerEntries; backfill before making the first four fields required.
+ledgerEventId: uuid(&#39;ledger_event_id&#39;).references(() =&gt; ledgerEvents.id),
+lineNumber: integer(&#39;line_number&#39;),
+accountCode: text(&#39;account_code&#39;),
+effectiveAt: timestamp(&#39;effective_at&#39;, { withTimezone: true }),
+postedAt: timestamp(&#39;posted_at&#39;, { withTimezone: true }).defaultNow().notNull(),
+</code></pre>
+</section>
+</main>
+  <footer><div class="container"><strong>FarmerDrop reconciliation reference model</strong><span>Exploratory simulator · no production database migration proposed</span></div></footer>
+  
+</body>
+</html>
