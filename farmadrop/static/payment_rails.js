@@ -15,7 +15,15 @@ function renderPaymentProfile(data) {
     const value = known ? `${paymentMoney(item.external_fee_total_minor)} · ${(item.external_fee_bps / 100).toFixed(2)}%` : "Unpriced";
     return `<div class="payment-cost-row"><div><b>${paymentEsc(item.display_name)}</b><span>${paymentEsc(item.category)}</span></div><div class="payment-cost-track ${known ? "" : "unknown"}">${known ? `<i style="width:${width.toFixed(2)}%"></i>` : `<em>funding · custody · redemption · compliance open</em>`}</div><strong>${paymentEsc(value)}</strong></div>`;
   }).join("");
-  document.getElementById("payment-rail-table").innerHTML = data.estimates.map((item) => `<tr><td><b>${paymentEsc(item.display_name)}</b><br><span class="badge ${item.status === "priced-reference" ? "good" : "warn"}">${paymentEsc(item.status)}</span><small class="payment-formula">${paymentEsc(item.formula)}</small></td><td>${paymentEsc(item.path)}<small class="payment-formula">${paymentEsc(item.visibility)}</small></td><td class="num">${item.customer_visible_fee_minor === null ? "open" : paymentMoney(item.customer_visible_fee_minor)}</td><td class="num">${item.external_fee_total_minor === null ? "unpriced" : paymentMoney(item.external_fee_total_minor)}</td><td class="num">${item.external_fee_bps === null ? "—" : `${(item.external_fee_bps / 100).toFixed(2)}%`}</td><td>${paymentEsc(item.charged_to)}</td></tr>`).join("");
+  document.getElementById("payment-rail-table").innerHTML = data.estimates.map((item) => `<tr><td><b>${paymentEsc(item.display_name)}</b><br><span class="badge ${item.status === "priced-reference" || item.status === "schedule-reference" ? "good" : "warn"}">${paymentEsc(item.status)}</span><small class="payment-formula">Confidence: ${paymentEsc(item.confidence)}</small><small class="payment-formula">${paymentEsc(item.formula)}</small></td><td>${paymentEsc(item.path)}<small class="payment-formula">${paymentEsc(item.visibility)}</small></td><td class="num">${item.customer_visible_fee_minor === null ? "open" : paymentMoney(item.customer_visible_fee_minor)}</td><td class="num">${item.external_fee_total_minor === null ? "unpriced" : paymentMoney(item.external_fee_total_minor)}</td><td class="num">${item.external_fee_bps === null ? "—" : `${(item.external_fee_bps / 100).toFixed(2)}%`}</td><td>${paymentEsc(item.charged_to)}</td></tr>`).join("");
+  const curveMaximum = Math.max(...data.card_curve.map((item) => item.high_bps));
+  document.getElementById("card-cost-curve").innerHTML = data.card_curve.map((item) => {
+    const left = item.low_bps / curveMaximum * 100;
+    const width = Math.max(1, (item.high_bps - item.low_bps) / curveMaximum * 100);
+    const reference = item.reference_bps / curveMaximum * 100;
+    return `<div class="card-curve-row"><span>${paymentMoney(item.amount_minor)}</span><div class="card-curve-band"><i style="left:${left.toFixed(2)}%;width:${width.toFixed(2)}%"></i><b style="left:${reference.toFixed(2)}%"></b></div><strong>${(item.low_bps / 100).toFixed(2)}%–${(item.high_bps / 100).toFixed(2)}% · midpoint ${paymentMoney(item.reference_fee_minor)}</strong></div>`;
+  }).join("");
+  document.getElementById("card-feedback-loop").innerHTML = data.feedback_loop.map((item) => `<div>${paymentEsc(item)}</div>`).join("");
   document.getElementById("payment-interpretation").innerHTML = data.interpretation.map((item) => `<p>${paymentEsc(item)}</p>`).join("");
   document.getElementById("payment-assumptions").innerHTML = data.assumptions.map((item) => `<p>${paymentEsc(item)}</p>`).join("");
   const sources = new Map();
@@ -26,13 +34,14 @@ function renderPaymentProfile(data) {
 async function profilePaymentRails() {
   const amountMinor = Math.round(Number(document.getElementById("payment-amount").value) * 100);
   const transactions = Number(document.getElementById("payment-count").value);
+  const monthlyNetworkTransactions = Number(document.getElementById("payment-network-volume").value);
   const status = document.getElementById("payment-profile-status");
   if (paymentStaticMode) {
     status.textContent = "Custom profiling uses the password-protected live Python service; this public copy shows the frozen reference.";
     return;
   }
   status.textContent = "Profiling in Python…";
-  const response = await fetch(paymentApiPath(`payment-rails/profile?amount_minor=${encodeURIComponent(amountMinor)}&transactions=${encodeURIComponent(transactions)}`));
+  const response = await fetch(paymentApiPath(`payment-rails/profile?amount_minor=${encodeURIComponent(amountMinor)}&transactions=${encodeURIComponent(transactions)}&monthly_network_transactions=${encodeURIComponent(monthlyNetworkTransactions)}`));
   if (!response.ok) throw new Error(`Payment profile failed (${response.status}).`);
   renderPaymentProfile(await response.json());
   status.textContent = "Profile updated from the Python model.";
