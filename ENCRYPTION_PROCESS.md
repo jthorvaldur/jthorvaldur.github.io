@@ -8,14 +8,17 @@ This documents how to build, encrypt, and deploy password-protected pages on jth
 
 ## Passwords
 
-Two passwords cover the entire site:
+Password **values never go in any tracked file** (this repo is public). Each zone's password lives in an
+environment variable set in `~/.oh-my-zsh/custom/keys.zsh` and in the gitignored `.passwords` file.
 
-| Password | Sections |
-|---|---|
-| `8bCcTDP9CoNKXeoAb3bU` | contacts, d72, food-trust, qwl |
-| `Th0r-Filing-2024!` | cook6724-QgixOl/filing |
+| Env var | Session key | Sections |
+|---|---|---|
+| `CONTACTS_PAGE_PASSWORD` | `_cp` | contacts, concepts, d72, food-trust, dimensions, qwl (`qwl_key`) |
+| `JTHORVALDUR_LEGAL_PAGE_PASSWORD` | `filing_key` | cook6724-QgixOl/filing, reports, case, thor2026 |
+| `ENERGY_TEXAS_PAGE_PASSWORD` | `energy_key` | energy |
+| `ANCIENT_INTEL_PAGE_PASSWORD` (`ancient-intelligence:` in `.passwords`) | `aif_key` | Ancient Intelligence (unlisted; published by `ancient_intelligence/scripts/publish_questions_page.py`) |
 
-The full map is in `.passwords` (gitignored, never committed).
+Load them with `source ~/.oh-my-zsh/custom/keys.zsh`. Pages listed in `PUBLIC_PAGES.txt` are public by choice and are not encrypted.
 
 ## Step-by-step: Adding a new encrypted page
 
@@ -39,7 +42,7 @@ node -e "
 const crypto = require('crypto');
 const fs = require('fs');
 
-const pw = '8bCcTDP9CoNKXeoAb3bU';
+const pw = process.env.CONTACTS_PAGE_PASSWORD;
 const content = fs.readFileSync('r/d72/_originals/my-new-page.html', 'utf8');
 
 const salt = crypto.randomBytes(16);
@@ -67,14 +70,14 @@ fs.writeFileSync('r/d72/my-new-page.html', gateHtml);
 
 ```bash
 cd ~/GitHub/words_quantum_legal
-node tools/encrypt_pages.mjs '8bCcTDP9CoNKXeoAb3bU' viz ~/GitHub/jthorvaldur.github.io/r/qwl/
+node tools/encrypt_pages.mjs "$CONTACTS_PAGE_PASSWORD" viz ~/GitHub/jthorvaldur.github.io/r/qwl/
 ```
 
 **For filing pages** (uses the _encrypt.js tool):
 
 ```bash
 cd ~/GitHub/jthorvaldur.github.io/r/cook6724-QgixOl/filing
-node _encrypt.js 'Th0r-Filing-2024!' new-page.html
+node _encrypt.js "$JTHORVALDUR_LEGAL_PAGE_PASSWORD" new-page.html
 ```
 
 ### 3. Fix the 1Password form
@@ -109,7 +112,7 @@ const iv = Buffer.from(i, 'base64');
 const combined = Buffer.from(c, 'base64');
 const tag = combined.slice(combined.length - 16);
 const encrypted = combined.slice(0, combined.length - 16);
-const key = crypto.pbkdf2Sync('8bCcTDP9CoNKXeoAb3bU', salt, 100000, 32, 'sha256');
+const key = crypto.pbkdf2Sync(process.env.CONTACTS_PAGE_PASSWORD, salt, 100000, 32, 'sha256');
 const decipher = crypto.createDecipheriv('aes-256-gcm', key, iv);
 decipher.setAuthTag(tag);
 const dec = Buffer.concat([decipher.update(encrypted), decipher.final()]);
