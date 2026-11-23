@@ -1,6 +1,9 @@
 (() => {
   const design = new URLSearchParams(location.search).get('design');
   document.body.dataset.design = design === 'field' ? 'field' : 'orchard';
+  if (window.parent !== window && window.name === 'farmerdrop-preview') {
+    document.querySelector('.business-entry').hidden = true;
+  }
   const phone = window.matchMedia('(max-width: 760px)');
   const menuButton = document.querySelector('.menu-toggle');
   const menu = document.querySelector('#phone-menu');

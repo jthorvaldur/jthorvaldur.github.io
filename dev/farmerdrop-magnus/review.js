@@ -15,6 +15,9 @@
     original: { label: 'Original site', path: 'base/index.html' },
     orchard: { label: 'Orchard', path: 'facelift.html' },
     field: { label: 'Field', path: 'facelift.html?design=field' },
+    business: { label: 'Business view', path: 'business/index.html' },
+    market: { label: 'Market', path: 'market.html' },
+    haven: { label: 'Haven', path: 'haven.html' },
   };
   const devices = {
     auto: { label: 'Auto' },
@@ -62,7 +65,7 @@
     }
     const { label, path } = designs[design];
     const destination = new URL(path, location.href);
-    if (params.get('metrics') === '1') destination.searchParams.set('metrics', '1');
+    if (design !== 'business' && params.get('metrics') === '1') destination.searchParams.set('metrics', '1');
     if (frame.getAttribute('src') !== destination.href) {
       // Mount a fresh frame so only the shareable shell URL adds history.
       const next = frame.cloneNode(false);
@@ -71,9 +74,10 @@
       frame.replaceWith(next);
       frame = next;
       stage.scrollTop = 0;
+      openLink.href = destination.href;
     }
-    openLink.href = destination.href;
     summary.textContent = `${label} · ${devices[device].label}`;
+    stage.dataset.design = design;
     stage.dataset.device = device;
     fitFrame();
   }
@@ -89,14 +93,30 @@
     if (button.getAttribute('aria-pressed') === 'true') return;
     const url = new URL(location.href);
     if (button.hasAttribute('data-design')) {
-      if (button.dataset.design === 'original') url.searchParams.delete('design');
-      else url.searchParams.set('design', button.dataset.design);
+      // Explicit Original should still open here when a standalone operator reloads.
+      url.searchParams.set('design', button.dataset.design);
     } else if (button.hasAttribute('data-device')) {
       if (button.dataset.device === 'auto') url.searchParams.delete('device');
       else url.searchParams.set('device', button.dataset.device);
     }
     history.pushState(null, '', url);
     render();
+  });
+  window.addEventListener('message', event => {
+    if (event.origin !== location.origin || event.source !== frame.contentWindow || stage.dataset.design !== 'business') return;
+    const message = event.data;
+    if (message?.type === 'farmerdrop:preview' && message.design === 'original') {
+      const original = bar.querySelector('[data-design="original"]');
+      original.click();
+      (original.getClientRects().length ? original : disclosure).focus();
+    }
+    if (message?.type === 'farmerdrop:business-route') {
+      const { role, queue, date } = message;
+      if (![role, queue, date].every(value => typeof value === 'string' && value.length > 0)) return;
+      const destination = new URL(designs.business.path, location.href);
+      destination.search = new URLSearchParams({ role, queue, date });
+      openLink.href = destination.href;
+    }
   });
   window.addEventListener('popstate', render);
   new ResizeObserver(fitFrame).observe(stage);

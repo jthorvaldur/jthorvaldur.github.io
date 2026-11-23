@@ -12,6 +12,7 @@ const pending = byId('pending');
 const all = byId('all');
 const notice = byId('result');
 const preferenceKey = 'fd-business-start-v1';
+const inComparison = window.parent !== window && window.name === 'farmerdrop-preview';
 const selected = new Set();
 let role, queue, dateId, visibleRows;
 let pendingOnly = true;
@@ -28,6 +29,7 @@ function readPreference() {
 }
 
 function savePreference(value) {
+  if (inComparison) return;
   try {
     if (value) sessionStorage.setItem(preferenceKey, value);
     else sessionStorage.removeItem(preferenceKey);
@@ -75,6 +77,9 @@ function openWorkspace() {
   byId('qty-col').textContent = queues[queue].quantityHeading;
   byId('caption').textContent = queues[queue].label + ' for ' + dropDate.selectedOptions[0].textContent;
   renderRows();
+  if (inComparison) {
+    window.parent.postMessage({ type: 'farmerdrop:business-route', role, queue, date: dateId }, location.origin);
+  }
 }
 
 function navigate(url) {
@@ -154,6 +159,10 @@ nav.addEventListener('click', event => {
 });
 window.addEventListener('popstate', openWorkspace);
 byId('mode-switch').addEventListener('click', () => {
+  if (inComparison) {
+    window.parent.postMessage({ type: 'farmerdrop:preview', design: 'original' }, location.origin);
+    return;
+  }
   savePreference(null);
   location.assign('../index.html?view=website');
 });
