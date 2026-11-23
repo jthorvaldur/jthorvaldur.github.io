@@ -1,4 +1,16 @@
 (() => {
+  // Explicit comparison links and browser Back always open the requested website.
+  const navigationType = performance.getEntriesByType('navigation')[0]?.type;
+  if (window === window.top && !location.search && !location.hash && navigationType !== 'back_forward') {
+    try {
+      const role = sessionStorage.getItem('fd-business-start-v1');
+      if (role === 'farmer' || role === 'host') {
+        location.replace('business/index.html?role=' + role);
+        return;
+      }
+    } catch { /* The website is available when browser storage is disabled. */ }
+  }
+
   const designs = {
     original: { label: 'Original site', path: 'base/index.html' },
     orchard: { label: 'Orchard', path: 'facelift.html' },
