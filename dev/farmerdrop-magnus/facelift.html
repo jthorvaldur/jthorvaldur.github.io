@@ -7,10 +7,22 @@
   <meta name="theme-color" content="#153e2e">
   <meta name="description" content="Find local farmers and pick up real food at a neighborhood HostDrop. Explore the FarmerDrop landing page preview.">
   <title>FarmerDrop — Secure Real Food!</title>
+  <script>
+    (() => {
+      const choice = new URLSearchParams(location.search).get('design');
+      const blendedHero = choice === 'field' || choice === 'orchard-blend';
+      document.documentElement.dataset.design = blendedHero ? choice : 'orchard';
+      // CSS uses the same breakpoint to collapse the empty photo and player areas.
+      window.blendPhotoFreeViewport = window.matchMedia('(max-width: 760px), (orientation: landscape) and (pointer: coarse) and (max-height: 500px)');
+      document.documentElement.classList.toggle('has-blended-hero', blendedHero);
+      if (choice === 'orchard-blend') document.querySelector('meta[name="theme-color"]').content = '#086b3b';
+    })();
+  </script>
   <link rel="icon" href="media/logo-only.webp" type="image/webp">
   <link rel="preload" as="font" type="font/woff2" href="fonts/baskervville.woff2" crossorigin>
   <link rel="stylesheet" href="site.css">
   <link rel="stylesheet" href="field.css">
+  <link rel="stylesheet" href="orchard-blend.css">
   <link rel="stylesheet" href="journeys.css">
   <script src="site.js" defer></script>
   <script src="journeys.js" defer></script>
@@ -57,10 +69,18 @@
           <a href="https://play.google.com/store/apps/details?id=com.farmerdrop.shop" target="_blank" rel="noopener noreferrer" aria-label="Get FarmerDrop on Google Play (opens in a new tab)"><img src="media/google-play.png" width="135" height="40" alt="Get it on Google Play"></a>
         </nav>
       </div>
-      <picture class="hero-photo">
-        <source srcset="media/hero-small.webp" media="(max-width: 700px)">
-        <img src="media/hero.webp" width="1920" height="1280" fetchpriority="high" alt="A farmer holding a wooden crate of freshly harvested vegetables in an orchard.">
-      </picture>
+      <template data-landing-photo>
+        <picture class="hero-photo">
+          <source srcset="media/hero-small.webp" media="(max-width: 700px)">
+          <img src="media/hero.webp" width="1920" height="1280" fetchpriority="high" alt="A farmer holding a wooden crate of freshly harvested vegetables in an orchard.">
+        </picture>
+      </template>
+      <noscript>
+        <picture class="hero-photo">
+          <source srcset="media/hero-small.webp" media="(max-width: 700px)">
+          <img src="media/hero.webp" width="1920" height="1280" fetchpriority="high" alt="A farmer holding a wooden crate of freshly harvested vegetables in an orchard.">
+        </picture>
+      </noscript>
     </section>
 
     <section class="community section-block" id="community" aria-labelledby="community-heading">
@@ -73,7 +93,12 @@
         </div>
         <div class="role-grid">
           <article class="role-card" id="role-member" aria-labelledby="member-heading">
-            <img class="role-image" src="media/member.webp" width="768" height="637" loading="lazy" alt="A Member picking up fresh vegetables from their host.">
+            <template data-landing-photo>
+              <img class="role-image" src="media/member.webp" width="768" height="637" loading="lazy" alt="A Member picking up fresh vegetables from their host.">
+            </template>
+            <noscript>
+              <img class="role-image" src="media/member.webp" width="768" height="637" loading="lazy" alt="A Member picking up fresh vegetables from their host.">
+            </noscript>
             <div class="role-body">
               <h3 id="member-heading"><span class="role-name">Member</span> <span class="role-slogan">Maximum Convenience</span></h3>
               <p>Choose from nearby farms and collect your order at one neighborhood HostDrop.</p>
@@ -81,7 +106,12 @@
             </div>
           </article>
           <article class="role-card" id="role-host" aria-labelledby="host-heading">
-            <img class="role-image" src="media/host.webp" width="768" height="612" loading="lazy" alt="A host and grower checking produce at a pickup spot.">
+            <template data-landing-photo>
+              <img class="role-image" src="media/host.webp" width="768" height="612" loading="lazy" alt="A host and grower checking produce at a pickup spot.">
+            </template>
+            <noscript>
+              <img class="role-image" src="media/host.webp" width="768" height="612" loading="lazy" alt="A host and grower checking produce at a pickup spot.">
+            </noscript>
             <div class="role-body">
               <h3 id="host-heading"><span class="role-name">HostDrop</span> <span class="role-slogan">Farm to Neighbourhood</span></h3>
               <p>Bring growers and neighbors together by hosting a local pickup spot.</p>
@@ -89,7 +119,12 @@
             </div>
           </article>
           <article class="role-card" id="role-farmer" aria-labelledby="farmer-heading">
-            <img class="role-image" src="media/farmer.webp" width="768" height="547" loading="lazy" alt="Two farmers tending cattle and sheep on pasture.">
+            <template data-landing-photo>
+              <img class="role-image" src="media/farmer.webp" width="768" height="547" loading="lazy" alt="Two farmers tending cattle and sheep on pasture.">
+            </template>
+            <noscript>
+              <img class="role-image" src="media/farmer.webp" width="768" height="547" loading="lazy" alt="Two farmers tending cattle and sheep on pasture.">
+            </noscript>
             <div class="role-body">
               <h3 id="farmer-heading"><span class="role-name">Farmer</span> <span class="role-slogan">Increase Sales, not Hours</span></h3>
               <p>List what you grow, see confirmed orders, and deliver to a HostDrop on DropDate.</p>
@@ -105,12 +140,21 @@
         <h2 class="section-heading" id="order-heading">How Ordering Works</h2>
         <div class="order-layout">
           <div class="film">
-            <video id="explainer" controls preload="none" playsinline poster="media/explainer-poster.webp" width="1280" height="720" aria-label="How FarmerDrop works, 1 minute 22 seconds">
-              <source src="media/explainer.mp4" type="video/mp4">
-              <track kind="captions" src="media/explainer.vtt" srclang="en" label="English">
-            </video>
+            <template id="film-template">
+              <video id="explainer" controls preload="none" playsinline poster="media/explainer-poster.webp" width="1280" height="720" aria-label="How FarmerDrop works, 1 minute 22 seconds">
+                <source src="media/explainer.mp4" type="video/mp4">
+                <track kind="captions" src="media/explainer.vtt" srclang="en" label="English">
+              </video>
+            </template>
+            <noscript>
+              <video controls preload="none" playsinline poster="media/explainer-poster.webp" width="1280" height="720" aria-label="How FarmerDrop works, 1 minute 22 seconds">
+                <source src="media/explainer.mp4" type="video/mp4">
+                <track kind="captions" src="media/explainer.vtt" srclang="en" label="English">
+              </video>
+            </noscript>
             <button class="film-play" type="button" hidden aria-label="Play the FarmerDrop explainer, 1 minute 22 seconds">
               <span class="play-circle"><svg viewBox="0 0 24 24" width="23" height="23" aria-hidden="true"><path d="M7.5 3.8v16.4L21 12Z" fill="currentColor"/></svg></span>
+              <span class="film-label" hidden>Watch the explainer</span>
               <span class="film-time">1:22</span>
             </button>
           </div>
@@ -143,6 +187,22 @@
       </div>
     </section>
   </main>
+  <script>
+    (() => {
+      const photoSlots = Array.from(document.querySelectorAll('template[data-landing-photo]'), slot => ({
+        slot, image: slot.content.firstElementChild
+      }));
+      function showPhotos(show) {
+        for (const { slot, image } of photoSlots) {
+          if (!show) image.remove();
+          else if (!image.isConnected) slot.after(image);
+        }
+      }
+      const blend = document.documentElement.dataset.design === 'orchard-blend';
+      if (blend) window.blendPhotoFreeViewport.addEventListener('change', event => showPhotos(!event.matches));
+      showPhotos(!blend || !window.blendPhotoFreeViewport.matches);
+    })();
+  </script>
   <footer class="site-footer"><div class="wrap"><span>FarmerDrop website preview</span><a href="#top">Back to top <span aria-hidden="true">↑</span></a></div></footer>
 </body>
 </html>

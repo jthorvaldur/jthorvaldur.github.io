@@ -1,10 +1,15 @@
 (() => {
-  const design = new URLSearchParams(location.search).get('design');
-  document.body.dataset.design = design === 'field' ? 'field' : 'orchard';
+  const design = document.documentElement.dataset.design;
+  const orchardBlend = design === 'orchard-blend';
+  document.body.dataset.design = design;
+  if (orchardBlend) {
+    document.querySelectorAll('header [data-journey="browse"]').forEach(button => button.remove());
+  }
   if (window.parent !== window && window.name === 'farmerdrop-preview') {
     document.querySelector('.business-entry').hidden = true;
   }
   const phone = window.matchMedia('(max-width: 760px)');
+  const photoFreeViewport = window.blendPhotoFreeViewport;
   const menuButton = document.querySelector('.menu-toggle');
   const menu = document.querySelector('#phone-menu');
   const tabList = document.querySelector('.role-tabs');
@@ -58,17 +63,35 @@
       tabs[next].focus();
     });
   });
-  phone.addEventListener('change', () => { showMenu(false); renderRoles(); });
-  renderRoles();
-
-  const video = document.querySelector('#explainer');
+  const video = document.querySelector('#film-template').content.querySelector('video');
+  const poster = video.getAttribute('poster');
   const play = document.querySelector('.film-play');
+  const filmLabel = play.querySelector('.film-label');
   video.controls = false;
   play.hidden = false;
+
+  function renderMedia() {
+    const textOnly = orchardBlend && photoFreeViewport.matches;
+    filmLabel.hidden = !textOnly;
+    if (textOnly) video.removeAttribute('poster');
+    else video.setAttribute('poster', poster);
+    if (textOnly && !video.controls) video.remove();
+    else if (!video.isConnected) play.before(video);
+  }
+
   play.addEventListener('click', () => {
-    play.hidden = true;
     video.controls = true;
+    if (!video.isConnected) play.before(video);
+    play.hidden = true;
     video.focus();
     video.play().catch(() => { video.controls = true; });
   });
+
+  phone.addEventListener('change', () => {
+    showMenu(false);
+    renderRoles();
+  });
+  if (orchardBlend) photoFreeViewport.addEventListener('change', renderMedia);
+  renderRoles();
+  renderMedia();
 })();

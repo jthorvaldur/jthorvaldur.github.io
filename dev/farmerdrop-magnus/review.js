@@ -15,6 +15,7 @@
     original: { label: 'Original site', path: 'base/index.html' },
     orchard: { label: 'Orchard', path: 'facelift.html' },
     field: { label: 'Field', path: 'facelift.html?design=field' },
+    'orchard-blend': { label: 'Orchard Blend', path: 'facelift.html?design=orchard-blend' },
     business: { label: 'Business view', path: 'business/index.html' },
     market: { label: 'Market', path: 'market.html' },
     haven: { label: 'Haven', path: 'haven.html' },
