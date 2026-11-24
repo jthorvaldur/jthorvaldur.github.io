@@ -36,6 +36,56 @@
   const summary = document.querySelector('#review-summary');
   let device = 'auto';
 
+  function isPlainClick(event) {
+    return event.button === 0 && !event.metaKey && !event.ctrlKey && !event.shiftKey && !event.altKey;
+  }
+
+  function followDesignLink(event) {
+    if (event.defaultPrevented || !isPlainClick(event)) return;
+    const link = event.target.closest('a[data-review-design]');
+    if (!link) return;
+    const control = designControls.find(item => item.dataset.design === link.dataset.reviewDesign);
+    if (!control) return;
+    event.preventDefault();
+    control.click();
+    (control.getClientRects().length ? control : disclosure).focus({ preventScroll: true });
+  }
+
+  // Ordinary clicks share the toolbar's history handling. Real URLs also
+  // keep the viewport when the user copies a link or opens another tab.
+  function updateDesignLinks() {
+    const doc = frame.contentDocument;
+    if (!doc) return;
+    doc.addEventListener('click', followDesignLink);
+    for (const link of doc.querySelectorAll('a[data-review-design]')) {
+      const url = new URL(location.href);
+      url.searchParams.set('design', link.dataset.reviewDesign);
+      link.href = url.href;
+      link.target = '_parent';
+    }
+  }
+
+  function connectDesignLinks(next) {
+    // The browser replaces the initial about:blank document asynchronously.
+    // Bind to its replacement before a slow image delays the frame load event.
+    let pendingFrame;
+    function bindDocument() {
+      if (next !== frame) return;
+      const doc = next.contentDocument;
+      if (!doc || doc.URL === 'about:blank') {
+        pendingFrame = requestAnimationFrame(bindDocument);
+        return;
+      }
+      updateDesignLinks();
+      if (doc.readyState === 'loading') doc.addEventListener('DOMContentLoaded', updateDesignLinks, { once: true });
+    }
+    next.addEventListener('load', () => {
+      cancelAnimationFrame(pendingFrame);
+      if (next === frame) updateDesignLinks();
+    }, { once: true });
+    bindDocument();
+  }
+
   function fitFrame() {
     if (device === 'auto') {
       size.removeAttribute('style');
@@ -82,9 +132,10 @@
       next.src = destination.href;
       frame.replaceWith(next);
       frame = next;
+      connectDesignLinks(next);
       stage.scrollTop = 0;
       openLink.href = destination.href;
-    }
+    } else updateDesignLinks();
     summary.textContent = `${label} · ${devices[device].label}`;
     stage.dataset.design = design;
     stage.dataset.device = device;
@@ -100,7 +151,7 @@
       return;
     }
     if (control.matches('a[href]')) {
-      if (event.metaKey || event.ctrlKey || event.shiftKey || event.altKey || event.button !== 0) return;
+      if (!isPlainClick(event)) return;
       event.preventDefault();
     }
     if (control.hasAttribute('data-design') && bar.classList.contains('is-expanded')) {
