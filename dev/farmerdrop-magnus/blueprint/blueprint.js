@@ -663,7 +663,31 @@
       ) + wrap(link('Continue with sample account', st.next || 'home', 'btn', { state: 'new' }))
     );
   }
+  function acceptRole() {
+    return (
+      lead(
+        'Account invitation',
+        'Review your invitation',
+        'The sample offer is to join the Grove Yard HostDrop team.',
+      ) +
+      wrap(
+        grid(
+          card(
+            'HostDrop team',
+            'Accept the sample role to open its team workspace.',
+            link('Accept sample invitation', studyFor('HostDrop settings / Team'), 'btn', { next: '' }),
+          ),
+          card(
+            'Decide later',
+            'Return to the member home with the offer pending.',
+            link('Return to member home', 'home', 'textlink', { next: '' }),
+          ),
+        ),
+      )
+    );
+  }
   const views = {
+    'accept-role': acceptRole,
     public: () =>
       hero(
         'FarmerDrop',
@@ -967,7 +991,7 @@
             ['Sample offer', 'HostDrop team'],
             ['Status', 'Awaiting acceptance'],
           ]),
-          link('Preview account sign-in', 'sign-in', 'btn', { next: 'host' }),
+          link('Preview account sign-in', 'sign-in', 'btn', { next: 'accept-role' }),
         );
       case 'inbox': {
         const member = r.group === 'Member',
@@ -1155,8 +1179,8 @@
         return layout(
           'Label printer',
           summaryList([
-            ['Printer', 'Sample label printer'],
-            ['Status', 'Available'],
+            ['Preview', 'Sample pickup label'],
+            ['Output', 'Browser print preview'],
             ['Format', 'Pickup label'],
           ]),
           onward('Preview a package label', 'Package label'),
@@ -1534,7 +1558,7 @@
       otherGreens: qty(q.get('otherGreens')),
       groveAccess: allowed(q.get('groveAccess'), ['pending', 'approved', 'available'], ''),
       meadowAccess: allowed(q.get('meadowAccess'), ['pending', 'approved', 'available'], ''),
-      next: allowed(q.get('next'), ['checkout', 'host', 'farm'], ''),
+      next: allowed(q.get('next'), ['checkout', 'host', 'farm', 'accept-role'], ''),
       order: allowed(
         q.get('order'),
         ['grove', 'meadow', 'none'],
