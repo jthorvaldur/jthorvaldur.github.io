@@ -171,8 +171,14 @@
     render();
   });
   window.addEventListener('message', event => {
-    if (event.origin !== location.origin || event.source !== frame.contentWindow || stage.dataset.design !== 'business') return;
+    if (event.origin !== location.origin || event.source !== frame.contentWindow) return;
     const message = event.data;
+    if (stage.dataset.design === 'member-blueprint' && message?.type === 'farmerdrop:blueprint-route') {
+      const destination = new URL(frame.src);
+      destination.hash = frame.contentWindow.location.hash;
+      openLink.href = destination.href;
+    }
+    if (stage.dataset.design !== 'business') return;
     if (message?.type === 'farmerdrop:preview' && message.design === 'original') {
       const original = bar.querySelector('[data-design="original"]');
       original.click();
