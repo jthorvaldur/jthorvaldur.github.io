@@ -10,21 +10,23 @@
   <script>
     (() => {
       const choice = new URLSearchParams(location.search).get('design');
-      const blendedHero = choice === 'field' || choice === 'orchard-blend';
+      const orchardBlend = choice === 'orchard-blend' || choice === 'orchard-blend-tabs';
+      const blendedHero = choice === 'field' || orchardBlend;
       document.documentElement.dataset.design = blendedHero ? choice : 'orchard';
       // CSS uses the same breakpoint to collapse the empty photo and player areas.
       window.blendPhotoFreeViewport = window.matchMedia('(max-width: 760px), (orientation: landscape) and (pointer: coarse) and (max-height: 500px)');
       document.documentElement.classList.toggle('has-blended-hero', blendedHero);
-      if (choice === 'orchard-blend') document.querySelector('meta[name="theme-color"]').content = '#086b3b';
+      document.documentElement.classList.toggle('orchard-blend', orchardBlend);
+      if (orchardBlend) document.querySelector('meta[name="theme-color"]').content = '#086b3b';
     })();
   </script>
   <link rel="icon" href="media/logo-only.webp" type="image/webp">
   <link rel="preload" as="font" type="font/woff2" href="fonts/baskervville.woff2" crossorigin>
   <link rel="stylesheet" href="site.css">
   <link rel="stylesheet" href="field.css?v=9e90d227fcd5">
-  <link rel="stylesheet" href="orchard-blend.css?v=7e3570c1b793">
+  <link rel="stylesheet" href="orchard-blend.css?v=25e9587e6072">
   <link rel="stylesheet" href="journeys.css">
-  <script src="site.js?v=51419c382943" defer></script>
+  <script src="site.js?v=44093d103d68" defer></script>
   <script src="journeys.js" defer></script>
   <script src="metrics.js" defer></script>
 </head>
@@ -59,7 +61,7 @@
           <img class="hero-logo" src="media/logo-text.webp" alt="FarmerDrop" width="1600" height="520">
           <h1 id="headline">Secure Real Food!</h1>
         </div>
-        <p class="hero-intro">Order from local farmers and pick up at one neighborhood HostDrop.</p>
+        <p class="hero-intro">Order from multiple farmers and pick up at one neighbourhood HostDrop.</p>
         <div class="hero-actions">
           <button class="button primary" type="button" data-journey="member" data-event="hero_member">Become a Member</button>
           <a class="button secondary" href="#ordering" data-event="hero_how">How it works</a>
@@ -198,9 +200,52 @@
           else if (!image.isConnected) slot.after(image);
         }
       }
-      const blend = document.documentElement.dataset.design === 'orchard-blend';
+      const blend = document.documentElement.classList.contains('orchard-blend');
       if (blend) window.blendPhotoFreeViewport.addEventListener('change', event => showPhotos(!event.matches));
       showPhotos(!blend || !window.blendPhotoFreeViewport.matches);
+
+      const greenTabs = document.documentElement.dataset.design === 'orchard-blend-tabs';
+      const phone = greenTabs ? window.blendPhotoFreeViewport : window.matchMedia('(max-width: 760px)');
+      const tabList = document.querySelector('.role-tabs');
+      const roleGrid = document.querySelector('.role-grid');
+      const heroCopy = document.querySelector('.hero-copy');
+      const tabs = Array.from(tabList.querySelectorAll('[role="tab"]'));
+      let activeRole = 0;
+
+      function renderRoles() {
+        // Keep one tablist in reading and focus order, immediately after the badges
+        // on Green Tabs phones and with the community section in wider layouts.
+        if (greenTabs && phone.matches && tabList.parentElement !== heroCopy) heroCopy.append(tabList);
+        if (greenTabs && !phone.matches && tabList.parentElement === heroCopy) roleGrid.before(tabList);
+        tabList.hidden = !phone.matches;
+        tabs.forEach((tab, index) => {
+          const selected = index === activeRole;
+          tab.setAttribute('aria-selected', String(selected));
+          tab.tabIndex = selected ? 0 : -1;
+          const panel = document.getElementById(tab.getAttribute('aria-controls'));
+          panel.hidden = phone.matches && !selected;
+          if (phone.matches) {
+            panel.setAttribute('role', 'tabpanel');
+            panel.setAttribute('aria-labelledby', tab.id);
+          } else {
+            panel.removeAttribute('role');
+            panel.setAttribute('aria-labelledby', panel.querySelector('h3').id);
+          }
+        });
+      }
+      tabs.forEach((tab, index) => {
+        tab.addEventListener('click', () => { activeRole = index; renderRoles(); });
+        tab.addEventListener('keydown', event => {
+          const next = { ArrowRight: (index + 1) % tabs.length, ArrowLeft: (index + tabs.length - 1) % tabs.length, Home: 0, End: tabs.length - 1 }[event.key];
+          if (next === undefined) return;
+          event.preventDefault();
+          activeRole = next;
+          renderRoles();
+          tabs[next].focus();
+        });
+      });
+      phone.addEventListener('change', renderRoles);
+      renderRoles();
     })();
   </script>
   <footer class="site-footer"><div class="wrap"><span>FarmerDrop website preview</span><a href="#top">Back to top <span aria-hidden="true">↑</span></a></div></footer>
