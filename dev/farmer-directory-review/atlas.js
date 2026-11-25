@@ -17,7 +17,7 @@ function startDirectoryAtlas(data) {
   const unknown = data.farmers.filter(f => !f[2] || !regions.has(f[2])).length;
   const farmers = [...data.farmers].sort((a,b)=>a[1].localeCompare(b[1])||a[0].localeCompare(b[0]));
   const supported = new Set(['density','total','points']);
-  const state = {mode:'density',region:'*',precision:'all',allRanks:false,page:0,point:null,query:''};
+  const state = {mode:'density',region:'*',precision:'all',county:'',locality:'',allRanks:false,page:0,point:null,query:''};
   const pageSize = 15;
   const svg = d3.select('#map');
   const name = code => code === '~' ? 'Unreported region' : (regions.get(code)?.name || code);
@@ -45,9 +45,66 @@ function startDirectoryAtlas(data) {
   const params = new URLSearchParams(location.hash.slice(1));
   if (supported.has(params.get('view'))) state.mode=params.get('view');
   if ([...get('region').options].some(x=>x.value===params.get('region'))) state.region=params.get('region');
+  const placeKey = value => (value || '').trim().replace(/\s+/g,' ').toLocaleLowerCase('en-US');
+  const countyOf = f => placeKey(data.localAreas?.[f[0]]?.[0]);
+  const zipOf = f => data.localAreas?.[f[0]]?.[1] || '';
+  const byCounty = f => !state.county || countyOf(f) === state.county;
+  const byLocality = f => !state.locality || (state.locality.startsWith('zip:')
+    ? zipOf(f) === state.locality.slice(4) : placeKey(f[3]) === state.locality.slice(5));
+  const bySelection = f => byRegion(f) && byCounty(f) && byLocality(f);
+  const regionFarms = d3.group(farmers, f=>f[2]);
+  let optionScope = null;
+  function addPlaces(select, label, rows, getName, getKey) {
+    const entries = new Map();
+    for (const f of rows) {
+      const text = getName(f);
+      if (!text) continue;
+      const key = getKey(text);
+      const v = entries.get(key) || {text, count:0};
+      v.count++;
+      entries.set(key, v);
+    }
+    if (!entries.size) return;
+    const group = document.createElement('optgroup');
+    group.label = label;
+    for (const [key,v] of [...entries].sort((a,b)=>a[1].text.localeCompare(b[1].text))) {
+      group.append(new Option(v.text+' · '+num(v.count),key));
+    }
+    select.append(group);
+  }
+  function fillAreaControls() {
+    const county=get('county'), local=get('locality');
+    get('map-local').hidden = !regions.has(state.region);
+    const editKey = state.region+'|'+state.county;
+    if (editKey !== optionScope) {
+      const rows=regionFarms.get(state.region) || [];
+      county.replaceChildren(new Option('All counties',''));
+      addPlaces(county,'Source-reported counties',rows,f=>data.localAreas?.[f[0]]?.[0],placeKey);
+      county.value=state.county;
+      if (!county.value) state.county='';
+      county.disabled=county.options.length===1;
+      const subset=rows.filter(byCounty);
+      local.replaceChildren(new Option('All towns and ZIP areas',''));
+      addPlaces(local,'Reported town',subset,f=>f[3],s=>'town:'+placeKey(s));
+      addPlaces(local,'Reported ZIP area',subset,zipOf,s=>'zip:'+s);
+      local.disabled=local.options.length===1;
+      optionScope=state.region+'|'+state.county;
+    }
+    local.value=state.locality;
+    if (!local.value) {state.locality='';local.selectedIndex=0;}
+    if (!county.value) county.selectedIndex=0;
+  }
+  if (regions.has(state.region)) {
+    state.county=params.get('county') || '';
+    state.locality=params.get('locality') || '';
+    fillAreaControls();
+    if (state.county || state.locality) state.mode='points';
+  }
   function saveView() {
     const p = new URLSearchParams({view:state.mode});
     if(state.region!=='*')p.set('region',state.region);
+    if(state.county)p.set('county',state.county);
+    if(state.locality)p.set('locality',state.locality);
     profiles?.appendParameter(p);
     history.replaceState(null,'','#'+p.toString());
   }
@@ -56,10 +113,10 @@ function startDirectoryAtlas(data) {
     get('map-title').focus({preventScroll:true});
   }
   function selectRegion(code) {
-    state.region=code; state.page=0; state.point=null; state.query=''; get('search').value=''; draw();
+    state.region=code; state.county=''; state.locality=''; resetCamera=true; state.page=0; state.point=null; state.query=''; get('search').value=''; draw();
   }
   function setMode(value) {
-    state.mode = value; state.page=0; state.point=null; draw();
+    state.mode = value; if(value!=='points'){state.county='';state.locality='';} resetCamera=true; state.page=0; state.point=null; draw();
   }
   function renderRanks() {
     const title = {density:'Regions by density',total:'Regions by count',points:'Regions with points'};
@@ -118,6 +175,47 @@ function startDirectoryAtlas(data) {
     const ranges=['< '+num(cuts[0]),...cuts.slice(1).map((v,i)=>num(cuts[i])+'–<'+num(v)),num(cuts.at(-1))+'+'];
     ranges.forEach((v,i)=>item(v,'swatch',palette[i]));
   }
+  let resetCamera = true;
+  let fitted = d3.zoomIdentity;
+  const extent = [[0,0],[860,490]];
+  const maxZoom = 32;
+  const zoom = d3.zoom().extent(extent).scaleExtent([1,maxZoom]).translateExtent(extent)
+    .filter(event=>(!event.ctrlKey || event.type==='wheel') && !event.button &&
+      (event.type!=='wheel' || event.ctrlKey || event.metaKey))
+    .on('zoom', event=>{
+      const t=event.transform;
+      svg.select('.plot').attr('transform',t).style('--map-scale',t.k);
+      get('zoom-level').textContent=dec(t.k)+'×';
+      get('zoom-out').disabled=t.k<=1;
+      get('zoom-in').disabled=t.k>=maxZoom;
+      hideTip();
+    });
+  svg.call(zoom);
+  function fitPoints(coords, limit) {
+    if (!coords.length) return d3.zoomIdentity;
+    const xs=d3.extent(coords, p=>p[0]), ys=d3.extent(coords, p=>p[1]);
+    const k=Math.max(1,Math.min(limit,740/Math.max(1,xs[1]-xs[0]),410/Math.max(1,ys[1]-ys[0])));
+    const cx=(xs[0]+xs[1])/2, cy=(ys[0]+ys[1])/2;
+    return zoom.constrain()(d3.zoomIdentity.translate(430,245).scale(k).translate(-cx,-cy),extent,extent);
+  }
+  function setCamera() {
+    const t=resetCamera ? fitted : d3.zoomTransform(svg.node());
+    svg.call(zoom.transform,t);
+    resetCamera=false;
+  }
+  get('zoom-in').onclick=()=>svg.call(zoom.scaleBy,2);
+  get('zoom-out').onclick=()=>svg.call(zoom.scaleBy,.5);
+  get('zoom-fit').onclick=()=>svg.call(zoom.transform,fitted);
+  svg.on('keydown.camera',event=>{
+    const step=70/d3.zoomTransform(svg.node()).k;
+    const directions={ArrowLeft:[step,0],ArrowRight:[-step,0],ArrowUp:[0,step],ArrowDown:[0,-step]};
+    if(directions[event.key]) svg.call(zoom.translateBy,...directions[event.key]);
+    else if(event.key==='+' || event.key==='=') svg.call(zoom.scaleBy,2);
+    else if(event.key==='-') svg.call(zoom.scaleBy,.5);
+    else if(event.key==='Home') svg.call(zoom.transform,fitted);
+    else return;
+    event.preventDefault();
+  });
   function renderMap() {
     svg.selectAll('.plot').remove();hideTip();
     const layer=svg.append('g').attr('class','plot');
@@ -127,7 +225,11 @@ function startDirectoryAtlas(data) {
     const place=state.region==='*'?'All regions':name(state.region);
     const title={density:'Directory density',total:'Producer counts',points:'Producer locations'};
     get('map-title').textContent=title[state.mode]+(state.region==='*'?'':' · '+place);
-    const subset=data.farmers.filter(byRegion);
+    const subset=data.farmers.filter(bySelection);
+    fitted=d3.zoomIdentity;
+    const localName=state.locality ? get('locality').selectedOptions[0]?.text.split(' · ')[0]
+      : state.county ? get('county').selectedOptions[0]?.text.split(' · ')[0] : '';
+    if(localName)get('map-title').textContent+=' · '+localName;
     const mapped=subset.filter(placeable);
     get('map-unit').textContent=state.mode==='density'?'Producer identities per 1,000 square miles of land':
       state.mode==='total'?'Distinct producer identities by assigned region':'Publisher-reported locations and approximate ZIP-area centers';
@@ -136,7 +238,7 @@ function startDirectoryAtlas(data) {
     if(state.region==='~' && state.mode!=='points') {
       layer.append('text').attr('x',430).attr('y',235).attr('text-anchor','middle').attr('fill','#526b60').text('No assigned region');
       get('map-note').textContent=num(subset.length)+' producers have no assigned state or territory. See their directory records below.';
-      return;
+      setCamera();return;
     }
     const features=selected?[selected]:geo;
     for(const f of features) {
@@ -156,7 +258,7 @@ function startDirectoryAtlas(data) {
     }
     if(!selected) layer.append('line').attr('x1',24).attr('x2',836).attr('y1',382).attr('y2',382).attr('stroke','#e6ebe5');
     if(state.mode==='points'){
-      let activePin;let plottedLocations=0;
+      let activePin;let plottedLocations=0; const selectedCoords=[];
       const batches=d3.group(mapped,keyOf);let placed=0;
       const pointLayer=layer.append('g');
       const clusters=[...batches.values()].sort((a,b)=>b.length-a.length);
@@ -167,11 +269,12 @@ function startDirectoryAtlas(data) {
         const xy=projectFor(drawnRegion)(coords);
         if(!xy||xy[0]<0||xy[0]>860||xy[1]<0||xy[1]>490)continue;
         placed+=farms.length;plottedLocations++;
+        if(state.county || state.locality)selectedCoords.push(xy);
         if(state.point===keyOf(f))activePin={xy,label:farms.length===1?f[1]:num(farms.length)+' producers at this point'};
         const exact=farms.some(v=>v[7]==='reported');
         const size=(selected?2.8:1.25)+Math.min(6,Math.log2(farms.length)*.85);
         const desc=farms.length===1?f[1]+' · '+labels[f[7]]:num(farms.length)+' producers share this point';
-        pointLayer.append('circle').attr('class','pin').attr('cx',xy[0]).attr('cy',xy[1]).attr('r',size)
+        pointLayer.append('circle').attr('class','pin').attr('cx',xy[0]).attr('cy',xy[1]).attr('r',size).style('--pin-radius',size+'px')
           .attr('fill',exact?'#0b5848':'#fff').attr('fill-opacity',exact?.85:.7)
           .attr('stroke',exact?'#0b5848':'#31816e').attr('stroke-width',selected?1:.65)
           .on('pointermove',ev=>tip(ev,desc)).on('pointerleave',hideTip).on('click',()=>{
@@ -180,22 +283,26 @@ function startDirectoryAtlas(data) {
           });
       }
       if(activePin){const [x,y]=activePin.xy;pointLayer.append('circle').attr('cx',x).attr('cy',y).attr('r',10).attr('fill','none').attr('stroke','#161c19').attr('stroke-width',2).attr('pointer-events','none');}
+      if(activePin) fitted=fitPoints([activePin.xy],8);
+      else if(selectedCoords.length) fitted=fitPoints(selectedCoords,16);
       const unplaced=subset.filter(f=>f[7]==='area').length;
       get('map-note').textContent=num(placed)+' producers plotted at '+num(plottedLocations)+' distinct coordinate pairs'+
         (placed<mapped.length?' (some points outside the frame)':'')+'. '+num(unplaced)+' '+word(unplaced,'producer has','producers have')+
-        ' no usable point in this region selection. Larger marks represent shared locations. Select a point to see its producers.';
+        ' no usable point in this selection. Larger marks represent shared locations. Select a point to see its producers.';
+      if(localName&&!placed)get('map-note').textContent+=' The map stays at state scale. The directory below lists the matching producers.';
     } else {
       const unitNote=region ? num(region.total)+' producers · '+num(Math.round(region.landSqMi))+' mi² of land.' :
         num(data.farmers.length-unknown)+' producers assigned to a state or territory'+(unknown?' · '+num(unknown)+' with unreported region.':'.');
       get('map-note').textContent=unitNote+' '+(selected?'Use All regions to return to the national map.':'Select a state for detail. Alaska, Hawaii, Puerto Rico and the Virgin Islands use inset scales.');
     }
+    setCamera();
   }
   const profileEdition = data.profiles || window.FARM_PROFILES;
   const profiles = profileEdition && typeof createProducerProfiles==='function' ? createProducerProfiles(profileEdition, farmers) : null;
   function renderTable() {
     const searchField = get('search-field')?.value || 'name';
     const input=state.query.toLocaleLowerCase().trim();
-    const rows=farmers.filter(f=>byRegion(f) && (state.mode!=='points'||state.precision==='all'||placeable(f)) && (!state.point || keyOf(f)===state.point && placeable(f))
+    const rows=farmers.filter(f=>bySelection(f) && (state.mode!=='points'||state.precision==='all'||placeable(f)) && (!state.point || keyOf(f)===state.point && placeable(f))
       && (searchField==='name' ? (!input || [f[1],f[2],f[3]].some(t=>String(t||'').toLocaleLowerCase().includes(input))) : profiles.matches(f[0],searchField,input)));
     const maxPage=Math.max(0,Math.ceil(rows.length/pageSize)-1);state.page=Math.min(state.page,maxPage);
     const start=state.page*pageSize;
@@ -205,7 +312,7 @@ function startDirectoryAtlas(data) {
       const first=create('td');
       if(farm[7]!=='area'){
         const locate=create('button',farm[1],'farm-link');locate.setAttribute('aria-label','Locate '+farm[1]);
-        locate.onclick=()=>{ state.mode='points';state.precision='all';get('precision').value='all';state.region=regions.has(farm[2])?farm[2]:'~';state.point=keyOf(farm);state.page=0;state.query='';get('search').value='';draw();focusMap();};first.append(locate);
+        locate.onclick=()=>{ resetCamera=true; state.mode='points';state.precision='all';get('precision').value='all';state.region=regions.has(farm[2])?farm[2]:'~';state.point=keyOf(farm);state.page=0;state.query='';get('search').value='';draw();focusMap();};first.append(locate);
       }else first.textContent=farm[1];
       if (profiles) {
       const profile=create('button','Profile','open-profile');
@@ -236,7 +343,10 @@ function startDirectoryAtlas(data) {
     copy(33,74,get('map-title').textContent,34,'#153d30');
     copy(34,102,get('map-unit').textContent,17);
     const layer=svg.select('.plot').node().cloneNode(true);
-    doc.append('g').attr('transform','translate(35,111)').node().append(layer);
+    const camera=d3.zoomTransform(svg.node());
+    for(const pin of layer.querySelectorAll('.pin'))pin.setAttribute('r',Number(pin.getAttribute('r'))/camera.k);
+    doc.append('svg').attr('x',35).attr('y',111).attr('width',860).attr('height',490).attr('viewBox','0 0 860 490')
+      .attr('overflow','hidden').node().append(layer);
     doc.append('style').text('.boundary{stroke:#fff;stroke-width:1}.state-label,.inset-label{font:11px Arial,sans-serif;text-anchor:middle}.inset-label{fill:#466055}');
     let x=34;
     for(const l of get('legend').children){
@@ -284,12 +394,18 @@ function startDirectoryAtlas(data) {
     get('reset').hidden=state.region==='*';get('region').value=state.region;
     get('point-tools').hidden=state.mode!=='points';
     for(const b of document.querySelectorAll('[data-mode]'))b.setAttribute('aria-pressed',String(b.dataset.mode===state.mode));
-    renderMap();renderRanks();renderTable();saveView();
+    fillAreaControls();renderMap();renderRanks();renderTable();saveView();
   }
+  function changeArea() {
+    state.mode='points';state.point=null;state.query='';state.page=0;get('search').value='';
+    resetCamera=true;draw();
+  }
+  get('county').onchange=e=>{state.county=e.target.value;state.locality='';changeArea();};
+  get('locality').onchange=e=>{state.locality=e.target.value;changeArea();};
   get('region').onchange=e=>selectRegion(e.target.value);
   get('reset').onclick=()=>selectRegion('*');
   document.querySelectorAll('[data-mode]').forEach(b=>b.onclick=()=>setMode(b.dataset.mode));
-  get('precision').onchange=e=>{state.precision=e.target.value;state.point=null;state.page=0;draw();};
+  get('precision').onchange=e=>{state.precision=e.target.value;state.point=null;resetCamera=true;state.page=0;draw();};
   get('ranking-more').onclick=()=>{state.allRanks=!state.allRanks;renderRanks();};
   if (profiles) get('search-field').onchange=e=>{
     const labels={name:'Farm or town',products:'Product or crop',methods:'Farming method',sales:'Sales channel or venue'};
