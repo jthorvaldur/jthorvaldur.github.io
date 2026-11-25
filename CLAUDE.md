@@ -55,6 +55,7 @@ cd ~/GitHub/policy-orchestrator
 | `JTHORVALDUR_LEGAL_PAGE_PASSWORD` | `filing_key` | filing, reports, case, thor2026 |
 | `ENERGY_TEXAS_PAGE_PASSWORD` | `energy_key` | energy |
 | `ANCIENT_INTEL_PAGE_PASSWORD` | `aif_key` | Ancient Intelligence fund pages (unlisted; published by `ancient_intelligence/scripts/publish_questions_page.py`) |
+| `KX_SHARE_PAGE_PASSWORD` | `kx_key` | Shared research notes (unlisted; published by the owning project's `krt/share.py`) |
 
 Each zone has its own password, so sharing one zone never opens another.
 

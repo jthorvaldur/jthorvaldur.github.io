@@ -17,6 +17,7 @@ environment variable set in `~/.oh-my-zsh/custom/keys.zsh` and in the gitignored
 | `JTHORVALDUR_LEGAL_PAGE_PASSWORD` | `filing_key` | cook6724-QgixOl/filing, reports, case, thor2026 |
 | `ENERGY_TEXAS_PAGE_PASSWORD` | `energy_key` | energy |
 | `ANCIENT_INTEL_PAGE_PASSWORD` (`ancient-intelligence:` in `.passwords`) | `aif_key` | Ancient Intelligence (unlisted; published by `ancient_intelligence/scripts/publish_questions_page.py`) |
+| `KX_SHARE_PAGE_PASSWORD` (`kx-share:` in `.passwords`) | `kx_key` | Shared research notes (unlisted; published by the owning project's `krt/share.py`) |
 
 Load them with `source ~/.oh-my-zsh/custom/keys.zsh`. Pages listed in `PUBLIC_PAGES.txt` are public by choice and are not encrypted.
 
