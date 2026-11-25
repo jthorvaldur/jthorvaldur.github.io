@@ -1,0 +1,365 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex, nofollow">
+<title>HostDrop launch kit | FarmerDrop</title>
+<style>
+  :root {
+    --forest: #086b3b; --deep: #084d2e; --lime: #7fcf00; --ink: #123b29;
+    --soft: #435b4e; --rule: #cbdace; --cream: #f7f8f1; --card: #ffffff;
+    --amber-bg: #fbf1d8; --amber: #8a5a08; --wait-bg: #eceFea; --rule-bg: #e3eee5;
+    --display: "Baskervville", "Baskerville", Georgia, "Times New Roman", serif;
+    --body: "DM Sans", system-ui, -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  }
+  * { box-sizing: border-box; }
+  html { scroll-behavior: smooth; }
+  body { margin: 0; background: var(--cream); color: var(--ink); font-family: var(--body);
+         font-size: 17px; line-height: 1.55; -webkit-text-size-adjust: 100%; }
+  a { color: var(--forest); }
+  .wrap { max-width: 960px; margin: 0 auto; padding: 0 20px; }
+  header.top { background: var(--deep); color: #fff; }
+  header.top .wrap { padding-top: 14px; padding-bottom: 14px; display: flex;
+                     justify-content: space-between; align-items: baseline; gap: 12px; flex-wrap: wrap; }
+  .brand { font-weight: 700; letter-spacing: .01em; font-size: 20px; }
+  .brand b { color: var(--lime); font-weight: 700; }
+  .edition { font-size: 13px; opacity: .85; }
+  .hero { padding: 44px 0 26px; }
+  .eyebrow { text-transform: uppercase; letter-spacing: .12em; font-size: 12px; font-weight: 700;
+             color: var(--forest); margin: 0 0 10px; }
+  h1 { font-family: var(--display); font-weight: 400; font-size: clamp(36px, 7vw, 58px);
+       line-height: 1.05; margin: 0 0 14px; text-wrap: balance; }
+  .hero p.lead { font-size: 19px; color: var(--soft); max-width: 62ch; margin: 0; }
+  .banner { margin: 22px 0 0; background: var(--amber-bg); border-left: 4px solid #a56a0b;
+            padding: 12px 16px; border-radius: 4px; color: #4a3204; font-size: 15px; }
+  h2 { font-family: var(--display); font-weight: 400; font-size: 30px; margin: 44px 0 14px; }
+  .steps { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 14px;
+           padding: 0; margin: 0; list-style: none; counter-reset: s; }
+  .steps li { counter-increment: s; background: var(--card); border: 1px solid var(--rule);
+              border-radius: 10px; padding: 16px 16px 16px 54px; position: relative; font-size: 15.5px; }
+  .steps li::before { content: counter(s); position: absolute; left: 16px; top: 15px; width: 26px;
+                      height: 26px; border-radius: 50%; background: var(--forest); color: #fff;
+                      font-weight: 700; font-size: 14px; display: grid; place-items: center; }
+  .cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(270px, 1fr)); gap: 16px; }
+  .card { background: var(--card); border: 1px solid var(--rule); border-radius: 12px;
+          padding: 20px; display: flex; flex-direction: column; }
+  .card h3 { font-family: var(--display); font-weight: 400; font-size: 24px; line-height: 1.15; margin: 2px 0 8px; }
+  .card p { margin: 0 0 12px; font-size: 15.5px; color: var(--soft); }
+  .num { text-transform: uppercase; letter-spacing: .1em; font-size: 11.5px; font-weight: 700;
+         color: var(--forest); margin: 0; }
+  .actions { margin-top: auto !important; display: flex; gap: 14px; align-items: center; flex-wrap: wrap; }
+  .btn { background: var(--forest); color: #fff; text-decoration: none; font-weight: 600;
+         padding: 10px 16px; border-radius: 999px; font-size: 15px; display: inline-block; }
+  .btn:hover, .btn:focus-visible { background: var(--deep); }
+  a.text { font-size: 15px; }
+  ul.plain { padding-left: 20px; margin: 0; }
+  ul.plain li { margin: 0 0 8px; }
+  details.guide { background: var(--card); border: 1px solid var(--rule); border-radius: 12px; margin: 0 0 12px; }
+  details.guide > summary { cursor: pointer; padding: 16px 48px 16px 20px; font-family: var(--display);
+                            font-size: 23px; list-style: none; position: relative; }
+  details.guide > summary::-webkit-details-marker { display: none; }
+  details.guide > summary::after { content: "+"; position: absolute; right: 20px; top: 50%;
+                                   transform: translateY(-50%); font-family: var(--body); font-size: 26px;
+                                   color: var(--forest); }
+  details.guide[open] > summary::after { content: "\2212"; }
+  details.guide > summary .num { display: block; font-family: var(--body); margin-bottom: 2px; }
+  details.guide .body { padding: 0 20px 22px; border-top: 1px solid var(--rule); }
+  .body .lede { color: var(--soft); font-size: 17.5px; margin: 16px 0 6px; }
+  .body h3 { font-size: 19px; margin: 28px 0 8px; padding-top: 16px; border-top: 1px solid var(--rule); }
+  .body h4 { font-size: 16px; margin: 18px 0 6px; }
+  .body p { margin: 0 0 10px; max-width: 72ch; }
+  .body ul, .body ol { margin: 0 0 12px; padding-left: 22px; max-width: 72ch; }
+  .body li { margin: 0 0 6px; }
+  .body p.sub { margin: 4px 0 0; color: var(--soft); }
+  ul.check { list-style: none; padding-left: 0; }
+  ul.check li { padding-left: 28px; position: relative; }
+  ul.check li::before { content: ""; position: absolute; left: 2px; top: 5px; width: 14px; height: 14px;
+                        border: 1.5px solid var(--ink); border-radius: 2px; }
+  .callout { border-left: 4px solid #8aa091; background: #f1f4ee; padding: 12px 16px; margin: 0 0 14px;
+             border-radius: 4px; max-width: 76ch; }
+  .callout span { display: block; text-transform: uppercase; letter-spacing: .1em; font-size: 11.5px;
+                  font-weight: 700; margin-bottom: 4px; color: var(--soft); }
+  .callout p { margin: 0 0 6px; } .callout p:last-child { margin: 0; }
+  .callout.open { background: var(--amber-bg); border-color: #a56a0b; } .callout.open span { color: var(--amber); }
+  .callout.waiting { background: #eceFea; border-color: var(--soft); border-left-style: dashed; }
+  .callout.rule { background: var(--rule-bg); border-color: var(--forest); } .callout.rule span { color: var(--forest); }
+  .callout.say { background: #fff; border: 1px solid var(--rule); border-left: 4px solid var(--ink); }
+  .scroll { overflow-x: auto; margin: 0 0 14px; }
+  table { border-collapse: collapse; width: 100%; font-size: 15px; min-width: 460px; }
+  th, td { border: 1px solid var(--rule); padding: 8px 10px; text-align: left; vertical-align: top; }
+  th { background: var(--rule-bg); }
+  td:empty { height: 34px; }
+  p.fill { display: flex; gap: 10px; align-items: flex-end; margin: 0 0 4px; max-width: 640px; }
+  p.fill span { flex: 0 0 40%; font-size: 15px; }
+  p.fill i { flex: 1; border-bottom: 1px solid var(--soft); height: 26px; }
+  footer { margin: 48px 0 0; padding: 22px 0 40px; border-top: 1px solid var(--rule); color: var(--soft); font-size: 14px; }
+  @media print {
+    header.top, .btn, a.text { display: none; }
+    details.guide { border: 0; break-before: page; }
+    details.guide > summary { padding-left: 0; }
+  }
+</style>
+</head>
+<body>
+<header class="top"><div class="wrap">
+  <div class="brand">Farmer<b>Drop</b></div>
+  <div class="edition">Draft for review · checked 2026-11-24</div>
+</div></header>
+
+<main class="wrap">
+  <section class="hero">
+    <p class="eyebrow">Farm to neighborhood</p>
+    <h1>HostDrop launch kit</h1>
+    <p class="lead">Everything a new host needs to start a neighborhood pickup spot from zero: the business plan, the first drop, finding members, and connecting with local farmers. Five short guides, each one a printable PDF.</p>
+    <p class="banner"><strong>Draft.</strong> FarmerDrop is still settling some decisions. Amber boxes say exactly which. Nothing in these guides is legal, tax or food safety advice.</p>
+  </section>
+
+  <p style="margin-top:18px"><a class="btn" href="index.html">New here? Start with the step-by-step page</a></p>
+  <h2>Start here</h2>
+  <ol class="steps">
+    <li>Read <a href="#guide-1">Guide 1</a> and fill in the cost worksheet. Decide whether hosting fits you.</li>
+    <li>Follow <a href="#guide-2">Guide 2</a> to apply and plan a first drop with one farmer.</li>
+    <li>Use <a href="#guide-3">Guide 3</a> and <a href="#guide-4">Guide 4</a> side by side: members and farmers have to arrive together.</li>
+    <li>Print <a href="#guide-5">Guide 5</a>. Fill in one line after every drop.</li>
+  </ol>
+
+  <h2>The guides</h2>
+  <div class="cards">
+<article class="card"><p class="num">Guide 1</p><h3>The HostDrop business plan</h3><p>What a host does, how each order is split, a cost and break-even worksheet, and the milestones from first members to a regular HostDrop of 50.</p><p class="actions"><a class="btn" href="pdf/1-hostdrop-business-plan.pdf">Download PDF</a><a class="text" href="#guide-1">Read on this page</a></p></article>
+<article class="card"><p class="num">Guide 2</p><h3>Launch your first drop</h3><p>Apply and get approved, choose your route, confirm one real offer with one farmer, run the readiness check, then receive, hand over and debrief.</p><p class="actions"><a class="btn" href="pdf/2-launch-your-first-drop.pdf">Download PDF</a><a class="text" href="#guide-2">Read on this page</a></p></article>
+<article class="card"><p class="num">Guide 3</p><h3>Gather your members</h3><p>How joining works in the app today, where the first 20 come from, the outreach arithmetic from 20 to 50, invitation wording, and the rules for recruiting.</p><p class="actions"><a class="btn" href="pdf/3-gather-your-members.pdf">Download PDF</a><a class="text" href="#guide-3">Read on this page</a></p></article>
+<article class="card"><p class="num">Guide 4</p><h3>Connect with farmers</h3><p>What the farm directory can and cannot tell you, the permission rule, the market conversation, what to record, and what happens after a farmer says yes.</p><p class="actions"><a class="btn" href="pdf/4-connect-with-farmers.pdf">Download PDF</a><a class="text" href="#guide-4">Read on this page</a></p></article>
+<article class="card"><p class="num">Guide 5</p><h3>Worksheets</h3><p>Site card, first drop planner, one-line-per-drop site sheet, farmer capture card and the scorecard that shows whether your HostDrop is working.</p><p class="actions"><a class="btn" href="pdf/5-worksheets.pdf">Download PDF</a><a class="text" href="#guide-5">Read on this page</a></p></article>
+  </div>
+
+  <h2>Use these alongside</h2>
+  <ul class="plain">
+    <li><a href="https://farmerdrop.com/guides">HostDrop 101 and Farmer 101</a>: the screen-by-screen handbooks for the app.</li>
+    <li><a href="https://farmerdrop.com/farmer-interest">Farmer interest form</a>: where a farmer can ask for an email when FarmerDrop opens nearby. A printable QR handout exists for market visits.</li>
+    <li><a href="https://farmerdrop.com/support">Support</a>: for account, role and payout questions.</li>
+  </ul>
+
+  <h2>Read the guides on this page</h2>
+<details class="guide" id="guide-1"><summary><span class="num">Guide 1</span>The HostDrop business plan</summary><div class="body"><p class="lede">A HostDrop is a neighborhood pickup spot. Members order from several local farmers on FarmerDrop and collect everything from you in one stop. This guide sets out the work, the money and the milestones so you can decide whether to start one and know what a working site looks like.</p><h3>1. What a HostDrop is</h3>
+<p>FarmerDrop's own description is "Bring growers and neighbors together by hosting a local pickup spot." Farmers list what they can supply for a date. Members order and pay online. Farmers deliver to you. You check what arrived, get each member's order ready and hand it over during your pickup window.</p>
+<p>You do not buy stock, set prices or handle payments. Every sale is between a farmer and a member. Your part is the place, the pickup window, the handover and the neighborhood.</p>
+<h3>2. What you do as a host</h3>
+<div class="scroll"><table><thead><tr><th>Job</th><th>What it involves</th><th>Where it is covered</th></tr></thead><tbody><tr><td>Open the site</td><td>Apply, get approved, set your address, days, hours and facilities, complete Payment Setup</td><td>Guide 2, HostDrop 101</td></tr><tr><td>Gather members</td><td>Invite neighbors, approve join requests, keep them coming back</td><td>Guide 3</td></tr><tr><td>Connect farmers</td><td>Tell FarmerDrop what your members want, meet farmers, approve farmer connections</td><td>Guide 4</td></tr><tr><td>Receive deliveries</td><td>Count what arrives, record anything missing or damaged, save the delivery check</td><td>HostDrop 101, steps 4 and 5</td></tr><tr><td>Run pickup</td><td>Prepare each member's order, hand it over, record the handover</td><td>HostDrop 101, steps 6 and 7</td></tr><tr><td>Keep score</td><td>One line per drop: who joined, who ordered, who came back, hours and expenses</td><td>Guide 5</td></tr></tbody></table></div>
+<p>When you apply, the application asks you to agree to seven things: the terms of use, a clean and safe space, a consistent weekly schedule, meeting your farmers, temperature control for goods that need it, supporting your members, and that a HostDrop can be capped at a certain number of members.</p>
+<h3>3. How the money moves</h3>
+<p>The member pays for the goods, any sales tax, and one flat service fee per order. The goods total is then split three ways.</p>
+<div class="scroll"><table><thead><tr><th>Who</th><th>Share of goods</th><th>When it is earned</th></tr></thead><tbody><tr><td>Farmer</td><td>80%</td><td>When you record that the delivery was received</td></tr><tr><td>HostDrop (you)</td><td>10%</td><td>When you record the member handover</td></tr><tr><td>FarmerDrop</td><td>10%</td><td>When the delivery is received</td></tr></tbody></table></div>
+<p>Each party carries the card and transfer cost on its own share, so your net is a little under 10%.</p>
+<p><b>Worked example.</b> A member orders $50.00 of goods with no sales tax. Your share is $5.00. Card cost on your share is $0.15 and transfer cost is $0.01. You net <b>$4.84</b> once you record the handover.</p>
+<aside class="callout note"><span>Note</span><p>These rates come from FarmerDrop's current fee schedule: 80/10/10 split, 2.9% card and 0.25% transfer cost, $0.55 flat service fee paid by the member. The schedule is versioned and can change. Your Ledger in the app is the authority for what you actually earned.</p></aside>
+<p><b>Getting paid.</b> Complete Payment Setup for your HostDrop first. Your Ledger shows Confirmed Credits, Pending Credits, Payouts and Net Balance. A confirmed credit is not yet a bank deposit: FarmerDrop runs payouts as a separate step. There is no published payday or bank arrival time.</p>
+<aside class="callout open"><span>Not decided yet</span><p><b>Payout timing.</b> FarmerDrop has not set a payout schedule that this guide can promise. Until it does, ask your FarmerDrop contact when the next payout runs.</p></aside>
+<h3>4. What it costs you</h3>
+<p>Joining is free. FarmerDrop's site says "Join, always free!" and there is no host fee in the current fee schedule or terms. Your costs are your own time and whatever your site needs. FarmerDrop has not published a host cost list, so fill this in yourself before you start.</p>
+<div class="scroll"><table><thead><tr><th>Cost line</th><th>One time ($)</th><th>Per drop ($)</th><th>Hours per drop</th></tr></thead><tbody><tr><td>Your time: inviting and answering members</td><td></td><td></td><td></td></tr><tr><td>Your time: receiving deliveries</td><td></td><td></td><td></td></tr><tr><td>Your time: staffing the pickup window</td><td></td><td></td><td></td></tr><tr><td>Cold storage, if you accept chilled goods</td><td></td><td></td><td></td></tr><tr><td>Table, shelving, bags, supplies</td><td></td><td></td><td></td></tr><tr><td>Label printer and labels, if you repack bulk goods</td><td></td><td></td><td></td></tr><tr><td>Sign so members can find the pickup point</td><td></td><td></td><td></td></tr><tr><td>Travel to markets and farms</td><td></td><td></td><td></td></tr><tr><td>Other</td><td></td><td></td><td></td></tr><tr><td><b>Total</b></td><td></td><td></td><td></td></tr></tbody></table></div>
+<h3>5. When it pays</h3>
+<p>Your monthly host earning is roughly:</p>
+<p><b>orders handed over in the month x average goods value per order x just under 10%</b></p>
+<p>The table shows the arithmetic at different sizes. The inputs are made up to show how the sum works. They are not a forecast: FarmerDrop has no measured basket size or order frequency yet, and the pilot is collecting both.</p>
+<div class="scroll"><table><thead><tr><th>Orders handed over per month</th><th>$30 average order</th><th>$50 average order</th><th>$80 average order</th></tr></thead><tbody><tr><td>50</td><td>$145.00</td><td>$242.00</td><td>$387.50</td></tr><tr><td>100</td><td>$290.00</td><td>$484.00</td><td>$775.00</td></tr><tr><td>200</td><td>$580.00</td><td>$968.00</td><td>$1,550.00</td></tr></tbody></table></div>
+<p>For scale: 50 members each ordering once a month is 50 orders. Every two weeks is about 100. Every week is about 200.</p>
+<p><b>Your break-even.</b> Take your per-drop cost from section 4 and divide it by what you net per order. That is the number of handed-over orders a drop needs before it covers its costs.</p>
+<p class="fill"><span>My cost per drop ($)</span><i></i></p>
+<p class="fill"><span>What I net per order ($)</span><i></i></p>
+<p class="fill"><span>Orders needed per drop</span><i></i></p>
+<p>Count your hours honestly. A site that only pays if your time is free is a volunteer project, which is a fine thing to run as long as you chose it.</p>
+<h3>6. Milestones</h3>
+<div class="scroll"><table><thead><tr><th>Milestone</th><th>What it means</th></tr></thead><tbody><tr><td>15 to 20 members</td><td>The size of a friendly first group in the current pilot. Enough to run a real first drop and learn from it.</td></tr><tr><td>20 recruited members</td><td>The point at which a proposed incentive for local organizers would start. See the box below.</td></tr><tr><td>At least 50 members</td><td>The standard for a regular HostDrop, set by FarmerDrop's founder.</td></tr><tr><td>Second pickup</td><td>The real test. A member who orders and collects twice is a member. Track this from the first drop.</td></tr></tbody></table></div>
+<aside class="callout open"><span>Not decided yet</span><p><b>What counts as a member.</b> For the 50 count, FarmerDrop has not yet decided whether a member is someone who joined, someone who has ordered once, or someone who orders regularly. Keep four numbers separately from day one: invited, joined, collected a first order, collected again. Whatever the definition turns out to be, you will have it.</p></aside>
+<aside class="callout open"><span>Not decided yet</span><p><b>Site capacity and the 50 target.</b> Today a new HostDrop is set up with a capacity of 50 members and stops taking new join requests when it is full. The target is "at least 50". HostDrop Info has a capacity setting you can change. Whether FarmerDrop sets an upper limit has not been confirmed.</p></aside>
+<aside class="callout open"><span>Not decided yet</span><p><b>Organizer incentive.</b> FarmerDrop is considering paying a local organizer who helps start a HostDrop a 3% share for a limited time, starting when the site reaches 20 recruited members. Three things are undecided: what the 3% is a percentage of (the goods sold, or FarmerDrop's own 10%), how long it runs (six months, six months with an earned extension, or a year), and what counts as a recruited member. Nothing has been promised to anyone. Do not quote an amount to a prospective organizer.</p></aside>
+<h3>7. What you may and may not say</h3>
+<ul><li>Describe what happens: several farms, one pickup, near home. Use real examples from your own drops once you have them.</li><li>Do not promise income to a prospective host or organizer, or savings to a member. Nobody has measured either yet.</li><li>If FarmerDrop pays you for recruiting, say so when you recommend it. A short honest line is enough.</li><li>Ask before you use someone's words, name or photo. Agreeing to try FarmerDrop is not agreeing to be quoted.</li></ul>
+<aside class="callout open"><span>Not decided yet</span><p><b>Agreements and legal form.</b> The host agreement and the legal form of a HostDrop are still being worked out by FarmerDrop. This kit is not legal, tax or food safety advice. Check the rules that apply to handling food at your location.</p></aside><p class="actions"><a class="btn" href="pdf/1-hostdrop-business-plan.pdf">Download this guide as a PDF</a></p></div></details>
+<details class="guide" id="guide-2"><summary><span class="num">Guide 2</span>Launch your first drop</summary><div class="body"><p class="lede">Start with one neighborhood, one food people want and one farmer who can supply it. This guide takes you from applying to the morning after your first pickup. For the exact taps in the app, use HostDrop 101 at farmerdrop.com/guides.</p><h3>Before you start</h3>
+<ul class="check"><li>You have a FarmerDrop account with a verified email and a member application on file. The host application needs both.</li><li>You have a place you can keep clean and safe, and a pickup window you can staff every week.</li><li>You have a backup person for the pickup window.</li><li>You have read Guide 1 and filled in the cost worksheet.</li></ul>
+<h3>Step 1. Apply to host</h3>
+<ol><li><strong>Sign in and choose to become a host. The application walks through Contact, Organization, Location, Schedule and Important Info.</strong><p class="sub">You will be asked for your name, email and phone, the type of location (home, community center, church, school, business, nonprofit or other), the address with any gate code or directions, a short description, the days and hours you are available, and your facilities such as parking, refrigeration and covered area.</p></li><li><strong>Read and accept the seven commitments.</strong><p class="sub">They cover the terms, a clean and safe space, a consistent weekly schedule, meeting your farmers, temperature control, member support and member caps. Coolers with ice are acceptable only if they hold a steady temperature.</p></li><li><strong>Submit and wait for review.</strong><p class="sub">Your HostDrop is created as pending and members cannot see it yet. FarmerDrop emails you when it is approved.</p></li><li><strong>Complete Payment Setup for the HostDrop.</strong><p class="sub">You should see "Payment setup complete". Without it you cannot be paid.</p></li><li><strong>Open HostDrop Info and check address, delivery days, operating hours, capacity and goods accepted.</strong><p class="sub">Fix anything wrong before you arrange a delivery. Keep the pickup hours you promise members the same as the hours in the settings.</p></li></ol>
+<h3>Step 2. Choose your route</h3>
+<p>There are two ways to get the first drop moving. Either works. Pick the one that matches what you already have.</p>
+<div class="scroll"><table><thead><tr><th></th><th>Members first</th><th>Farmer first</th></tr></thead><tbody><tr><td>Use it when</td><td>You have neighbors who are keen</td><td>You already know a farmer who would deliver</td></tr><tr><td>Start by</td><td>Asking households what they would buy, how often, and whether they can collect in your window</td><td>Asking the farmer what they could offer on one date</td></tr><tr><td>Then</td><td>Take the most-requested foods and the real number of interested households to nearby growers</td><td>Take that concrete offer back to households</td></tr><tr><td>Watch for</td><td>Interest that fades while you look for supply</td><td>An offer nobody asked for</td></tr></tbody></table></div>
+<p>Whichever route you take, write down the area you serve, the host and backup, the pickup window and the date you want to try.</p>
+<h3>Step 3. Confirm one real offer</h3>
+<p>Before you announce anything to members, agree these with the farmer and write them down:</p>
+<ul class="check"><li>Products and units (a dozen eggs, a one pound pack, a loaf)</li><li>Price per unit</li><li>Quantity available for the date</li><li>Delivery day and how it arrives (the farmer delivers, a package is shipped, or a pallet)</li><li>The smallest order total that makes the trip worthwhile for the farmer</li><li>The ordering cutoff</li></ul>
+<p><b>About the cutoff.</b> Each farmer sets their own. Orders close at 12:00 noon in the farm's time zone, a set number of days before delivery, and a farmer can set a different cutoff for your HostDrop. Work backward from the cutoff, not from the pickup date. A farmer who joins two days before your pickup may already have missed the chance to sell for it.</p>
+<p>In the app, the farmer must be approved, request a connection to your HostDrop, and save stock for the date. You approve the connection under Settings, your HostDrop, Farmers. Guide 4 covers how to find and approach farmers and what permission you need first.</p>
+<h3>A three week calendar</h3>
+<p>This follows the shape of FarmerDrop's current pilot: members first, farmers the following week, first delivery about two and a half weeks after kickoff. Move the weeks to fit your cutoff.</p>
+<div class="scroll"><table><thead><tr><th>When</th><th>What happens</th></tr></thead><tbody><tr><td>Week 1</td><td>Site approved and Payment Setup complete. Invite your first households with a real date in mind. Help each one join your HostDrop and approve their requests. Ask what they would buy.</td></tr><tr><td>Week 2</td><td>Farmer is approved, connected to your HostDrop, and has saved stock for the date. You check the member view yourself: product, price, cutoff, pickup date. Send the invitation with those details and your HostDrop link.</td></tr><tr><td>Before the cutoff</td><td>Run the readiness check below. If you are not ready, move the date. A late first drop costs less than a failed one.</td></tr><tr><td>Week 3</td><td>Cutoff passes. Farmer packs paid orders and delivers. You receive, prepare and hand over.</td></tr><tr><td>The week after</td><td>Debrief, fill in your site sheet, agree the next date.</td></tr></tbody></table></div>
+<h3>Readiness check</h3>
+<p>Run this before the first ordering cutoff, and again the day before pickup.</p>
+<ul class="check"><li>Supply is confirmed. The farmer has saved stock for this date and you can see it as a member would.</li><li>The pickup window is staffed by you or your backup, and members have been told when and where.</li><li>Members know how to find the pickup point. Put up a temporary sign if directions are unclear.</li><li>You know how the delivery arrives and roughly when. The farmer can share an arrival time in DropChat.</li><li>If goods need to stay cold, your cold storage is ready and holding temperature.</li><li>You and the farmer each know how to reach the other if something goes wrong on the day.</li></ul>
+<p>If any line is unticked, wait. Run the first drop when the site is ready.</p>
+<h3>Pickup day</h3>
+<p>HostDrop 101 has the screens. This is the order of work.</p>
+<ol><li><strong>Select your location and the pickup date, then open Receiving.</strong><p class="sub">Match the farmer, shipment and package codes to the goods in front of you. You can only receive a shipment the farmer has marked as on the way.</p></li><li><strong>Count and check before you save.</strong><p class="sub">Mark each package Received, Missing, Incomplete or Damaged. Enter the usable quantity you actually received. Then save the delivery check. This is what confirms the farmer's earning, so record what is true.</p></li><li><strong>Prepare each member's order.</strong><p class="sub">Open Pickup, find the member or order number, and pack bulk goods into member orders if the app asks you to. Keep orders for different pickup dates apart even if they arrived together.</p></li><li><strong>Hand over and record it.</strong><p class="sub">Match the member to the order, hand over the goods, and choose Hand over. If something is missing or damaged, use the resolve option and review the result first. Your earning is confirmed by this step.</p></li><li><strong>Deal with no-shows honestly.</strong><p class="sub">If a member has not collected, do not record a handover. Message them in the app. Use the no-show option only when it matches what happened.</p></li></ol>
+<p>Receiving, packing and handover are three separate records. Do not skip one to save time.</p>
+<h3>The morning after</h3>
+<ul class="check"><li>Fill in one line on your site sheet (Guide 5): joined, ordered, collected, returned, hours, expenses.</li><li>Ask the farmer: was the trip worth it, and what would make the next one better?</li><li>Ask two or three members: where did you hesitate, and what would you buy again?</li><li>Agree the next date with the farmer and tell members.</li><li>Write down the most common objection you heard and one change to try next time.</li><li>Report anything that failed in the app, with the screen and the steps, to your FarmerDrop contact.</li></ul>
+<h3>Growing after the first drop</h3>
+<p>Add complexity one step at a time. First repeat the same farmer and the same window until it is routine. Then add a second farmer, so that one member can buy from two farms and collect once. Leave shipping from far away, pallets and bulk repacking until the simple local drop runs without help.</p><p class="actions"><a class="btn" href="pdf/2-launch-your-first-drop.pdf">Download this guide as a PDF</a></p></div></details>
+<details class="guide" id="guide-3"><summary><span class="num">Guide 3</span>Gather your members</summary><div class="body"><p class="lede">A HostDrop works when enough households order often enough to make a farmer's trip worthwhile. This guide covers how joining works today, how to find your first 20 members, what it takes to reach 50, and how to keep people coming back for a second pickup.</p><h3>The numbers to aim for</h3>
+<div class="scroll"><table><thead><tr><th>Number</th><th>What it is</th></tr></thead><tbody><tr><td>15 to 20</td><td>A friendly first group, the size used in FarmerDrop's current pilot sites. Enough for a real first drop.</td></tr><tr><td>20</td><td>The proposed start point for a local organizer incentive. Not decided. See Guide 1.</td></tr><tr><td>At least 50</td><td>A regular HostDrop.</td></tr></tbody></table></div>
+<aside class="callout open"><span>Not decided yet</span><p><b>Who counts.</b> FarmerDrop has not yet defined a member for the 50 count. Keep four numbers apart: invited, joined, collected a first order, collected again.</p></aside>
+<h3>How joining works today</h3>
+<ol><li><strong>The person creates a FarmerDrop account, verifies their email and completes the short member application.</strong></li><li><strong>They open your HostDrop's page and ask to join.</strong><p class="sub">Your HostDrop has its own page at farmerdrop.com/hd/ followed by your HostDrop's short name. That link is what you share.</p></li><li><strong>You approve the request.</strong><p class="sub">Open Settings, your HostDrop, Members. Requests wait there for you unless your HostDrop is set to approve automatically.</p></li><li><strong>They can now see what is on offer for your pickup dates and order before the cutoff.</strong></li></ol>
+<aside class="callout note"><span>Note</span><p>The in-app Marketing tools (QR code image and email invitations) are switched off for now. Your HostDrop link still works. If you need a QR code for a flyer, ask your FarmerDrop contact.</p></aside>
+<p>There is no rule in the app today that holds ordering back until a HostDrop reaches a minimum number of members. A proposal to open ordering at 20 active members has been discussed and is not built.</p>
+<h3>The first 20</h3>
+<p>Start with people who already trust you. The first group should be friendly: you are learning the routine together.</p>
+<ul><li><b>Your street and building.</b> Knock, text, or catch people at the mailbox.</li><li><b>Groups you already belong to.</b> School, congregation, sports club, garden club, neighborhood chat.</li><li><b>People who already buy this way.</b> Farmers' market regulars, CSA members, anyone who complains about supermarket eggs.</li><li><b>Your farmer's existing customers nearby,</b> if the farmer offers to tell them. That is the farmer's call, not yours.</li></ul>
+<p>Ask three questions before you ask anyone to join:</p>
+<ol><li><strong>What would you actually buy?</strong></li><li><strong>How often?</strong></li><li><strong>Can you collect at this place in this window?</strong></li></ol>
+<p>Write the answers down. They are what you take to a farmer, and they tell you whether your window works.</p>
+<p><b>Make a real offer, not a general pitch.</b> Compare "Eggs, chicken and bread from two farms, pickup Tuesday 4 to 6 at my garage, order by Saturday noon" with "a new way to buy local food". FarmerDrop's working guess, not yet measured, is that the specific offer wins more yeses. Count your own results.</p>
+<h3>Words you can use</h3>
+<p>These are starting drafts. Change them to sound like you.</p>
+<aside class="callout say"><span>Words you can use</span><p><b>First invitation.</b> Hi [name]. I'm starting a FarmerDrop pickup spot at [place]. You order online from local farms and collect everything in one stop here on [day] between [times]. The first pickup is [date], with [farm] bringing [foods]. Order by [cutoff day and time]. Join here: [your HostDrop link]. Want me to walk you through it?</p></aside>
+<aside class="callout say"><span>Words you can use</span><p><b>Pickup reminder.</b> Pickup is [day], [times], at [place]. [Directions or where to park.] You can find your order in the app. If you can't make it, message me in the app before [time] so we can sort it out.</p></aside>
+<aside class="callout say"><span>Words you can use</span><p><b>After the first pickup.</b> Thanks for coming on [day]. Next pickup is [date]. What would you order again, and what was missing?</p></aside>
+<h3>From 20 to 50</h3>
+<p>Plan for some people to leave. If two members drop out while you recruit, you need <b>32</b> new approved members to get from 20 to 50.</p>
+<p>How many people you need to talk to depends on how many say yes. Nobody has measured this for a HostDrop yet. The table shows two assumed rates so you can see the scale of the job.</p>
+<div class="scroll"><table><thead><tr><th>If this share of the people you contact join</th><th>People to contact</th><th>Weeks at 40 contacts a week</th><th>Hours at 10 minutes each</th></tr></thead><tbody><tr><td>1 in 5 (20%)</td><td>160</td><td>4</td><td>about 27</td></tr><tr><td>1 in 4 (25%)</td><td>128</td><td>a little over 3</td><td>about 21</td></tr></tbody></table></div>
+<p>Count your own rate from the first week: people you asked, people who joined. Then redo the sum with your number.</p>
+<p>Ways to widen the circle once the first 20 are collecting:</p>
+<ul><li>Ask each member to bring one neighbor to the next pickup.</li><li>Add a second farmer so there is more to buy in one stop.</li><li>Go back to the people who said "maybe later" with a specific date and a specific food.</li><li>Ask a local group leader to share your link in their own words.</li></ul>
+<h3>Keep them: the second pickup</h3>
+<p>Repeat orders are what make a farmer's trip worthwhile, so the beta is measuring what it takes to get from an invitation to a second pickup. After every drop, look at who ordered last time and did not order this time, and ask them why.</p>
+<ul><li>Keep the window and the place the same every week.</li><li>Tell members the next date before they leave the pickup.</li><li>Pass what members ask for to your farmers, and tell members when it arrives.</li><li>Sort out problems on the spot using the resolve options at handover.</li></ul>
+<h3>Rules for recruiting</h3>
+<ul><li>Invite people one at a time, yourself. Do not upload an address book or send mass messages to people who have not asked.</li><li>Do not promise savings or make health claims. Say what the food is and where it comes from.</li><li>Keep member names, addresses and phone numbers private. Do not share your member list with farmers or other members.</li><li>If you are paid for recruiting, say so.</li><li>Ask before using anyone's words, name or photo. A good review is never a condition of membership.</li></ul><p class="actions"><a class="btn" href="pdf/3-gather-your-members.pdf">Download this guide as a PDF</a></p></div></details>
+<details class="guide" id="guide-4"><summary><span class="num">Guide 4</span>Connect with farmers</summary><div class="body"><p class="lede">Your members need farmers who can deliver to your pickup spot. FarmerDrop keeps a research directory of farms to help find them. This guide explains what that directory is, the permission you need before anyone contacts a farm or shares its details, and how to open the conversation.</p><h3>The rule that comes first</h3>
+<aside class="callout rule"><span>Rule</span><p><b>A directory listing is research. It is not consent.</b> A farm that appears in FarmerDrop's directory has not agreed to be contacted on FarmerDrop's behalf, has not agreed to have its details passed to a host, and may not know FarmerDrop exists. Nobody on the list is a lead until they say so themselves.</p></aside>
+<p>In practice:</p>
+<ul><li>Do not message, call or email a farm "from FarmerDrop" because its name is on a list.</li><li>Do not pass a farm's details to another host, a member or a group chat.</li><li>Do talk to farmers the way any neighbor would: in person at their public market stall, or through someone who already knows them.</li><li>Do let the farmer choose the next step. A card or a QR code they can use later is a fine outcome.</li></ul>
+<h3>What the directory is</h3>
+<p>It is a private research file built only from public sources: government rosters and published farmers' market vendor lists. It holds no phone numbers and no email addresses.</p>
+<p><b>Texas, checked November 24, 2026:</b> 732 producers from 826 public listings.</p>
+<div class="scroll"><table><thead><tr><th>Where the Texas listings come from</th><th>Listings</th></tr></thead><tbody><tr><td>USDA Organic INTEGRITY certified operations</td><td>370</td></tr><tr><td>USDA on-farm market directory</td><td>146</td></tr><tr><td>Texas Department of Agriculture, Farm Fresh Network members</td><td>140</td></tr><tr><td>Texas Department of Agriculture, Local Food for Schools vendors</td><td>64</td></tr><tr><td>USDA community-supported agriculture directory</td><td>48</td></tr><tr><td>Texas Farmers' Market vendor profiles (Austin area)</td><td>28</td></tr><tr><td>Rice Village and Heights Mercantile market vendors (Houston)</td><td>12</td></tr><tr><td>Pearl Farmers Market vendors (San Antonio)</td><td>10</td></tr><tr><td>Cibolo Farmers Market vendors (Boerne)</td><td>8</td></tr></tbody></table></div>
+<p><b>Near the three launch cities.</b> 281 of the 732 have a mapped location. Of those, 42 are within 75 miles of Austin, 45 of Houston and 18 of San Antonio, each counted once at its nearest city. Market rosters add farms with a town or no location at all: about 24 from the Austin-area market profiles, 12 from the two Houston markets, 10 from Pearl in San Antonio and 8 from Boerne.</p>
+<h4>What it cannot tell you</h4>
+<ul><li>Whether the farm is still selling, or sells to households at all. In Texas, every piece of sales evidence on file is a historical listing.</li><li>What it has this season, at what price, or whether it could deliver to you.</li><li>Whether it wants to hear from FarmerDrop.</li><li>Everything that exists. Several large markets are not covered yet, including Urban Harvest in Houston and the SFC markets in Austin.</li></ul>
+<p>Treat the directory as a map of where to look, and expect it to be wrong about some farms.</p>
+<aside class="callout open"><span>Not decided yet</span><p><b>What a host receives from the directory.</b> It has not been decided whether a host is given a research shortlist of farm names and towns for their area before any farmer has agreed, or only farms that have already agreed to be introduced to that host. Until that is decided, hosts get the second kind only.</p></aside>
+<h3>Who does what</h3>
+<div class="scroll"><table><thead><tr><th>Who</th><th>Role with farmers</th></tr></thead><tbody><tr><td>FarmerDrop's founder</td><td>Opens the first farmer conversations himself during the beta.</td></tr><tr><td>The directory owner</td><td>Looks after the directory and the records. Matches a farm you mention to the right record and assigns one follow-up owner.</td></tr><tr><td>The farmer liaison</td><td>Makes introductions between a farm and a specific host, where the farmer has agreed.</td></tr><tr><td>You, the host</td><td>Know what your members want. Meet farmers in your area. Approve farmer connections to your HostDrop.</td></tr><tr><td>Later: local organizers</td><td>People who already have working relationships with farmers through a market, a grower network or a food group.</td></tr></tbody></table></div>
+<h3>Four ways to reach a farmer</h3>
+<ol><li><strong><b>A farmer you already know.</b> Ask them yourself, as you. If they are interested, ask whether you may pass their name to FarmerDrop.</strong></li><li><strong><b>A warm introduction.</b> A market manager, another farmer or a food group leader connects you, or forwards the interest link for you.</strong></li><li><strong><b>A market visit.</b> Go to a local farmers' market and talk to growers at a quiet moment. Ask the market manager first where and when a conversation or a handout fits.</strong></li><li><strong><b>The farmer finds FarmerDrop.</b> Leave the printed handout with its QR code, or point them to farmerdrop.com/farmer-interest. The form takes their email, state, county and what they produce, and asks them to tick "Email me when FarmerDrop opens near me."</strong></li></ol>
+<p>To find markets near you, use the USDA local food directories at ams.usda.gov, which list farmers' markets, CSAs and food hubs by ZIP code. One Central Texas starting point is the Texas Farmers' Market at Bell in Cedar Park.</p>
+<h3>The market conversation</h3>
+<p>Bring real numbers from your members: how many households, which foods, which day.</p>
+<aside class="callout say"><span>Words you can use</span><p>We're organizing a pickup in [neighborhood]. People have asked for [food]. What would make a delivery worthwhile for you? May [name] follow up about [date]?</p></aside>
+<p>Then ask, and listen more than you talk:</p>
+<ul><li>What do you produce, and when is it available?</li><li>Where can you deliver, and on which days?</li><li>How do you prefer to send it: deliver yourself, ship a package, or a pallet?</li><li>What is the smallest order that makes the trip worth it?</li></ul>
+<h3>Ask for permission, one kind at a time</h3>
+<p>These are three different permissions. A yes to one is not a yes to the others. Read back what you heard before you leave.</p>
+<div class="scroll"><table><thead><tr><th>Permission</th><th>What the farmer is agreeing to</th></tr></thead><tbody><tr><td>Launch email</td><td>"Email me when FarmerDrop opens near me." The farmer gives this on the interest form. Nothing else follows from it.</td></tr><tr><td>A named person may contact me</td><td>For example, "Your farmer liaison may contact me." Ask who, by which channel, and about what.</td></tr><tr><td>Share with this named host</td><td>"You may pass my details to [host] at [HostDrop]." It covers that host only.</td></tr></tbody></table></div>
+<p>If the farmer would rather take a card and think about it, leave the next move with them. If they say no, or later change their mind, tell your FarmerDrop contact so nobody approaches them again.</p>
+<h3>What to record</h3>
+<p>Tell your FarmerDrop contact about every farmer conversation the same day, so it is recorded once and nobody calls the farm twice. Use the capture card in Guide 5. It asks for:</p>
+<ul><li><b>Farm:</b> farm or trading name, state and county, its own website if you know it.</li><li><b>Supply:</b> what the farmer told you they produce, season, delivery area, how they would send it, any minimum. Leave unknowns blank.</li><li><b>Source:</b> warm introduction, market conversation or the farmer's own form. Date and who recorded it.</li><li><b>Permission:</b> which of the three, for whom, by which channel, the date, and how you know.</li><li><b>Introduction:</b> which host and site, who referred, who follows up, what happens next and by when.</li><li><b>Result:</b> where it stands (see below).</li></ul>
+<p>Keep farmers' contact details off paper you hand around and out of group chats. They belong in FarmerDrop's access-controlled record. Anyone who has actually been contacted is recorded separately as a lead, with a copy of what was sent.</p>
+<h4>Where a farm stands</h4>
+<div class="scroll"><table><thead><tr><th>Status</th><th>Meaning</th></tr></thead><tbody><tr><td>Discovered</td><td>On a list or mentioned by someone. No contact, no permission.</td></tr><tr><td>Introduction offered</td><td>Someone has asked the farmer whether they would like an introduction.</td></tr><tr><td>Introduction accepted</td><td>The farmer said yes to a named person or host.</td></tr><tr><td>First offering scheduled</td><td>Farmer and host have both confirmed products, delivery method and date.</td></tr><tr><td>First offering fulfilled</td><td>The farmer delivered and members collected.</td></tr><tr><td>Deferred or declined</td><td>Not now, or no. Record the date and respect it.</td></tr></tbody></table></div>
+<p>A farm only counts as scheduled when both the farmer and the host have confirmed. A name on a list or a friendly chat counts for nothing yet.</p>
+<h3>After a farmer says yes</h3>
+<ol><li><strong>The farmer applies on FarmerDrop and is approved. Farmer 101 at farmerdrop.com/guides walks them through it.</strong></li><li><strong>The farmer requests a connection to your HostDrop and sets delivery days.</strong></li><li><strong>You approve the connection under Settings, your HostDrop, Farmers.</strong></li><li><strong>The farmer completes Payment Setup and saves stock for your date.</strong></li><li><strong>You check the offer as a member would see it, then invite your members (Guide 2, step 3).</strong></li></ol>
+<p>The farmer keeps control of products, prices and cutoff. You do not set them.</p>
+<h3>What not to promise a farmer</h3>
+<ul><li>Do not promise sales volume. Share the real number of interested households and let the farmer judge.</li><li>Do not promise a payout date. Farmer earnings are confirmed when you record receipt, and payouts are run separately by FarmerDrop.</li><li>Do not promise a rating or score for their farming practices. That feature is not live.</li><li>Do not say another farm has joined unless that farm has agreed you can say so.</li></ul><p class="actions"><a class="btn" href="pdf/4-connect-with-farmers.pdf">Download this guide as a PDF</a></p></div></details>
+<details class="guide" id="guide-5"><summary><span class="num">Guide 5</span>Worksheets</summary><div class="body"><p class="lede">One page per job. The site card goes on your wall and in your invitations. The site sheet gets one line after every drop. The capture card records a farmer conversation. The scorecard tells you whether the HostDrop is working.</p><h3>Site card</h3>
+<p>Fill this in once. Everything members and farmers need to know about your HostDrop.</p>
+<p class="fill"><span>HostDrop name</span><i></i></p>
+<p class="fill"><span>Your link (farmerdrop.com/hd/...)</span><i></i></p>
+<p class="fill"><span>Neighborhood or area served</span><i></i></p>
+<p class="fill"><span>Pickup place</span><i></i></p>
+<p class="fill"><span>Directions and parking</span><i></i></p>
+<p class="fill"><span>Pickup day and window</span><i></i></p>
+<p class="fill"><span>Host</span><i></i></p>
+<p class="fill"><span>Backup for the pickup window</span><i></i></p>
+<p class="fill"><span>How members reach you</span><i></i></p>
+<p class="fill"><span>Delivery days farmers can use</span><i></i></p>
+<p class="fill"><span>Cold storage available</span><i></i></p>
+<p class="fill"><span>Your FarmerDrop contact</span><i></i></p>
+<h3>First drop planner</h3>
+<p class="fill"><span>Target pickup date</span><i></i></p>
+<p class="fill"><span>Route (members first or farmer first)</span><i></i></p>
+<p class="fill"><span>Farmer</span><i></i></p>
+<p class="fill"><span>Products and units</span><i></i></p>
+<p class="fill"><span>Price per unit</span><i></i></p>
+<p class="fill"><span>Quantity available</span><i></i></p>
+<p class="fill"><span>How it arrives</span><i></i></p>
+<p class="fill"><span>Farmer's minimum for the trip</span><i></i></p>
+<p class="fill"><span>Ordering cutoff (day and time)</span><i></i></p>
+<p class="fill"><span>Date invitations go out</span><i></i></p>
+<p class="fill"><span>Households who said yes</span><i></i></p>
+<h3>Readiness check: before the cutoff and the day before</h3>
+<ul class="check"><li>Supply is confirmed and visible to members for this date</li><li>Pickup window is staffed and members have been told when and where</li><li>Members can find the pickup point</li><li>You know how and roughly when the delivery arrives</li><li>Cold storage is ready, if needed</li><li>You and the farmer can reach each other on the day</li></ul>
+<h3>Site sheet: one line per drop</h3>
+<p>Fill in one row the morning after each pickup. Compare rows to see what is worth repeating. Keep names and contact details out of this sheet.</p>
+<h4>Members</h4>
+<div class="scroll"><table><thead><tr><th>Drop date</th><th>Invited to date</th><th>Joined to date</th><th>Ordered</th><th>Collected</th><th>Came back</th></tr></thead><tbody><tr><td></td><td></td><td></td><td></td><td></td><td></td></tr><tr><td></td><td></td><td></td><td></td><td></td><td></td></tr><tr><td></td><td></td><td></td><td></td><td></td><td></td></tr><tr><td></td><td></td><td></td><td></td><td></td><td></td></tr><tr><td></td><td></td><td></td><td></td><td></td><td></td></tr><tr><td></td><td></td><td></td><td></td><td></td><td></td></tr></tbody></table></div>
+<h4>Farmers and your effort</h4>
+<div class="scroll"><table><thead><tr><th>Drop date</th><th>Farmers asked</th><th>Farmers agreed</th><th>Farmers delivered</th><th>Your hours</th><th>Spent ($)</th></tr></thead><tbody><tr><td></td><td></td><td></td><td></td><td></td><td></td></tr><tr><td></td><td></td><td></td><td></td><td></td><td></td></tr><tr><td></td><td></td><td></td><td></td><td></td><td></td></tr><tr><td></td><td></td><td></td><td></td><td></td><td></td></tr><tr><td></td><td></td><td></td><td></td><td></td><td></td></tr><tr><td></td><td></td><td></td><td></td><td></td><td></td></tr></tbody></table></div>
+<p><b>Came back</b> means members who collected at this drop and also collected at the one before.</p>
+<p>After each drop, also note:</p>
+<p class="fill"><span>Most common objection this week</span><i></i></p>
+<p class="fill"><span>One change to try next time</span><i></i></p>
+<p class="fill"><span>Who owns that change</span><i></i></p>
+<h3>Scorecard</h3>
+<p>These are the measures FarmerDrop's pilot is using. Work them out once a month from your site sheet and your Ledger.</p>
+<div class="scroll"><table><thead><tr><th>Measure</th><th>How to work it out</th><th>This month</th></tr></thead><tbody><tr><td>Members joined</td><td>Approved members at your HostDrop</td><td></td></tr><tr><td>Repeat members</td><td>Members who collected at two drops in a row</td><td></td></tr><tr><td>Average order</td><td>Goods total of paid orders divided by the number of orders</td><td></td></tr><tr><td>Farmer fulfillment</td><td>Orders the farmer delivered in full divided by orders due</td><td></td></tr><tr><td>No-shows</td><td>Pickups not collected in the window divided by pickups that were ready</td><td></td></tr><tr><td>Host earning</td><td>Confirmed Credits in your Ledger for the month</td><td></td></tr><tr><td>Your hours</td><td>From the site sheet</td><td></td></tr><tr><td>Your spending</td><td>From the site sheet</td><td></td></tr><tr><td>Earning per hour</td><td>(Host earning minus spending) divided by hours</td><td></td></tr></tbody></table></div>
+<h3>Farmer capture card</h3>
+<p>One card per farmer conversation. Hand it to your FarmerDrop contact the same day. Do not write a phone number or email on this card unless the farmer asked you to pass it on, and then give the card to your contact only.</p>
+<h4>Farm</h4>
+<p class="fill"><span>Farm or trading name</span><i></i></p>
+<p class="fill"><span>State and county</span><i></i></p>
+<p class="fill"><span>Farm's own website, if known</span><i></i></p>
+<h4>Supply (what the farmer told you)</h4>
+<p class="fill"><span>Products</span><i></i></p>
+<p class="fill"><span>Season or first availability</span><i></i></p>
+<p class="fill"><span>Delivery area and days</span><i></i></p>
+<p class="fill"><span>Self-delivery, package or pallet</span><i></i></p>
+<p class="fill"><span>Minimum for the trip</span><i></i></p>
+<h4>Source</h4>
+<p class="fill"><span>Warm introduction, market conversation, or farmer's own form</span><i></i></p>
+<p class="fill"><span>Where and when</span><i></i></p>
+<p class="fill"><span>Recorded by</span><i></i></p>
+<h4>Permission (tick only what the farmer said yes to)</h4>
+<ul class="check"><li>Launch email only (they will use the interest form themselves)</li><li>A named person may contact them</li><li>Their details may be shared with one named host</li></ul>
+<p class="fill"><span>Who may contact them</span><i></i></p>
+<p class="fill"><span>By which channel</span><i></i></p>
+<p class="fill"><span>About what</span><i></i></p>
+<p class="fill"><span>Which host and HostDrop</span><i></i></p>
+<p class="fill"><span>Date and how you know (their words)</span><i></i></p>
+<h4>Next step</h4>
+<p class="fill"><span>Who referred them</span><i></i></p>
+<p class="fill"><span>Who follows up</span><i></i></p>
+<p class="fill"><span>What happens next</span><i></i></p>
+<p class="fill"><span>By when</span><i></i></p>
+<h4>Where it stands</h4>
+<ul class="check"><li>Discovered</li><li>Introduction offered</li><li>Introduction accepted</li><li>First offering scheduled</li><li>First offering fulfilled</li><li>Deferred or declined</li></ul><p class="actions"><a class="btn" href="pdf/5-worksheets.pdf">Download this guide as a PDF</a></p></div></details>
+
+  <footer>
+    FarmerDrop HostDrop launch kit · Draft for review · checked 2026-11-24. This kit is not legal, tax or food safety advice. A farm listed in FarmerDrop's research directory has not agreed to be contacted or to have its details shared.
+  </footer>
+</main>
+<script>
+  // Open the matching guide when a link on this page points at it.
+  function openFromHash() {
+    var el = document.getElementById(location.hash.slice(1));
+    if (el && el.tagName === "DETAILS") { el.open = true; el.scrollIntoView(); }
+  }
+  window.addEventListener("hashchange", openFromHash);
+  openFromHash();
+</script>
+</body>
+</html>
