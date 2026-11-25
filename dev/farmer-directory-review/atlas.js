@@ -6,7 +6,7 @@ function startDirectoryAtlas(data) {
   const num = value => fmt.format(value);
   const dec = value => value.toLocaleString('en-US', {maximumFractionDigits: 1});
   const palette = ['#eef3ed', '#d5e7db', '#a5d0b9', '#6aaf91', '#34856b', '#155946'];
-  const labels = { reported:'Reported on-farm location', zip:'ZIP-area estimate', area:'No usable point' };
+  const labels = { reported:'Publisher-reported location', zip:'ZIP-area estimate', area:'No usable point' };
   const regions = new Map(data.states.filter(s => s.code).map(s => [s.code, s]));
   const fips = new Map([...regions.values()].map(s => [String(s.fips).padStart(2, '0'), s.code]));
   const geo = topojson.feature(STATE_TOPOLOGY, STATE_TOPOLOGY.objects.states).features
@@ -111,7 +111,7 @@ function startDirectoryAtlas(data) {
       span.append(i,document.createTextNode(text));legend.append(span);
     };
     if(state.mode==='points') {
-      if(state.precision!=='zip') item('Publisher-reported on-farm site','dot reported');
+      if(state.precision!=='zip') item('Publisher-reported location','dot reported');
       if(state.precision!=='reported') item('ZIP-area center','dot');
       return;
     }
@@ -130,7 +130,7 @@ function startDirectoryAtlas(data) {
     const subset=data.farmers.filter(byRegion);
     const mapped=subset.filter(placeable);
     get('map-unit').textContent=state.mode==='density'?'Producer identities per 1,000 square miles of land':
-      state.mode==='total'?'Distinct producer identities by assigned region':'Reported on-farm locations and approximate ZIP-area centers';
+      state.mode==='total'?'Distinct producer identities by assigned region':'Publisher-reported locations and approximate ZIP-area centers';
     const {cuts,color}=colorScale();
     renderLegend(cuts);
     if(state.region==='~' && state.mode!=='points') {
@@ -262,7 +262,7 @@ function startDirectoryAtlas(data) {
     const paras=[
       num(data.listingCount)+' source listings include producers, CSA programs, venues and other records. The atlas uses '+num(data.producerRecordCount)+' producer-tagged listings linked to '+num(data.farmers.length)+' provisional identities. Each identity counts once, even if several sources describe it.',
       'Density divides identities assigned to a state or territory by its land area in thousands of square miles. It measures the geographic coverage of this directory. It is not an estimate of the complete farming population or a measure of production volume.',
-      num(points.reported)+' producers have a usable publisher-reported on-farm location. Records include on-farm markets and visitor locations published by county farm directories. '+num(points.zip)+' others can be placed approximately at a Census ZIP Code Tabulation Area representative point. '+num(points.area)+' have no usable point. ZIP locations can coincide for many farms. Market or CSA sales venues away from a farm are excluded from the farm point layer.',
+      num(points.reported)+' producers have a usable publisher-reported location, which may identify a farm or another place the producer operates. '+num(points.zip)+' others can be placed approximately at a Census ZIP Code Tabulation Area representative point. '+num(points.area)+' have no usable point. ZIP locations can coincide for many farms. Market or CSA sales venues away from a farm are excluded from the farm point layer.',
       'Directory locations reflect the source editions and may change. State assignment, precision and conflicts are documented in the geographic audit. This shared edition unlocks in your browser. Filtering, search and map exports run on your device.'
     ];
     for(const p of paras)m.append(create('p',p));
