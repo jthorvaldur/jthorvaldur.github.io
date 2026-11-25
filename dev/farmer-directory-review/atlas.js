@@ -48,6 +48,7 @@ function startDirectoryAtlas(data) {
   function saveView() {
     const p = new URLSearchParams({view:state.mode});
     if(state.region!=='*')p.set('region',state.region);
+    profiles?.appendParameter(p);
     history.replaceState(null,'','#'+p.toString());
   }
   function focusMap() {
@@ -189,10 +190,13 @@ function startDirectoryAtlas(data) {
       get('map-note').textContent=unitNote+' '+(selected?'Use All regions to return to the national map.':'Select a state for detail. Alaska, Hawaii, Puerto Rico and the Virgin Islands use inset scales.');
     }
   }
+  const profileEdition = data.profiles || window.FARM_PROFILES;
+  const profiles = profileEdition && typeof createProducerProfiles==='function' ? createProducerProfiles(profileEdition, farmers) : null;
   function renderTable() {
+    const searchField = get('search-field')?.value || 'name';
     const input=state.query.toLocaleLowerCase().trim();
     const rows=farmers.filter(f=>byRegion(f) && (state.mode!=='points'||state.precision==='all'||placeable(f)) && (!state.point || keyOf(f)===state.point && placeable(f))
-      && (!input || [f[1],f[2],f[3]].some(t=>String(t||'').toLocaleLowerCase().includes(input))));
+      && (searchField==='name' ? (!input || [f[1],f[2],f[3]].some(t=>String(t||'').toLocaleLowerCase().includes(input))) : profiles.matches(f[0],searchField,input)));
     const maxPage=Math.max(0,Math.ceil(rows.length/pageSize)-1);state.page=Math.min(state.page,maxPage);
     const start=state.page*pageSize;
     const host=get('rows');host.replaceChildren();
@@ -203,6 +207,13 @@ function startDirectoryAtlas(data) {
         const locate=create('button',farm[1],'farm-link');locate.setAttribute('aria-label','Locate '+farm[1]);
         locate.onclick=()=>{ state.mode='points';state.precision='all';get('precision').value='all';state.region=regions.has(farm[2])?farm[2]:'~';state.point=keyOf(farm);state.page=0;state.query='';get('search').value='';draw();focusMap();};first.append(locate);
       }else first.textContent=farm[1];
+      if (profiles) {
+      const profile=create('button','Profile','open-profile');
+      profile.type='button';
+      profile.setAttribute('aria-label','View profile for '+farm[1]);
+      profile.onclick=()=>profiles.show(farm);
+      first.append(profile);
+      }
       tr.append(first,create('td',[farm[3],farm[2]].filter(Boolean).join(', ')||'Unreported'),create('td',labels[farm[7]]),create('td',sourceNames(farm)));
       host.append(tr);
     }
@@ -280,9 +291,14 @@ function startDirectoryAtlas(data) {
   document.querySelectorAll('[data-mode]').forEach(b=>b.onclick=()=>setMode(b.dataset.mode));
   get('precision').onchange=e=>{state.precision=e.target.value;state.point=null;state.page=0;draw();};
   get('ranking-more').onclick=()=>{state.allRanks=!state.allRanks;renderRanks();};
+  if (profiles) get('search-field').onchange=e=>{
+    const labels={name:'Farm or town',products:'Product or crop',methods:'Farming method',sales:'Sales channel or venue'};
+    get('query-label').textContent=labels[e.target.value];
+    get('search').value='';state.query='';state.page=0;renderTable();
+  };
   get('search').oninput=e=>{state.query=e.target.value;state.page=0;renderTable();};
   get('prev').onclick=()=>{state.page--;renderTable();};get('next').onclick=()=>{state.page++;renderTable();};
   get('clear-pin').onclick=()=>{state.point=null;state.page=0;renderMap();renderTable();};
   get('save-map').onclick=exportMap;
-  methods();draw();
+  methods();draw();profiles?.openInitial();
 }
