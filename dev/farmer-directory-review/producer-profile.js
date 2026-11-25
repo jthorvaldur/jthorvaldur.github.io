@@ -42,6 +42,15 @@ function createProducerProfiles(edition, farmers) {
     document.getElementById('profile-place').textContent = [farm[3],farm[2]].filter(Boolean).join(', ');
     const groups = edition.rows[selected] || [[],[],[]];
     body.replaceChildren();
+    const review = edition.dropReviews?.[selected];
+    if (review) {
+      const section=element('section');section.append(element('h3','DROP practice review'));
+      if (review[0] !== null) {
+        const link=element('a','Rank '+review[0]+' · '+review[1].toFixed(3)+' · See credited practices','drop-source-link');
+        link.href='research.html#rank-'+selected;section.append(link);
+      } else section.append(element('p','Unranked. '+review[2]));
+      body.append(section);
+    }
     categoryOrder.forEach((category,index) => {
       const section = element('section');
       section.append(element('h3',fields[category]));
@@ -90,7 +99,18 @@ function createProducerProfiles(edition, farmers) {
     return searchValues.get(key).includes(normalize(query));
   }
   document.getElementById('close-profile').addEventListener('click',()=>dialog.close());
-  dialog.addEventListener('close',()=>{selected=null;address(null);});
+  dialog.addEventListener('close',()=>{
+    if(dialog.open) return;
+    const previous=selected;
+    selected=null;
+    if (new URLSearchParams(location.hash.slice(1)).get('profile')===previous) address(null);
+  });
+  window.addEventListener('hashchange',()=>{
+    const id=new URLSearchParams(location.hash.slice(1)).get('profile');
+    if (id && byId.has(id)) {
+      if (!dialog.open || selected!==id) show(byId.get(id));
+    } else if (dialog.open) dialog.close();
+  });
   return {
     show, matches,
     appendParameter(params) {if (selected) params.set('profile',selected);},
